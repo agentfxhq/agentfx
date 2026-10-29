@@ -11,6 +11,7 @@ pub const ELEMENTS: &[&str] = &[
     "particles", "layer", "group", "rect", "ellipse", "circle", "path", "line", "poly", "star", "lower3", "toast",
     "chapter", "link", "diagram", "node", "camera", "lottie", "shader", "textpath", "stat", "note", "steps", "pill", "quote",
     "list", "window", "device", "progress", "panel", "cloud", "presenter", "light", "world", "place", "fluid", "nest",
+    "scene3d",
 ];
 
 const ICONS: &[(&str, &str)] = &[
@@ -128,6 +129,10 @@ impl<'a> Ctx<'a> {
             self.err("E_CLOUD", "`form` outside a cloud", "indent it under `cloud #id n=...`", n.span);
             return None;
         }
+        if !ELEMENTS.contains(&k) && crate::s3d::OBJ_KINDS.contains(&k) {
+            self.err("E_S3D_KIND", format!("`{k}` is a 3D object"), format!("indent it under a `scene3d #world ...` line"), n.span);
+            return None;
+        }
         if !ELEMENTS.contains(&k) {
             let mut all: Vec<&str> = ELEMENTS.to_vec();
             all.extend_from_slice(VERBS);
@@ -218,6 +223,7 @@ impl<'a> Ctx<'a> {
             "nest" => self.nest_el(parent, n, lid),
             "cloud" => self.cloud(parent, si, n, lid),
             "fluid" => self.fluid(parent, si, n, lid),
+            "scene3d" => self.scene3d(parent, si, n, lid),
             "light" => self.light_el(si, n, lid),
             "particles" => {
                 let mut l = Layer::new(lid, Kind::Group);
@@ -267,7 +273,14 @@ impl<'a> Ctx<'a> {
             // also allow scene-qualified lookup
             self.names.insert(format!("{u}@{si}"), Named { idx, scene: si, kind: k.to_string() });
         }
-        self.common(idx, n, in_abs);
+        if k == "scene3d" {
+            // the 3D props are the scene's own; the rest are the layer's (placement, looks)
+            let mut cn = n.clone();
+            cn.props.retain(|key, _| crate::s3d::layer_prop(key));
+            self.common(idx, &cn, in_abs);
+        } else {
+            self.common(idx, n, in_abs);
+        }
         if let (Some(u), true) = (&user, matches!(self.layers[idx].kind, Kind::Html { .. })) {
             // addressable parts of a raw block: data-part="x" -> layer #u.x (animatable with verbs)
             if let Kind::Html { markup } = self.layers[idx].kind.clone() {
@@ -310,7 +323,7 @@ impl<'a> Ctx<'a> {
             }
         }
         // nested children: elements; verbs/anim under elements apply to the element
-        if !matches!(k, "browser" | "phone" | "title" | "chart" | "code" | "terminal" | "link" | "steps" | "list" | "pill" | "quote" | "device" | "panel" | "progress" | "cloud") && !matches!(self.layers[idx].kind, Kind::Html { .. }) {
+        if !matches!(k, "browser" | "phone" | "title" | "chart" | "code" | "terminal" | "link" | "steps" | "list" | "pill" | "quote" | "device" | "panel" | "progress" | "cloud" | "scene3d") && !matches!(self.layers[idx].kind, Kind::Html { .. }) {
             // a window's children go into its body
             let host = if k == "window" { self.kids[idx].iter().copied().find(|&c| self.layers[c].id.ends_with("-body")).unwrap_or(idx) } else { idx };
             let abs = self.layers[host].layout.flow == "none";

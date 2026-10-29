@@ -936,7 +936,9 @@ impl Shader<'_> {
                     };
                     let mut d = dotf(n, ld).max(0.0);
                     if o.kind == 2 {
-                        d = ((d * o.bands).floor() / (o.bands - 1.0)).min(1.0);
+                        // toon: the lit side in `bands` steps (darkest lit step 1/bands), the
+                        // side facing away gets ambient only
+                        d = if d <= 1e-4 { 0.0 } else { ((d * o.bands).ceil() / o.bands).min(1.0) };
                     }
                     for k in 0..3 {
                         l[k] += li.col[k] * d * att;

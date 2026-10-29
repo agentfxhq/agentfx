@@ -438,7 +438,14 @@ struct Em<'a> {
     fluid_nodes: Vec<usize>,
     /// `reveal ... with #fluid`: (node, effect index, fluid layer id)
     fluid_mattes: Vec<(usize, usize, String)>,
+    /// 3D screens: (scene3d node, object index, source layer id), patched last
+    s3d_screens: Vec<(usize, usize, String)>,
+    /// scene3d nodes whose extrude fonts index `cloud_fonts` (shifted last)
+    s3d_font_nodes: Vec<usize>,
 }
+
+#[path = "s3d_emit.rs"]
+mod s3d_emit;
 
 const TF: [Ch; 12] = [Ch::X, Ch::Y, Ch::Z, Ch::Px, Ch::Py, Ch::Scale, Ch::Sx, Ch::Sy, Ch::Rot, Ch::RotX, Ch::RotY, Ch::Magic];
 
@@ -919,7 +926,7 @@ impl<'a> Em<'a> {
                 self.time_maps.push((idx, id.clone()));
             }
         }
-        if l.style.time_map || l.style.fluid_hidden {
+        if l.style.time_map || l.style.fluid_hidden || l.style.screen_src {
             node["hidden"] = json!(true);
         }
         // effects
@@ -998,6 +1005,13 @@ impl<'a> Em<'a> {
                 self.fluid_nodes.push(idx);
                 content = Some(crate::fluid::ir_fluid(cfg, r));
             }
+            Kind::Scene3d(cfg) => {
+                if !own.is_empty() {
+                    self.note("fill= on a scene3d (use bg= for the 3D background)");
+                }
+                content = Some(self.s3d_content(l, cfg, r, idx));
+            }
+            Kind::Obj3d(_) => {}
             Kind::Cloud(cfg) => {
                 let mut c = crate::cloud::resolve(cfg, r, &mut self.cloud_fonts, &easing);
                 if in3d || cfg.persp.is_some() {
@@ -1183,7 +1197,8 @@ impl<'a> Em<'a> {
         for t in &tracks {
             if t.keys.len() > 1 && !t.is_static() {
                 let ok = matches!(t.ch, Ch::Rgbsplit | Ch::RgbsplitDx | Ch::RgbsplitDy | Ch::Glitch | Ch::GlitchRate | Ch::GlitchBlock | Ch::Vhs | Ch::Dither | Ch::Ascii | Ch::Halftone | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
-                    || (t.ch == Ch::PathOffset && l.style.text_path.is_some());
+                    || (t.ch == Ch::PathOffset && l.style.text_path.is_some())
+                    || (matches!(l.kind, Kind::Scene3d(_)) && s3d_emit::scene_ch(t.ch));
                 if !ok {
                     self.note(&format!("channel {} ({:?} stage)", t.ch.name(), t.ch.stage()));
                 }
@@ -1210,8 +1225,10 @@ impl<'a> Em<'a> {
             kids.push(i);
         }
         let first_child = kids.len();
-        for c in &l.children {
-            kids.push(self.layer(c, in3d));
+        if !matches!(l.kind, Kind::Scene3d(_)) {
+            for c in &l.children {
+                kids.push(self.layer(c, in3d));
+            }
         }
         for (m, &k) in knockouts.iter().enumerate() {
             self.nodes[idx]["effects"][m]["source"] = json!(kids[first_child + k]);
@@ -1601,6 +1618,8 @@ pub fn emit(ir: &Ir, nat: &mut Native) -> Out {
         time_maps: vec![],
         fluid_nodes: vec![],
         fluid_mattes: vec![],
+        s3d_screens: vec![],
+        s3d_font_nodes: vec![],
     };
     em.hooks();
     // base paint of every layer (own content)
@@ -1699,7 +1718,27 @@ pub fn emit(ir: &Ir, nat: &mut Native) -> Out {
         }
         em.nodes[i]["content"]["emitters"] = json!(out);
     }
+    for (i, oi, id) in std::mem::take(&mut em.s3d_screens) {
+        match em.layer_node.get(&id) {
+            Some(&m) => em.nodes[i]["content"]["objects"][oi]["shape"]["node"] = json!(m),
+            None => {
+                let size = em.nodes[i]["content"]["objects"][oi]["shape"]["size"].clone();
+                em.nodes[i]["content"]["objects"][oi]["shape"] = json!({"type": "plane", "size": size});
+                diags.push(Diag::warn("W_IR_UNSUPPORTED", format!("3D screen source #{id}: layer not emitted; the screen is blank"), "show a layer of the same scene on the screen", Default::default()));
+            }
+        }
+    }
     let mut nodes = em.nodes;
+    for &i in &em.s3d_font_nodes {
+        if let Some(objs) = nodes[i]["content"]["objects"].as_array_mut() {
+            for o in objs {
+                if o["shape"]["type"] == "extrude" && o["shape"].get("text").is_some_and(|t| !t.is_null()) {
+                    let fi = o["shape"]["font"].as_u64().unwrap_or(0) as usize;
+                    o["shape"]["font"] = json!(fi + font_off);
+                }
+            }
+        }
+    }
     for &i in &em.cloud_nodes {
         if let Some(forms) = nodes[i]["content"]["forms"].as_array_mut() {
             for f in forms {

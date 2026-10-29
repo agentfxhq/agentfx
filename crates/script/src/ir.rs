@@ -50,6 +50,14 @@ pub enum Ch {
     Rgbsplit, RgbsplitDx, RgbsplitDy, Glitch, GlitchRate, GlitchBlock, Vhs, Dither, Ascii,
     FluidTime,           // simulation time a fluid shows, s (identity unless remapped)
     PathOffset,          // text on a path: start offset along the path, px
+    // 3D (scene3d objects use X Y Z RotX RotY Rot(=rz) Scale Sx Sy Opacity Color too)
+    Sz,                  // object scale along z
+    CamX, CamY, CamZ,    // scene3d camera position (world units)
+    LookX, LookY, LookZ, // scene3d camera target
+    Fov, Roll,           // scene3d camera field of view / roll, degrees
+    Ambient,             // scene3d ambient light
+    Emissive,            // object self-illumination
+    Intensity,           // 3D light intensity
 }
 
 impl Ch {
@@ -59,13 +67,15 @@ impl Ch {
             X | Y | Z | Px | Py | Scale | Sx | Sy | Rot | RotX | RotY | Opacity | Magic => Stage::Composite,
             Blur | Glow | Brightness | Saturate | Contrast | Hue | Fill | Color | Stroke | TrimStart | TrimEnd | Reveal | MaskX
             | GradAngle | Grad0 | Grad1 | Grad2 | Grad3 | TimeSpan | Halftone | Sweep | Rays | Misreg | FluidTime | PathOffset | Rgbsplit | RgbsplitDx | RgbsplitDy | Glitch | GlitchRate | GlitchBlock | Vhs | Dither | Ascii => Stage::Paint,
+            Sz | CamX | CamY | CamZ | LookX | LookY | LookZ | Fov | Roll | Ambient | Emissive | Intensity => Stage::PerFrame,
             Wght | Wdth | Opsz | Slnt | Axis0 | Axis1 | Axis2 | Axis3 | Tracking | W | H | LineH | Count => Stage::Layout,
         }
     }
     pub fn default_value(self) -> TV {
         use Ch::*;
         match self {
-            Scale | Sx | Sy | Opacity | Brightness | Saturate | Contrast | TrimEnd | Reveal | LineH | Magic => TV::N(1.0),
+            Scale | Sx | Sy | Sz | Intensity | Opacity | Brightness | Saturate | Contrast | TrimEnd | Reveal | LineH | Magic => TV::N(1.0),
+            Fov => TV::N(40.0),
             Fill | Color | Stroke | Grad0 | Grad1 | Grad2 | Grad3 => TV::C(Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0.0 }),
             Wght => TV::N(400.0),
             Wdth => TV::N(100.0),
@@ -87,7 +97,10 @@ impl Ch {
         Some(match s.as_str() {
             "x" => Ch::X, "y" => Ch::Y, "z" => Ch::Z, "px" => Ch::Px, "py" => Ch::Py,
             "scale" | "s" => Ch::Scale, "sx" | "scale-x" => Ch::Sx, "sy" | "scale-y" => Ch::Sy,
-            "rot" | "rotate" | "r" => Ch::Rot, "rotx" | "rot-x" => Ch::RotX, "roty" | "rot-y" => Ch::RotY,
+            "rot" | "rotate" | "r" | "rz" => Ch::Rot, "rotx" | "rot-x" | "rx" => Ch::RotX, "roty" | "rot-y" | "ry" => Ch::RotY,
+            "sz" | "scale-z" => Ch::Sz, "cam-x" => Ch::CamX, "cam-y" => Ch::CamY, "cam-z" => Ch::CamZ,
+            "look-x" => Ch::LookX, "look-y" => Ch::LookY, "look-z" => Ch::LookZ, "fov" => Ch::Fov, "roll" => Ch::Roll,
+            "ambient" => Ch::Ambient, "emissive" => Ch::Emissive, "intensity" => Ch::Intensity,
             "opacity" | "o" | "alpha" => Ch::Opacity, "blur" => Ch::Blur, "glow" => Ch::Glow,
             "brightness" => Ch::Brightness, "saturate" | "saturation" => Ch::Saturate, "contrast" => Ch::Contrast,
             "hue" => Ch::Hue, "fill" => Ch::Fill, "color" => Ch::Color, "stroke" => Ch::Stroke,
@@ -120,12 +133,13 @@ impl Ch {
     pub fn is_axis(self) -> bool {
         matches!(self, Ch::Wght | Ch::Wdth | Ch::Opsz | Ch::Slnt | Ch::Axis0 | Ch::Axis1 | Ch::Axis2 | Ch::Axis3)
     }
-    pub const NAMES: [&'static str; 52] = [
+    pub const NAMES: [&'static str; 64] = [
         "x", "y", "z", "px", "py", "scale", "sx", "sy", "rot", "rotx", "roty", "opacity", "blur", "glow", "brightness",
         "saturate", "contrast", "hue", "fill", "color", "stroke", "trim-start", "trim", "reveal", "mask-x", "grad-angle", "grad0",
         "grad1", "grad2", "grad3", "wght", "tracking", "w", "h", "count", "halftone", "sweep", "rays", "misreg",
         "rgbsplit", "rgbsplit-dx", "rgbsplit-dy", "glitch", "glitch-rate", "glitch-block", "vhs", "dither", "ascii",
         "wdth", "opsz", "slnt", "path-offset",
+        "sz", "cam-x", "cam-y", "cam-z", "look-x", "look-y", "look-z", "fov", "roll", "ambient", "emissive", "intensity",
     ];
 }
 
@@ -298,6 +312,10 @@ pub enum Kind {
     Cloud(Box<CloudCfg>),
     /// 2D fluid (reel-ir `fluid` content): simulated by the native renderer only.
     Fluid(Box<crate::fluid::FluidCfg>),
+    /// Stylised 3D scene (reel-ir `scene3d` content); its children are `Obj3d` layers.
+    Scene3d(Box<crate::s3d::S3dCfg>),
+    /// One object (or light) of a 3D scene; never laid out or drawn as a 2D layer.
+    Obj3d(Box<crate::s3d::ObjCfg>),
 }
 
 /// A point cloud as written: shape props stay raw (lengths resolve against the laid-out box
@@ -552,6 +570,9 @@ pub struct Style {
     /// a fluid drawn only as a matte (`reveal ... only`)
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub fluid_hidden: bool,
+    /// the layer is shown on a 3D `screen` (`src=#id`): hidden in the 2D pass (reel-ir `hidden`)
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub screen_src: bool,
     /// cut out of the parent instead of drawn (`knockout`): reel-ir alpha-inverted matte
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub knockout: bool,

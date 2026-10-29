@@ -424,7 +424,7 @@ pub const VERBS: &[&str] = &[
     "enter", "exit", "show", "hide", "emph", "pulse", "shake", "glow", "highlight", "spotlight", "callout", "zoom", "pan",
     "cursor", "click", "dblclick", "drag", "type", "swap", "count", "draw", "diff", "burst", "move", "set", "anim", "sfx",
     "gesture", "mood", "dolly", "orbit", "focus", "play", "activate", "deactivate", "done", "undone", "advance", "page", "rewind", "timemap", "drop", "pile", "push", "swing", "shatter",
-    "slitscan", "echo", "timedisplace", "freeze", "sweep", "pour", "stir", "ink", "reveal", "animate",
+    "slitscan", "echo", "timedisplace", "freeze", "sweep", "pour", "stir", "ink", "reveal", "animate", "spin", "tumble", "assemble", "explode", "truck", "pedestal", "lookat", "camera3d",
 ];
 pub fn is_verb(k: &str) -> bool {
     VERBS.contains(&k)
@@ -547,6 +547,9 @@ fn compile_pass(doc0: &Document, tl: &Timeline, fmt: Option<&str>, base: &Path, 
         }
     }
     c.presenter_ready();
+    for si in 0..scenes.len() {
+        c.s3d_resolve_screens(si);
+    }
     // pass 2: events
     for (si, sn) in scenes.iter().enumerate() {
         c.collect_events(si, sn);
@@ -565,6 +568,7 @@ fn compile_pass(doc0: &Document, tl: &Timeline, fmt: Option<&str>, base: &Path, 
         c.cur_scene = e.scene;
         c.camera_director(&e);
     }
+    c.s3d_lint();
     // voice clips
     for s in &tl.scenes {
         for say in &s.says {

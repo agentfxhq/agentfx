@@ -191,6 +191,9 @@ impl<'a> Ctx<'a> {
         let n = &e.node;
         let t = e.t;
         let k = n.kind.as_str();
+        if self.s3d_apply(e) {
+            return;
+        }
         match k {
             "gesture" | "mood" => self.presenter_event(e),
             "enter" | "show" => {

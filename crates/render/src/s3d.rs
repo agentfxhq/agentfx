@@ -560,7 +560,6 @@ pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mu
                 }
                 // shade once per (output pixel, triangle) like MSAA: the samples of a pixel
                 // that one triangle covers share the colour shaded at the first of them
-                let noshade = agentfx_ir::env::var("AGENTFX_S3D_NOSHADE").is_ok();
                 let rows = (yb - ya) as usize;
                 let mut seen: Vec<(u32, [u8; 4], [f32; 3], u32)> = Vec::with_capacity(16);
                 for oy in 0..rows / ss {
@@ -571,7 +570,7 @@ pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mu
                                 let (yy, x) = (oy * ss + sy, ox * ss + sx);
                                 let i = yy * w + x;
                                 let ti = tb[i];
-                                if ti == NONE || noshade {
+                                if ti == NONE {
                                     continue;
                                 }
                                 let (c8, e, n8) = match seen.iter().find(|s| s.0 == ti) {

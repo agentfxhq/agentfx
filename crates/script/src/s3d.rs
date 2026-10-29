@@ -1113,7 +1113,7 @@ impl<'a> Ctx<'a> {
                 }
                 let span = Span { line: oc.span.0, col: oc.span.1 };
                 let name = oc.obj.id.clone();
-                let label = if name.is_empty() { oc.kind.clone() } else { format!("#{name}") };
+                let label = if name.is_empty() { format!("(line {})", oc.span.0) } else { format!("#{name}") };
                 let Some(he) = half_extent(&oc) else { continue };
                 let ext = 2.0 * he[0].max(he[1]).max(he[2]);
                 if ext > 1e4 || (ext > 0.0 && ext < 1e-3) {

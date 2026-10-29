@@ -297,6 +297,7 @@ impl<'g> Job<'g> {
         self.staged.push(st);
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self, b: &wgpu::Buffer) {
         self.enc.clear_buffer(b, 0, None);
     }

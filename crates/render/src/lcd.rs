@@ -57,6 +57,7 @@ impl MaskGamma {
     }
 
     /// Identity correction (no gamma, no contrast).
+    #[allow(dead_code)]
     pub fn identity() -> Self {
         let mut t = [0u8; 256];
         for (i, v) in t.iter_mut().enumerate() { *v = i as u8; }

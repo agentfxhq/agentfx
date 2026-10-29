@@ -666,6 +666,7 @@ impl Cloud {
         Ok(Cloud { n, radius: c.radius, rfac, palette: c.palette.clone(), forms, slot, start, col, proj, max_size, toff: c.time_offset })
     }
 
+    #[allow(dead_code)]
     pub fn has_projection(&self) -> bool {
         !self.proj.is_empty()
     }

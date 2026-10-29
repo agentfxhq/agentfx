@@ -84,6 +84,7 @@ pub struct Schedule {
     /// tracks per node, sorted by order
     pub tracks: Vec<Vec<usize>>,
     /// nodes drawn only as matte sources (hidden or below a hidden node)
+    #[allow(dead_code)]
     pub matte_only: Vec<bool>,
 }
 

@@ -73,6 +73,7 @@ fn load_ir(path: &Path) -> Result<agentfx_ir::Scene> {
 
 /// HTML mode: CSS timeline (css.rs) + Blitz layout/geometry (blitzfe.rs) -> planner
 /// (html.rs) -> native display lists per paint unit / repaint state (blitzfe.rs).
+#[allow(dead_code)]
 fn html_frontend(scene_dir: &Path, out_dir: &Path) -> Result<(html::HtmlOut, serde_json::Value)> {
     let (o, s, _) = html_frontend_res(scene_dir, out_dir)?;
     Ok((o, s))

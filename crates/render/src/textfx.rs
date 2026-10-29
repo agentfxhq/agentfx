@@ -16,6 +16,7 @@ use std::hash::{Hash, Hasher};
 /// Glyph reference: position in the list and per-glyph data in scene space.
 struct G {
     item: usize,
+    #[allow(dead_code)]
     k: usize,
     /// unit index per kind: [char, word, line]
     unit: [u32; 3],
@@ -222,6 +223,7 @@ impl Prep {
     }
 
     /// Unit counts [char, word, line].
+    #[allow(dead_code)]
     pub fn units(&self) -> [usize; 3] {
         self.units
     }

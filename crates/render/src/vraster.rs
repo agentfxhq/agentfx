@@ -144,7 +144,7 @@ impl Prepared {
         let mut images: Vec<Option<Arc<Pixmap>>> = vec![None; scene.assets.len()];
         let image_scale: Vec<f64> = scene.assets.iter().map(|a| a.scale).collect();
         let mut used = vec![false; scene.assets.len()];
-        let mut mark = |c: &Content, used: &mut Vec<bool>| {
+        let mark = |c: &Content, used: &mut Vec<bool>| {
             fn walk(c: &Content, used: &mut Vec<bool>) {
                 match c {
                     Content::Image { asset, variants, .. } => {

@@ -626,7 +626,7 @@ pub fn build(scene_dir: &Path, out_dir: &Path) -> Result<(Plan, Resources)> {
     let mut seqs: BTreeMap<ElemId, Vec<Vec<Tok>>> = BTreeMap::new();
     for p in &probes {
         let mut cur: BTreeMap<ElemId, Vec<Tok>> = BTreeMap::new();
-        let mut push = |cur: &mut BTreeMap<ElemId, Vec<Tok>>, at: ElemId, tok: Tok| {
+        let push = |cur: &mut BTreeMap<ElemId, Vec<Tok>>, at: ElemId, tok: Tok| {
             let v = cur.entry(at).or_default();
             if v.last() != Some(&tok) {
                 v.push(tok);

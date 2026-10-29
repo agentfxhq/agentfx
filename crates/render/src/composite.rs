@@ -89,6 +89,7 @@ impl Compositor {
         }
     }
     /// Current premultiplied frame.
+    #[allow(dead_code)]
     pub fn frame(&self) -> &Pixmap { &self.frame }
     /// Straight RGBA; borrows the frame when all pixels are opaque.
     pub fn frame_rgba(&self) -> Cow<'_, [u8]> {

@@ -23,6 +23,7 @@ pub enum Codec {
 
 impl Codec {
     /// Any hardware encoder (NV12/10-bit input from reel, ffmpeg from [`hw_ffmpeg`]).
+    #[allow(dead_code)]
     pub fn is_hw(self) -> bool { self != Codec::X264 }
     /// NVIDIA NVENC (system-memory frames, no hwupload, session-capped).
     pub fn is_nvenc(self) -> bool { matches!(self, Codec::Nvenc | Codec::NvencHevc) }
@@ -434,6 +435,7 @@ fn has_avx2() -> bool {
 
 /// RGBA -> I420, BT.709 limited range with rounded 2x2 box chroma.
 /// Panics on zero/odd dimensions, overflowing sizes or incorrect RGBA length.
+#[allow(dead_code)]
 pub fn rgba_to_i420(rgba: &[u8], w: usize, h: usize, out: &mut Vec<u8>) {
     out.resize(i420_len(w, h), 0);
     assert_eq!(rgba.len(), w * h * 4, "incorrect RGBA length");

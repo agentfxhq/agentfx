@@ -128,14 +128,17 @@ impl Fluid {
         }
     }
 
+    #[allow(dead_code)]
     pub fn first_frame(&self) -> Option<usize> {
         self.first
     }
+    #[allow(dead_code)]
     pub fn settle_frame(&self) -> Option<usize> {
         self.settle
     }
 
     /// Bytes held by the frame cache so far, sim seconds and mask seconds.
+    #[allow(dead_code)]
     pub fn stats(&self) -> (usize, usize, f64, f64) {
         let c = self.cache.lock().unwrap();
         (c.frames.len(), c.frames.len() * self.gw * self.gh, c.sim_s, c.mask_s)
@@ -361,6 +364,7 @@ fn jacobi_w(p: &[f32], b: &[f32], w: usize, h: usize, h2: f32, om: f32, out: &mu
     });
 }
 
+#[allow(dead_code)]
 fn jacobi(p: &[f32], div: &[f32], w: usize, h: usize, out: &mut [f32], avx2: bool) {
     jacobi_w(p, div, w, h, 1.0, 1.0, out, avx2)
 }
@@ -468,6 +472,7 @@ impl Sim {
         Sim { w, h, u: z(), v: z(), d: z(), p: z(), t0: z(), t1: z(), t2: z(), t3: z() }
     }
 
+    #[allow(dead_code)]
     pub fn dye(&self) -> &[f32] {
         &self.d
     }

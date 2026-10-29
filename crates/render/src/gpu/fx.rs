@@ -142,6 +142,7 @@ pub struct Chain {
 }
 
 impl Chain {
+    #[allow(dead_code)]
     pub fn on(g: &'static Gpu) -> Chain {
         Chain { a: None, forced: Some(g) }
     }
@@ -329,7 +330,7 @@ fn check_report(ops: &[Op], mut cpu: Vec<u8>, gpu: &[u8], w: usize, h: usize) {
 
 /// Record `op`'s passes on the resident frame. `host`: the current pixels when the chain
 /// starts with this op (required when `op.needs_host()`).
-fn encode(a: &mut Active, op: &Op, host: Option<&[u8]>) -> anyhow::Result<()> {
+fn encode(a: &mut Active, op: &Op, _host: Option<&[u8]>) -> anyhow::Result<()> {
     match op {
         Op::Look(e, p, cx) => match e {
             Effect::Riso { inks, seed, drift, drift_speed, grain, density, paper, .. } => riso(a, cx, &crate::look::RisoCfg { inks, seed: *seed, misreg: p[0], drift: *drift, drift_speed: *drift_speed, t: p[TIME], grain: *grain, density: *density, paper: *paper }),
@@ -349,6 +350,7 @@ fn encode(a: &mut Active, op: &Op, host: Option<&[u8]>) -> anyhow::Result<()> {
 }
 
 /// Run one effect on a given device regardless of mode/routing (tests, benchmarks).
+#[allow(dead_code)]
 pub fn apply_on(g: &'static Gpu, e: &Effect, p: &[f64; NPARAM], buf: &mut [u8], w: usize, h: usize, cx: &FxCtx) -> anyhow::Result<bool> {
     let mut c = Chain::on(g);
     if !c.look(e, p, buf, w, h, cx) {

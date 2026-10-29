@@ -22,6 +22,7 @@ pub struct ShapedGlyph {
 
 #[derive(Clone, Debug)]
 pub struct Shaped {
+    #[allow(dead_code)]
     pub font: FontData,
     pub size: f32,
     pub coords: Vec<i16>,

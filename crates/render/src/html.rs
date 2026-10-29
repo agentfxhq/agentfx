@@ -43,6 +43,7 @@ pub struct Geom {
     pub elements: Vec<GeomElem>,
 }
 
+#[allow(dead_code)]
 pub fn load_geom(path: &Path) -> Result<Geom> {
     let s = std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
     Ok(serde_json::from_str(&s)?)
@@ -340,7 +341,7 @@ pub fn build(compiled: &Compiled, geom: &Geom) -> Result<HtmlOut> {
 
     // --- units
     let mut units: Vec<Unit> = Vec::new();
-    let mut build_ctx = |ctx: Option<usize>, units: &mut Vec<Unit>| -> Vec<Child> {
+    let build_ctx = |ctx: Option<usize>, units: &mut Vec<Unit>| -> Vec<Child> {
         let mut items = Vec::new();
         match ctx {
             None => seq(0, usize::MAX, &children, &positioned, &is_root, &mut items),
@@ -375,7 +376,7 @@ pub fn build(compiled: &Compiled, geom: &Geom) -> Result<HtmlOut> {
     };
     let top = build_ctx(None, &mut units);
     let all: Vec<Vec<Child>> = (0..layers.len()).map(|l| build_ctx(Some(l), &mut units)).collect();
-    drop(build_ctx);
+    let _ = build_ctx;
     for (l, ch) in all.into_iter().enumerate() {
         layers[l].children = ch;
     }

@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -23,8 +24,10 @@ jobs:
       - name: Test
         run: cargo test --release --locked
 
+  # macOS is untested and its runners are scarce: run this check by hand (Actions > CI > Run workflow).
   macos:
     name: macOS check (experimental)
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     continue-on-error: true
     steps:

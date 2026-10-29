@@ -250,8 +250,18 @@ impl<'a> Ctx<'a> {
             self.add(Some(parent), l)
         } else {
             l.layout.pos = Pos::Fill;
-            let p = if parent == self.scenes[si].content { self.scenes[si].world } else { parent };
-            self.add(Some(p), l)
+            let content = self.scenes[si].content;
+            if parent == content {
+                // a full-frame 3D scene is the backdrop: in the scene's world, below the 2D content
+                let world = self.scenes[si].world;
+                let i = self.add(Some(world), l);
+                self.kids[world].pop();
+                let at = self.kids[world].iter().position(|&k| k == content).unwrap_or(0);
+                self.kids[world].insert(at, i);
+                i
+            } else {
+                self.add(Some(parent), l)
+            }
         };
         for (ch, v) in [(Ch::CamX, cam.pos[0]), (Ch::CamY, cam.pos[1]), (Ch::CamZ, cam.pos[2]), (Ch::LookX, cam.target[0]), (Ch::LookY, cam.target[1]), (Ch::LookZ, cam.target[2]), (Ch::Fov, cam.fov), (Ch::Roll, cam.roll), (Ch::Ambient, ambient)] {
             self.set_base(idx, ch, TV::N(v));
@@ -386,6 +396,10 @@ impl<'a> Ctx<'a> {
                 let s = self.s3d_num(n, "size", 1e-6, 1e6).unwrap_or(200.0);
                 receive = true;
                 rot_default = [-90.0, 0.0, 0.0];
+                // a floor takes no default outline (its far edge would draw a horizon line)
+                if !n.props.contains_key("outline") {
+                    mat.outline = 0.0;
+                }
                 Shape3d::Plane { size: [size1(self, "w", s), size1(self, "d", s)] }
             }
             "sphere" => Shape3d::Sphere { radius: size1(self, "r", 0.5), segments: self.s3d_num(n, "seg", 3.0, 256.0).unwrap_or(48.0) as u32 },

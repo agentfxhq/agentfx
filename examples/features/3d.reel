@@ -10,13 +10,13 @@ scene lgtm dur=2.8s bg=#03070A
   scene3d #blocks fov=34 camera=(-2.5, 2.6, 9.5) target=(0, 0.3, 0) light=(-4, 7, 5) ambient=0.45 fog=#03070A fog-near=9 fog-far=24 outline=3 outline-color=#3DDC6A bloom=18
     floor #ground y=-0.85 color=#08130C
     group #row
-      box #bL size=1.5 x=-2.55 color=#123A20 in=drop at=@0.07s from=5
+      box #bL size=1.5 x=-2.85 color=#123A20 in=drop at=@0.07s from=5
         extrude "L" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
-      box #bG size=1.5 x=-0.85 color=#123A20 in=drop at=@0.31s from=5
+      box #bG size=1.5 x=-0.95 color=#123A20 in=drop at=@0.31s from=5
         extrude "G" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
-      box #bT size=1.5 x=0.85 color=#123A20 in=drop at=@0.54s from=5
+      box #bT size=1.5 x=0.95 color=#123A20 in=drop at=@0.54s from=5
         extrude "T" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
-      box #bM size=1.5 x=2.55 color=#123A20 in=drop at=@0.78s from=5
+      box #bM size=1.5 x=2.85 color=#123A20 in=drop at=@0.78s from=5
         extrude "M" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
   text #tag "looks good to me" size=40 weight=700 color=#7CFF6B x=50% y=88% anchor=center nowrap in=fade at=@1.6s font="JetBrains Mono"
   @0s orbit #blocks by=38deg pitch=-6deg dur=2.8s ease=inout-sine
@@ -41,7 +41,7 @@ scene parcel dur=2.4s bg=#05010D in=fade tdur=0.3s
         plane w=1.8 h=1.2 rx=-90 ry=90 x=0.6 color=#E3C28D double-sided
       group #hr x=1.2 y=1.6
         plane w=1.8 h=1.2 rx=-90 ry=90 x=-0.6 color=#E3C28D double-sided
-      sphere #star r=0.45 y=0.9 color=#7CFF6B emissive=0.8 opacity=0
+      sphere #star r=0.45 y=0.9 color=#7CFF6B emissive=0.45 opacity=0
   @0.3s anim #hl rz 0s:0deg 0.5s:200deg~out-back
   @0.45s anim #hr rz 0s:0deg 0.5s:-200deg~out-back
   @0.7s anim #hf rx 0s:0deg 0.5s:200deg~out-back

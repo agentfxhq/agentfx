@@ -157,6 +157,7 @@ pub struct Scratch {
     mask: Vec<f32>,
     own: Vec<u32>,
     seed: Vec<u32>,
+    skey: Vec<f32>,
     hx: Vec<u32>,
 }
 
@@ -515,7 +516,7 @@ pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mu
         b
     };
     let bins = bin(&opaque);
-    let Scratch { tri: s_tri, zb: s_zb, aux: s_aux, col: s_col, emis: s_emis, mask: s_mask, own: s_own, seed: s_seed, hx: s_hx } = scr;
+    let Scratch { tri: s_tri, zb: s_zb, aux: s_aux, col: s_col, emis: s_emis, mask: s_mask, own: s_own, seed: s_seed, skey: s_skey, hx: s_hx } = scr;
     let tri_buf = prep(s_tri, n, NONE);
     let zb = prep(s_zb, n, 0f32);
     // barycentrics, then packed normals (only read where a triangle is)
@@ -719,7 +720,14 @@ pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mu
     tm.push(("shadow", t0.elapsed().as_secs_f64()));
     // ---- outlines
     if objs.iter().any(|o| o.outline > 0.0) {
-        outline(col, tri_buf, zb, aux, &opaque, &objs, w, h, (s_own, s_seed, s_hx));
+        // outlines fade into the fog like the surfaces they belong to
+        let (ortho, cfar) = (view.ortho, view.far as f32);
+        let fogf = move |key: f32| -> f32 {
+            let Some((exp, near, far, dens, _)) = fog else { return 0.0 };
+            let d = if ortho { cfar + 1.0 - key } else { 1.0 / key.max(1e-20) };
+            if exp { 1.0 - (-dens * d).exp() } else { ((d - near) / (far - near).max(1e-6)).clamp(0.0, 1.0) }
+        };
+        outline(col, tri_buf, zb, aux, &opaque, &objs, w, h, (s_own, s_seed, s_skey, s_hx), &fogf);
     }
     tm.push(("outline", t0.elapsed().as_secs_f64()));
     // ---- transparent surfaces, back to front
@@ -1057,10 +1065,10 @@ impl Shader<'_> {
 /// sample within the owner's half width of a seed is painted in the owner's outline colour
 /// (exact Euclidean distance inside a window, separable: nearest seed per row, then columns).
 #[allow(clippy::too_many_arguments)]
-fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tri], objs: &[ObjF], w: usize, h: usize, bufs: (&mut Vec<u32>, &mut Vec<u32>, &mut Vec<u32>)) {
+fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tri], objs: &[ObjF], w: usize, h: usize, bufs: (&mut Vec<u32>, &mut Vec<u32>, &mut Vec<f32>, &mut Vec<u32>), fogf: &(dyn Fn(f32) -> f32 + Sync)) {
     let tq = std::time::Instant::now();
     let dbg = agentfx_ir::env::var("AGENTFX_S3D_DEBUG").is_ok();
-    let (b_own, b_seed, b_hx) = bufs;
+    let (b_own, b_seed, b_skey, b_hx) = bufs;
     if b_own.len() < w * h {
         b_own.resize(w * h, NONE);
     }
@@ -1073,9 +1081,15 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
     let own = &*own;
     let owner = |i: usize| -> u32 { own[i] };
     let rmax = (objs.iter().map(|o| o.outline / 2.0).fold(0.0f32, f32::max).ceil() as i64 + 1).min(250);
+    // owners are packed into 23 bits next to the offset
+    let objs_ok = objs.len() < (1 << 23);
+    if !objs_ok {
+        return;
+    }
     // seed owner per sample (NONE = no seed)
     let seed = prep(b_seed, w * h, NONE);
-    seed.par_chunks_mut(w).enumerate().for_each(|(y, row)| {
+    let skey = prep(b_skey, w * h, 0f32);
+    seed.par_chunks_mut(w).zip(skey.par_chunks_mut(w)).enumerate().for_each(|(y, (row, krow))| {
         for x in 0..w {
             let i = y * w + x;
             let a = owner(i);
@@ -1120,8 +1134,9 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
             if y + 1 < h {
                 consider(i + w);
             }
-            if let Some((_, f)) = best {
+            if let Some((k, f)) = best {
                 row[x] = f;
+                krow[x] = k;
             }
         }
     });
@@ -1129,7 +1144,7 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
         eprintln!("  outline seeds {:.1}", tq.elapsed().as_secs_f64() * 1e3);
     }
     // nearest seed per row within rmax: (dx, owner)
-    // nearest seed per row: dx (low 8 bits) | owner << 8, NONE = none
+    // nearest seed per row: dx + 256 (low 9 bits, signed offset to the seed) | owner << 9
     let hx = prep(b_hx, w * h, NONE);
     hx.par_chunks_mut(w).enumerate().for_each(|(y, row)| {
         let s = &seed[y * w..(y + 1) * w];
@@ -1141,7 +1156,7 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
             if let Some(l) = last {
                 let d = (x - l) as i64;
                 if d <= rmax {
-                    row[x] = d as u32 | (s[l] << 8);
+                    row[x] = (256 - d) as u32 | (s[l] << 9);
                 }
             }
         }
@@ -1152,8 +1167,8 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
             }
             if let Some(nx) = next {
                 let d = (nx - x) as i64;
-                if d <= rmax && (row[x] == NONE || (d as u32) < (row[x] & 0xff)) {
-                    row[x] = d as u32 | (s[nx] << 8);
+                if d <= rmax && (row[x] == NONE || d < ((row[x] & 0x1ff) as i64 - 256).abs()) {
+                    row[x] = (256 + d) as u32 | (s[nx] << 9);
                 }
             }
         }
@@ -1165,6 +1180,7 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
     col.par_chunks_mut(w).enumerate().for_each(|(y, row)| {
         for x in 0..w {
             let mut best = (f32::MAX, NONE);
+            let mut bkey = 0f32;
             let ylo = (y as i64 - rmax).max(0) as usize;
             let yhi = ((y as i64 + rmax) as usize).min(h - 1);
             for yy in ylo..=yhi {
@@ -1172,11 +1188,12 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
                 if v == NONE {
                     continue;
                 }
-                let (dx, o) = (v & 0xff, v >> 8);
+                let (sdx, o) = ((v & 0x1ff) as i64 - 256, v >> 9);
                 let dy = yy as f32 - y as f32;
-                let d2 = (dx as f32) * (dx as f32) + dy * dy;
+                let d2 = (sdx as f32) * (sdx as f32) + dy * dy;
                 if d2 < best.0 || (d2 == best.0 && o < best.1) {
                     best = (d2, o);
+                    bkey = skey[yy * w + (x as i64 + sdx) as usize];
                 }
             }
             if best.1 == NONE {
@@ -1184,7 +1201,7 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
             }
             let ob = &objs[best.1 as usize];
             let r = ob.outline / 2.0 - 0.5;
-            let a = (r + 0.5 - best.0.sqrt()).clamp(0.0, 1.0) * ob.outline_color[3];
+            let a = (r + 0.5 - best.0.sqrt()).clamp(0.0, 1.0) * ob.outline_color[3] * (1.0 - fogf(bkey));
             if a <= 0.0 {
                 continue;
             }

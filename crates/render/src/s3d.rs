@@ -146,6 +146,29 @@ pub struct Frame<'a> {
     pub aa: u32,
 }
 
+/// Per-painter buffers reused across frames (no page faults per frame).
+#[derive(Default)]
+pub struct Scratch {
+    tri: Vec<u32>,
+    zb: Vec<f32>,
+    aux: Vec<u32>,
+    col: Vec<[u8; 4]>,
+    emis: Vec<[f32; 3]>,
+    mask: Vec<f32>,
+    own: Vec<u32>,
+    seed: Vec<u32>,
+    hx: Vec<u32>,
+}
+
+/// `v[..n]` filled with `x` (grown when needed).
+fn prep<T: Copy + Send + Sync>(v: &mut Vec<T>, n: usize, x: T) -> &mut [T] {
+    if v.len() < n {
+        v.resize(n, x);
+    }
+    v[..n].par_chunks_mut(1 << 16).for_each(|c| c.fill(x));
+    &mut v[..n]
+}
+
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Stats {
     pub tris: usize,
@@ -347,7 +370,7 @@ fn raster(t: &Tri, w: usize, ya: i32, yb: i32, mut f: impl FnMut(usize, usize, f
 }
 
 /// Render the scene into `w` x `h` premultiplied RGBA8 (output px).
-pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mut Stats) -> Vec<u8> {
+pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mut Stats, scr: &mut Scratch) -> Vec<u8> {
     let t0 = std::time::Instant::now();
     let mut tm: Vec<(&str, f64)> = Vec::new();
     let ss = fr.aa.clamp(1, 4) as usize;
@@ -492,12 +515,17 @@ pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mu
         b
     };
     let bins = bin(&opaque);
-    let mut tri_buf = vec![NONE; n];
-    let mut zb = vec![0f32; n];
-    let mut aux = vec![0u32; n]; // barycentrics, then packed normals
-    let mut col = vec![[0u8; 4]; n];
+    let Scratch { tri: s_tri, zb: s_zb, aux: s_aux, col: s_col, emis: s_emis, mask: s_mask, own: s_own, seed: s_seed, hx: s_hx } = scr;
+    let tri_buf = prep(s_tri, n, NONE);
+    let zb = prep(s_zb, n, 0f32);
+    // barycentrics, then packed normals (only read where a triangle is)
+    if s_aux.len() < n {
+        s_aux.resize(n, 0);
+    }
+    let aux = &mut s_aux[..n];
+    let col = prep(s_col, n, [0u8; 4]);
     let (ow, oh) = (fr.w, fr.h);
-    let mut emis = vec![[0f32; 3]; ow * oh];
+    let emis = prep(s_emis, ow * oh, [0f32; 3]);
     let inv_ss2 = 1.0 / (ss * ss) as f32;
     let want_nrm = objs.iter().any(|o| o.outline > 0.0);
     let sh = Shader { objs: &objs, lights: &lights, up, amb, fog, tex: fr.tex };
@@ -529,30 +557,45 @@ pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mu
                         }
                     });
                 }
-                // shade
+                // shade once per (output pixel, triangle) like MSAA: the samples of a pixel
+                // that one triangle covers share the colour shaded at the first of them
                 let noshade = agentfx_ir::env::var("AGENTFX_S3D_NOSHADE").is_ok();
-                for yy in 0..(yb - ya) as usize {
-                    for x in 0..w {
-                        let i = yy * w + x;
-                        let ti = tb[i];
-                        if ti == NONE || noshade {
-                            continue;
-                        }
-                        let t = &opaque[ti as usize];
-                        let p1 = (ax[i] & 0xffff) as f32 / 65535.0;
-                        let p2 = (ax[i] >> 16) as f32 / 65535.0;
-                        let (c, e, nrm) = sh.shade(t, 1.0 - p1 - p2, p1, p2, x as f64 + 0.5, (yy + ya as usize) as f64 + 0.5);
-                        cc[i] = to8(c);
-                        if want_nrm {
-                            ax[i] = oct_enc(nrm);
-                        }
-                        let oy = yy / ss;
-                        let ox = x / ss;
-                        if e[0] + e[1] + e[2] > 0.0 && ox < ow && oy * ow < em.len() {
-                            let k = oy * ow + ox;
-                            em[k][0] += e[0] * inv_ss2;
-                            em[k][1] += e[1] * inv_ss2;
-                            em[k][2] += e[2] * inv_ss2;
+                let rows = (yb - ya) as usize;
+                let mut seen: Vec<(u32, [u8; 4], [f32; 3], u32)> = Vec::with_capacity(16);
+                for oy in 0..rows / ss {
+                    for ox in 0..ow {
+                        seen.clear();
+                        for sy in 0..ss {
+                            for sx in 0..ss {
+                                let (yy, x) = (oy * ss + sy, ox * ss + sx);
+                                let i = yy * w + x;
+                                let ti = tb[i];
+                                if ti == NONE || noshade {
+                                    continue;
+                                }
+                                let (c8, e, n8) = match seen.iter().find(|s| s.0 == ti) {
+                                    Some(s) => (s.1, s.2, s.3),
+                                    None => {
+                                        let t = &opaque[ti as usize];
+                                        let p1 = (ax[i] & 0xffff) as f32 / 65535.0;
+                                        let p2 = (ax[i] >> 16) as f32 / 65535.0;
+                                        let (c, e, nrm) = sh.shade(t, 1.0 - p1 - p2, p1, p2, x as f64 + 0.5, (yy + ya as usize) as f64 + 0.5);
+                                        let v = (ti, to8(c), e, if want_nrm { oct_enc(nrm) } else { 0 });
+                                        seen.push(v);
+                                        (v.1, v.2, v.3)
+                                    }
+                                };
+                                cc[i] = c8;
+                                if want_nrm {
+                                    ax[i] = n8;
+                                }
+                                if e[0] + e[1] + e[2] > 0.0 {
+                                    let k = oy * ow + ox;
+                                    em[k][0] += e[0] * inv_ss2;
+                                    em[k][1] += e[1] * inv_ss2;
+                                    em[k][2] += e[2] * inv_ss2;
+                                }
+                            }
                         }
                     }
                 }
@@ -615,7 +658,7 @@ pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mu
             if !stris.is_empty() {
                 let tris: Vec<Tri> = stris.iter().map(|x| clone_tri(&x.0)).collect();
                 let sbins = bin(&tris);
-                let mut mask = vec![0f32; n];
+                let mask = prep(s_mask, n, 0f32);
                 {
                     let (tri_buf, opaque) = (&tri_buf, &opaque);
                     mask.par_chunks_mut(bh * w).enumerate().for_each(|(bi, mk)| {
@@ -647,7 +690,6 @@ pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mu
                         *v = acc * inv_ss2;
                     }
                 });
-                drop(mask);
                 blur_f32(&mut mo, ow, oh, 1, shc.blur * fr.px_scale);
                 let sc_col = [shc.color[0] as f32, shc.color[1] as f32, shc.color[2] as f32];
                 let op = (shc.opacity * shc.color[3]) as f32;
@@ -677,7 +719,7 @@ pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mu
     tm.push(("shadow", t0.elapsed().as_secs_f64()));
     // ---- outlines
     if objs.iter().any(|o| o.outline > 0.0) {
-        outline(&mut col, &tri_buf, &zb, &aux, &opaque, &objs, w, h);
+        outline(col, tri_buf, zb, aux, &opaque, &objs, w, h, (s_own, s_seed, s_hx));
     }
     tm.push(("outline", t0.elapsed().as_secs_f64()));
     // ---- transparent surfaces, back to front
@@ -800,12 +842,41 @@ pub fn render(sc: &Scene3d, meshes: &[Option<Arc<Mesh>>], fr: &Frame, stats: &mu
     tm.push(("down", t0.elapsed().as_secs_f64()));
     if let Some(b) = &sc.bloom {
         if b.strength > 0.0 && emis.iter().any(|e| e[0] + e[1] + e[2] > 0.0) {
-            let mut flat: Vec<f32> = emis.iter().flat_map(|e| e.iter().copied()).collect();
-            blur_f32(&mut flat, ow, oh, 3, b.radius * fr.px_scale);
+            // blurred at half resolution (it is wide and soft), read back bilinearly
+            let (hw2, hh2) = (ow.div_ceil(2), oh.div_ceil(2));
+            let mut half = vec![0f32; hw2 * hh2 * 3];
+            half.par_chunks_mut(hw2 * 3).enumerate().for_each(|(y, row)| {
+                for x in 0..hw2 {
+                    for ch in 0..3 {
+                        let mut acc = 0f32;
+                        for (dx, dy) in [(0, 0), (1, 0), (0, 1), (1, 1)] {
+                            let (sx, sy) = ((2 * x + dx).min(ow - 1), (2 * y + dy).min(oh - 1));
+                            acc += emis[sy * ow + sx][ch];
+                        }
+                        row[3 * x + ch] = acc * 0.25;
+                    }
+                }
+            });
+            blur_f32(&mut half, hw2, hh2, 3, b.radius * fr.px_scale / 2.0);
             let k = b.strength as f32;
-            out.par_chunks_mut(ow * 4).zip(flat.par_chunks(ow * 3)).for_each(|(row, er)| {
+            let half = &half;
+            out.par_chunks_mut(ow * 4).enumerate().for_each(|(y, row)| {
+                let fy = ((y as f32 + 0.5) / 2.0 - 0.5).max(0.0);
+                let (y0, ty) = (fy.floor() as usize, fy.fract());
+                let y1 = (y0 + 1).min(hh2 - 1);
+                let y0 = y0.min(hh2 - 1);
                 for x in 0..ow {
-                    let g = [er[3 * x] * k, er[3 * x + 1] * k, er[3 * x + 2] * k];
+                    let fx = ((x as f32 + 0.5) / 2.0 - 0.5).max(0.0);
+                    let (x0, tx) = (fx.floor() as usize, fx.fract());
+                    let x1 = (x0 + 1).min(hw2 - 1);
+                    let x0 = x0.min(hw2 - 1);
+                    let at = |xx: usize, yy: usize, c: usize| half[(yy * hw2 + xx) * 3 + c];
+                    let mut g = [0f32; 3];
+                    for (c, gv) in g.iter_mut().enumerate() {
+                        let top = at(x0, y0, c) * (1.0 - tx) + at(x1, y0, c) * tx;
+                        let bot = at(x0, y1, c) * (1.0 - tx) + at(x1, y1, c) * tx;
+                        *gv = (top * (1.0 - ty) + bot * ty) * k;
+                    }
                     let gm = g[0].max(g[1]).max(g[2]);
                     if gm <= 0.0 {
                         continue;
@@ -954,7 +1025,10 @@ impl Shader<'_> {
                         }
                     }
                 }
-                [base[0] * l[0] + spec[0], base[1] * l[1] + spec[1], base[2] * l[2] + spec[2]]
+                // soft shoulder: light sums above 0.8 roll off toward 1, so a fully lit face shows
+                // its colour instead of clipping to white (specular still can)
+                let sh = |v: f32| if v <= 0.8 { v } else { 0.8 + 0.2 * (1.0 - (-(v - 0.8) / 0.2).exp()) };
+                [base[0] * sh(l[0]) + spec[0], base[1] * sh(l[1]) + spec[1], base[2] * sh(l[2]) + spec[2]]
             }
         };
         let e = [base[0] * o.emissive, base[1] * o.emissive, base[2] * o.emissive];
@@ -983,11 +1057,24 @@ impl Shader<'_> {
 /// sample within the owner's half width of a seed is painted in the owner's outline colour
 /// (exact Euclidean distance inside a window, separable: nearest seed per row, then columns).
 #[allow(clippy::too_many_arguments)]
-fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tri], objs: &[ObjF], w: usize, h: usize) {
-    let owner = |i: usize| -> u32 { if tri[i] == NONE { NONE } else { tris[tri[i] as usize].obj } };
-    let rmax = objs.iter().map(|o| o.outline / 2.0).fold(0.0f32, f32::max).ceil() as i64 + 1;
+fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tri], objs: &[ObjF], w: usize, h: usize, bufs: (&mut Vec<u32>, &mut Vec<u32>, &mut Vec<u32>)) {
+    let tq = std::time::Instant::now();
+    let dbg = agentfx_ir::env::var("AGENTFX_S3D_DEBUG").is_ok();
+    let (b_own, b_seed, b_hx) = bufs;
+    if b_own.len() < w * h {
+        b_own.resize(w * h, NONE);
+    }
+    let own = &mut b_own[..w * h];
+    own.par_chunks_mut(1 << 16).zip(tri.par_chunks(1 << 16)).for_each(|(o, t)| {
+        for (a, &b) in o.iter_mut().zip(t) {
+            *a = if b == NONE { NONE } else { tris[b as usize].obj };
+        }
+    });
+    let own = &*own;
+    let owner = |i: usize| -> u32 { own[i] };
+    let rmax = (objs.iter().map(|o| o.outline / 2.0).fold(0.0f32, f32::max).ceil() as i64 + 1).min(250);
     // seed owner per sample (NONE = no seed)
-    let mut seed = vec![NONE; w * h];
+    let seed = prep(b_seed, w * h, NONE);
     seed.par_chunks_mut(w).enumerate().for_each(|(y, row)| {
         for x in 0..w {
             let i = y * w + x;
@@ -1038,8 +1125,12 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
             }
         }
     });
+    if dbg {
+        eprintln!("  outline seeds {:.1}", tq.elapsed().as_secs_f64() * 1e3);
+    }
     // nearest seed per row within rmax: (dx, owner)
-    let mut hx = vec![(i16::MAX, NONE); w * h];
+    // nearest seed per row: dx (low 8 bits) | owner << 8, NONE = none
+    let hx = prep(b_hx, w * h, NONE);
     hx.par_chunks_mut(w).enumerate().for_each(|(y, row)| {
         let s = &seed[y * w..(y + 1) * w];
         let mut last: Option<usize> = None;
@@ -1050,7 +1141,7 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
             if let Some(l) = last {
                 let d = (x - l) as i64;
                 if d <= rmax {
-                    row[x] = (d as i16, s[l]);
+                    row[x] = d as u32 | (s[l] << 8);
                 }
             }
         }
@@ -1061,12 +1152,15 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
             }
             if let Some(nx) = next {
                 let d = (nx - x) as i64;
-                if d <= rmax && (d as i16) < row[x].0 {
-                    row[x] = (d as i16, s[nx]);
+                if d <= rmax && (row[x] == NONE || (d as u32) < (row[x] & 0xff)) {
+                    row[x] = d as u32 | (s[nx] << 8);
                 }
             }
         }
     });
+    if dbg {
+        eprintln!("  outline rows {:.1}", tq.elapsed().as_secs_f64() * 1e3);
+    }
     // per sample: min over dy of dx^2 + dy^2
     col.par_chunks_mut(w).enumerate().for_each(|(y, row)| {
         for x in 0..w {
@@ -1074,10 +1168,11 @@ fn outline(col: &mut [[u8; 4]], tri: &[u32], zb: &[f32], nrm: &[u32], tris: &[Tr
             let ylo = (y as i64 - rmax).max(0) as usize;
             let yhi = ((y as i64 + rmax) as usize).min(h - 1);
             for yy in ylo..=yhi {
-                let (dx, o) = hx[yy * w + x];
-                if o == NONE {
+                let v = hx[yy * w + x];
+                if v == NONE {
                     continue;
                 }
+                let (dx, o) = (v & 0xff, v >> 8);
                 let dy = yy as f32 - y as f32;
                 let d2 = (dx as f32) * (dx as f32) + dy * dy;
                 if d2 < best.0 || (d2 == best.0 && o < best.1) {

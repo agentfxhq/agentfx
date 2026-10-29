@@ -252,7 +252,7 @@ impl<'a> Painter<'a> {
                 };
                 let fr = s3d::Frame { st: &st, tex: &tex, ndc_to_px: ndc, w: bi[2] as usize, h: bi[3] as usize, clip, px_scale: sc_chain.as_coeffs()[0].hypot(sc_chain.as_coeffs()[1]).max(1e-6), aa };
                 let mut stats = s3d::Stats::default();
-                let buf = s3d::render(&p.c, &p.meshes, &fr, &mut stats);
+                let buf = s3d::render(&p.c, &p.meshes, &fr, &mut stats, &mut self.s3d_scratch);
                 let mut px = Pixmap::new(bi[2] as u16, bi[3] as u16);
                 px.data_as_u8_slice_mut().copy_from_slice(&buf);
                 let px = Arc::new(px);
@@ -265,5 +265,175 @@ impl<'a> Painter<'a> {
         ctx.set_transform(Affine::IDENTITY);
         draw_pixmap(ctx, px, (bi[0] as i64 - self.origin.0) as f64, (bi[1] as i64 - self.origin.1) as f64);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const W: u32 = 160;
+    const H: u32 = 96;
+
+    /// 160x96 scene: an optional backdrop rect, a scene3d node (and an optional hidden screen source).
+    fn scene(objects: serde_json::Value, extra: serde_json::Value, tracks: serde_json::Value, source: bool) -> Scene {
+        let mut nodes = vec![
+            serde_json::json!({"name": "root", "children": if source { vec![1, 2] } else { vec![1] }}),
+            serde_json::json!({"name": "s3d", "content": {"type": "scene3d", "rect": [0, 0, W, H],
+                "camera": {"pos": [0, 1.5, 6], "target": [0, 0, 0], "fov": 40},
+                "lights": [{"kind": "directional", "pos": [-3, 5, 4], "intensity": 0.8}],
+                "objects": objects}}),
+        ];
+        if let serde_json::Value::Object(m) = extra {
+            for (k, v) in m {
+                nodes[1]["content"][k] = v;
+            }
+        }
+        if source {
+            nodes.push(serde_json::json!({"name": "ui", "hidden": true, "content": {"type": "rect", "rect": {"rect": [0, 0, 64, 36]}, "color": [1, 0, 0, 1]}}));
+        }
+        serde_json::from_value(serde_json::json!({"version": 1, "width": W, "height": H, "fps": 30, "frames": 30, "nodes": nodes, "tracks": tracks})).unwrap()
+    }
+
+    fn frame(scene: &Scene, f: usize) -> Vec<u8> {
+        let prep = Prepared::new(scene, Path::new("."), None, None).unwrap();
+        let info = Info::new(scene, &prep);
+        let sched = schedule::build(scene, &info).unwrap();
+        let mut p = Painter::new(scene, &prep, &sched, &info, 0);
+        p.render_rect(f, [0, 0, W as i32, H as i32]).unwrap().data_as_u8_slice().to_vec()
+    }
+
+    fn px(buf: &[u8], x: usize, y: usize) -> [u8; 4] {
+        let o = (y * W as usize + x) * 4;
+        [buf[o], buf[o + 1], buf[o + 2], buf[o + 3]]
+    }
+
+    fn rich() -> Scene {
+        scene(
+            serde_json::json!([
+                {"shape": {"type": "plane", "size": [20, 20]}, "rot": [-90, 0, 0], "pos": [0, -1, 0], "receive": true, "material": {"kind": "lambert", "color": [0.2, 0.25, 0.2, 1]}},
+                {"shape": {"type": "box", "size": [1.4, 1.4, 1.4], "radius": 0.1}, "rot": [0, 30, 0], "pos": [-1.2, -0.3, 0], "material": {"kind": "toon", "color": [0.8, 0.6, 0.3, 1], "outline": 2}},
+                {"shape": {"type": "sphere", "radius": 0.6}, "pos": [1.2, -0.4, 0.5], "material": {"kind": "phong", "color": [0.2, 0.4, 1, 1], "specular": 0.5, "emissive": 0.3}},
+                {"shape": {"type": "torus", "radius": 0.6, "tube": 0.15}, "pos": [0, 1.2, -1], "rot": [70, 0, 0], "material": {"kind": "wire", "wire_color": [1, 1, 1, 1]}},
+                {"shape": {"type": "box", "size": [1, 1, 1]}, "pos": [0, 0, -2], "material": {"kind": "flat", "color": [0, 1, 0, 1], "opacity": 0.5}}
+            ]),
+            serde_json::json!({"shadow": {"opacity": 0.5, "blur": 2}, "bloom": {"radius": 3}, "fog": {"color": [0, 0, 0, 1], "near": 6, "far": 20}}),
+            serde_json::json!([]),
+            false,
+        )
+    }
+
+    #[test]
+    fn frames_are_deterministic_across_runs_and_thread_counts() {
+        let s = rich();
+        let a = frame(&s, 0);
+        let b = frame(&s, 0);
+        assert_eq!(a, b, "two runs differ");
+        let one = rayon::ThreadPoolBuilder::new().num_threads(1).build().unwrap().install(|| frame(&s, 0));
+        let four = rayon::ThreadPoolBuilder::new().num_threads(4).build().unwrap().install(|| frame(&s, 0));
+        assert_eq!(a, one, "1 thread differs");
+        assert_eq!(a, four, "4 threads differ");
+        // something was drawn, and the floor covers the bottom rows
+        let covered = a.chunks_exact(4).filter(|p| p[3] > 0).count();
+        assert!(covered > (W * H / 3) as usize, "covered {covered}");
+        assert_eq!(px(&a, 80, 94)[3], 255, "floor under the camera");
+    }
+
+    #[test]
+    fn toon_box_takes_its_colour_and_the_sky_stays_transparent() {
+        let s = scene(
+            serde_json::json!([{"shape": {"type": "box", "size": [2, 2, 2]}, "material": {"kind": "flat", "color": [1, 0.5, 0, 1]}}]),
+            serde_json::json!({}),
+            serde_json::json!([]),
+            false,
+        );
+        let f = frame(&s, 0);
+        // flat material: exactly its colour in the middle
+        assert_eq!(px(&f, 80, 48), [255, 128, 0, 255]);
+        // corners: nothing there
+        assert_eq!(px(&f, 2, 2), [0, 0, 0, 0]);
+        // lit material: the face toward the light (top) is brighter than the side away from it
+        let s = scene(
+            serde_json::json!([{"shape": {"type": "box", "size": [2, 2, 2]}, "rot": [0, 45, 0], "material": {"kind": "lambert", "color": [1, 1, 1, 1]}}]),
+            serde_json::json!({"camera": {"pos": [0, 4, 6], "target": [0, 0, 0], "fov": 40}}),
+            serde_json::json!([]),
+            false,
+        );
+        let f = frame(&s, 0);
+        let (left, right) = (px(&f, 66, 56), px(&f, 94, 56));
+        assert!(left[3] == 255 && right[3] == 255);
+        assert!(left[0] > right[0] + 20, "light from the left: {left:?} vs {right:?}");
+    }
+
+    #[test]
+    fn nearer_surface_wins_whatever_the_object_order() {
+        let red = serde_json::json!({"shape": {"type": "box", "size": [1, 1, 1]}, "pos": [0, 0, 1], "material": {"kind": "flat", "color": [1, 0, 0, 1]}});
+        let blue = serde_json::json!({"shape": {"type": "box", "size": [3, 3, 1]}, "pos": [0, 0, -1], "material": {"kind": "flat", "color": [0, 0, 1, 1]}});
+        for objs in [serde_json::json!([red.clone(), blue.clone()]), serde_json::json!([blue, red])] {
+            let f = frame(&scene(objs, serde_json::json!({}), serde_json::json!([]), false), 0);
+            assert_eq!(px(&f, 80, 46), [255, 0, 0, 255], "the near red box covers the far blue one");
+        }
+    }
+
+    #[test]
+    fn outline_darkens_the_silhouette_only() {
+        let obj = |w: f64| serde_json::json!([{"shape": {"type": "box", "size": [2, 2, 2]}, "material": {"kind": "flat", "color": [1, 1, 1, 1], "outline": w, "outline_color": [0, 0, 0, 1]}}]);
+        let plain = frame(&scene(obj(0.0), serde_json::json!({}), serde_json::json!([]), false), 0);
+        let lined = frame(&scene(obj(3.0), serde_json::json!({}), serde_json::json!([]), false), 0);
+        // the interior of the front face is untouched
+        assert_eq!(px(&plain, 80, 50), px(&lined, 80, 50));
+        // along the left silhouette some pixels turn dark
+        let dark = (0..W as usize).filter(|&x| {
+            let (a, b) = (px(&plain, x, 50), px(&lined, x, 50));
+            b[3] > 0 && (b[0] as i32) < (a[0] as i32) - 100
+        }).count();
+        assert!(dark >= 2, "outline pixels on row 50: {dark}");
+    }
+
+    #[test]
+    fn screen_shows_its_source_node() {
+        let s = scene(
+            serde_json::json!([{"shape": {"type": "screen", "size": [3.2, 1.8], "node": 2, "rect": [0, 0, 64, 36]}, "material": {"kind": "flat", "color": [0, 0, 0, 1]}}]),
+            serde_json::json!({}),
+            serde_json::json!([]),
+            true,
+        );
+        let f = frame(&s, 0);
+        let c = px(&f, 80, 50);
+        assert!(c[0] > 200 && c[1] < 40 && c[2] < 40, "screen centre shows the red source: {c:?}");
+        // the hidden source is not drawn in the 2D pass (its own box at the top-left stays empty)
+        assert_eq!(px(&f, 3, 3), [0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn static_scene_rests_and_a_camera_track_damages() {
+        let objs = serde_json::json!([{"shape": {"type": "sphere", "radius": 1}}]);
+        let s = scene(objs.clone(), serde_json::json!({}), serde_json::json!([]), false);
+        let prep = Prepared::new(&s, Path::new("."), None, None).unwrap();
+        let info = Info::new(&s, &prep);
+        let sched = schedule::build(&s, &info).unwrap();
+        assert!((1..30).all(|f| sched.damage[f].is_empty()), "a static 3D scene repeats");
+        let tr = serde_json::json!([{"node": 1, "property": "s3d.cam.x", "delay": 0.2, "duration": 0.3, "fill": "both", "easing": "linear",
+            "keyframes": [{"offset": 0, "value": {"number": 0}}, {"offset": 1, "value": {"number": 2}}]}]);
+        let s2 = scene(objs, serde_json::json!({}), tr, false);
+        let prep = Prepared::new(&s2, Path::new("."), None, None).unwrap();
+        let info = Info::new(&s2, &prep);
+        let sched = schedule::build(&s2, &info).unwrap();
+        assert!(sched.damage[3].is_empty() && sched.damage[20].is_empty());
+        assert!(!sched.damage[10].is_empty(), "the camera move damages");
+        // and the frame differs from the rest frame
+        assert_ne!(frame(&s2, 0), frame(&s2, 20));
+    }
+
+    #[test]
+    fn camera_inside_the_near_plane_range_clips_instead_of_failing() {
+        let s = scene(
+            serde_json::json!([{"shape": {"type": "box", "size": [4, 4, 4]}, "pos": [0, 0, 4.5], "material": {"kind": "lambert", "color": [1, 1, 1, 1], "double_sided": true}}]),
+            serde_json::json!({}),
+            serde_json::json!([]),
+            false,
+        );
+        let f = frame(&s, 0);
+        assert!(f.chunks_exact(4).any(|p| p[3] > 0), "the box around the camera is still drawn (clipped)");
     }
 }

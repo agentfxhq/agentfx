@@ -90,7 +90,7 @@ impl<'a> Ctx<'a> {
         }
         if let (Some(p), Some(id)) = (praw(n, "in"), id.clone()) {
             let mut e = Node { kind: "enter".into(), args: vec![Value::Str(format!("#{id}")), Value::Str(p)], span: n.span, ..Default::default() };
-            for k in ["dur", "ease", "stagger", "to", "value"] {
+            for k in ["dur", "ease", "stagger", "to", "value", "from"] {
                 if let Some(v) = n.props.get(k) {
                     e.props.insert(k.into(), v.clone());
                 }

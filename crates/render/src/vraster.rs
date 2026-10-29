@@ -735,6 +735,7 @@ pub struct Painter<'a> {
     /// 3D scenes: rasters per node keyed by (state, screens, placement), screen textures
     s3d_cache: std::collections::HashMap<NodeId, Vec<(u64, Arc<Pixmap>)>>,
     s3d_tex: Vec<(u64, Arc<crate::s3d::Tex>)>,
+    s3d_scratch: crate::s3d::Scratch,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -862,6 +863,7 @@ impl<'a> Painter<'a> {
             time_depth: 0,
             s3d_cache: Default::default(),
             s3d_tex: Vec::new(),
+            s3d_scratch: Default::default(),
             // raster cache of static content: opt-in (AGENTFX_CACHE=1); blits of large cached
             // rasters cost more than redrawing the vectors on the recorded scenes
             use_cache: agentfx_ir::env::var("AGENTFX_CACHE").is_ok(),

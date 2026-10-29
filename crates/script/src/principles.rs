@@ -47,7 +47,10 @@ fn texts_of(n: &Node) -> Vec<String> {
 fn walk<'a>(nodes: &'a [Node], out: &mut Vec<&'a Node>) {
     for n in nodes {
         out.push(n);
-        walk(&n.children, out);
+        // the objects of a 3D scene are not 2D roles (boxes, text) of the design rules
+        if n.kind != "scene3d" {
+            walk(&n.children, out);
+        }
     }
 }
 

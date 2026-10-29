@@ -244,6 +244,7 @@ impl<'a> Ctx<'a> {
         let cfg = S3dCfg { scene, key_light: !light_off, bloom_off, shadow_off, si };
         let mut l = Layer::new(lid, Kind::Scene3d(Box::new(cfg)));
         l.tags.push("scene3d".into());
+        l.tags.push("cam-precise".into());
         let sized = ["w", "h", "x", "y", "place"].iter().any(|k| n.props.contains_key(*k));
         let idx = if sized {
             self.add(Some(parent), l)
@@ -382,7 +383,7 @@ impl<'a> Ctx<'a> {
                 Shape3d::Plane { size: [size1(self, "w", s), size1(self, "h", s)] }
             }
             "floor" => {
-                let s = self.s3d_num(n, "size", 1e-6, 1e6).unwrap_or(40.0);
+                let s = self.s3d_num(n, "size", 1e-6, 1e6).unwrap_or(200.0);
                 receive = true;
                 rot_default = [-90.0, 0.0, 0.0];
                 Shape3d::Plane { size: [size1(self, "w", s), size1(self, "d", s)] }
@@ -516,6 +517,8 @@ impl<'a> Ctx<'a> {
         l.layout.w = Some(Len::px(0.0));
         l.layout.h = Some(Len::px(0.0));
         l.tags.push("obj3d".into());
+        // world units: no 1/64 px quantization of x/y/z (lower.rs `normalize_track`)
+        l.tags.push("cam-precise".into());
         let i = self.add(Some(parent), l);
         if let Some(u) = &user {
             self.layers[i].name = Some(u.clone());
@@ -978,15 +981,15 @@ impl<'a> Ctx<'a> {
                     self.err("E_S3D_TARGET", "stack needs a group with objects inside", "write `group #ship` with `box` children, then `@1s stack #ship`", n.span);
                     return;
                 }
-                let mut level = None::<f64>;
+                // the pile starts at the group's origin (the first piece's bottom face there)
+                let mut level = 0.0f64;
                 for (j, p) in pieces.into_iter().enumerate() {
                     let tj = t + st * j as f64;
                     let he = self.layers[p].kind.as_obj3d().and_then(half_extent).map(|h| h[ax]).unwrap_or(0.5);
                     let s = self.cur(p, Ch::Scale, tj) * self.cur(p, [Ch::Sx, Ch::Sy, Ch::Sz][ax], tj);
                     let h = he * s;
-                    let base = level.unwrap_or_else(|| self.cur(p, ch, tj) - h);
-                    let rest = base + h;
-                    level = Some(base + 2.0 * h + gap);
+                    let rest = level + h;
+                    level += 2.0 * h + gap;
                     if d <= 0.0 {
                         self.track(p, ch).jump(tj, TV::N(rest));
                     } else {

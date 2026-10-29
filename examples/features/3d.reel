@@ -1,0 +1,106 @@
+// Stylised 3D (scene3d): extruded letter blocks dropping in on the beat, a cardboard box whose
+// flaps open, a container ship stacked crate by crate, and a keynote stage whose screen shows a
+// normal 2D layer. Toon shading, outlines, emissive glow, fog, orbit/dolly camera moves.
+video "LGTM in 3D" size=1920x1080 fps=30 captions=off
+
+music src=assets/beat-128bpm-drop.mp3 vol=0.8
+
+// ---------------------------------------------------------------- 1. LGTM blocks
+scene lgtm dur=2.8s bg=#03070A
+  scene3d #blocks fov=34 camera=(-2.5, 2.6, 9.5) target=(0, 0.3, 0) light=(-4, 7, 5) ambient=0.45 fog=#03070A fog-near=9 fog-far=24 outline=3 outline-color=#3DDC6A bloom=18
+    floor #ground y=-0.85 color=#08130C
+    group #row
+      box #bL size=1.5 x=-2.55 color=#123A20 in=drop at=@0.07s from=5
+        extrude "L" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
+      box #bG size=1.5 x=-0.85 color=#123A20 in=drop at=@0.31s from=5
+        extrude "G" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
+      box #bT size=1.5 x=0.85 color=#123A20 in=drop at=@0.54s from=5
+        extrude "T" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
+      box #bM size=1.5 x=2.55 color=#123A20 in=drop at=@0.78s from=5
+        extrude "M" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
+  text #tag "looks good to me" size=40 weight=700 color=#7CFF6B x=50% y=88% anchor=center nowrap in=fade at=@1.6s font="JetBrains Mono"
+  @0s orbit #blocks by=38deg pitch=-6deg dur=2.8s ease=inout-sine
+  @1.7s spin #bG by=360deg dur=0.8s ease=inout-cubic
+
+// ---------------------------------------------------------------- 2. the box
+scene parcel dur=2.4s bg=#05010D in=fade tdur=0.3s
+  scene3d #desk fov=36 camera=(4.5, 4.2, 7) target=(0, 0.5, 0) light=(-3, 6, 4) ambient=0.45 fog=#05010D fog-near=8 fog-far=22 outline=2.5 outline-color=#1E1306
+    floor y=0 color=#140B1E
+    group #parcel
+      // an open carton: bottom and four walls, four flaps hinged on the top edges
+      plane w=2.4 h=1.8 rx=-90 y=0.01 color=#8C6A3C double-sided
+      plane w=2.4 h=1.6 y=0.8 z=0.9 color=#C9A36B double-sided
+      plane w=2.4 h=1.6 y=0.8 z=-0.9 color=#C9A36B double-sided
+      plane w=1.8 h=1.6 y=0.8 x=-1.2 ry=90 color=#BE9862 double-sided
+      plane w=1.8 h=1.6 y=0.8 x=1.2 ry=90 color=#BE9862 double-sided
+      group #hf z=0.9 y=1.6
+        plane w=2.4 h=0.9 rx=-90 z=-0.45 color=#D9B57C double-sided
+      group #hb z=-0.9 y=1.6
+        plane w=2.4 h=0.9 rx=-90 z=0.45 color=#D9B57C double-sided
+      group #hl x=-1.2 y=1.6
+        plane w=1.8 h=1.2 rx=-90 ry=90 x=0.6 color=#E3C28D double-sided
+      group #hr x=1.2 y=1.6
+        plane w=1.8 h=1.2 rx=-90 ry=90 x=-0.6 color=#E3C28D double-sided
+      sphere #star r=0.45 y=0.9 color=#7CFF6B emissive=0.8 opacity=0
+  @0.3s anim #hl rz 0s:0deg 0.5s:200deg~out-back
+  @0.45s anim #hr rz 0s:0deg 0.5s:-200deg~out-back
+  @0.7s anim #hf rx 0s:0deg 0.5s:200deg~out-back
+  @0.85s anim #hb rx 0s:0deg 0.5s:-200deg~out-back
+  @1.15s set #star opacity=1
+  @1.15s anim #star y 0s:0.9 0.6s:3~out-back
+  @1.15s spin #star by=360deg dur=1s
+  @0s orbit #desk by=-30deg dur=2.4s ease=inout-sine
+
+// ---------------------------------------------------------------- 3. container ship
+scene ship dur=2.6s bg=#061018 in=fade tdur=0.3s
+  scene3d #sea fov=32 camera=(-9, 4.5, 10) target=(0.5, 0.6, 0) light=(-5, 8, 3) ambient=0.5 fog=#061018 fog-near=12 fog-far=34 outline=2 outline-color=#03080C
+    floor y=-0.3 color=#0B2433
+    group #hull
+      box w=9 h=1.2 d=2.6 color=#9B2C2C
+      box w=8.6 h=0.12 d=2.4 y=0.66 color=#2E3A40
+      box w=1.4 h=2.2 d=2.2 x=-3.6 y=1.7 color=#E8E4D8
+      box w=1.5 h=0.3 d=2.4 x=-3.6 y=2.9 color=#2E3A40
+    group #c1 x=-1.9 y=0.72
+      box w=1.5 h=0.6 d=2.2 color=#E2632B
+      box w=1.5 h=0.6 d=2.2 color=#2B6CB0
+      box w=1.5 h=0.6 d=2.2 color=#38A169
+    group #c2 x=-0.3 y=0.72
+      box w=1.5 h=0.6 d=2.2 color=#D69E2E
+      box w=1.5 h=0.6 d=2.2 color=#E2632B
+      box w=1.5 h=0.6 d=2.2 color=#2B6CB0
+    group #c3 x=1.3 y=0.72
+      box w=1.5 h=0.6 d=2.2 color=#38A169
+      box w=1.5 h=0.6 d=2.2 color=#D69E2E
+    group #c4 x=2.9 y=0.72
+      box w=1.5 h=0.6 d=2.2 color=#2B6CB0
+      box w=1.5 h=0.6 d=2.2 color=#E2632B
+      box w=1.5 h=0.6 d=2.2 color=#38A169
+  @0.1s stack #c1 stagger=0.14s gap=0.03 from=4
+  @0.35s stack #c2 stagger=0.14s gap=0.03 from=4
+  @0.6s stack #c3 stagger=0.14s gap=0.03 from=4
+  @0.85s stack #c4 stagger=0.14s gap=0.03 from=4
+  @0s camera3d #sea orbit=26deg dolly=2 dur=2.6s ease=inout-sine
+
+// ---------------------------------------------------------------- 4. the keynote
+scene keynote dur=3s bg=#020203 in=fade tdur=0.3s
+  layer #slides x=0 y=0 w=1920 h=1080 fill=#0B1410
+    text "LGTM" size=300 weight=900 color=#7CFF6B x=50% y=36% anchor=center nowrap
+    text "ship it." size=90 weight=700 color=#E6FFE0 x=50% y=64% anchor=center nowrap font="JetBrains Mono"
+    rect #bar x=20% y=78% w=60% h=18 radius=9 fill=#123A20
+    rect #fillbar x=20% y=78% w=60% h=18 radius=9 fill=#7CFF6B origin=left
+  scene3d #stage fov=38 camera=(0, 2.2, 11) target=(0, 2.2, 0) light=(2, 6, 6) ambient=0.35 fog=#020203 fog-near=10 fog-far=30 outline=2 outline-color=#000000 bloom=22
+    floor y=0 color=#0A0C0B
+    box #riser w=9 h=0.5 d=3 y=0.25 z=-1 color=#1C2420
+    screen #wall w=7.2 h=4.05 y=3.3 z=-2.4 src=#slides emissive=0.25 outline=3 outline-color=#7CFF6B
+    light point=(0, 4, 3) color=#7CFF6B intensity=0.5 range=6
+    group #crowd z=4.2
+      sphere r=0.32 x=-3 y=1.55 material=flat color=#000000
+      cylinder r=0.5 h=1.4 x=-3 y=0.7 material=flat color=#000000
+      sphere r=0.3 x=-1.2 y=1.6 material=flat color=#000000
+      cylinder r=0.48 h=1.45 x=-1.2 y=0.72 material=flat color=#000000
+      sphere r=0.33 x=0.7 y=1.5 material=flat color=#000000
+      cylinder r=0.5 h=1.35 x=0.7 y=0.68 material=flat color=#000000
+      sphere r=0.31 x=2.6 y=1.58 material=flat color=#000000
+      cylinder r=0.49 h=1.42 x=2.6 y=0.71 material=flat color=#000000
+  @0s dolly #stage by=2.5 dur=3s ease=out-cubic
+  @0.2s anim #fillbar sx 0s:0 2.2s:1~inout-cubic

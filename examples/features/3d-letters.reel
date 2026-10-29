@@ -1,0 +1,15 @@
+// Extruded type: a word in 3D letters that tumble in, settle, and spin once, under an orbiting camera.
+video "3D letters" size=1920x1080 fps=30 captions=off
+scene word dur=4s bg=#0D0A1A
+  scene3d #type fov=35 camera=(0, 1.2, 9) target=(0, 0, 0) light=(-4, 6, 5) ambient=0.45 fog=#0D0A1A fog-near=8 fog-far=22 outline=2.5 outline-color=#1A0F2E
+    floor y=-1.1 color=#151026
+    group #word
+      extrude #a "A" size=1.6 depth=0.5 x=-3.3 color=#FF5C8A in=assemble at=@0.0s
+      extrude #g "G" size=1.6 depth=0.5 x=-2.0 color=#FFB547 in=assemble at=@0.1s
+      extrude #e "E" size=1.6 depth=0.5 x=-0.75 color=#7CFF6B in=assemble at=@0.2s
+      extrude #n "N" size=1.6 depth=0.5 x=0.5 color=#4CC9F0 in=assemble at=@0.3s
+      extrude #t "T" size=1.6 depth=0.5 x=1.75 color=#B388FF in=assemble at=@0.4s
+      extrude #x "X" size=1.6 depth=0.5 x=3.1 color=#FF5C8A emissive=0.4 in=assemble at=@0.5s
+  @0s orbit #type by=-30deg pitch=8deg dur=4s ease=inout-sine
+  @2.2s spin #x by=360deg dur=1s ease=inout-cubic
+  @2.6s spin #a axis=x by=360deg dur=0.9s

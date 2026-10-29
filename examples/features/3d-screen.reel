@@ -1,0 +1,23 @@
+// A 2D layer on a 3D monitor: a code block types itself on a CRT, the camera dollies in and
+// aims at the screen. The screen texture is the `code` layer rendered every frame.
+video "Screen in 3D" size=1920x1080 fps=30 captions=off
+scene desk dur=4s bg=#05080A
+  code #src lang=rust x=0 y=0 w=1280 h=800 size=54 in=type |
+    fn review(pr: &Pr) -> Verdict {
+        if pr.tests_pass() { Verdict::Lgtm }
+        else { Verdict::Changes }
+    }
+  scene3d #room fov=40 camera=(-4, 2.5, 7) target=(0, 1.2, 0) light=(-3, 6, 5) ambient=0.4 fog=#05080A fog-near=8 fog-far=24 outline=2 outline-color=#020405
+    floor y=0 color=#0E1517
+    box #desk w=5 h=0.15 d=2.2 y=0.9 color=#5A4632
+    box w=0.12 h=0.85 d=1.9 x=-2.3 y=0.42 color=#3D2F21
+    box w=0.12 h=0.85 d=1.9 x=2.3 y=0.42 color=#3D2F21
+    group #crt y=1.95
+      box #body w=2.4 h=1.9 d=1.8 color=#D8D2C0 bevel=0.12
+      screen #glass w=2 h=1.25 z=0.91 y=0.1 src=#src emissive=0.2
+    group #rack x=3.2
+      box w=1.1 h=2.6 d=1 y=1.3 color=#1B2328
+      box w=0.9 h=0.08 d=0.02 y=2.2 z=0.51 material=flat color=#7CFF6B emissive=1
+      box w=0.9 h=0.08 d=0.02 y=1.8 z=0.51 material=flat color=#7CFF6B emissive=1
+      box w=0.9 h=0.08 d=0.02 y=1.4 z=0.51 material=flat color=#FFB547 emissive=1
+  @0s camera3d #room orbit=28deg dolly=3.6 lookat=#glass dur=3.5s ease=inout-cubic

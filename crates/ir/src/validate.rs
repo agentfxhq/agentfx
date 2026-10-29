@@ -66,6 +66,7 @@ pub fn validate(scene: &Scene, base_dir: &Path) -> Result<Vec<String>, Vec<Strin
                     p if p.starts_with("effects.") => effect_field_ok(node, p),
                     "time.span" => node.time.is_some(),
                     "fluid.time" => matches!(node.content, Some(Content::Fluid(_))),
+                    p if p.starts_with("s3d.") => matches!(&node.content, Some(Content::Scene3d(s)) if s3d::property(s, p).is_some()),
                     _ => true,
                 };
                 if !ok { errors.push(format!("{ctx}: property {:?} does not apply to node {} {:?}", track.property, track.node, node.name)); }
@@ -187,6 +188,19 @@ pub fn validate(scene: &Scene, base_dir: &Path) -> Result<Vec<String>, Vec<Strin
         if let Some(Content::Fluid(fl)) = &node.content {
             check_fluid(scene, i, fl, &ctx, &mut errors, &mut warnings);
         }
+        if let Some(Content::Scene3d(s3)) = &node.content {
+            for (k, src) in s3.screens() {
+                if src >= scene.nodes.len() { errors.push(format!("{ctx}: screen object {k}: source node {src} out of range")); continue; }
+                // the source must not contain this node (it would render itself) nor another 3D scene with screens
+                let mut st = vec![src];
+                while let Some(x) = st.pop() {
+                    if x == i { errors.push(format!("{ctx}: screen object {k}: source node {src} contains the 3D scene itself")); break; }
+                    if x != i && matches!(&scene.nodes[x].content, Some(Content::Scene3d(o)) if o.screens().next().is_some()) { errors.push(format!("{ctx}: screen object {k}: source node {src} contains a 3D scene with screens (not supported)")); break; }
+                    st.extend(scene.nodes[x].children.iter().copied().filter(|&c| c < scene.nodes.len()));
+                }
+                if !scene.nodes[src].hidden { warnings.push(format!("{ctx}: screen source node {src} is not hidden (it is also drawn normally)")); }
+            }
+        }
         if let Some(tf) = &node.time {
             check_time(scene, i, node, tf, &ctx, &mut errors, &mut warnings);
         }
@@ -247,6 +261,63 @@ fn check_fluid(scene: &Scene, i: usize, fl: &crate::FluidContent, ctx: &str, err
     }
 }
 
+fn check_scene3d(scene: &Scene, s: &crate::s3d::Scene3d, ctx: &str, used: &mut [bool], errors: &mut Vec<String>) {
+    use crate::s3d::Shape3d;
+    let fin = |v: &[f64]| v.iter().all(|x| x.is_finite());
+    if !fin(&s.rect) || s.rect[2] <= 0.0 || s.rect[3] <= 0.0 { errors.push(format!("{ctx}: scene3d rect must be finite with positive size")); }
+    let c = &s.camera;
+    if !fin(&c.pos) || !fin(&c.target) || !fin(&[c.fov, c.roll, c.near, c.far, c.ortho]) { errors.push(format!("{ctx}: scene3d camera values must be finite")); }
+    if !(1.0..=170.0).contains(&c.fov) { errors.push(format!("{ctx}: scene3d camera fov must be 1..=170 degrees")); }
+    if c.near <= 0.0 || c.far <= c.near { errors.push(format!("{ctx}: scene3d camera needs 0 < near < far")); }
+    if c.ortho < 0.0 { errors.push(format!("{ctx}: scene3d camera ortho must be >= 0")); }
+    if !(1..=4).contains(&s.aa) { errors.push(format!("{ctx}: scene3d aa must be 1..=4")); }
+    if !s.ambient.is_finite() || s.ambient < 0.0 { errors.push(format!("{ctx}: scene3d ambient must be >= 0")); }
+    for (k, l) in s.lights.iter().enumerate() {
+        if !matches!(l.kind.as_str(), "directional" | "point") { errors.push(format!("{ctx}: light {k}: kind must be directional|point")); }
+        if !fin(&l.pos) || !fin(&[l.intensity, l.range]) || l.range < 0.0 { errors.push(format!("{ctx}: light {k}: values must be finite, range >= 0")); }
+    }
+    if let Some(f) = &s.fog {
+        if !matches!(f.mode.as_str(), "linear" | "exp") { errors.push(format!("{ctx}: fog mode must be linear|exp")); }
+        if !fin(&[f.near, f.far, f.density]) || (f.mode == "linear" && f.far <= f.near) || f.density < 0.0 { errors.push(format!("{ctx}: fog needs near < far (linear), density >= 0")); }
+    }
+    if let Some(b) = &s.bloom {
+        if !fin(&[b.radius, b.strength]) || b.radius < 0.0 || b.radius > 400.0 || b.strength < 0.0 { errors.push(format!("{ctx}: bloom radius must be 0..=400 px, strength >= 0")); }
+    }
+    if let Some(sh) = &s.shadow {
+        if !fin(&[sh.opacity, sh.blur]) || !(0.0..=1.0).contains(&sh.opacity) || sh.blur < 0.0 || sh.blur > 200.0 { errors.push(format!("{ctx}: shadow opacity must be 0..=1, blur 0..=200 px")); }
+    }
+    for (k, o) in s.objects.iter().enumerate() {
+        let oc = format!("{ctx} object {k} {:?}", o.id);
+        if o.parent.is_some_and(|p| p >= k) { errors.push(format!("{oc}: parent must be an earlier object")); }
+        if !fin(&o.pos) || !fin(&o.rot) || !fin(&o.scale) || !fin(&o.pivot) { errors.push(format!("{oc}: transform must be finite")); }
+        let m = &o.material;
+        if !matches!(m.kind.as_str(), "flat" | "lambert" | "toon" | "phong" | "wire") { errors.push(format!("{oc}: material kind must be flat|lambert|toon|phong|wire")); }
+        if !fin(&[m.opacity, m.emissive, m.specular, m.shininess, m.outline, m.crease, m.wire]) || m.outline < 0.0 || m.outline > 64.0 || m.wire < 0.0 || m.wire > 64.0 || m.emissive < 0.0 { errors.push(format!("{oc}: material values must be finite; outline/wire 0..=64 px, emissive >= 0")); }
+        if !(2..=16).contains(&m.bands) { errors.push(format!("{oc}: toon bands must be 2..=16")); }
+        if let Some(a) = m.asset {
+            if a >= scene.assets.len() { errors.push(format!("{oc}: texture asset {a} out of range")); } else { used[a] = true; }
+        }
+        let pos = |v: &[f64]| fin(v) && v.iter().all(|x| *x > 0.0);
+        let ok = match &o.shape {
+            Shape3d::Group => true,
+            Shape3d::Box { size, radius } => pos(size) && *radius >= 0.0 && *radius <= size.iter().cloned().fold(f64::MAX, f64::min) / 2.0,
+            Shape3d::Plane { size } | Shape3d::Screen { size, .. } => pos(size),
+            Shape3d::Sphere { radius, segments } => pos(&[*radius]) && (3..=256).contains(segments),
+            Shape3d::Cylinder { radius, radius_top, height, segments } => pos(&[*height]) && *radius >= 0.0 && radius_top.unwrap_or(*radius) >= 0.0 && (*radius > 0.0 || radius_top.unwrap_or(0.0) > 0.0) && (3..=256).contains(segments),
+            Shape3d::Torus { radius, tube, segments } => pos(&[*radius, *tube]) && (3..=256).contains(segments),
+            Shape3d::Extrude { text, font, size, depth, d, .. } => {
+                if text.is_some() && *font >= scene.fonts.len() { errors.push(format!("{oc}: extrude font {font} out of range")); }
+                pos(&[*size]) && *depth >= 0.0 && depth.is_finite() && (text.is_some() != d.is_some())
+            }
+            Shape3d::Mesh { path, size } => !path.is_empty() && pos(&[*size]),
+        };
+        if !ok { errors.push(format!("{oc}: bad shape parameters (sizes > 0, segments 3..=256, box radius <= half the smallest side, extrude needs text or d)")); }
+        if let Shape3d::Screen { rect, res, .. } = &o.shape {
+            if !fin(rect) || rect[2] <= 0.0 || rect[3] <= 0.0 || !res.is_finite() || *res < 0.0 || *res > 4.0 { errors.push(format!("{oc}: screen rect must have positive size, res 0..=4")); }
+        }
+    }
+}
+
 fn subtree_has_fluid(scene: &Scene, n: usize) -> bool {
     let mut st = vec![n];
     while let Some(x) = st.pop() {
@@ -301,13 +372,14 @@ pub fn property_kind(p: &str) -> Option<bool> {
         "fill.color" | "stroke.color" => Some(false),
         "text.fill" | "text.stroke" | "text.stroke-width" | "text.path-offset" => Some(false),
         p if p.starts_with("animators.") => Some(false),
+        p if p.starts_with("s3d.") => Some(false),
         _ => None,
     }
 }
 
 /// Track properties whose values are colors (`{"color": [r, g, b, a]}`).
 pub fn color_property(p: &str) -> bool {
-    matches!(p, "fill.color" | "stroke.color" | "text.fill" | "text.stroke")
+    matches!(p, "fill.color" | "stroke.color" | "text.fill" | "text.stroke") || (p.starts_with("s3d.obj.") && p.ends_with(".color"))
 }
 
 fn animator_field_ok(node: &Node, p: &str) -> bool {
@@ -425,6 +497,7 @@ fn check_content(scene: &Scene, c: &Content, ctx: &str, sizes: &[Option<(u32, u3
         }
         Content::Cloud(c) => check_cloud(scene, c, ctx, errors),
         Content::Fluid(_) => {} // checked per node (needs the node index and warnings)
+        Content::Scene3d(s) => check_scene3d(scene, s, ctx, used, errors),
     }
     for (id, rect) in uses {
         if id >= scene.assets.len() { errors.push(format!("{ctx}: asset {id} out of range")); continue; }

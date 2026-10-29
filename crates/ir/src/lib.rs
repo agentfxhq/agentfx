@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 pub mod cube;
 pub mod env;
 pub mod eval;
+pub mod s3d;
 pub mod timing;
 pub mod validate;
 
@@ -286,6 +287,10 @@ pub enum Content {
     /// sequentially, and cached per frame, so frame n is a pure function of n. See IR.md
     /// "Fluid".
     Fluid(FluidContent),
+    /// Stylised 3D (camera, lights, fog, objects with flat/lambert/toon/phong materials,
+    /// outlines, screens showing other nodes): rasterised by the renderer into one layer. See
+    /// IR.md "Scene 3D" and `s3d.rs`.
+    Scene3d(Box<s3d::Scene3d>),
 }
 
 /// 2D affine as `[a, b, c, d, e, f]` (CSS matrix order), used in display lists.

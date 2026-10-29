@@ -41,6 +41,8 @@ mod pathx;
 mod record;
 mod regress;
 mod render;
+mod s3d;
+mod s3d_mesh;
 mod schedule;
 mod schedule_v2;
 mod sdft;

@@ -182,6 +182,9 @@ pub fn build(scene: &Scene, info: &dyn ContentInfo) -> Result<Schedule> {
                 v.push(*source);
             }
         }
+        if let Some(Content::Scene3d(c)) = &scene.nodes[n].content {
+            v.extend(c.screens().map(|(_, src)| src));
+        }
         if let Some(agentfx_ir::TimeFx::Displace { map: agentfx_ir::TimeMap::Layer { node }, .. }) = &scene.nodes[n].time {
             v.push(*node);
         }

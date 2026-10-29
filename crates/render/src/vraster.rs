@@ -68,6 +68,7 @@ pub enum PContent {
     Path(PPath),
     Cloud(Box<crate::cloud::Cloud>),
     Fluid(Box<crate::fluid::Fluid>),
+    Scene3d(Box<s3d_paint::Prep3d>),
 }
 
 pub struct Prepared {
@@ -261,6 +262,10 @@ impl Prepared {
                     Some(PContent::Cloud(Box::new(crate::cloud::Cloud::new(c, &mut sampler).with_context(|| format!("node {ni} cloud"))?)))
                 }
                 Some(Content::Fluid(c)) => Some(PContent::Fluid(Box::new(crate::fluid::Fluid::new(c, scene.fps as f64, scene.frames as usize)))),
+                Some(Content::Scene3d(c)) => {
+                    let tr: Vec<&agentfx_ir::Track> = scene.tracks.iter().filter(|t| t.node == ni).collect();
+                    Some(PContent::Scene3d(Box::new(s3d_paint::prep3d(c, &fonts, &mut shaper, &images, base, &tr).with_context(|| format!("node {ni} {:?} scene3d", node.name))?)))
+                }
             };
             contents.push(c);
         }
@@ -553,6 +558,7 @@ impl ContentInfo for Info<'_> {
             }
             PContent::Cloud(c) => c.bounds(t),
             PContent::Fluid(fl) => fl.bounds(fluid_time(scene, &self.tracks[n], fl, t)),
+            PContent::Scene3d(p) => Some(p.c.rect),
             _ => schedule::content_rect(scene.nodes[n].content.as_ref()?),
         }
     }
@@ -585,6 +591,7 @@ impl ContentInfo for Info<'_> {
             Some(PContent::TextFx(b)) => text_state(scene, &self.tracks[n], &b.0, t).hash_into(&mut h),
             Some(PContent::Cloud(c)) => c.sig(t).hash(&mut h),
             Some(PContent::Fluid(fl)) => fl.sig(fluid_time(scene, &self.tracks[n], fl, t)).hash(&mut h),
+            Some(PContent::Scene3d(p)) => s3d_paint::sig3d(scene, &self.tracks[n], p, t, &mut h),
             _ => {}
         }
         h.finish()
@@ -725,6 +732,9 @@ pub struct Painter<'a> {
     pub mb_crop: bool,
     /// > 0 while a time effect renders its samples
     time_depth: u32,
+    /// 3D scenes: rasters per node keyed by (state, screens, placement), screen textures
+    s3d_cache: std::collections::HashMap<NodeId, Vec<(u64, Arc<Pixmap>)>>,
+    s3d_tex: Vec<(u64, Arc<crate::s3d::Tex>)>,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -766,6 +776,13 @@ pub mod world_paint;
 mod fluid_paint;
 #[path = "mblur_paint.rs"]
 mod mblur_paint;
+#[path = "s3d_paint.rs"]
+pub mod s3d_paint;
+
+/// The frame a view shows (motion-blur and time-effect samples: the nearest frame).
+fn view_frame(view: &View, scene: &Scene, sched: &Schedule) -> usize {
+    ((view.t * scene.fps as f64).round().max(0.0) as usize).min(sched.frames.saturating_sub(1))
+}
 
 fn has_blend(items: &[PDraw]) -> bool {
     items.iter().any(|d| matches!(d, PDraw::Push { blend, .. } if *blend != BlendMode::default()))
@@ -821,7 +838,7 @@ impl<'a> Painter<'a> {
                 let mut d = vec![false; scene.nodes.len()];
                 for &x in sched.preorder.iter().rev() {
                     let nd = &scene.nodes[x];
-                    d[x] = nd.motion_blur.is_some() || nd.time.is_some() || nd.effects.iter().any(|e| matches!(e, Effect::Matte { .. })) || matches!(nd.content, Some(Content::Cloud(_)) | Some(Content::Fluid(_))) || nd.children.iter().any(|&c| d[c]);
+                    d[x] = nd.motion_blur.is_some() || nd.time.is_some() || nd.effects.iter().any(|e| matches!(e, Effect::Matte { .. })) || matches!(nd.content, Some(Content::Cloud(_)) | Some(Content::Fluid(_))) || matches!(&nd.content, Some(Content::Scene3d(c)) if c.screens().next().is_some()) || nd.children.iter().any(|&c| d[c]);
                 }
                 d
             },
@@ -843,6 +860,8 @@ impl<'a> Painter<'a> {
             mb_cache: Default::default(),
             mb_crop: agentfx_ir::env::var("AGENTFX_MBLUR").map_or(true, |v| v != "exact"),
             time_depth: 0,
+            s3d_cache: Default::default(),
+            s3d_tex: Vec::new(),
             // raster cache of static content: opt-in (AGENTFX_CACHE=1); blits of large cached
             // rasters cost more than redrawing the vectors on the recorded scenes
             use_cache: agentfx_ir::env::var("AGENTFX_CACHE").is_ok(),
@@ -1136,6 +1155,7 @@ impl<'a> Painter<'a> {
             PContent::Path(_) => "draw.path",
             PContent::Cloud(_) => "cloud.splat",
             PContent::Fluid(_) => "fluid.draw",
+            PContent::Scene3d(_) => "s3d.draw",
         });
         match c {
             PContent::Raster { rect } => {
@@ -1221,6 +1241,7 @@ impl<'a> Painter<'a> {
             }
             PContent::Cloud(c) => self.draw_cloud(ctx, n, c, view.t, chain)?,
             PContent::Fluid(fl) => self.draw_fluid(ctx, view, n, fl, chain)?,
+            PContent::Scene3d(p) => self.draw_scene3d(ctx, view, view_frame(view, self.scene, self.sched), n, p, chain)?,
             PContent::Path(p) => {
                 let a = schedule::number_at(self.scene, &self.info.tracks[n], "trim-start", view.t, p.trim[0]);
                 let b = schedule::number_at(self.scene, &self.info.tracks[n], "trim-end", view.t, p.trim[1]);

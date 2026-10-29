@@ -98,6 +98,9 @@ It binds to 127.0.0.1 only and has no authentication. See [skill/agentfx/desk.md
 - **Presenter:** a rigged character with lip sync, gestures and moods.
 - **Point clouds and world camera:** tens of thousands of particles, camera tours over one large canvas.
 - **Layout and components:** cards, stats, charts, diagrams, code with diffs, browser and phone mockups, a 2.5D camera.
+- **Stylised 3D:** extruded letter blocks, boxes, stages and screens that show any 2D layer, toon
+  shading with outlines, emissive glow, fog and ground shadows; orbit, dolly, truck and look-at
+  camera moves, spin, drop, assemble and stack verbs ([examples/features/3d.reel](examples/features/3d.reel)).
 - **Motion blur** (shutter-accurate), masks and mattes, blend modes.
 
 Output: MP4 (H.264 via x264, VAAPI/QSV or NVENC), ProRes 4444 and VP9 with alpha, GIF, animated
@@ -111,7 +114,10 @@ AgentFX is early software (0.1.0). Expect the format and the CLI to change.
 - **GPU:** GPU effects use Vulkan only (via wgpu). Without a usable GPU (common in
   containers, CI, and WSL) everything renders on the CPU automatically. Set
   `AGENTFX_GPU=0` to skip the GPU probe. See [docs/BUILD.md](docs/BUILD.md) for details.
-- **No true 3D:** a 2.5D camera, parallax and projected point clouds, but no 3D meshes or lighting.
+- **Stylised 3D, not photoreal:** `scene3d` renders boxes, spheres, cylinders, tori, extruded
+  text and SVG paths, OBJ meshes and screens showing 2D layers, with flat/lambert/toon/phong
+  shading, outlines, glow, fog and planar ground shadows, on the CPU. No PBR or global
+  illumination, no shadow maps, no glTF, no GPU path yet.
 - **No timeline editor:** the script is the source of truth.
 - **Text to speech:** piper (local) is the default. The `edge` engine uses an undocumented
   online service and is opt-in only; see [docs/INSTALL-NOTES.md](docs/INSTALL-NOTES.md).

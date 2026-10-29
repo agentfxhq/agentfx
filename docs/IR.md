@@ -1,5 +1,10 @@
 # reel IR (v1)
 
+> **Changes (stylised 3D, 2026-10-29)**: additive: new content type `scene3d` (camera, lights,
+> fog, objects with flat/lambert/toon/phong/wire materials, outlines, screens that show other
+> nodes; rasterised by the renderer into one layer) and the track properties `s3d.*`; see
+> [Scene 3D](#scene-3d). Files without it load and render unchanged.
+
 > **Changes (text v2, 2026-10-29)**: additive: optional `stroke` on `glyphs` draw items (text
 > stroke from the outlines), optional `text` on `paint` content (text animators with range /
 > key selectors per char, word or line; text on a path) and the track properties `text.fill`,
@@ -156,6 +161,7 @@ coordinates.
 | `sequence` | `rect`, `frames: [[first_frame, asset]]` | M0 raster sequence |
 
 | `cloud` | `count`, `seed`, `radius`, `radius_jitter`, `palette`, `weights`, `forms`, `projection` | instanced point cloud, see [Point cloud](#point-cloud) |
+| `scene3d` | `rect`, `camera`, `ambient`, `ambient_color`, `lights`, `fog`, `bg`, `aa`, `bloom`, `shadow`, `objects` | stylised 3D rasterised into one layer, see [Scene 3D](#scene-3d) |
 
 **Draw** (display-list items, the anyrender command set; all geometry scene space,
 optional `transform` `[a,b,c,d,e,f]`):
@@ -523,6 +529,8 @@ the default per segment.
 | `text.path-offset` | number (px) | `paint` with `text.path` | arc length where the text starts; damage = evaluated glyph ink |
 | `animators.<i>.start` / `.end` / `.offset` / `.amount` | number (fractions) | `paint` with `text.animators[i]` (`amount` also for key selectors) | selector parameters; damage = union of the evaluated glyph boxes before and after |
 | `time.span` | number (s) | node with `time` | per-frame re-sample of the subtree while anything in the window moves; damage = ink over the samples |
+| `s3d.cam.{x,y,z,tx,ty,tz,fov,roll,ortho}`, `s3d.obj.<i>.{x,y,z,rx,ry,rz,s,sx,sy,sz,opacity,emissive}`, `s3d.light.<i>.{x,y,z,intensity}`, `s3d.ambient`, `s3d.fog.{near,far}` | number | `scene3d` content (indices in range; `fog.*` needs a fog) | re-raster of the 3D layer while the evaluated state changes; damage = its rect |
+| `s3d.obj.<i>.color` | color | `scene3d` content | as above |
 | `effects.<i>.radius` / `.dx` / `.dy` / `.strength` | number | node with that effect | per-frame re-filter of the subtree; damage = evaluated ink (content grown by 3σ and offsets) before ∪ after |
 
 `motion_blur` is per frame while the subtree moves within the shutter (damage = union of
@@ -532,6 +540,73 @@ Easing (externally tagged JSON): `"linear"`, `{"cubic-bezier": [x1,y1,x2,y2]}` (
 like Chrome's `gfx::CubicBezier`), `{"steps": [n, "jump-end"]}` (CSS step positions incl.
 the before-flag rule), `{"spring": {"mass", "stiffness", "damping", "velocity"}}`
 (closed-form damped oscillator stretched over the segment, settles exactly at 1).
+
+### Scene 3D
+
+`{"type": "scene3d", ...}`: a small scene graph that the renderer rasterises on the CPU into one
+premultiplied RGBA layer covering `rect` (the viewport, content coordinates), which then
+composites like any content (effects, blend, clips and opacity of the node apply). Types in
+`crates/ir/src/s3d.rs`, raster in `crates/render/src/s3d.rs`, geometry in `s3d_mesh.rs`.
+
+```jsonc
+{ "type": "scene3d", "rect": [0, 0, 1920, 1080],
+  "camera": {"pos": [0, 2, 8], "target": [0, 0, 0], "fov": 40, "roll": 0, "near": 0.1, "far": 200, "ortho": 0},
+  "ambient": 0.4, "ambient_color": [1, 1, 1, 1],
+  "lights": [{"kind": "directional", "pos": [-3, 5, 4], "intensity": 0.75},
+             {"kind": "point", "pos": [0, 4, 3], "color": [0.5, 1, 0.4, 1], "intensity": 0.5, "range": 6}],
+  "fog": {"color": [0.02, 0, 0.05, 1], "mode": "linear", "near": 10, "far": 30},
+  "aa": 2, "bloom": {"radius": 14, "strength": 0.9}, "shadow": {"opacity": 0.45, "blur": 6},
+  "objects": [
+    {"id": "ground", "shape": {"type": "plane", "size": [200, 200]}, "rot": [-90, 0, 0], "pos": [0, -1, 0], "receive": true,
+     "material": {"kind": "lambert", "color": [0.04, 0.1, 0.06, 1]}},
+    {"id": "crate", "shape": {"type": "box", "size": [2, 1.4, 2], "radius": 0.05},
+     "material": {"kind": "toon", "color": [0.79, 0.64, 0.42, 1], "outline": 2, "outline_color": [0.16, 0.1, 0.04, 1]}},
+    {"id": "L", "parent": 1, "shape": {"type": "extrude", "text": "L", "font": 0, "size": 1.6, "weight": 800, "depth": 0.6},
+     "pos": [0, 0, 1.01], "material": {"kind": "toon", "color": [0.49, 1, 0.42, 1], "emissive": 0.6}},
+    {"id": "crt", "shape": {"type": "screen", "size": [4, 2.25], "node": 7, "rect": [0, 0, 1920, 1080]}, "pos": [0, 2, -2],
+     "material": {"kind": "flat", "color": [0.04, 0.04, 0.05, 1]}}
+  ] }
+```
+
+- **World:** right-handed, y up, z toward the viewer. Object matrix = `parent x T(pos) x Ry x Rx
+  x Rz x S(scale) x T(-pivot)` (degrees; yaw last). `parent` must be an earlier object.
+- **Camera:** looks from `pos` at `target`, `roll` about the view axis, `fov` vertical (1..170);
+  `ortho > 0` = orthographic, that many world units visible vertically. Viewport aspect =
+  `rect` w/h; NDC maps onto `rect` (y up).
+- **Shapes:** `group` (no geometry), `box {size, radius}` (rounded edges), `plane {size}` (xy,
+  facing +z, two-sided), `sphere {radius, segments}`, `cylinder {radius, radius_top, height,
+  segments}` (`radius_top` 0 = cone), `torus {radius, tube, segments}`, `extrude {text, font,
+  size, weight, letter_spacing | d, depth}` (glyph outlines via the text stack or SVG path data;
+  nonzero fill triangulated by a scanline trapezoid sweep, no T-junctions; extruded along z,
+  centered on the ink box, side normals smoothed below 30 degrees), `mesh {path, size}` (Wavefront
+  OBJ relative to the IR file, normalized), `screen {size, node, rect, res}` (a plane textured with
+  node `node`'s subtree, drawn as in a matte pass over `rect`, at `res` texels per scene px or,
+  with 0, a power of two from its size on screen; mip-mapped, trilinear).
+- **Materials:** `kind` `flat` (unlit) | `lambert` | `toon` (`bands` steps of the lit side,
+  ambient only on the side facing away) | `phong` (+ `specular`, `shininess`; toon draws a hard
+  highlight) | `wire` (only `wire` lines); `color`, `opacity`, `emissive` (adds `emissive x
+  color`, feeds `bloom`), `outline` px + `outline_color` + `crease` degrees, `wire` px +
+  `wire_color` (edges whose faces meet at more than 1 degree, borders), `double_sided`, `asset`
+  (PNG texture). Lighting: `color x shoulder(ambient x (0.75 + 0.25 n.y) + sum of lights)`; the
+  shoulder rolls light sums above 0.8 off toward 1. `cast` / `receive`: planar shadows.
+- **Raster:** supersampled `aa x aa`; fixed-point edge functions (1/256 px) with a top-left tie
+  rule; perspective-correct barycentrics; near clipping in view space; back faces culled for
+  closed meshes; shading once per (pixel, triangle) like MSAA; fog by view depth; shadows:
+  casters projected onto each receiving plane along the first light (directional or point),
+  coverage gated to the receiver's pixels, blurred (`shadow.blur` px), mixed toward
+  `shadow.color`; outlines from the depth/normal/object buffer (seeds where neighbouring samples
+  differ in object, depth or normal, painted within half the width, exact distance); transparent
+  triangles sorted back to front; wire lines depth-tested with a small bias; bloom = the emissive
+  light blurred at half resolution and added. Bands of rows in parallel with one global triangle
+  order: identical output for any thread count.
+- **Planner:** bounds = `rect`; signature = the evaluated state (camera, lights, fog, every object's
+  transform/colour/opacity/emissive); screen sources count as dependencies (like matte sources),
+  so the node is evaluated every frame but only changes when something it shows changes. The
+  painter caches the raster per node by (state, screen textures, placement): a scene at rest is
+  rasterised once even when 2D content around it repaints.
+- **Validation:** finite values, fov 1..170, 0 < near < far, aa 1..4, materials and light kinds,
+  shape sizes, bands 2..16, parent order, font and asset indices, screen source in range and not
+  containing the scene itself (warning when the source is not `hidden`).
 
 ### Asset / font
 

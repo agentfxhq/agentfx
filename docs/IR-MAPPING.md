@@ -72,6 +72,7 @@ geometry step:
 | quantization | same constants: 1/16 px commit, 1/255 opacity (reel `POS_EPS_PX`, `OPACITY_EPS`); Reel Script snaps keys to 1/64 px and 1/255 before emitting | aligned |
 | audio reactivity (`audio(...)`, `pulse on=beat`, `visualizer`, `beat:N` anchors) | nothing new: `src/audio.rs` analyses the music at compile time and lowers to `layer`/`rect` nodes and per-frame linear keys before compile, so they map like any other transform/opacity/effect track | done (no IR change) |
 | audio (voice, music, sfx) | not in reel-ir; `agentfx render` mixes and muxes | proposal below |
+| `Kind::Scene3d` + its `Kind::Obj3d` children (`scene3d`, `box`, `extrude`, `screen`, ...) | one node with `content: scene3d {rect (the laid-out box), camera, ambient, lights (key light + `light` children), fog, bg, aa, bloom, shadow, objects}`; objects in preorder (`parent` = index of the enclosing object), object channels -> `s3d.obj.<i>.{x,y,z,rx,ry,rz,s,sx,sy,sz,opacity,emissive,color}`, light channels -> `s3d.light.<i>.{x,y,z,intensity}`, scene channels `cam-x..look-z fov roll ambient` -> `s3d.cam.{x,y,z,tx,ty,tz,fov,roll}` / `s3d.ambient`; extrude fonts appended like cloud fonts; `screen src=#id` -> the source layer's node (`hidden`) and its laid-out box as `rect`; object layers emit no nodes; 3D tracks keep full precision | done |
 
 ## What reel-ir cannot express yet (reported as `W_IR_UNSUPPORTED`, never faked)
 

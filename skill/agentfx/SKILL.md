@@ -133,5 +133,7 @@ Chat works just as well; the desk is a convenience, not a requirement.
 - Do not show more than three alternatives at once; name what differs.
 - Never invent facts, numbers, client names or logos. Use only media the user has rights to.
 - No em-dashes in copy, UI text or messages.
-- GPU effects (`--gpu`) need Vulkan; without it everything renders on the CPU. There are no true
-  3D layers (2.5D camera, parallax and projected point clouds only).
+- GPU effects (`--gpu`) need Vulkan; without it everything renders on the CPU. 3D is stylised:
+  `scene3d` with simple shapes, extruded text, OBJ meshes and screens (toon, outlines, glow,
+  fog, ground shadows), not photoreal. A moving 3D camera re-renders every frame (about 0.2 s
+  per 1080p frame); a still 3D scene costs nothing after its first frame.

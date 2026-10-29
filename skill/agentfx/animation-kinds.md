@@ -29,6 +29,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Infinite zoom | nested `place ... scale=0.01` + `camera zoom-through` | implemented | "zoom into" reveals |
 | Zoom / pan onto an element | `zoom #el` / `pan #el` | implemented | UI focus |
 | 2.5D parallax | `camera persp=1200`, `layer z=-400`, `dolly`, `orbit` | partial (planes stay flat) | depth on stills |
+| Stylised 3D | `scene3d #w camera=(0, 2, 8)` + `box`, `extrude "L"`, `screen src=#ui`; `orbit #w`, `dolly #w`, `lookat`, `spin`, `drop`, `assemble`, `stack` | implemented (planar shadows, no glTF) | letter blocks, product stages, UI on a screen in 3D |
 | Depth of field | `camera dof=` | planned | |
 
 ## Transitions

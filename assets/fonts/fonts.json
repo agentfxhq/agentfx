@@ -1,0 +1,12 @@
+{"_note": "Registered font families (direct mode registers every .ttf here; the Chrome backend gets @font-face from this list). All OFL-1.1 (Google Fonts) except Inter (OFL) and Noto Sans Mono (OFL).",
+ "fonts": [
+  {"family": "Inter", "file": "Inter.ttf", "weight": "100 900"},
+  {"family": "Noto Sans Mono", "file": "NotoSansMono-Regular.ttf", "weight": "400"},
+  {"family": "Noto Sans Mono", "file": "NotoSansMono-Bold.ttf", "weight": "700"},
+  {"family": "Source Serif 4", "file": "SourceSerif4.ttf", "weight": "200 900", "role": "serif display / editorial"},
+  {"family": "Libre Franklin", "file": "LibreFranklin.ttf", "weight": "100 900", "role": "news grotesque (FT/NYT desk)"},
+  {"family": "Nunito", "file": "Nunito.ttf", "weight": "200 1000", "role": "rounded sans (flat illustration)"},
+  {"family": "JetBrains Mono", "file": "JetBrainsMono.ttf", "weight": "100 800", "role": "technical mono"},
+  {"family": "Space Grotesk", "file": "SpaceGrotesk.ttf", "weight": "300 700", "role": "geometric grotesk"},
+  {"family": "Fraunces", "file": "Fraunces.ttf", "weight": "100 900", "role": "soft serif display"}
+ ]}

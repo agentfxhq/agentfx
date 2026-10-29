@@ -1,0 +1,41 @@
+// Text v2 in direct mode: a custom font file with variable axes (incl. the custom SOFT/WONK
+// axes of Fraunces) and OpenType features, AE-style text animators (range selectors by char,
+// word and line; per-word key times), real text stroke, text color tracks (no repaints) and
+// text on a path with an animated offset.
+video "Text v2" size=1920x1080 fps=30 captions=off
+
+font "Brand" src="../../assets/fonts/Fraunces.ttf"
+
+scene type dur=4s bg=#14110F
+  // custom font: weight, optical size and the custom SOFT axis animate (relayout per frame)
+  text #brand "Variable type" font=Brand size=150 weight=200 axes="opsz 144, SOFT 0, WONK 1" color=#F4EFE6 x=50% y=34% anchor=center
+    anim wght 0s:200 1.6s:900~inout-cubic 3.2s:400~inout-cubic
+    anim SOFT 0s:0 1.6s:100~inout-cubic
+  // OpenType features: Inter's stylistic set and tabular figures on/off
+  text #feat-on "Rafael 1 0 4 6 9" size=64 weight=600 color=#E8442E features="ss01, tnum, cv11" x=30% y=68% anchor=center
+  text #feat-off "Rafael 1 0 4 6 9" size=64 weight=600 color=#F4EFE6 features="ss01 off, cv11 off" x=70% y=68% anchor=center
+  text #feat-l "ss01 tnum cv11" size=28 weight=500 color=#8A8178 x=30% y=78% anchor=center
+  text #feat-r "defaults off" size=28 weight=500 color=#8A8178 x=70% y=78% anchor=center
+
+scene animators dur=4.5s bg=#0E1116
+  // range selector by char: a soft-edged wipe (ramp-up) sweeps the units in, from below and blurred
+  text #wipe "Range selectors, like After Effects" size=84 weight=800 color=#FFFFFF x=50% y=26% anchor=center
+  // by word in random order, shrinking and recolored
+  text #words "every word on its own clock" size=64 weight=700 color=#5BD0FF x=50% y=50% anchor=center
+  // by word with per-word key times (spoken-word timing, like captions)
+  text #keys "one node, per word times" size=64 weight=700 color=#FFE45B x=50% y=74% anchor=center
+  @0s animate #wipe by=char shape=ramp-up range=0%..25% offset=-25%..100% dur=1.6s ease=linear opacity=0 y=60 blur=10
+  @0.6s animate #words by=word order=random seed=4 offset=0%..100% dur=1.4s ease=inout-cubic opacity=0 scale=0.4 color=#FF5E5B
+  @1.6s animate #keys by=word times=[0s, 0.35s, 0.5s, 1.1s] dur=0.4s ease=out-back y=50 opacity=0 rot=-12
+  @3.2s animate #wipe by=char shape=smooth range=0%..30% offset=-30%..100% dur=1.2s ease=linear y=-24 color=#FFE45B
+
+scene stroke dur=3.5s bg=#1B1530
+  // real text stroke from the glyph outlines (below the fill) and an animated text color
+  text #outline "OUTLINE" size=200 weight=900 color=#1B1530 stroke=#FF48B0 sw=6 x=50% y=34% anchor=center
+    anim color 0s:#1B1530 1.5s:#FFE800~inout-sine 3s:#1B1530~inout-sine
+  text #over "stroke over the fill" size=72 weight=800 color=#FFFFFF stroke=#3D5BFF sw=3 stroke-over x=50% y=68% anchor=center
+
+scene onpath dur=4s bg=#F4EFE6
+  path #wave d="M0 160 C240 0 480 0 720 160 S1200 320 1440 160" w=1440 h=320 x=50% y=50% anchor=center stroke=#D9D0C3 sw=4
+  text #ride "text on a path follows every curve of it" font=Brand size=64 weight=700 axes="opsz 72" color=#1B1530 on=#wave offset=1440
+    anim offset 0s:1440 3.4s:-120~out-cubic

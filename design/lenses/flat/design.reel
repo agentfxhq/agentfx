@@ -1,0 +1,22 @@
+// Flat vector explainer (L1 lens). Tokens for Reel Script components. Essay: LENS.md
+design "Flat Explainer" base=dark lens=flat
+  colors bg=#141a46 bg2=#1b2259 surface=#252d6e surface2=#2e3680 border=#3a4290 text=#ffffff muted=#b9bfe8 faint=#7d84c2 mint=#ffc84a accent=#ffc84a accent2=#4fd1e8 danger=#ff6f61 warn=#ff9f43 ink=#0f1336 paper=#ffffff code-bg=#0f1336
+  bg radial(at 28% 18%, #26307a 0%, #141a46 100%)
+  type display="Nunito" body="Nunito" mono="JetBrains Mono" base=38 ratio=1.333 display-weight=900 heading-weight=800 body-weight=600 label-weight=800 display-tracking=-0.01 heading-tracking=-0.005 label-tracking=0.02 label-case=none lh-display=1.05 lh-body=1.3
+  space unit=8 scale=[8, 16, 24, 40, 56, 88, 136]
+  layout radius=36 radius-sm=18 safe=7%
+  surface style=flat border=0
+  elevation shadow="0 14px 0 #0f1336ff"
+  texture bg=radial grain=0
+  icons style=solid stroke=3
+  scale components=1.15 diagram=1.4 chart=1.2
+  motion enter=spring(260,18) exit=in-back move=spring(170,22) emphasis=spring(320,14) enter-dur=0.6s exit-dur=0.3s move-dur=0.8s stagger=70ms
+  skin node=tile
+  treatment big-numbers numbered
+  do "Everything is built from circles, rounded rectangles and capsules in solid fills; no outlines on shapes"
+  do "Deep night ground, saturated mid tones for objects, one warm yellow for what matters now"
+  do "Each step gets an icon disc; state is shown by color and a badge, never by text alone"
+  do "Hard offset shadows (solid, no blur) to lift the active object off the ground"
+  dont "Gradients on objects, blurred drop shadows, glass, hairlines"
+  dont "Thin or condensed type; anything sharper than a 14 px corner"
+  dont "Pure black ground or grey palettes; linear robotic motion without overshoot"

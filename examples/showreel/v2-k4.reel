@@ -1,0 +1,43 @@
+video "v2 hold" size=1920x1080 fps=30
+theme studio-light
+  bg #F2EEE6
+scene s dur=16s
+  rect #rule0 w=1728 h=1.5 x=96 y=150 fill=#141414
+  rect #rule1 w=1728 h=1.5 x=96 y=930 fill=#141414
+  rect #ct0 w=1.5 h=14 x=96 y=150 fill=#141414
+  rect #ct1 w=1.5 h=14 x=242 y=150 fill=#141414
+  rect #ct2 w=1.5 h=14 x=388 y=150 fill=#141414
+  rect #ct3 w=1.5 h=14 x=534 y=150 fill=#141414
+  rect #ct4 w=1.5 h=14 x=680 y=150 fill=#141414
+  rect #ct5 w=1.5 h=14 x=826 y=150 fill=#141414
+  rect #ct6 w=1.5 h=14 x=972 y=150 fill=#141414
+  rect #ct7 w=1.5 h=14 x=1118 y=150 fill=#141414
+  rect #ct8 w=1.5 h=14 x=1264 y=150 fill=#141414
+  rect #ct9 w=1.5 h=14 x=1410 y=150 fill=#141414
+  rect #ct10 w=1.5 h=14 x=1556 y=150 fill=#141414
+  rect #ct11 w=1.5 h=14 x=1702 y=150 fill=#141414
+  rect #x0 w=111.0 h=694.0 x=101.5 y=186.0 fill=#E8442E
+  rect #x1 w=257.0 h=113.0 x=101.5 y=200.0 fill=#E8442E
+  rect #x2 w=111.0 h=680.0 x=539.5 y=200.0 fill=#E8442E
+  rect #x3 w=403.0 h=113.0 x=539.5 y=200.0 fill=#E8442E
+  rect #x4 w=403.0 h=113.0 x=539.5 y=486.0 fill=#E8442E
+  rect #x5 w=403.0 h=113.0 x=539.5 y=767.0 fill=#E8442E
+  rect #x6 w=111.0 h=399.0 x=831.5 y=200.0 fill=#E8442E
+  rect #x7 w=111.0 h=680.0 x=1123.5 y=200.0 fill=#E8442E
+  rect #x8 w=403.0 h=113.0 x=1123.5 y=200.0 fill=#E8442E
+  rect #x9 w=403.0 h=113.0 x=1123.5 y=486.0 fill=#E8442E
+  rect #x10 w=403.0 h=113.0 x=1123.5 y=767.0 fill=#E8442E
+  rect #x11 w=111.0 h=399.0 x=1415.5 y=200.0 fill=#E8442E
+  rect #x12 w=111.0 h=776.0 x=1707.5 y=104.0 fill=#E8442E
+  rect #tk0 w=1.5 h=10 x=361.8 y=931 fill=#8C9196
+  rect #tk1 w=1.5 h=10 x=534.6 y=931 fill=#8C9196
+  rect #tk2 w=1.5 h=10 x=707.4 y=931 fill=#8C9196
+  rect #tk3 w=1.5 h=10 x=880.2 y=931 fill=#8C9196
+  rect #tk4 w=1.5 h=10 x=1053.0 y=931 fill=#8C9196
+  rect #tk5 w=1.5 h=10 x=1332.2 y=931 fill=#8C9196
+  rect #tk6 w=1.5 h=10 x=1505.0 y=931 fill=#8C9196
+  rect #tk7 w=1.5 h=10 x=1664.5 y=931 fill=#8C9196
+  rect #tk8 w=1.5 h=10 x=1824.0 y=931 fill=#8C9196
+  rect #ph w=2 h=26 x=96.0 y=918 fill=#8C9196
+  text #tc "t = 00:00.000" font=mono size=22 color=#141414 x=96 y=958 nowrap
+  text #lb "N / 690 frames drawn" font=mono size=22 color=#8C9196 x=1824 y=958 anchor=top-right nowrap

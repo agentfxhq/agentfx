@@ -1,0 +1,29 @@
+/* Shared base for reel test scenes (fonts + design tokens). */
+@font-face {
+  font-family: "Inter";
+  src: url("Inter.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+}
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f0f2f5;
+  --text: #15181d;
+  --muted: #5d6572;
+  --faint: #8b929e;
+  --border: #e2e5ea;
+  --accent: #17845a;
+  --accent-hover: #126c49;
+  --accent-soft: #e5f4ed;
+  --scene-bg: linear-gradient(155deg, #0c2a1f 0%, #10392a 50%, #17845a 140%);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body {
+  position: relative;
+  background: var(--scene-bg);
+  font: 15px/1.5 "Inter", sans-serif;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}

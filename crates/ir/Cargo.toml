@@ -1,0 +1,11 @@
+[package]
+name = "agentfx-ir"
+version.workspace = true
+license.workspace = true
+edition = "2024"
+description = "AgentFX intermediate representation: scene graph + property tracks + assets"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"

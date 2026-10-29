@@ -1,0 +1,72 @@
+{
+ "language": "en",
+ "segments": [
+  {
+   "start": 0.0,
+   "end": 4.08,
+   "text": "These captions were transcribed and timed right here on one small machine.",
+   "words": [
+    {
+     "word": "These",
+     "start": 0.0,
+     "end": 0.2
+    },
+    {
+     "word": "captions",
+     "start": 0.2,
+     "end": 0.6
+    },
+    {
+     "word": "were",
+     "start": 0.6,
+     "end": 0.98
+    },
+    {
+     "word": "transcribed",
+     "start": 0.98,
+     "end": 1.62
+    },
+    {
+     "word": "and",
+     "start": 1.62,
+     "end": 1.94
+    },
+    {
+     "word": "timed",
+     "start": 1.94,
+     "end": 2.38
+    },
+    {
+     "word": "right",
+     "start": 2.38,
+     "end": 2.56
+    },
+    {
+     "word": "here",
+     "start": 2.56,
+     "end": 2.94
+    },
+    {
+     "word": "on",
+     "start": 2.94,
+     "end": 3.18
+    },
+    {
+     "word": "one",
+     "start": 3.18,
+     "end": 3.38
+    },
+    {
+     "word": "small",
+     "start": 3.38,
+     "end": 3.78
+    },
+    {
+     "word": "machine.",
+     "start": 3.78,
+     "end": 4.08
+    }
+   ]
+  }
+ ]
+}

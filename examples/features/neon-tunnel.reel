@@ -1,0 +1,19 @@
+// Neon tunnel: a seamless infinite zoom (backlog D5). One level of the tunnel is a rounded
+// square in neon with a ring of light dots; `nest` stacks 28 copies, each 0.72x the previous
+// and turned 4deg, cycling three hues. `camera loop` zooms exactly six levels (two hue cycles)
+// per 6 s at constant log-speed and turns with the nest, so the last frame runs into the first.
+// The halo is a blurred copy of the same nest (blur is in screen px, so it stays self-similar).
+//
+//   agentfx lint examples/features/neon-tunnel.reel --all-formats
+//   agentfx render examples/features/neon-tunnel.reel --format 9:16 --no-tts -o tunnel.mp4
+video "Neon tunnel" size=1920x1080 fps=30 captions=off formats=[16:9, 9:16]
+
+scene tunnel dur=6s bg=#05010D
+  layer #tunnel
+    nest #halo levels=28 scale=0.72 rot=4 cycle=[#FF2BD6, #22E4FF, #FFC23D] w=1920 h=1920 blur=22 blend=plus
+      rect x=50 y=50 w=1820 h=1820 radius=150 stroke=$cycle sw=44
+    nest #core levels=28 scale=0.72 rot=4 cycle=[#FF2BD6, #22E4FF, #FFC23D] w=1920 h=1920 blend=plus
+      rect x=50 y=50 w=1820 h=1820 radius=150 stroke=$cycle sw=14 blend=plus
+      rect x=50 y=50 w=1820 h=1820 radius=150 stroke=#FFFFFFC0 sw=4 blend=plus
+      path d="M260 170 H1660 Q1750 170 1750 260 V1660 Q1750 1750 1660 1750 H260 Q170 1750 170 1660 V260 Q170 170 260 170 Z" w=1920 h=1920 stroke=#FFF3D6 sw=16 dash=[0.5, 105] blend=plus
+  camera loop #tunnel levels=6 dur=6s

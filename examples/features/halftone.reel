@@ -1,0 +1,13 @@
+// Halftone (reel-ir halftone): a poster over a UI screenshot as CMYK dots. The cell shrinks
+// from huge to fine (channel `halftone`): first only the big word reads, then the UI resolves.
+video "Halftone" size=1920x1080 fps=30 captions=off
+
+scene dots dur=6s bg=#FFFFFF
+  layer #art x=0 y=0 w=100% h=100% halftone=150 halftone-mode=cmyk halftone-angle=45deg halftone-paper=#FBF8F2
+    image #shot src=../assets/ui/content.png w=100% h=100% x=0 y=0 fit=cover
+      anim scale 0s:1.3 6s:1~out-cubic
+    ellipse #blob w=1300 h=1300 x=24% y=50% anchor=center fill=#E8442E
+      anim scale 0s:1 2.2s:1.1 3.4s:0~in-cubic
+    text #word "DOTS" size=520 weight=900 color=#111111 x=52% y=50% anchor=center nowrap tracking=-0.04
+      anim x 0s:-120 2.2s:60 3.4s:2600~in-cubic
+    anim halftone 0s:150 1.6s:70~inout-sine 4.8s:4~inout-cubic

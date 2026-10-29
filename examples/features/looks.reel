@@ -1,0 +1,17 @@
+// Five digital looks. Every numeric effect field below is animatable.
+video "Digital looks" size=640x360 fps=24 captions=off
+scene digital dur=2s bg=#101418
+  text #rgb "RGB SPLIT" x=24 y=24 size=40 weight=800 rgbsplit=0.8 rgbsplit-dx=7 rgbsplit-dy=2 rgbsplit-mode=linear
+    anim rgbsplit 0s:0 1s:1
+    anim rgbsplit-dx 0s:1 2s:10
+    anim rgbsplit-dy 0s:0 2s:3
+  text #glitch "GLITCH" x=24 y=88 size=40 weight=800 glitch=0.7 glitch-rate=6 glitch-block=22 seed=42
+    anim glitch 0s:0.2 2s:0.8
+    anim glitch-rate 0s:2 2s:12
+    anim glitch-block 0s:10 2s:30
+  text #tape "VHS TAPE" x=24 y=152 size=40 weight=800 vhs=0.7 seed=42
+    anim vhs 0s:0 2s:1
+  rect #dots x=360 y=30 w=250 h=130 fill=linear(45deg, #F34A70, #33DDBB) dither=3 dither-mode=bayer dither-size=4
+    anim dither 0s:2 2s:6
+  text #ascii "ASCII" x=340 y=205 size=70 weight=900 ascii=8 ascii-color=source ascii-bg=#101418
+    anim ascii 0s:6 2s:12

@@ -1,0 +1,14 @@
+// Caption pack sample, 9:16. Voice: piper en_US-ljspeech-medium (LJ Speech, public domain), words: faster-whisper (tools/transcribe.sh).
+video "Captions 9:16" size=1080x1920 fps=30 captions=off
+
+scene hook bg=linear(165deg, #23395d 0%, #0b0b0e 70%) pre=0.3s
+  label "style=hormozi" place=top
+  captions src=assets/v1.json audio=assets/v1.mp3 style=hormozi
+
+scene pop bg=linear(165deg, #3b1d4a 0%, #0b0b0e 70%) pre=0.2s
+  label "style=pop" place=top
+  captions src=assets/v2.json audio=assets/v2.mp3 style=pop
+
+scene pill bg=linear(165deg, #12392c 0%, #0b0b0e 70%) pre=0.2s
+  label "style=pill" place=top
+  captions src=assets/v3.json audio=assets/v3.mp3 style=pill keywords=[machine]

@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- Fictional "ticket picker" screen for tests/fixtures/crop.reel (2880x1620 at DPR 2).
+     All names and tasks are invented. Hotspots in crop.reel: #ticket 30 1110 920 60, #prompt 30 1255 920 140. -->
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Inter"; src: url("../../../../assets/fonts/Inter.ttf"); font-weight: 100 900; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1440px; height: 810px; overflow: hidden; background: #eef1f5; font: 13px/1.4 Inter, sans-serif; color: #1f2328; }
+.chat { position: absolute; left: 0; top: 0; bottom: 0; width: 490px; background: #fff; border-right: 1px solid #dde2e8; }
+.head { height: 52px; display: flex; align-items: center; gap: 9px; padding: 0 16px; font-weight: 750; font-size: 15px; border-bottom: 1px solid #eef0f3; }
+.logo { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg,#0ca678,#1098ad); }
+.msg { position: absolute; left: 15px; width: 460px; border-radius: 12px; padding: 10px 12px; font-size: 12.5px; background: #f8f9fa; border: 1px solid #eef0f3; }
+.msg.me { background: #e6fcf5; border-color: #c3fae8; left: 75px; width: 400px; }
+.who { font-size: 11px; font-weight: 700; color: #6b7280; margin-bottom: 3px; }
+.list { position: absolute; left: 15px; width: 460px; top: 425px; height: 196px; border: 1px solid #dde2e8; border-radius: 12px; background: #fff; overflow: hidden; }
+.list h5 { height: 36px; display: flex; align-items: center; padding: 0 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #6b7280; border-bottom: 1px solid #eef0f3; }
+.t { position: absolute; left: 0; width: 458px; height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 12.5px; }
+.t .id { font-family: monospace; color: #6b7280; font-size: 11.5px; }
+.t .sp { flex: 1; }
+.t.sel { background: #e6fcf5; outline: 1.5px solid #20c997; outline-offset: -1.5px; border-radius: 6px; }
+.tag { font-size: 10.5px; padding: 2px 7px; border-radius: 10px; background: #f1f3f5; color: #495057; }
+.prompt { position: absolute; left: 15px; top: 627.5px; width: 460px; height: 70px; border: 1.5px solid #96f2d7; border-radius: 12px; padding: 10px 12px; color: #6b7280; }
+.board { position: absolute; left: 510px; right: 20px; top: 20px; bottom: 20px; display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.col { background: #e3e8ee; border-radius: 12px; padding: 12px; }
+.col h4 { font-size: 12px; color: #495057; margin-bottom: 10px; display: flex; justify-content: space-between; }
+.card { background: #fff; border-radius: 9px; padding: 10px 12px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.card b { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; }
+.card .bar { height: 5px; border-radius: 3px; background: #e9ecef; overflow: hidden; }
+.card .bar i { display: block; height: 100%; border-radius: 3px; }
+.card .meta { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #6b7280; }
+.ini { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; font-weight: 700; color: #fff; }
+</style></head>
+<body>
+<div class="chat">
+  <div class="head"><div class="logo"></div>Tidewater Tasks</div>
+  <div class="msg" style="top:70px"><div class="who">Assistant</div>Good morning. Four tickets are open for the bakery website this week.</div>
+  <div class="msg me" style="top:150px"><div class="who">You</div>Show me the ones about the menu.</div>
+  <div class="msg" style="top:230px"><div class="who">Assistant</div>Here they are. Pick one and I will start a draft for it.</div>
+  <div class="msg me" style="top:310px"><div class="who">You</div>The brunch one, please.</div>
+  <div class="list">
+    <h5>Matching tickets</h5>
+    <div class="t" style="top:61px"><span class="id">TT-104</span>Update cake price list<span class="sp"></span><span class="tag">Content</span></div>
+    <div class="t" style="top:95px"><span class="id">TT-117</span>New photos for the terrace<span class="sp"></span><span class="tag">Media</span></div>
+    <div class="t sel" style="top:129px"><span class="id">TT-121</span>Add Sunday brunch menu<span class="sp"></span><span class="tag">Content</span></div>
+    <div class="t" style="top:163px"><span class="id">TT-125</span>Translate opening hours<span class="sp"></span><span class="tag">i18n</span></div>
+  </div>
+  <div class="prompt">Type a message or pick a ticket…</div>
+</div>
+<div class="board">
+  <div class="col"><h4>To do <span>3</span></h4>
+    <div class="card"><b>Translate opening hours</b><div class="bar"><i style="width:10%;background:#adb5bd"></i></div><div class="meta"><span>TT-125</span><span class="ini" style="background:#f76707">RB</span></div></div>
+    <div class="card"><b>New photos for the terrace</b><div class="bar"><i style="width:0%"></i></div><div class="meta"><span>TT-117</span><span class="ini" style="background:#7048e8">SM</span></div></div>
+    <div class="card"><b>Add Sunday brunch menu</b><div class="bar"><i style="width:5%;background:#adb5bd"></i></div><div class="meta"><span>TT-121</span><span class="ini" style="background:#1098ad">JL</span></div></div>
+  </div>
+  <div class="col"><h4>In progress <span>2</span></h4>
+    <div class="card"><b>Update cake price list</b><div class="bar"><i style="width:60%;background:#20c997"></i></div><div class="meta"><span>TT-104</span><span class="ini" style="background:#e64980">AK</span></div></div>
+    <div class="card"><b>Cookie banner wording</b><div class="bar"><i style="width:35%;background:#20c997"></i></div><div class="meta"><span>TT-098</span><span class="ini" style="background:#f76707">RB</span></div></div>
+  </div>
+  <div class="col"><h4>Done <span>4</span></h4>
+    <div class="card"><b>Footer address</b><div class="bar"><i style="width:100%;background:#40c057"></i></div><div class="meta"><span>TT-090</span><span class="ini" style="background:#7048e8">SM</span></div></div>
+    <div class="card"><b>Contact form spam filter</b><div class="bar"><i style="width:100%;background:#40c057"></i></div><div class="meta"><span>TT-087</span><span class="ini" style="background:#1098ad">JL</span></div></div>
+    <div class="card"><b>Logo in higher resolution</b><div class="bar"><i style="width:100%;background:#40c057"></i></div><div class="meta"><span>TT-082</span><span class="ini" style="background:#e64980">AK</span></div></div>
+    <div class="card"><b>Menu PDF replaced by page</b><div class="bar"><i style="width:100%;background:#40c057"></i></div><div class="meta"><span>TT-079</span><span class="ini" style="background:#f76707">RB</span></div></div>
+  </div>
+</div>
+</body></html>

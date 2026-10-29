@@ -1,0 +1,20 @@
+// Path correctness in direct mode: relative SVG commands (m l h v c s q t a z, implicit
+// repeats, compact numbers), an inline svg scaled into its box (viewBox fit, not cropped),
+// gradient strokes, and animated stroke/fill colors as reel-ir color tracks (no repaints).
+video "Paths" size=1920x1080 fps=30 captions=off
+
+scene paths dur=4s bg=#0E1116
+  // relative commands: a rounded tab, a wave and arcs
+  path #tab d="m20 200 v-120 q0-40 40-40 h200 q40 0 40 40 v120 z" w=320 h=220 x=12% y=26% anchor=center stroke=#5BD0FF sw=6
+  path #wave d="M10 100c40-80 80-80 120 0s80 80 120 0 80-80 120 0" w=400 h=200 x=36% y=26% anchor=center stroke=#FFE45B sw=8
+  path #arcs d="M20 120a60 60 0 0 1 120 0a60 60 0 0 0 120 0t60 0" w=340 h=200 x=60% y=26% anchor=center stroke=#FF5E5B sw=8
+  // the same 24x24 icon at 240 px: scaled, not cropped
+  svg #icon w=240 h=240 x=84% y=26% anchor=center |
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="10" fill="#18C29C"/><path d="m7 12.5 3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+  // gradient stroke with draw-on
+  path #grad d="M20 160 C120 -20 280 -20 380 160 S640 340 740 160" w=760 h=220 x=30% y=70% anchor=center stroke=linear(90deg, #FF48B0, #FFE800 50%, #18C29C) sw=14 trim=0
+    anim trim 0s:0 2s:1~inout-cubic
+  // animated stroke and fill colors (color tracks)
+  star #pulse points=5 inner=0.45 size=300 x=78% y=70% anchor=center fill=#3D5BFF stroke=#FFFFFF sw=8
+    anim stroke 0s:#FFFFFF 2s:#FF5E5B~inout-sine 4s:#FFE45B
+    anim fill 0s:#3D5BFF 2s:#18C29C 4s:#B35BFF

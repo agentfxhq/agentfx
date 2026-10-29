@@ -1,0 +1,7 @@
+1
+00:00:00,000 --> 00:00:01,660
+Plain subtitles still work,
+
+2
+00:00:02,020 --> 00:00:03,520
+straight from an SRT file.

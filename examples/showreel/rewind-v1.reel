@@ -1,0 +1,259 @@
+video "Rewind v1" size=1920x1080 fps=30
+theme studio-light
+  bg #F2EEE6
+scene s dur=21.0s
+  camera persp=1600
+  anim #camera x 0.00s:-608.0 1.55s:-608.0~inout-cubic 1.75s:-710.0~inout-cubic 2.70s:-698.0~inout-cubic 2.95s:-360.0~inout-cubic 3.75s:-356.0~inout-cubic 4.00s:-220.0~inout-cubic 4.85s:-216.0~inout-cubic 5.05s:-73.0~inout-cubic 5.75s:-73.0~inout-cubic 6.15s:0.0~inout-cubic 6.55s:0.0~inout-cubic 7.05s:220.0~inout-cubic 7.85s:222.0~inout-cubic 8.05s:365.0~inout-cubic 8.85s:367.0~inout-cubic 9.05s:510.0~inout-cubic 9.75s:510.0~inout-cubic 9.95s:803.0~inout-cubic 10.45s:803.0~inout-cubic 10.85s:0.0~inout-cubic
+  anim #camera y 0.00s:0.0 1.55s:0.0~inout-cubic 1.75s:-278.0~inout-cubic 2.70s:-278.0~inout-cubic 2.95s:0.0~inout-cubic 3.75s:0.0~inout-cubic 4.00s:0.0~inout-cubic 4.85s:0.0~inout-cubic 5.05s:-140.0~inout-cubic 5.75s:-136.0~inout-cubic 6.15s:0.0~inout-cubic 6.55s:0.0~inout-cubic 7.05s:0.0~inout-cubic 7.85s:0.0~inout-cubic 8.05s:0.0~inout-cubic 8.85s:0.0~inout-cubic 9.05s:-140.0~inout-cubic 9.75s:-136.0~inout-cubic 9.95s:-70.0~inout-cubic 10.45s:-70.0~inout-cubic 10.85s:0.0~inout-cubic
+  anim #camera z 0.00s:735.1 1.55s:735.1~inout-cubic 1.75s:904.3~inout-cubic 2.70s:888.9~inout-cubic 2.95s:600.0~inout-cubic 3.75s:612.3~inout-cubic 4.00s:414.8~inout-cubic 4.85s:432.1~inout-cubic 5.05s:779.5~inout-cubic 5.75s:787.8~inout-cubic 6.15s:61.5~inout-cubic 6.55s:61.5~inout-cubic 7.05s:600.0~inout-cubic 7.85s:612.3~inout-cubic 8.05s:414.8~inout-cubic 8.85s:423.5~inout-cubic 9.05s:779.5~inout-cubic 9.75s:787.8~inout-cubic 9.95s:496.6~inout-cubic 10.45s:511.6~inout-cubic 10.85s:0.0~inout-cubic
+  anim #camera roty 0.00s:0.0 1.55s:0.0~inout-cubic 1.75s:0.0~inout-cubic 2.70s:0.0~inout-cubic 2.95s:0.0~inout-cubic 3.75s:0.0~inout-cubic 4.00s:0.0~inout-cubic 4.85s:0.0~inout-cubic 5.05s:0.0~inout-cubic 5.75s:0.0~inout-cubic 6.15s:-8.0~inout-cubic 6.55s:-8.0~inout-cubic 7.05s:0.0~inout-cubic 7.85s:0.0~inout-cubic 8.05s:0.0~inout-cubic 8.85s:0.0~inout-cubic 9.05s:0.0~inout-cubic 9.75s:0.0~inout-cubic 9.95s:0.0~inout-cubic 10.45s:0.0~inout-cubic 10.85s:0.0~inout-cubic
+  layer #pwrap x=0 y=0 w=1920 h=1080
+    layer #poster x=0 y=0 w=1920 h=1080
+      layer #grid x=0 y=0 w=1920 h=1080
+        rect #rl150 w=1728 h=1.5 x=96 y=150 fill=#141414
+        rect #rl930 w=1728 h=1.5 x=96 y=930 fill=#141414
+        rect #ct0 w=1.5 h=14 x=96 y=150 fill=#141414
+        rect #ct1 w=1.5 h=14 x=242 y=150 fill=#141414
+        rect #cg1 w=1 h=778 x=242.5 y=151.5 fill=#141414 opacity=0.07
+        rect #ct2 w=1.5 h=14 x=388 y=150 fill=#141414
+        rect #cg2 w=1 h=778 x=388.5 y=151.5 fill=#141414 opacity=0.07
+        rect #ct3 w=1.5 h=14 x=534 y=150 fill=#141414
+        rect #cg3 w=1 h=778 x=534.5 y=151.5 fill=#141414 opacity=0.07
+        rect #ct4 w=1.5 h=14 x=680 y=150 fill=#141414
+        rect #cg4 w=1 h=778 x=680.5 y=151.5 fill=#141414 opacity=0.07
+        rect #ct5 w=1.5 h=14 x=826 y=150 fill=#141414
+        rect #cg5 w=1 h=778 x=826.5 y=151.5 fill=#141414 opacity=0.07
+        rect #ct6 w=1.5 h=14 x=972 y=150 fill=#141414
+        rect #cg6 w=1 h=778 x=972.5 y=151.5 fill=#141414 opacity=0.07
+        rect #ct7 w=1.5 h=14 x=1118 y=150 fill=#141414
+        rect #cg7 w=1 h=778 x=1118.5 y=151.5 fill=#141414 opacity=0.07
+        rect #ct8 w=1.5 h=14 x=1264 y=150 fill=#141414
+        rect #cg8 w=1 h=778 x=1264.5 y=151.5 fill=#141414 opacity=0.07
+        rect #ct9 w=1.5 h=14 x=1410 y=150 fill=#141414
+        rect #cg9 w=1 h=778 x=1410.5 y=151.5 fill=#141414 opacity=0.07
+        rect #ct10 w=1.5 h=14 x=1556 y=150 fill=#141414
+        rect #cg10 w=1 h=778 x=1556.5 y=151.5 fill=#141414 opacity=0.07
+        rect #ct11 w=1.5 h=14 x=1702 y=150 fill=#141414
+        rect #cg11 w=1 h=778 x=1702.5 y=151.5 fill=#141414 opacity=0.07
+      text #g0 "c" size=118 weight=800 color=#141414 x=144.5 y=581.9 anchor=center rot=-90 nowrap mblur=8
+        anim y 0s:265 0.93s:265 1.77s:0~spring(260,20)
+      text #g1 "h" size=118 weight=800 color=#141414 x=144.5 y=512.9 anchor=center rot=-90 nowrap mblur=8
+        anim y 0s:265 0.89s:265 1.74s:0~spring(260,20)
+      text #g2 "a" size=118 weight=800 color=#141414 x=144.5 y=444.0 anchor=center rot=-90 nowrap mblur=8
+        anim y 0s:265 0.85s:265 1.71s:0~spring(260,20)
+      text #g3 "n" size=118 weight=800 color=#141414 x=144.5 y=375.1 anchor=center rot=-90 nowrap mblur=8
+        anim y 0s:265 0.82s:265 1.67s:0~spring(260,20)
+      text #g4 "g" size=118 weight=800 color=#141414 x=144.5 y=303.5 anchor=center rot=-90 nowrap mblur=8
+        anim y 0s:265 0.79s:265 1.64s:0~spring(260,20)
+      text #g5 "e" size=118 weight=800 color=#141414 x=144.5 y=233.7 anchor=center rot=-90 nowrap mblur=8
+        anim y 0s:265 0.75s:265 1.60s:0~spring(260,20)
+      path #trim d="M0 56.5 L146.0 56.5" w=146.0 h=113 x=212.5 y=200 stroke=#141414 sw=113 trim=0
+        anim trim 0s:0 1.75s:0 2.3s:1~out-cubic trim-start 0s:0 2.15s:0 2.8s:1~inout-cubic
+      path #hair d="M0 1 L146.0 1" w=146.0 h=2 x=212.5 y=255.5 stroke=#141414 sw=2 trim=0
+        anim trim 0s:0 2.15s:0 2.8s:1~inout-cubic
+      text #w3 "weight" size=118 weight=900 color=#141414 x=582.5 y=350.0 anchor=center rot=-90 nowrap mblur=8
+        anim y 0s:0 2.85s:0 3.75s:350~out-cubic wght 0s:200 2.85s:200 3.75s:900~inout-cubic opacity 0s:0 2.84s:0 2.85s:1
+      rect #bar0 w=286.0 h=113 x=656.5 y=200 fill=#141414 origin=left
+        anim sx 0s:0 3.85s:0 4.35s:1~out-cubic 4.55s:1 4.85s:0.55~inout-cubic sy 0s:1 4.55s:1 4.85s:0.34~inout-cubic
+      rect #bar1 w=286.0 h=113 x=656.5 y=486 fill=#141414 origin=left
+        anim sx 0s:0 3.93s:0 4.43s:1~out-cubic 4.60s:1 4.90s:1.0~inout-cubic sy 0s:1 4.60s:1 4.90s:0.34~inout-cubic
+      rect #bar2 w=286.0 h=113 x=656.5 y=767 fill=#141414 origin=left
+        anim sx 0s:0 4.01s:0 4.51s:1~out-cubic 4.65s:1 4.95s:0.78~inout-cubic sy 0s:1 4.65s:1 4.95s:0.34~inout-cubic
+      layer #mcol x=831.5 y=200 w=111 h=399 mask=linear(90deg, #000 33%, transparent 66%) mask-mode=luma
+        text #m0 "every" font=mono size=22 color=#141414 x=6 y=8 nowrap
+        text #m1 "frame" font=mono size=22 color=#141414 x=6 y=51 nowrap
+        text #m2 "is" font=mono size=22 color=#141414 x=6 y=94 nowrap
+        text #m3 "a" font=mono size=22 color=#141414 x=6 y=137 nowrap
+        text #m4 "pure" font=mono size=22 color=#141414 x=6 y=180 nowrap
+        text #m5 "function" font=mono size=22 color=#141414 x=6 y=223 nowrap
+        text #m6 "of" font=mono size=22 color=#141414 x=6 y=266 nowrap
+        text #m7 "time" font=mono size=22 color=#141414 x=6 y=309 nowrap
+        text #m8 "t" font=mono size=22 color=#141414 x=6 y=352 nowrap
+        anim mask-x 0s:1 4.95s:1 5.7s:0~inout-cubic
+      text #b0 "near" size=96 weight=800 color=#141414 x=1159.5 y=785.0 anchor=center rot=-90 nowrap blur=14
+        anim blur 0s:14 7.1s:14 7.9s:0~inout-cubic opacity 0s:0 6.6s:0 6.8s:1
+      text #b1 "focus" size=96 weight=800 color=#141414 x=1159.5 y=542.5 anchor=center rot=-90 nowrap blur=0
+        anim blur 0s:0 7.1s:0 7.9s:14~inout-cubic opacity 0s:0 6.6s:0 6.8s:1
+      text #b2 "far" size=96 weight=800 color=#141414 x=1159.5 y=285.0 anchor=center rot=-90 nowrap blur=16
+        anim blur 0s:16 7.1s:16 7.9s:2~inout-cubic opacity 0s:0 6.6s:0 6.8s:1
+      text #n0 "5" size=150 weight=800 color=#141414 x=1238.5 y=182 nowrap mblur=16 shutter=180deg
+        anim x 0s:0 8.05s:0 8.85s:196.0~steps(5) opacity 0s:0 7.95s:0 8.0s:1
+      text #n1 "3" size=150 weight=800 color=#141414 x=1238.5 y=468 nowrap mblur=16 shutter=180deg
+        anim x 0s:0 8.05s:0 8.85s:196.0~out-cubic opacity 0s:0 7.95s:0 8.0s:1
+      text #n2 "8" size=150 weight=800 color=#141414 x=1238.5 y=749 nowrap mblur=16 shutter=180deg
+        anim x 0s:0 8.05s:0 8.85s:196.0~spring(200,14) opacity 0s:0 7.95s:0 8.0s:1
+      particles #fx count=40 seed=11 x=1471 y=591 speed=900 spread=10 angle=-90 gravity=2200 life=0.8s size=10 shape=square colors=[#141414]
+      rect #lb w=111 h=230 x=1707.5 y=104 fill=#141414 mblur=12
+        anim y 0s:546 9.85s:546 10.5s:0~spring(240,16) opacity 0s:0 9.84s:0 9.85s:1
+      rect #ph w=2 h=26 x=96 y=918 fill=#8C9196 hud
+        anim x 0s:0 10.5s:1728
+      rect #tk0 w=1.5 h=12 x=359.3 y=931 fill=#141414 opacity=0 hud
+        anim opacity 0s:0 1.60s:0 1.64s:1
+      rect #tk1 w=1.5 h=12 x=556.8 y=931 fill=#141414 opacity=0 hud
+        anim opacity 0s:0 2.80s:0 2.84s:1
+      rect #tk2 w=1.5 h=12 x=721.4 y=931 fill=#141414 opacity=0 hud
+        anim opacity 0s:0 3.80s:0 3.84s:1
+      rect #tk3 w=1.5 h=12 x=902.4 y=931 fill=#141414 opacity=0 hud
+        anim opacity 0s:0 4.90s:0 4.94s:1
+      rect #tk4 w=1.5 h=12 x=1050.5 y=931 fill=#141414 opacity=0 hud
+        anim opacity 0s:0 5.80s:0 5.84s:1
+      rect #tk5 w=1.5 h=12 x=1396.1 y=931 fill=#141414 opacity=0 hud
+        anim opacity 0s:0 7.90s:0 7.94s:1
+      rect #tk6 w=1.5 h=12 x=1560.7 y=931 fill=#141414 opacity=0 hud
+        anim opacity 0s:0 8.90s:0 8.94s:1
+      rect #tk7 w=1.5 h=12 x=1708.8 y=931 fill=#141414 opacity=0 hud
+        anim opacity 0s:0 9.80s:0 9.84s:1
+      rect #tk8 w=1.5 h=12 x=1824.0 y=931 fill=#141414 opacity=0 hud
+        anim opacity 0s:0 10.50s:0 10.54s:1
+    anim opacity 0s:1 11.80s:1 11.92s:0
+  rect #ovl w=60 h=1080 x=0 y=0 fill=#141414 opacity=0.86
+    anim x 0.00s:0.0 1.55s:0.0~inout-cubic 1.75s:0.0~inout-cubic 2.70s:0.0~inout-cubic 2.95s:0.0~inout-cubic 3.75s:0.0~inout-cubic 4.00s:0.0~inout-cubic 4.85s:0.0~inout-cubic 5.05s:0.0~inout-cubic 5.75s:0.0~inout-cubic 6.15s:0.0~inout-cubic 6.55s:0.0~inout-cubic 7.05s:0.0~inout-cubic 7.85s:0.0~inout-cubic 8.05s:0.0~inout-cubic 8.85s:0.0~inout-cubic 9.05s:0.0~inout-cubic 9.75s:0.0~inout-cubic 9.95s:0.0~inout-cubic 10.45s:0.0~inout-cubic 10.85s:0.0~inout-cubic y 0.00s:0.0 1.55s:0.0~inout-cubic 1.75s:0.0~inout-cubic 2.70s:0.0~inout-cubic 2.95s:0.0~inout-cubic 3.75s:0.0~inout-cubic 4.00s:0.0~inout-cubic 4.85s:0.0~inout-cubic 5.05s:0.0~inout-cubic 5.75s:0.0~inout-cubic 6.15s:0.0~inout-cubic 6.55s:0.0~inout-cubic 7.05s:0.0~inout-cubic 7.85s:0.0~inout-cubic 8.05s:0.0~inout-cubic 8.85s:0.0~inout-cubic 9.05s:0.0~inout-cubic 9.75s:0.0~inout-cubic 9.95s:0.0~inout-cubic 10.45s:0.0~inout-cubic 10.85s:0.0~inout-cubic w 0.00s:60.0 1.55s:60.0~inout-cubic 1.75s:40.0~inout-cubic 2.70s:40.0~inout-cubic 2.95s:470.0~inout-cubic 3.75s:470.0~inout-cubic 4.00s:470.0~inout-cubic 4.85s:470.0~inout-cubic 5.05s:790.0~inout-cubic 5.75s:790.0~inout-cubic 6.15s:1.0~inout-cubic 6.55s:1.0~inout-cubic 7.05s:1060.0~inout-cubic 7.85s:1060.0~inout-cubic 8.05s:1060.0~inout-cubic 8.85s:1060.0~inout-cubic 9.05s:1350.0~inout-cubic 9.75s:1350.0~inout-cubic 9.95s:1640.0~inout-cubic 10.45s:1640.0~inout-cubic 10.85s:1.0~inout-cubic h 0.00s:1080.0 1.55s:1080.0~inout-cubic 1.75s:1080.0~inout-cubic 2.70s:1080.0~inout-cubic 2.95s:1080.0~inout-cubic 3.75s:1080.0~inout-cubic 4.00s:1080.0~inout-cubic 4.85s:1080.0~inout-cubic 5.05s:1080.0~inout-cubic 5.75s:1080.0~inout-cubic 6.15s:1080.0~inout-cubic 6.55s:1080.0~inout-cubic 7.05s:1080.0~inout-cubic 7.85s:1080.0~inout-cubic 8.05s:1080.0~inout-cubic 8.85s:1080.0~inout-cubic 9.05s:1080.0~inout-cubic 9.75s:1080.0~inout-cubic 9.95s:1080.0~inout-cubic 10.45s:1080.0~inout-cubic 10.85s:1080.0~inout-cubic
+  rect #ovr w=1530 h=1080 x=390 y=0 fill=#141414 opacity=0.86
+    anim x 0.00s:0.0 1.55s:0.0~inout-cubic 1.75s:120.0~inout-cubic 2.70s:120.0~inout-cubic 2.95s:340.0~inout-cubic 3.75s:340.0~inout-cubic 4.00s:640.0~inout-cubic 4.85s:640.0~inout-cubic 5.05s:600.0~inout-cubic 5.75s:600.0~inout-cubic 6.15s:1529.0~inout-cubic 6.55s:1529.0~inout-cubic 7.05s:930.0~inout-cubic 7.85s:930.0~inout-cubic 8.05s:1230.0~inout-cubic 8.85s:1230.0~inout-cubic 9.05s:1200.0~inout-cubic 9.75s:1200.0~inout-cubic 9.95s:1500.0~inout-cubic 10.45s:1500.0~inout-cubic 10.85s:1529.0~inout-cubic y 0.00s:0.0 1.55s:0.0~inout-cubic 1.75s:0.0~inout-cubic 2.70s:0.0~inout-cubic 2.95s:0.0~inout-cubic 3.75s:0.0~inout-cubic 4.00s:0.0~inout-cubic 4.85s:0.0~inout-cubic 5.05s:0.0~inout-cubic 5.75s:0.0~inout-cubic 6.15s:0.0~inout-cubic 6.55s:0.0~inout-cubic 7.05s:0.0~inout-cubic 7.85s:0.0~inout-cubic 8.05s:0.0~inout-cubic 8.85s:0.0~inout-cubic 9.05s:0.0~inout-cubic 9.75s:0.0~inout-cubic 9.95s:0.0~inout-cubic 10.45s:0.0~inout-cubic 10.85s:0.0~inout-cubic w 0.00s:1530.0 1.55s:1530.0~inout-cubic 1.75s:1410.0~inout-cubic 2.70s:1410.0~inout-cubic 2.95s:1190.0~inout-cubic 3.75s:1190.0~inout-cubic 4.00s:890.0~inout-cubic 4.85s:890.0~inout-cubic 5.05s:930.0~inout-cubic 5.75s:930.0~inout-cubic 6.15s:1.0~inout-cubic 6.55s:1.0~inout-cubic 7.05s:600.0~inout-cubic 7.85s:600.0~inout-cubic 8.05s:300.0~inout-cubic 8.85s:300.0~inout-cubic 9.05s:330.0~inout-cubic 9.75s:330.0~inout-cubic 9.95s:30.0~inout-cubic 10.45s:30.0~inout-cubic 10.85s:1.0~inout-cubic h 0.00s:1080.0 1.55s:1080.0~inout-cubic 1.75s:1080.0~inout-cubic 2.70s:1080.0~inout-cubic 2.95s:1080.0~inout-cubic 3.75s:1080.0~inout-cubic 4.00s:1080.0~inout-cubic 4.85s:1080.0~inout-cubic 5.05s:1080.0~inout-cubic 5.75s:1080.0~inout-cubic 6.15s:1080.0~inout-cubic 6.55s:1080.0~inout-cubic 7.05s:1080.0~inout-cubic 7.85s:1080.0~inout-cubic 8.05s:1080.0~inout-cubic 8.85s:1080.0~inout-cubic 9.05s:1080.0~inout-cubic 9.75s:1080.0~inout-cubic 9.95s:1080.0~inout-cubic 10.45s:1080.0~inout-cubic 10.85s:1080.0~inout-cubic
+  rect #ovt w=330 h=110 x=60 y=0 fill=#141414 opacity=0.86
+    anim x 0.00s:0.0 1.55s:0.0~inout-cubic 1.75s:-20.0~inout-cubic 2.70s:-20.0~inout-cubic 2.95s:410.0~inout-cubic 3.75s:410.0~inout-cubic 4.00s:410.0~inout-cubic 4.85s:410.0~inout-cubic 5.05s:730.0~inout-cubic 5.75s:730.0~inout-cubic 6.15s:-60.0~inout-cubic 6.55s:-60.0~inout-cubic 7.05s:1000.0~inout-cubic 7.85s:1000.0~inout-cubic 8.05s:1000.0~inout-cubic 8.85s:1000.0~inout-cubic 9.05s:1290.0~inout-cubic 9.75s:1290.0~inout-cubic 9.95s:1580.0~inout-cubic 10.45s:1580.0~inout-cubic 10.85s:-60.0~inout-cubic y 0.00s:0.0 1.55s:0.0~inout-cubic 1.75s:0.0~inout-cubic 2.70s:0.0~inout-cubic 2.95s:0.0~inout-cubic 3.75s:0.0~inout-cubic 4.00s:0.0~inout-cubic 4.85s:0.0~inout-cubic 5.05s:0.0~inout-cubic 5.75s:0.0~inout-cubic 6.15s:0.0~inout-cubic 6.55s:0.0~inout-cubic 7.05s:0.0~inout-cubic 7.85s:0.0~inout-cubic 8.05s:0.0~inout-cubic 8.85s:0.0~inout-cubic 9.05s:0.0~inout-cubic 9.75s:0.0~inout-cubic 9.95s:0.0~inout-cubic 10.45s:0.0~inout-cubic 10.85s:0.0~inout-cubic w 0.00s:330.0 1.55s:330.0~inout-cubic 1.75s:470.0~inout-cubic 2.70s:470.0~inout-cubic 2.95s:260.0~inout-cubic 3.75s:260.0~inout-cubic 4.00s:560.0~inout-cubic 4.85s:560.0~inout-cubic 5.05s:200.0~inout-cubic 5.75s:200.0~inout-cubic 6.15s:1920.0~inout-cubic 6.55s:1920.0~inout-cubic 7.05s:260.0~inout-cubic 7.85s:260.0~inout-cubic 8.05s:560.0~inout-cubic 8.85s:560.0~inout-cubic 9.05s:240.0~inout-cubic 9.75s:240.0~inout-cubic 9.95s:250.0~inout-cubic 10.45s:250.0~inout-cubic 10.85s:1920.0~inout-cubic h 0.00s:110.0 1.55s:110.0~inout-cubic 1.75s:150.0~inout-cubic 2.70s:150.0~inout-cubic 2.95s:110.0~inout-cubic 3.75s:110.0~inout-cubic 4.00s:110.0~inout-cubic 4.85s:110.0~inout-cubic 5.05s:150.0~inout-cubic 5.75s:150.0~inout-cubic 6.15s:1.0~inout-cubic 6.55s:1.0~inout-cubic 7.05s:110.0~inout-cubic 7.85s:110.0~inout-cubic 8.05s:110.0~inout-cubic 8.85s:110.0~inout-cubic 9.05s:150.0~inout-cubic 9.75s:150.0~inout-cubic 9.95s:40.0~inout-cubic 10.45s:40.0~inout-cubic 10.85s:1.0~inout-cubic
+  rect #ovb w=330 h=110 x=60 y=970 fill=#141414 opacity=0.86
+    anim x 0.00s:0.0 1.55s:0.0~inout-cubic 1.75s:-20.0~inout-cubic 2.70s:-20.0~inout-cubic 2.95s:410.0~inout-cubic 3.75s:410.0~inout-cubic 4.00s:410.0~inout-cubic 4.85s:410.0~inout-cubic 5.05s:730.0~inout-cubic 5.75s:730.0~inout-cubic 6.15s:-60.0~inout-cubic 6.55s:-60.0~inout-cubic 7.05s:1000.0~inout-cubic 7.85s:1000.0~inout-cubic 8.05s:1000.0~inout-cubic 8.85s:1000.0~inout-cubic 9.05s:1290.0~inout-cubic 9.75s:1290.0~inout-cubic 9.95s:1580.0~inout-cubic 10.45s:1580.0~inout-cubic 10.85s:-60.0~inout-cubic y 0.00s:0.0 1.55s:0.0~inout-cubic 1.75s:-520.0~inout-cubic 2.70s:-520.0~inout-cubic 2.95s:0.0~inout-cubic 3.75s:0.0~inout-cubic 4.00s:0.0~inout-cubic 4.85s:0.0~inout-cubic 5.05s:-320.0~inout-cubic 5.75s:-320.0~inout-cubic 6.15s:109.0~inout-cubic 6.55s:109.0~inout-cubic 7.05s:0.0~inout-cubic 7.85s:0.0~inout-cubic 8.05s:0.0~inout-cubic 8.85s:0.0~inout-cubic 9.05s:-320.0~inout-cubic 9.75s:-320.0~inout-cubic 9.95s:10.0~inout-cubic 10.45s:10.0~inout-cubic 10.85s:109.0~inout-cubic w 0.00s:330.0 1.55s:330.0~inout-cubic 1.75s:470.0~inout-cubic 2.70s:470.0~inout-cubic 2.95s:260.0~inout-cubic 3.75s:260.0~inout-cubic 4.00s:560.0~inout-cubic 4.85s:560.0~inout-cubic 5.05s:200.0~inout-cubic 5.75s:200.0~inout-cubic 6.15s:1920.0~inout-cubic 6.55s:1920.0~inout-cubic 7.05s:260.0~inout-cubic 7.85s:260.0~inout-cubic 8.05s:560.0~inout-cubic 8.85s:560.0~inout-cubic 9.05s:240.0~inout-cubic 9.75s:240.0~inout-cubic 9.95s:250.0~inout-cubic 10.45s:250.0~inout-cubic 10.85s:1920.0~inout-cubic h 0.00s:110.0 1.55s:110.0~inout-cubic 1.75s:630.0~inout-cubic 2.70s:630.0~inout-cubic 2.95s:110.0~inout-cubic 3.75s:110.0~inout-cubic 4.00s:110.0~inout-cubic 4.85s:110.0~inout-cubic 5.05s:430.0~inout-cubic 5.75s:430.0~inout-cubic 6.15s:1.0~inout-cubic 6.55s:1.0~inout-cubic 7.05s:110.0~inout-cubic 7.85s:110.0~inout-cubic 8.05s:110.0~inout-cubic 8.85s:110.0~inout-cubic 9.05s:430.0~inout-cubic 9.75s:430.0~inout-cubic 9.95s:100.0~inout-cubic 10.45s:100.0~inout-cubic 10.85s:1.0~inout-cubic
+  rect #fl0 w=69 h=68 x=123 y=464 fill=#E8442E opacity=0
+    anim opacity 0s:0 0.6s:0 0.601s:1 0.633s:1 0.634s:0
+  layer #exp x=0 y=0 w=1920 h=1080 hud
+    image #ex0 src=rewind-exp/e0354.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 11.799s:0 11.800s:1 11.832s:1 11.833s:0
+    image #ex1 src=rewind-exp/e0355.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 11.832s:0 11.833s:1 11.866s:1 11.867s:0
+    image #ex2 src=rewind-exp/e0356.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 11.866s:0 11.867s:1 11.899s:1 11.900s:0
+    image #ex3 src=rewind-exp/e0357.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 11.899s:0 11.900s:1 11.932s:1 11.933s:0
+    image #ex4 src=rewind-exp/e0358.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 11.932s:0 11.933s:1 11.966s:1 11.967s:0
+    image #ex5 src=rewind-exp/e0359.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 11.966s:0 11.967s:1 11.999s:1 12.000s:0
+    image #ex6 src=rewind-exp/e0360.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 11.999s:0 12.000s:1 12.032s:1 12.033s:0
+    image #ex7 src=rewind-exp/e0361.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.032s:0 12.033s:1 12.066s:1 12.067s:0
+    image #ex8 src=rewind-exp/e0362.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.066s:0 12.067s:1 12.099s:1 12.100s:0
+    image #ex9 src=rewind-exp/e0363.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.099s:0 12.100s:1 12.132s:1 12.133s:0
+    image #ex10 src=rewind-exp/e0364.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.132s:0 12.133s:1 12.166s:1 12.167s:0
+    image #ex11 src=rewind-exp/e0365.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.166s:0 12.167s:1 12.199s:1 12.200s:0
+    image #ex12 src=rewind-exp/e0366.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.199s:0 12.200s:1 12.232s:1 12.233s:0
+    image #ex13 src=rewind-exp/e0367.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.232s:0 12.233s:1 12.266s:1 12.267s:0
+    image #ex14 src=rewind-exp/e0368.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.266s:0 12.267s:1 12.299s:1 12.300s:0
+    image #ex15 src=rewind-exp/e0369.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.299s:0 12.300s:1 12.332s:1 12.333s:0
+    image #ex16 src=rewind-exp/e0370.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.332s:0 12.333s:1 12.366s:1 12.367s:0
+    image #ex17 src=rewind-exp/e0371.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.366s:0 12.367s:1 12.399s:1 12.400s:0
+    image #ex18 src=rewind-exp/e0372.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.399s:0 12.400s:1 12.432s:1 12.433s:0
+    image #ex19 src=rewind-exp/e0373.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.432s:0 12.433s:1 12.466s:1 12.467s:0
+    image #ex20 src=rewind-exp/e0374.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.466s:0 12.467s:1 12.499s:1 12.500s:0
+    image #ex21 src=rewind-exp/e0375.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.499s:0 12.500s:1 12.532s:1 12.533s:0
+    image #ex22 src=rewind-exp/e0376.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.532s:0 12.533s:1 12.566s:1 12.567s:0
+    image #ex23 src=rewind-exp/e0377.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.566s:0 12.567s:1 12.599s:1 12.600s:0
+    image #ex24 src=rewind-exp/e0378.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.599s:0 12.600s:1 12.632s:1 12.633s:0
+    image #ex25 src=rewind-exp/e0379.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.632s:0 12.633s:1 12.666s:1 12.667s:0
+    image #ex26 src=rewind-exp/e0380.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.666s:0 12.667s:1 12.699s:1 12.700s:0
+    image #ex27 src=rewind-exp/e0381.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.699s:0 12.700s:1 12.732s:1 12.733s:0
+    image #ex28 src=rewind-exp/e0382.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.732s:0 12.733s:1 12.766s:1 12.767s:0
+    image #ex29 src=rewind-exp/e0383.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.766s:0 12.767s:1 12.799s:1 12.800s:0
+    image #ex30 src=rewind-exp/e0384.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.799s:0 12.800s:1 12.832s:1 12.833s:0
+    image #ex31 src=rewind-exp/e0385.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.832s:0 12.833s:1 12.866s:1 12.867s:0
+    image #ex32 src=rewind-exp/e0386.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.866s:0 12.867s:1 12.899s:1 12.900s:0
+    image #ex33 src=rewind-exp/e0387.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.899s:0 12.900s:1 12.932s:1 12.933s:0
+    image #ex34 src=rewind-exp/e0388.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.932s:0 12.933s:1 12.966s:1 12.967s:0
+    image #ex35 src=rewind-exp/e0389.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.966s:0 12.967s:1 12.999s:1 13.000s:0
+    image #ex36 src=rewind-exp/e0390.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 12.999s:0 13.000s:1 13.032s:1 13.033s:0
+    image #ex37 src=rewind-exp/e0391.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.032s:0 13.033s:1 13.066s:1 13.067s:0
+    image #ex38 src=rewind-exp/e0392.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.066s:0 13.067s:1 13.099s:1 13.100s:0
+    image #ex39 src=rewind-exp/e0393.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.099s:0 13.100s:1 13.132s:1 13.133s:0
+    image #ex40 src=rewind-exp/e0394.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.132s:0 13.133s:1 13.166s:1 13.167s:0
+    image #ex41 src=rewind-exp/e0395.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.166s:0 13.167s:1 13.199s:1 13.200s:0
+    image #ex42 src=rewind-exp/e0396.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.199s:0 13.200s:1 13.232s:1 13.233s:0
+    image #ex43 src=rewind-exp/e0397.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.232s:0 13.233s:1 13.266s:1 13.267s:0
+    image #ex44 src=rewind-exp/e0398.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.266s:0 13.267s:1 13.299s:1 13.300s:0
+    image #ex45 src=rewind-exp/e0399.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.299s:0 13.300s:1 13.332s:1 13.333s:0
+    image #ex46 src=rewind-exp/e0400.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.332s:0 13.333s:1 13.366s:1 13.367s:0
+    image #ex47 src=rewind-exp/e0401.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.366s:0 13.367s:1 13.399s:1 13.400s:0
+    image #ex48 src=rewind-exp/e0402.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 13.399s:0 13.400s:1 18.30s:1 18.60s:0
+  layer #fin x=0 y=0 w=1920 h=1080 hud
+    rect #frl150 w=1728 h=1.5 x=96 y=150 fill=#141414 opacity=0
+      anim opacity 0s:0 11.80s:0 11.90s:1
+    rect #frl930 w=1728 h=1.5 x=96 y=930 fill=#141414 opacity=0
+      anim opacity 0s:0 11.80s:0 11.90s:1
+    text #nd "· not drawn" font=mono size=22 color=#8C9196 x=1824 y=958 anchor=top-right nowrap opacity=0
+      anim opacity 0s:0 13.50s:0 13.51s:1 14.00s:1 14.01s:0
+    rect #inv w=1920 h=1080 x=0 y=0 fill=#141414 opacity=0
+      anim opacity 0s:0 14.00s:0 14.35s:1~out-cubic 15.20s:1 15.45s:0~in-quad
+    image #warm src=rewind-exp/warm.png w=1920 h=1080 x=0 y=0 opacity=0
+      anim opacity 0s:0 14.10s:0 14.45s:1~out-cubic 15.20s:1 15.45s:0~in-quad
+    rect #dv0 w=111.0 h=694.0 x=101.5 y=186.0 fill=#E8442E origin=bottom opacity=0
+      anim opacity 0s:0 15.50s:0 15.51s:1 sy 0s:0 15.50s:0 15.66s:1~out-cubic
+    rect #dv1 w=257.0 h=113.0 x=101.5 y=200.0 fill=#E8442E origin=left opacity=0
+      anim opacity 0s:0 15.68s:0 15.69s:1 sx 0s:0 15.68s:0 15.84s:1~out-cubic
+    rect #dv2 w=111.0 h=680.0 x=539.5 y=200.0 fill=#E8442E origin=bottom opacity=0
+      anim opacity 0s:0 15.85s:0 15.86s:1 sy 0s:0 15.85s:0 16.01s:1~out-cubic
+    rect #dv3 w=403.0 h=113.0 x=539.5 y=200.0 fill=#E8442E origin=left opacity=0
+      anim opacity 0s:0 16.02s:0 16.04s:1 sx 0s:0 16.02s:0 16.18s:1~out-cubic
+    rect #dv4 w=403.0 h=113.0 x=539.5 y=486.0 fill=#E8442E origin=left opacity=0
+      anim opacity 0s:0 16.20s:0 16.21s:1 sx 0s:0 16.20s:0 16.36s:1~out-cubic
+    rect #dv5 w=403.0 h=113.0 x=539.5 y=767.0 fill=#E8442E origin=left opacity=0
+      anim opacity 0s:0 16.38s:0 16.39s:1 sx 0s:0 16.38s:0 16.54s:1~out-cubic
+    rect #dv6 w=111.0 h=399.0 x=831.5 y=200.0 fill=#E8442E origin=bottom opacity=0
+      anim opacity 0s:0 16.55s:0 16.56s:1 sy 0s:0 16.55s:0 16.71s:1~out-cubic
+    rect #dv7 w=111.0 h=680.0 x=1123.5 y=200.0 fill=#E8442E origin=bottom opacity=0
+      anim opacity 0s:0 16.73s:0 16.74s:1 sy 0s:0 16.73s:0 16.89s:1~out-cubic
+    rect #dv8 w=403.0 h=113.0 x=1123.5 y=200.0 fill=#E8442E origin=left opacity=0
+      anim opacity 0s:0 16.90s:0 16.91s:1 sx 0s:0 16.90s:0 17.06s:1~out-cubic
+    rect #dv9 w=403.0 h=113.0 x=1123.5 y=486.0 fill=#E8442E origin=left opacity=0
+      anim opacity 0s:0 17.07s:0 17.09s:1 sx 0s:0 17.07s:0 17.23s:1~out-cubic
+    rect #dv10 w=403.0 h=113.0 x=1123.5 y=767.0 fill=#E8442E origin=left opacity=0
+      anim opacity 0s:0 17.25s:0 17.26s:1 sx 0s:0 17.25s:0 17.41s:1~out-cubic
+    rect #dv11 w=111.0 h=399.0 x=1415.5 y=200.0 fill=#E8442E origin=bottom opacity=0
+      anim opacity 0s:0 17.43s:0 17.44s:1 sy 0s:0 17.43s:0 17.59s:1~out-cubic
+    rect #dv12 w=111.0 h=776.0 x=1707.5 y=104.0 fill=#E8442E origin=bottom opacity=0
+      anim opacity 0s:0 17.60s:0 17.61s:1 sy 0s:0 17.60s:0 18.10s:1~spring(260,18)
+    text #cnt "502 / 630 frames drawn" font=mono size=22 color=#141414 x=1824 y=958 anchor=top-right nowrap opacity=0
+      anim opacity 0s:0 18.50s:0 18.51s:1
+  @0s timemap #poster 0s:1.6s 0.6s:0.6s then=play
+  @11.0s timemap #poster 0s:0s 0.8s:-1.6s 2.4s:-10.3s~in-cubic then=hold
+  @9.05s burst #fx

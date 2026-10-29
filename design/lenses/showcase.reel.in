@@ -1,0 +1,44 @@
+// Lens showcase (L1): the same script in every lens; only the design spec changes.
+video "Lens: @LENS@" size=1920x1080 fps=30 rate=+6% captions=karaoke formats=[16:9, 9:16]
+design lens=@LENS@
+
+scene open min=3s
+  title #t "How a change goes live" kicker="Studio" in=rise
+  say "Four steps from [[request]] to live."
+    @request pulse #t
+
+scene pipe in=fade min=9s
+  col #main gap=40
+    progress #prog n=4 label="Step" in=fade
+    grid #d cols=4 gap=70
+      node #a "Chat" sub="Request" icon=chat n=01 in=pop at=@Chat
+      node #b "Agent" sub="Files" icon=sparkle n=02 in=pop at=@Agent
+      node #c "Pipeline" sub="Build, Test" icon=gear n=03 in=pop at=@Pipeline
+      node #e "Live" sub="Production" icon=rocket n=04 in=pop at=@live
+    panel #det kicker="Details" in=rise at=@Chat
+      pane #p1 title="Chat"
+        item "Change hero text" icon=chat
+      pane #p2 title="Agent"
+        item "index.astro" chip="edited" status=ok
+        item "lint" chip="passed" status=ok
+      pane #p3 title="Pipeline #482"
+        item "build" chip="ok" status=ok
+        item "deploy" chip="running" status=run
+  when portrait
+    set #d cols=2 gap=56
+  link #l1 #a -> #b in=draw at=@Agent
+  link #l2 #b -> #c in=draw at=@Pipeline
+  link #l3 #c -> #e in=draw at=@live
+  say "You describe it in [[Chat]], the [[Agent]] edits the files, the [[Pipeline]] checks, then it goes [[live|live]]."
+    @Chat activate #a ; advance #prog to=1
+    @Agent done #a ; activate #b ; advance #prog to=2 ; page #det to=p2
+    @Pipeline done #b ; activate #c ; advance #prog to=3 ; page #det to=p3
+    @live done #c ; activate #e ; advance #prog to=4
+
+scene data in=fade min=6s
+  row #r dir=auto gap=64 align=end
+    chart #rev type=bar data=[84, 97, 121, 168] labels=["Q1", "Q2", "Q3", "Q4"] unit=k highlight=4 note="x2 since Q1" kicker="Revenue 2025" title="Q4 doubles Q1" source="Sample data, thousands of euros" w=1000 h=520 in=draw at=@Revenue
+    stat #s value=12480 from=0 label="Orders" sub="2025" in=count at=@Revenue.end
+  when portrait
+    set #rev w=900 h=560
+  say "[[Revenue]] doubles, with 12,480 [[orders]]."

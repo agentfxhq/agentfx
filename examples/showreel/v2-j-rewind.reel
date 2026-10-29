@@ -1,0 +1,37 @@
+video "J1 rewind" size=1920x1080 fps=30
+theme studio-light
+  bg #F2EEE6
+scene s dur=2s
+  rect #rule0 w=1728 h=1.5 x=96 y=150 fill=#141414
+  rect #rule1 w=1728 h=1.5 x=96 y=930 fill=#141414
+  rect #ct0 w=1.5 h=14 x=96 y=150 fill=#141414
+  rect #ct1 w=1.5 h=14 x=242 y=150 fill=#141414
+  rect #ct2 w=1.5 h=14 x=388 y=150 fill=#141414
+  rect #ct3 w=1.5 h=14 x=534 y=150 fill=#141414
+  rect #ct4 w=1.5 h=14 x=680 y=150 fill=#141414
+  rect #ct5 w=1.5 h=14 x=826 y=150 fill=#141414
+  rect #ct6 w=1.5 h=14 x=972 y=150 fill=#141414
+  rect #ct7 w=1.5 h=14 x=1118 y=150 fill=#141414
+  rect #ct8 w=1.5 h=14 x=1264 y=150 fill=#141414
+  rect #ct9 w=1.5 h=14 x=1410 y=150 fill=#141414
+  rect #ct10 w=1.5 h=14 x=1556 y=150 fill=#141414
+  rect #ct11 w=1.5 h=14 x=1702 y=150 fill=#141414
+  image #exp src=v2-j-rewind-exposure.png w=1920 h=1080 x=0 y=0
+  rect #lv0 w=112 h=378 x=101 y=435 fill=#E8442E
+  rect #lv1 w=112 h=337 x=101 y=543 fill=#E8442E
+  rect #lv2 w=112 h=127 x=101 y=269 fill=#E8442E
+  rect #lv3 w=112 h=270 x=101 y=325 fill=#E8442E
+  rect #lv4 w=112 h=100 x=101 y=175 fill=#E8442E
+  rect #lv5 w=112 h=367 x=101 y=375 fill=#E8442E
+  rect #tk0 w=1.5 h=10 x=375.8 y=931 fill=#8C9196
+  rect #tk1 w=1.5 h=10 x=556.8 y=931 fill=#8C9196
+  rect #tk2 w=1.5 h=10 x=737.8 y=931 fill=#8C9196
+  rect #tk3 w=1.5 h=10 x=902.4 y=931 fill=#8C9196
+  rect #tk4 w=1.5 h=10 x=1067.0 y=931 fill=#8C9196
+  rect #tk5 w=1.5 h=10 x=1412.6 y=931 fill=#8C9196
+  rect #tk6 w=1.5 h=10 x=1577.1 y=931 fill=#8C9196
+  rect #tk7 w=1.5 h=10 x=1708.8 y=931 fill=#8C9196
+  rect #tk8 w=1.5 h=10 x=1824.0 y=931 fill=#8C9196
+  rect #ph w=2 h=26 x=227.7 y=918 fill=#8C9196
+  text #tc "t = 00:00.800" font=mono size=22 color=#141414 x=96 y=958 nowrap
+  text #lb "rewind" font=mono size=22 color=#141414 x=1824 y=958 anchor=top-right nowrap

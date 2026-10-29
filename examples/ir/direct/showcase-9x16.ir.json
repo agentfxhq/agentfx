@@ -1,0 +1,1559 @@
+{
+ "version": 1,
+ "width": 1080,
+ "height": 1920,
+ "fps": 30,
+ "frames": 240,
+ "nodes": [
+  {
+   "name": "root",
+   "children": [
+    1,
+    2,
+    3,
+    12,
+    5,
+    4,
+    6,
+    7,
+    14,
+    15
+   ]
+  },
+  {
+   "name": "background",
+   "children": [],
+   "content": {
+    "type": "path",
+    "d": "M0 0 H1080 V1920 H0 Z",
+    "fill": {
+     "linear": {
+      "start": [
+       0,
+       0
+      ],
+      "end": [
+       1080,
+       1920
+      ],
+      "stops": [
+       {
+        "offset": 0,
+        "color": [
+         0.03,
+         0.06,
+         0.09,
+         1
+        ]
+       },
+       {
+        "offset": 0.55,
+        "color": [
+         0.05,
+         0.14,
+         0.12,
+         1
+        ]
+       },
+       {
+        "offset": 1,
+        "color": [
+         0.07,
+         0.3,
+         0.21,
+         1
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "orb green (blur)",
+   "children": [],
+   "content": {
+    "type": "rect",
+    "rect": {
+     "rect": [
+      280.0,
+      700.0,
+      520.0,
+      520.0
+     ],
+     "radius": [
+      260.0,
+      260.0,
+      260.0,
+      260.0
+     ]
+    },
+    "color": [
+     0.1,
+     0.6,
+     0.4,
+     0.55
+    ]
+   },
+   "origin": [
+    540.0,
+    960.0
+   ],
+   "effects": [
+    {
+     "type": "blur",
+     "radius": 90.0
+    }
+   ]
+  },
+  {
+   "name": "orb blue (blur)",
+   "children": [],
+   "content": {
+    "type": "rect",
+    "rect": {
+     "rect": [
+      358.0,
+      778.0,
+      364.0,
+      364.0
+     ],
+     "radius": [
+      182.0,
+      182.0,
+      182.0,
+      182.0
+     ]
+    },
+    "color": [
+     0.15,
+     0.35,
+     0.85,
+     0.45
+    ]
+   },
+   "origin": [
+    540.0,
+    960.0
+   ],
+   "effects": [
+    {
+     "type": "blur",
+     "radius": 70.0
+    }
+   ]
+  },
+  {
+   "name": "title (glyph springs + glow)",
+   "children": [],
+   "content": {
+    "type": "text",
+    "text": "reel",
+    "font": 0,
+    "size": 270.0,
+    "weight": 820,
+    "letter_spacing": -8.1,
+    "pos": [
+     0,
+     288.0
+    ],
+    "max_width": 1080,
+    "align": "center",
+    "brush": {
+     "linear": {
+      "start": [
+       270.0,
+       0
+      ],
+      "end": [
+       810.0,
+       0
+      ],
+      "stops": [
+       {
+        "offset": 0,
+        "color": [
+         0.62,
+         1.0,
+         0.82,
+         1
+        ]
+       },
+       {
+        "offset": 1,
+        "color": [
+         1,
+         1,
+         1,
+         1
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "origin": [
+    540.0,
+    450.0
+   ],
+   "effects": [
+    {
+     "type": "glow",
+     "radius": 0,
+     "color": [
+      0.35,
+      1.0,
+      0.7,
+      1
+     ],
+     "strength": 0.9
+    }
+   ]
+  },
+  {
+   "name": "underline (path draw-on)",
+   "children": [],
+   "content": {
+    "type": "path",
+    "d": "M162.00 612.00 L174.60 614.19 L187.20 616.33 L199.80 618.36 L212.40 620.23 L225.00 621.90 L237.60 623.33 L250.20 624.47 L262.80 625.31 L275.40 625.83 L288.00 626.00 L300.60 625.83 L313.20 625.31 L325.80 624.47 L338.40 623.33 L351.00 621.90 L363.60 620.23 L376.20 618.36 L388.80 616.33 L401.40 614.19 L414.00 612.00 L426.60 609.81 L439.20 607.67 L451.80 605.64 L464.40 603.77 L477.00 602.10 L489.60 600.67 L502.20 599.53 L514.80 598.69 L527.40 598.17 L540.00 598.00 L552.60 598.17 L565.20 598.69 L577.80 599.53 L590.40 600.67 L603.00 602.10 L615.60 603.77 L628.20 605.64 L640.80 607.67 L653.40 609.81 L666.00 612.00 L678.60 614.19 L691.20 616.33 L703.80 618.36 L716.40 620.23 L729.00 621.90 L741.60 623.33 L754.20 624.47 L766.80 625.31 L779.40 625.83 L792.00 626.00 L804.60 625.83 L817.20 625.31 L829.80 624.47 L842.40 623.33 L855.00 621.90 L867.60 620.23 L880.20 618.36 L892.80 616.33 L905.40 614.19 L918.00 612.00",
+    "trim": [
+     0,
+     0
+    ],
+    "stroke": {
+     "width": 12.0,
+     "cap": "round",
+     "join": "round",
+     "brush": {
+      "linear": {
+       "start": [
+        162.0,
+        0
+       ],
+       "end": [
+        918.0,
+        0
+       ],
+       "stops": [
+        {
+         "offset": 0,
+         "color": [
+          0.23,
+          0.95,
+          0.62,
+          1
+         ]
+        },
+        {
+         "offset": 1,
+         "color": [
+          0.35,
+          0.65,
+          1.0,
+          1
+         ]
+        }
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "subtitle (typewriter)",
+   "children": [],
+   "content": {
+    "type": "text",
+    "text": "native raster\nHTML + direct mode",
+    "font": 0,
+    "size": 40.0,
+    "weight": 500,
+    "line_height": 1.35,
+    "pos": [
+     0,
+     672.0
+    ],
+    "max_width": 1080,
+    "align": "center",
+    "brush": {
+     "solid": [
+      0.78,
+      0.92,
+      0.86,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "name": "card (de-blur + drop shadow)",
+   "children": [
+    8,
+    9,
+    10,
+    11
+   ],
+   "origin": [
+    540.0,
+    1014.0
+   ],
+   "effects": [
+    {
+     "type": "blur",
+     "radius": 0
+    },
+    {
+     "type": "drop-shadow",
+     "dx": 0,
+     "dy": 18.0,
+     "radius": 28.0,
+     "color": [
+      0,
+      0,
+      0,
+      0.45
+     ]
+    }
+   ]
+  },
+  {
+   "name": "card bg",
+   "children": [],
+   "content": {
+    "type": "rect",
+    "rect": {
+     "rect": [
+      108.0,
+      864.0,
+      864.0,
+      300.0
+     ],
+     "radius": [
+      28.0,
+      28.0,
+      28.0,
+      28.0
+     ]
+    },
+    "color": [
+     1,
+     1,
+     1,
+     0.09
+    ]
+   }
+  },
+  {
+   "name": "card border",
+   "children": [],
+   "content": {
+    "type": "path",
+    "d": "M136.0 864.0 H944.0",
+    "stroke": {
+     "width": 2,
+     "brush": {
+      "solid": [
+       1,
+       1,
+       1,
+       0.25
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "card text",
+   "children": [],
+   "content": {
+    "type": "text",
+    "text": "blur \u00b7 glow \u00b7 matte \u00b7 trim",
+    "font": 0,
+    "size": 46.0,
+    "weight": 650,
+    "pos": [
+     0,
+     924.0
+    ],
+    "max_width": 1080,
+    "align": "center",
+    "brush": {
+     "solid": [
+      1,
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "name": "card text 2",
+   "children": [],
+   "content": {
+    "type": "text",
+    "text": "motion blur \u00b7 springs \u00b7 per-glyph tracks",
+    "font": 0,
+    "size": 30.0,
+    "weight": 450,
+    "pos": [
+     0,
+     1029.0
+    ],
+    "max_width": 1080,
+    "align": "center",
+    "brush": {
+     "solid": [
+      0.75,
+      0.85,
+      0.82,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "name": "matte source (hidden text)",
+   "children": [],
+   "content": {
+    "type": "text",
+    "text": "MATTE",
+    "font": 0,
+    "size": 170.0,
+    "weight": 900,
+    "letter_spacing": 6.8,
+    "pos": [
+     0,
+     1294.0
+    ],
+    "max_width": 1080,
+    "align": "center",
+    "brush": {
+     "solid": [
+      1,
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "hidden": true,
+   "origin": [
+    540.0,
+    1294.0
+   ]
+  },
+  {
+   "name": "band",
+   "children": [],
+   "content": {
+    "type": "path",
+    "d": "M-432.0 1274.0 H1512.0 V1515.0 H-432.0 Z",
+    "fill": {
+     "linear": {
+      "start": [
+       -432.0,
+       0
+      ],
+      "end": [
+       1512.0,
+       0
+      ],
+      "extend": "reflect",
+      "stops": [
+       {
+        "offset": 0,
+        "color": [
+         0.1,
+         0.45,
+         0.32,
+         1
+        ]
+       },
+       {
+        "offset": 0.45,
+        "color": [
+         0.4,
+         1.0,
+         0.75,
+         1
+        ]
+       },
+       {
+        "offset": 0.5,
+        "color": [
+         1,
+         1,
+         1,
+         1
+        ]
+       },
+       {
+        "offset": 0.55,
+        "color": [
+         0.4,
+         0.75,
+         1.0,
+         1
+        ]
+       },
+       {
+        "offset": 1,
+        "color": [
+         0.12,
+         0.25,
+         0.55,
+         1
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "matte target",
+   "children": [
+    13
+   ],
+   "effects": [
+    {
+     "type": "matte",
+     "source": 12,
+     "mode": "alpha"
+    }
+   ],
+   "origin": [
+    540.0,
+    1294.0
+   ]
+  },
+  {
+   "name": "comet (motion blur)",
+   "children": [
+    16,
+    17
+   ],
+   "origin": [
+    540.0,
+    960.0
+   ],
+   "motion_blur": {
+    "samples": 12,
+    "shutter": 1.0
+   }
+  },
+  {
+   "name": "ball",
+   "children": [],
+   "content": {
+    "type": "rect",
+    "rect": {
+     "rect": [
+      514.0,
+      934.0,
+      52.0,
+      52.0
+     ],
+     "radius": [
+      26.0,
+      26.0,
+      26.0,
+      26.0
+     ]
+    },
+    "color": [
+     1,
+     0.85,
+     0.35,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ball square",
+   "children": [],
+   "content": {
+    "type": "rect",
+    "rect": {
+     "rect": [
+      579.0,
+      947.0,
+      26.0,
+      26.0
+     ],
+     "radius": [
+      3,
+      3,
+      3,
+      3
+     ]
+    },
+    "color": [
+     0.35,
+     0.95,
+     0.65,
+     1
+    ]
+   }
+  }
+ ],
+ "tracks": [
+  {
+   "node": 2,
+   "property": "transform",
+   "delay": 0,
+   "duration": 8,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.65,
+     0,
+     0.35,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -345.6,
+         -345.59999999999997
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         237.6,
+         -96.0
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "node": 2,
+   "property": "opacity",
+   "delay": 0,
+   "duration": 1.2,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.16,
+     1,
+     0.3,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 0
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 1
+     }
+    }
+   ]
+  },
+  {
+   "node": 3,
+   "property": "transform",
+   "delay": 0,
+   "duration": 8,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.65,
+     0,
+     0.35,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         324.0,
+         480.0
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -108.0,
+         384.0
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "node": 3,
+   "property": "effects.0.radius",
+   "delay": 0,
+   "duration": 8,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.65,
+     0,
+     0.35,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 110.0
+     }
+    },
+    {
+     "offset": 0.5,
+     "value": {
+      "number": 40.0
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 110.0
+     }
+    }
+   ]
+  },
+  {
+   "node": 4,
+   "property": "glyph.transform",
+   "delay": 0.5,
+   "duration": 1.0,
+   "fill": "both",
+   "easing": {
+    "spring": {
+     "mass": 1,
+     "stiffness": 140,
+     "damping": 13,
+     "velocity": 0
+    }
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         0,
+         120.0
+        ]
+       },
+       {
+        "scale": [
+         0.4,
+         0.4
+        ]
+       },
+       {
+        "rotate": -18
+       }
+      ]
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         0,
+         0
+        ]
+       },
+       {
+        "scale": [
+         1,
+         1
+        ]
+       },
+       {
+        "rotate": 0
+       }
+      ]
+     }
+    }
+   ],
+   "stagger": {
+    "each": 0.09
+   }
+  },
+  {
+   "node": 4,
+   "property": "glyph.opacity",
+   "delay": 0.5,
+   "duration": 0.3,
+   "fill": "both",
+   "easing": "linear",
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 0
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 1
+     }
+    }
+   ],
+   "stagger": {
+    "each": 0.09
+   }
+  },
+  {
+   "node": 4,
+   "property": "effects.0.radius",
+   "delay": 1.3,
+   "duration": 2.2,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.16,
+     1,
+     0.3,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 0
+     }
+    },
+    {
+     "offset": 0.35,
+     "value": {
+      "number": 34.0
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 14.0
+     }
+    }
+   ]
+  },
+  {
+   "node": 4,
+   "property": "effects.0.strength",
+   "delay": 1.3,
+   "duration": 2.2,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.16,
+     1,
+     0.3,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 0
+     }
+    },
+    {
+     "offset": 0.35,
+     "value": {
+      "number": 1.4
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 0.7
+     }
+    }
+   ]
+  },
+  {
+   "node": 5,
+   "property": "trim-end",
+   "delay": 1.0,
+   "duration": 1.4,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.16,
+     1,
+     0.3,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 0
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 1
+     }
+    }
+   ]
+  },
+  {
+   "node": 5,
+   "property": "trim-start",
+   "delay": 6.6,
+   "duration": 0.9,
+   "fill": "forwards",
+   "easing": {
+    "cubic-bezier": [
+     0.65,
+     0,
+     0.35,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 0
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 1
+     }
+    }
+   ]
+  },
+  {
+   "node": 6,
+   "property": "glyph.opacity",
+   "delay": 2.1,
+   "duration": 0.001,
+   "fill": "both",
+   "easing": {
+    "steps": [
+     1,
+     "jump-end"
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 0
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 1
+     }
+    }
+   ],
+   "stagger": {
+    "each": 0.035
+   }
+  },
+  {
+   "node": 7,
+   "property": "transform",
+   "delay": 2.6,
+   "duration": 1.3,
+   "fill": "both",
+   "easing": {
+    "spring": {
+     "mass": 1,
+     "stiffness": 90,
+     "damping": 15,
+     "velocity": 0
+    }
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         0,
+         160.0
+        ]
+       },
+       {
+        "scale": [
+         0.92,
+         0.92
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         0,
+         0
+        ]
+       },
+       {
+        "scale": [
+         1,
+         1
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "node": 7,
+   "property": "opacity",
+   "delay": 2.6,
+   "duration": 0.5,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.16,
+     1,
+     0.3,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 0
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 1
+     }
+    }
+   ]
+  },
+  {
+   "node": 7,
+   "property": "effects.0.radius",
+   "delay": 2.6,
+   "duration": 1.0,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.16,
+     1,
+     0.3,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 26.0
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 0
+     }
+    }
+   ]
+  },
+  {
+   "node": 13,
+   "property": "transform",
+   "delay": 4.0,
+   "duration": 3.5,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.65,
+     0,
+     0.35,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -534.6,
+         0
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         534.6,
+         0
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "node": 14,
+   "property": "opacity",
+   "delay": 4.0,
+   "duration": 0.6,
+   "fill": "both",
+   "easing": {
+    "cubic-bezier": [
+     0.16,
+     1,
+     0.3,
+     1
+    ]
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "number": 0
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "number": 1
+     }
+    }
+   ]
+  },
+  {
+   "node": 14,
+   "property": "transform",
+   "delay": 4.0,
+   "duration": 0.9,
+   "fill": "both",
+   "easing": {
+    "spring": {
+     "mass": 1,
+     "stiffness": 140,
+     "damping": 13,
+     "velocity": 0
+    }
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "transform": [
+       {
+        "scale": [
+         0.85,
+         0.85
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "transform": [
+       {
+        "scale": [
+         1,
+         1
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "node": 12,
+   "property": "transform",
+   "delay": 4.0,
+   "duration": 0.9,
+   "fill": "both",
+   "easing": {
+    "spring": {
+     "mass": 1,
+     "stiffness": 140,
+     "damping": 13,
+     "velocity": 0
+    }
+   },
+   "keyframes": [
+    {
+     "offset": 0,
+     "value": {
+      "transform": [
+       {
+        "scale": [
+         0.85,
+         0.85
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "offset": 1,
+     "value": {
+      "transform": [
+       {
+        "scale": [
+         1,
+         1
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "node": 15,
+   "property": "transform",
+   "delay": 5.2,
+   "duration": 1.3,
+   "fill": "both",
+   "easing": "linear",
+   "keyframes": [
+    {
+     "offset": 0.0,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -648.0,
+         710.4000000000001
+        ]
+       },
+       {
+        "rotate": 0.0
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.0625,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -646.7343749999999,
+         709.6931427618127
+        ]
+       },
+       {
+        "rotate": 0.52734375
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.125,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -637.875,
+         704.7457009483211
+        ]
+       },
+       {
+        "rotate": 4.21875
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.1875,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -613.828125,
+         691.3366430478239
+        ]
+       },
+       {
+        "rotate": 14.23828125
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.25,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -567.0,
+         665.4511898074842
+        ]
+       },
+       {
+        "rotate": 33.75
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.3125,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -489.796875,
+         624.1925998913762
+        ]
+       },
+       {
+        "rotate": 65.91796875
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.375,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -374.625,
+         568.6506415302237
+        ]
+       },
+       {
+        "rotate": 113.90625
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.4375,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         -213.890625,
+         510.28130934420324
+        ]
+       },
+       {
+        "rotate": 180.87890625
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.5,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         0.0,
+         480.0000000000001
+        ]
+       },
+       {
+        "rotate": 270.0
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.5625,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         213.89062499999994,
+         510.2813093442031
+        ]
+       },
+       {
+        "rotate": 359.12109375
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.625,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         374.62499999999994,
+         568.6506415302237
+        ]
+       },
+       {
+        "rotate": 426.09375
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.6875,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         489.796875,
+         624.1925998913762
+        ]
+       },
+       {
+        "rotate": 474.08203125
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.75,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         567.0,
+         665.4511898074841
+        ]
+       },
+       {
+        "rotate": 506.25
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.8125,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         613.8281249999999,
+         691.3366430478239
+        ]
+       },
+       {
+        "rotate": 525.76171875
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.875,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         637.8750000000001,
+         704.7457009483211
+        ]
+       },
+       {
+        "rotate": 535.78125
+       }
+      ]
+     }
+    },
+    {
+     "offset": 0.9375,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         646.7343749999999,
+         709.6931427618127
+        ]
+       },
+       {
+        "rotate": 539.47265625
+       }
+      ]
+     }
+    },
+    {
+     "offset": 1.0,
+     "value": {
+      "transform": [
+       {
+        "translate": [
+         648.0,
+         710.4000000000001
+        ]
+       },
+       {
+        "rotate": 540.0
+       }
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "assets": [],
+ "fonts": [
+  {
+   "path": "../../scenes/_shared/Inter.ttf"
+  }
+ ]
+}

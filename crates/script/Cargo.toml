@@ -1,0 +1,42 @@
+[package]
+name = "agentfx-script"
+version.workspace = true
+license.workspace = true
+edition = "2021"
+description = "AgentFX CLI and Reel Script compiler: an LLM/CLI-native format for motion graphics and video"
+
+[[bin]]
+name = "agentfx"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+indexmap = { version = "2", features = ["serde"] }
+sha2 = "0.10"
+base64 = "0.22"
+# native layout + paint (Blitz = Stylo + Taffy + Parley): the same pinned, patched crates as
+# the renderer (workspace [patch] -> vendor/); the layout mode is chosen at runtime
+# (`native::layout_mode`).
+agentfx-ir = { path = "../ir" }
+blitz-dom = { version = "=0.3.0-beta.4", default-features = false, features = ["svg", "woff"] }
+blitz-html = "=0.3.0-beta.4"
+blitz-paint = "=0.3.0-beta.4"
+blitz-traits = "=0.3.0-beta.4"
+style = { package = "stylo", version = "0.22" }
+taffy = { version = "0.15", default-features = false, features = ["std"] }
+anyrender = "0.14"
+parley = { version = "0.12", default-features = false, features = ["std"] }
+kurbo = "0.13.1"
+peniko = "0.6"
+skrifa = { version = "0.44", default-features = false, features = ["std"] }
+# WOFF/WOFF2 custom fonts (already in the tree via blitz-dom `woff`)
+wuff = "0.2"
+url = "2.5"
+anyhow = "1"
+png = "0.18"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+

@@ -1,0 +1,57 @@
+{
+ "language": "en",
+ "segments": [
+  {
+   "start": 0.0,
+   "end": 2.92,
+   "text": "Most people watch short videos with the sound off.",
+   "words": [
+    {
+     "word": "Most",
+     "start": 0.0,
+     "end": 0.2
+    },
+    {
+     "word": "people",
+     "start": 0.2,
+     "end": 0.58
+    },
+    {
+     "word": "watch",
+     "start": 0.58,
+     "end": 0.98
+    },
+    {
+     "word": "short",
+     "start": 0.98,
+     "end": 1.38
+    },
+    {
+     "word": "videos",
+     "start": 1.38,
+     "end": 1.96
+    },
+    {
+     "word": "with",
+     "start": 1.96,
+     "end": 2.28
+    },
+    {
+     "word": "the",
+     "start": 2.28,
+     "end": 2.46
+    },
+    {
+     "word": "sound",
+     "start": 2.46,
+     "end": 2.74
+    },
+    {
+     "word": "off.",
+     "start": 2.74,
+     "end": 2.92
+    }
+   ]
+  }
+ ]
+}

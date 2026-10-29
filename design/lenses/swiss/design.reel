@@ -1,0 +1,22 @@
+// Swiss International (L1 lens). Tokens for Reel Script components. Essay: LENS.md
+design "Swiss International" base=light lens=swiss
+  colors bg=#f2f0eb bg2=#e9e6df surface=#ffffff surface2=#ffffff border=#111111 text=#111111 muted=#3d3d3d faint=#6b6b6b accent=#e3000f accent2=#111111 mint=#e3000f danger=#e3000f warn=#111111 ink=#111111 paper=#ffffff code-bg=#111111
+  bg #f2f0eb
+  type display="Inter" body="Inter" mono="JetBrains Mono" base=40 ratio=1.414 display-weight=800 heading-weight=750 body-weight=450 label-weight=700 display-tracking=-0.045 heading-tracking=-0.02 label-tracking=0.06 label-case=upper lh-display=0.95 lh-body=1.3
+  space unit=8 scale=[8, 16, 24, 40, 64, 104, 168]
+  layout radius=0 radius-sm=0 safe=7%
+  surface style=outline border=3
+  elevation shadow=none
+  texture bg=solid grain=0
+  icons style=plain stroke=2.5
+  scale components=1.1 diagram=1.45 chart=1.15
+  motion enter=out-expo exit=in-quart move=inout-quart emphasis=out-quart enter-dur=0.45s exit-dur=0.25s move-dur=0.6s stagger=50ms
+  skin node=step
+  treatment hairlines caps-labels big-numbers numbered frame-rules
+  do "Flush-left type on a 12-column grid; hierarchy by size and weight only"
+  do "One red accent per frame, on the element the narration names"
+  do "Black rules (3 px) to structure; huge numerals as images"
+  do "Chart bars in black, the one bar that matters in red; values set on the bar, no gridlines"
+  dont "Rounded corners, drop shadows, gradients, glows"
+  dont "Centered compositions; more than one accent color"
+  dont "Bounce, overshoot or springy pops; motion is a wipe or a hard cut"

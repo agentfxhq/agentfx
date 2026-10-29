@@ -1,0 +1,28 @@
+{
+  "version": "v0",
+  "source": "agentfx motion mine (tools/motion_mine.py) over 16 recordings: an in-house product tour (Remotion), HyperFrames figma-elementor, 14 HyperFrames registry blocks; 292 moves, 257 fitted to a named curve with RMSE < 0.06. Report: design/MOTION-REPORT.md",
+  "duration": {
+    "short1": 0.1, "short2": 0.167, "short3": 0.267, "short4": 0.3,
+    "medium1": 0.4, "medium2": 0.467, "medium3": 0.633, "medium4": 0.8,
+    "long1": 1.0, "long2": 1.4
+  },
+  "easing": {
+    "enter": "out-cubic",
+    "enter-pop": "out-back",
+    "exit": "in-quad",
+    "move": "inout-sine",
+    "move-strong": "inout-cubic",
+    "emphasis": "out-cubic",
+    "standard": "inout-cubic",
+    "emphasized-decelerate": "cubic(0.05, 0.7, 0.1, 1)",
+    "emphasized-accelerate": "cubic(0.3, 0, 0.8, 0.15)"
+  },
+  "roles": {
+    "enter": {"duration": "medium1", "easing": "enter", "distance_px": 28, "scale_from": 0.9},
+    "exit": {"duration": "short4", "easing": "exit", "ratio_to_enter": 0.73},
+    "move": {"duration": "medium3", "easing": "move"},
+    "emphasis": {"duration": "short3", "easing": "emphasis"},
+    "stagger": {"item": 0.133, "beat": 0.43},
+    "overlap": {"next_starts_at": 0.19}
+  }
+}

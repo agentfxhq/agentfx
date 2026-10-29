@@ -1,0 +1,77 @@
+{
+ "language": "en",
+ "segments": [
+  {
+   "start": 0.0,
+   "end": 3.86,
+   "text": "So every word has to land on screen the moment it is spoken.",
+   "words": [
+    {
+     "word": "So",
+     "start": 0.0,
+     "end": 0.24
+    },
+    {
+     "word": "every",
+     "start": 0.24,
+     "end": 0.6
+    },
+    {
+     "word": "word",
+     "start": 0.6,
+     "end": 0.94
+    },
+    {
+     "word": "has",
+     "start": 0.94,
+     "end": 1.2
+    },
+    {
+     "word": "to",
+     "start": 1.2,
+     "end": 1.4
+    },
+    {
+     "word": "land",
+     "start": 1.4,
+     "end": 1.72
+    },
+    {
+     "word": "on",
+     "start": 1.72,
+     "end": 1.98
+    },
+    {
+     "word": "screen",
+     "start": 1.98,
+     "end": 2.32
+    },
+    {
+     "word": "the",
+     "start": 2.32,
+     "end": 2.58
+    },
+    {
+     "word": "moment",
+     "start": 2.58,
+     "end": 2.92
+    },
+    {
+     "word": "it",
+     "start": 2.92,
+     "end": 3.5
+    },
+    {
+     "word": "is",
+     "start": 3.5,
+     "end": 3.62
+    },
+    {
+     "word": "spoken.",
+     "start": 3.62,
+     "end": 3.86
+    }
+   ]
+  }
+ ]
+}

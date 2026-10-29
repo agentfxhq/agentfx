@@ -1,0 +1,45 @@
+[package]
+name = "agentfx-render"
+version.workspace = true
+license.workspace = true
+edition = "2024"
+description = "AgentFX renderer: native CPU/GPU video renderer for the AgentFX IR and HTML/CSS scenes"
+
+[[bin]]
+name = "agentfx-render"
+path = "src/main.rs"
+
+[dependencies]
+agentfx-ir = { path = "../ir" }
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# HTML frontend (CSS timeline)
+lightningcss = { version = "1.0.0-alpha.68", default-features = false }
+scraper = "0.24"
+# native layout + paint (pinned like p1; no system-fonts: fonts are registered explicitly)
+blitz-dom = { version = "=0.3.0-beta.4", default-features = false, features = ["svg", "woff"] }
+blitz-html = "=0.3.0-beta.4"
+blitz-paint = "=0.3.0-beta.4"
+blitz-traits = "=0.3.0-beta.4"
+style = { package = "stylo", version = "0.22" }
+taffy = { version = "0.15", default-features = false, features = ["std"] }
+anyrender = "0.14"
+parley = { version = "0.12", default-features = false, features = ["std"] }
+kurbo = "0.13.1"
+peniko = "0.6"
+vello_cpu = { version = "0.3", default-features = false, features = ["std", "text", "u8_pipeline", "multithreading", "png"] }
+url = "2.5"
+skrifa = { version = "0.44", default-features = false, features = ["std"] }
+png = "0.18"
+rayon = "1"
+bytemuck = "1"
+# planner v2: spatial index for the damage merge
+rstar = "0.12"
+# fallback compositor (M0)
+# E4 GPU effects (compute shaders; Vulkan only, headless)
+wgpu = { version = "30.0.1", default-features = false, features = ["vulkan", "wgsl", "std"] }
+pollster = "1"
+tiny-skia = { version = "0.11", default-features = false, features = ["std", "simd", "png-format"] }
+
+[dev-dependencies]

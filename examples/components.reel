@@ -1,0 +1,55 @@
+// Component library: every component with defaults (no styling props), 16:9 and 9:16.
+video "Components" size=1920x1080 fps=30 captions=karaoke formats=[16:9, 9:16]
+
+scene cards min=4s
+  title #t "What the library does" kicker="Reel Script" in=rise
+  row #cards dir=auto gap=28
+    card #c1 "Fast" sub="Rendered natively, no browser in the way." icon=bolt kicker="Render" in=rise
+    card #c2 "Safe" sub="Lint measures every layout before the first frame." icon=shield variant=glass in=rise at=@Lint
+    card #c3 "Pretty" sub="Components on brand tokens." icon=sparkle variant=accent in=rise at=@brand
+  say "Cards for [[Render]], [[Lint]] and the [[brand]] tokens."
+
+scene stats min=4s
+  row #st dir=auto gap=28
+    stat #s1 label="New users" value=12480 from=0 delta="+12 %" sub="since July" icon=user in=count
+    stat #s2 label="Revenue" value=318 suffix=" k$" from=0 delta="+8 %" spark=[3, 5, 4, 8, 9, 12, 14] icon=trend in=count at=@revenue
+    stat #s3 label="Churn" value=27 suffix=" %" from=0 delta="-4 %" icon=x in=count at=@churn
+  say "Numbers for [[revenue]] and [[churn]], counted live."
+
+scene notes min=4s
+  col #nc gap=24
+    note #n1 "Whatever lint sees, the video shows." title="Good to know" in=rise
+    note #n2 "No network access while rendering." title="Heads up" kind=warn in=rise at=@warning
+    list #l1 "Native layout" "Glyphs, not images" "One command per video" in=rise stagger=150ms at=@list
+  say "Notes, a [[warning]], and a [[list]]."
+
+scene diagram min=5s
+  diagram #d gap=110
+    node #a "Script" sub=".reel" icon=file
+    node #b "Compiler" sub="Layout + timing" icon=gear variant=primary status=ok
+    node #c "Renderer" sub="agentfx-render" icon=play
+  link #l1 #a -> #b
+  link #l2 #b -> #c
+  steps #p "Write" "Check" "Render" active=2 in=rise at=@steps
+  say "From the [[script]] through the [[compiler]] to the [[renderer]], in three [[steps]]."
+    @script draw #l1 ; activate #a for=1.2s
+    @compiler activate #c for=1s
+    @renderer draw #l2
+
+scene charts min=5s
+  row #ch dir=auto gap=40
+    chart #bars type=bar data=[12, 19, 27, 41, 58] labels=["2022", "2023", "2024", "2025", "2026"] unit=k w=820 h=460 highlight=5 in=draw at=@Bars
+    chart #pie type=donut data=[48, 27, 15, 10] labels=["Web", "App", "Shop", "Other"] unit=% w=760 h=420 in=draw at=@shares
+  say "[[Bars]] with axes and [[shares]] in a ring."
+
+scene mocks min=5s
+  row #m dir=auto gap=48
+    window #w title="Dashboard" w=820 h=520 in=rise
+      row gap=20
+        stat #k1 label="Active" value=842 icon=user
+        stat #k2 label="Open" value=12 icon=clock
+      note "All systems normal." title="Status" kind=success
+    quote #q "Finally, videos as precise as the code behind them." by="Mara Lindqvist, Studio" in=rise at=@quote
+  lower3 #lt "Mara Lindqvist" sub="Creative Director" icon=user in=left at=@name
+  pill #pl "New" x=6% y=8%
+  say "A window, a [[quote]] and a [[name]] on screen."

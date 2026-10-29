@@ -1,0 +1,11 @@
+// Point cloud in the scene's 2.5D camera: a terrain fly-over (z=on) and a spinning sphere.
+video "Terrain" size=1920x1080 fps=30
+theme studio-dark
+  bg #0C0B0A
+scene s dur=6s
+  camera persp=1000
+  cloud #land n=20000 seed=3 r=2.2 palette=[#F2EEE6, #E8442E] weights=[0.7, 0.3] mblur=6
+    form 0s cluster sx=25% sy=18% sz=200 noise=30
+    form 0.8s terrain z=on amp=80 speed=0.35 rows=110 dur=1.3s stagger=0.6s by=y ease=spring(100,16) color=dir angle=0 wave=[220, 700] split=[0.7, 0.3]
+    form 3.8s sphere r=26% spin=45 dur=1.2s stagger=0.5s by=random ease=spring(120,15)
+  @0s anim #camera rotx 0s:12 3.5s:28 6s:16

@@ -1,0 +1,27 @@
+// Audio reactivity (X10): everything here is driven by the music bed, analysed at compile time
+// (level, onsets, 8 bands, beat grid) and lowered to plain keyframe tracks.
+// Track: 10 s excerpt (break, build, drop at bar 5) of the original 128 bpm beat from
+// an in-house generator script (synthesized, no third-party samples).
+video "Audio" size=1920x1080 fps=30 captions=off
+
+music src=assets/beat-128bpm-drop.mp3 vol=0.9
+
+scene viz dur=10s bg=radial(at 50% 45%, #1B1F2E 0%, #0B0D14 70%)
+  // radial spectrum around a beat-pulsed core
+  visualizer #ring type=radial mirror count=64 w=560 h=560 radius=160 gap=5 colors=[#5EEAD4, #60A5FA, #A78BFA, #60A5FA] gain=1.1 smooth=90ms x=50% y=44% anchor=center
+  ellipse #core w=250 h=250 x=50% y=44% anchor=center fill=radial(at 50% 50%, #3B0F7A 0%, #6D28D9 65%, #A78BFA 100%) glow=audio(band=0, gain=40, smooth=120ms)
+  pulse #core on=beat amount=0.12 decay=250ms
+  text #bpm "128 BPM" size=34 weight=800 color=#FFFFFF x=50% y=44% anchor=center nowrap
+  // waveform line along the top, mirrored bar spectrum along the bottom
+  visualizer #wave type=waveform count=64 w=1600 h=120 thick=4 colors=[#5EEAD4] gain=0.9 x=50% y=9% anchor=center opacity=0.8
+  visualizer #bars count=48 w=1600 h=170 gap=8 colors=[#60A5FA, #A78BFA] mirror gain=1.15 smooth=70ms x=50% y=88% anchor=center
+  text #sub "audio(level)" size=30 weight=700 color=#E6EDF3 x=18% y=75% anchor=center nowrap opacity=audio(level, gain=1.4, offset=0.2, smooth=200ms)
+  text #grid "at bar:5" size=30 weight=700 color=#5EEAD4 x=82% y=75% anchor=center nowrap
+  // beat-grid anchors: the drop of this excerpt lands on bar 5
+  text #drop "DROP" size=96 weight=900 color=#FFFFFF x=50% y=75% anchor=center nowrap opacity=0
+  at beat:2
+    flash #core
+  at bar:5
+    set #drop opacity=1
+    shake #ring
+    pulse #grid

@@ -1,0 +1,20 @@
+// Time effects (X3): the renderer evaluates a group at other times than the frame's.
+// slitscan (rows from earlier times), echo (decaying copies), timedisplace (per-pixel delay), freeze.
+video "Time effects" size=1280x720 fps=30 captions=off
+
+scene fx dur=6s
+  layer #smear x=0 y=0 w=50% h=100%
+    text #word "TIME" size=170 weight=900 color=$mint x=50% y=50% anchor=center
+      anim rot 0s:-20 1.5s:20~in-out-cubic repeat=4 yoyo
+  ellipse #ball w=90 h=90 fill=$accent x=60% y=30% anchor=center
+    anim x 0s:0 0.7s:380~spring(170,12) 2.2s:0~spring(170,12)
+  layer #grid x=50% y=50% w=50% h=50%
+    text #cells "+ + + + +\n+ + + + +\n+ + + + +" size=60 weight=800 color=#141414 x=50% y=50% anchor=center
+      anim scale 0s:0.6 0.5s:1.2~in-out-sine 1s:0.6~in-out-sine repeat=6
+  text #clock "12:00" size=48 weight=800 color=#141414 x=4% y=8%
+    anim rot 0s:0 6s:720
+  @0s slitscan #smear axis=y span=0.8s band=4
+  @0s echo #ball n=6 dt=50ms decay=0.7 blend=add colors=#ff3b30,#2979ff
+  @0s timedisplace #grid map=radial span=0.6s levels=16
+  @1.5s freeze #clock for=1s
+  @4.5s slitscan #smear span=0 dur=0.2s ease=out-cubic

@@ -1,0 +1,82 @@
+AgentFX
+Copyright 2026 Levels Branding and Webdevelopment OG
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes third-party software and assets under their own licences, listed below.
+These are not covered by the Apache License of AgentFX itself.
+
+------------------------------------------------------------------------------
+Vendored and modified Rust crates (vendor/, see vendor/README.md)
+------------------------------------------------------------------------------
+
+The following crates are copies of their crates.io releases, MODIFIED for AgentFX.
+Every change is marked with a "reel patch" comment (git grep -n -F "reel patch" vendor).
+
+- blitz-dom 0.3.0-beta.4      https://github.com/dioxuslabs/blitz
+  MIT OR Apache-2.0           vendor/blitz-dom/LICENSE-MIT, LICENSE-APACHE
+- blitz-paint 0.3.0-beta.4    https://github.com/dioxuslabs/blitz
+  MIT OR Apache-2.0           vendor/blitz-paint/LICENSE-MIT, LICENSE-APACHE
+- parley 0.12.0               https://github.com/linebender/parley
+  Apache-2.0 OR MIT           vendor/parley/LICENSE-APACHE, LICENSE-MIT
+- stylo 0.22.0                https://github.com/servo/stylo
+  MPL-2.0                     vendor/stylo/LICENSE
+  Stylo is under the Mozilla Public License 2.0, a file-level copyleft licence. The
+  modified files remain under MPL-2.0 and their source, including the modifications,
+  is available in vendor/stylo/. Per-file MPL headers are kept.
+
+Files bundled inside the vendored crates:
+
+- vendor/blitz-dom/assets/moz-bullet-font.otf ("Mozilla Bullet", from Firefox), shipped
+  unchanged by upstream blitz-dom. The file carries no licence string; as part of the
+  Firefox sources it is treated as MPL-2.0.
+- vendor/stylo/properties/vendored_python/: Mako 1.3.10 (MIT), toml 0.10.2 (MIT) and
+  MarkupSafe (BSD-3-Clause), used for build-time code generation; their licence texts
+  are inside the wheels and the package directory.
+
+------------------------------------------------------------------------------
+Fonts (OFL-1.1)
+------------------------------------------------------------------------------
+
+assets/fonts/ bundles Fraunces, Inter, JetBrains Mono, Libre Franklin, Noto Sans Mono,
+Nunito, Source Serif 4 and Space Grotesk, unmodified, under the SIL Open Font License,
+Version 1.1. Copyright notices and the licence text: assets/fonts/OFL.txt; versions
+and upstream sources: assets/fonts/README.md. "Source" is a Reserved Font Name of
+Adobe. The copies of Inter in examples/scenes/ are under the same licence (OFL.txt
+next to them).
+
+------------------------------------------------------------------------------
+Rust dependencies (not vendored, fetched by Cargo)
+------------------------------------------------------------------------------
+
+Unmodified crates.io dependencies keep their own licences. Besides MIT and Apache-2.0
+these include:
+
+- MPL-2.0: app_units, cssparser, cssparser-color, cssparser-macros, dtoa-short,
+  lightningcss, lightningcss-derive, parcel_selectors, selectors, stylo_* support
+  crates, to_shmem, to_shmem_derive, uluru.
+- Unicode-3.0: icu_* crates, unicode-ident and related Unicode data crates.
+- BSD-2-Clause / BSD-3-Clause: tiny-skia, tiny-skia-path, alloc-no-stdlib,
+  alloc-stdlib, arrayref, brotli-decompressor, moxcms, pxfm; encoding_rs is
+  (Apache-2.0 OR MIT) AND BSD-3-Clause.
+- r-efi is offered under MIT OR Apache-2.0 OR LGPL-2.1-or-later; AgentFX uses it
+  under MIT/Apache-2.0.
+
+Run `cargo about` or `cargo license` for the complete list with licence texts.
+
+------------------------------------------------------------------------------
+Sample media
+------------------------------------------------------------------------------
+
+- examples/captions/assets/*.mp3: synthesized with piper and the voice
+  en_US-ljspeech-medium (trained on the public-domain LJ Speech dataset).
+- examples/features/assets/beat-128bpm-drop.mp3, teal-orange.cube, the UI screenshots
+  in examples/assets/ui/ and all rendered images are original works of the AgentFX
+  authors, under the Apache License 2.0.
+
+------------------------------------------------------------------------------
+External programs (not bundled)
+------------------------------------------------------------------------------
+
+AgentFX calls ffmpeg, and optionally piper (GPL-3.0), Chrome/Playwright and
+faster-whisper, as separate programs. They are not part of this distribution.

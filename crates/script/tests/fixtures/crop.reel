@@ -1,0 +1,10 @@
+video "Crop" size=1920x1080 formats=[16:9, 9:16]
+scene a
+  browser #app url=tasks.example.test shot=assets/picker.png
+    hot #prompt 30 1255 920 140
+    hot #ticket 30 1110 920 60
+    when portrait
+      set #app crop=[0, 380, 960, 1240]
+  say "In the [[chat]] you type, and [[then]] you pick the ticket."
+    @chat zoom #prompt z=1.4
+    @then click #ticket ; highlight #ticket

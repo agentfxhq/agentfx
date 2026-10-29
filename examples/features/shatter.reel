@@ -1,0 +1,8 @@
+video "Break / rebuild" size=1920x1080 fps=30 captions=off
+scene fracture dur=5.5s
+  layer #film x=0 y=0 w=100% h=100%
+    text #word "BREAK" size=500 weight=900 color=#FF7A4D x=50% y=50% anchor=center w=100%
+  text "BREAK IT. BRING IT BACK." size=48 weight=800 color=#FFFFFF x=4% y=6%
+  @0.4s shatter #word pieces=40 seed=11 origin=40%,60% force=1500 gravity=2200 bounce=0.3 dur=1.9s
+  @2.4s rewind #film speed=1.2 dur=2s
+  @4.4s rewind #film speed=0 dur=1.1s

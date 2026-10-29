@@ -1,0 +1,20 @@
+video "J1 inversion" size=1920x1080 fps=30
+theme studio-light
+  bg #F2EEE6
+scene s dur=2s
+  rect #ink w=1920 h=1080 x=0 y=0 fill=#141414
+  rect #r0 w=1728 h=1.5 x=96 y=150 fill=#3A3835
+  rect #r1 w=1728 h=1.5 x=96 y=930 fill=#3A3835
+  image #exp src=v2-j-invert-exposure.png w=1920 h=1080 x=0 y=0
+  rect #tk0 w=1.5 h=10 x=375.8 y=931 fill=#5A5650
+  rect #tk1 w=1.5 h=10 x=556.8 y=931 fill=#5A5650
+  rect #tk2 w=1.5 h=10 x=737.8 y=931 fill=#5A5650
+  rect #tk3 w=1.5 h=10 x=902.4 y=931 fill=#5A5650
+  rect #tk4 w=1.5 h=10 x=1067.0 y=931 fill=#5A5650
+  rect #tk5 w=1.5 h=10 x=1412.6 y=931 fill=#5A5650
+  rect #tk6 w=1.5 h=10 x=1577.1 y=931 fill=#5A5650
+  rect #tk7 w=1.5 h=10 x=1708.8 y=931 fill=#5A5650
+  rect #tk8 w=1.5 h=10 x=1824.0 y=931 fill=#5A5650
+  rect #ph w=2 h=26 x=96.0 y=918 fill=#5A5650
+  text #tc "t = 00:00.000" font=mono size=22 color=#8A857D x=96 y=958 nowrap
+  text #lb "not drawn" font=mono size=22 color=#8A857D x=1824 y=958 anchor=top-right nowrap

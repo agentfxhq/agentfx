@@ -1,0 +1,99 @@
+{
+ "language": "en",
+ "segments": [
+  {
+   "start": 0.0,
+   "end": 5.42,
+   "text": "Reel Script reads the transcript, groups the words into phrases, and breaks them into balanced",
+   "words": [
+    {
+     "word": "Reel",
+     "start": 0.0,
+     "end": 0.26
+    },
+    {
+     "word": "Script",
+     "start": 0.26,
+     "end": 0.6
+    },
+    {
+     "word": "reads",
+     "start": 0.6,
+     "end": 1.04
+    },
+    {
+     "word": "the",
+     "start": 1.04,
+     "end": 1.3
+    },
+    {
+     "word": "transcript,",
+     "start": 1.3,
+     "end": 1.92
+    },
+    {
+     "word": "groups",
+     "start": 2.26,
+     "end": 2.52
+    },
+    {
+     "word": "the",
+     "start": 2.52,
+     "end": 2.8
+    },
+    {
+     "word": "words",
+     "start": 2.8,
+     "end": 3.02
+    },
+    {
+     "word": "into",
+     "start": 3.02,
+     "end": 3.32
+    },
+    {
+     "word": "phrases,",
+     "start": 3.32,
+     "end": 3.78
+    },
+    {
+     "word": "and",
+     "start": 4.18,
+     "end": 4.26
+    },
+    {
+     "word": "breaks",
+     "start": 4.26,
+     "end": 4.56
+    },
+    {
+     "word": "them",
+     "start": 4.56,
+     "end": 4.86
+    },
+    {
+     "word": "into",
+     "start": 4.86,
+     "end": 5.0
+    },
+    {
+     "word": "balanced",
+     "start": 5.0,
+     "end": 5.42
+    }
+   ]
+  },
+  {
+   "start": 5.42,
+   "end": 5.92,
+   "text": "lines.",
+   "words": [
+    {
+     "word": "lines.",
+     "start": 5.42,
+     "end": 5.92
+    }
+   ]
+  }
+ ]
+}

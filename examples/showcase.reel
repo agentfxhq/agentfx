@@ -1,0 +1,71 @@
+// Motion-level showcase: one source, rendered at 16:9 and 9:16.
+video "Reel Script Showcase" size=1920x1080 fps=30 rate=+4% captions=karaoke formats=[16:9, 9:16]
+
+// 1 kinetic type, text matte with animated gradient, mask sweep, glow
+scene type min=4.2s
+  layer #bg fill=linear(120deg, #0c2a1f 0%, #10392a 45%, #17845a 100%)
+  @0s anim #bg grad-angle 0s:120deg 4.5s:220deg grad2 0s:#17845a 4.5s:#3cbf87
+  label #kick "Reel Script" color=$mint in=fade
+  text #headline "Motion from text." style=display split=char in=rise stagger=35ms at=@0.2s
+  display #matte "MOTION" size=230 tracking=-0.04 fill=linear(90deg, #8fe0bb 0%, #ffffff 50%, #3cbf87 100%) glow=0 in=blur at=@motion
+    anim grad-angle 0s:90deg 3s:270deg
+    when portrait
+      set #matte size=170
+  text #sweep "One line per idea" style=h3 color=$muted mask=linear(90deg, #000 33%, transparent 66%) at=@text
+    anim mask-x 0s:1 1.4s:0
+  say "Reel Script turns [[text]] into [[motion]]." min=3.6s
+    @motion.end glow #matte for=0.8s
+
+// 2 data: animated bar + area chart from inline data, trim-path star with glow
+scene data in=wipe tdur=0.7s min=4.6s
+  h2 #dtitle "Data becomes pictures" in=rise
+  row #charts dir=auto gap=60
+    chart #bars type=bar data=[12, 19, 27, 41, 58] labels=["2022", "2023", "2024", "2025", "2026"] unit=k w=720 h=420 in=draw at=@Data
+    chart #trend type=area data=[8, 14, 11, 22, 19, 31, 42] labels=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] w=720 h=420 color=$mint in=draw at=@curves
+  star #st points=5 inner=0.45 size=120 stroke=$warn sw=6 trim=0 x=86% y=16% anchor=center glow=14 glow-color=$warn
+    when portrait
+      set #st x=80% y=12%
+  say "[[Data]] becomes bars and [[curves]], live from the [[script]]." min=4.2s
+    @script draw #st dur=0.9s ; anim #st rot 0s:0deg 1.6s:144deg~out-cubic
+
+// 3 code with diff animation
+scene code in=push tdur=0.6s min=4s
+  h2 #ctitle "Code with a diff" in=rise
+  code #snip lang=ts w=1100 in=type |
+      export function total(items: Item[]) {
+    -   return items.reduce((s, i) => s + i.price, 0);
+    +   const net = items.reduce((s, i) => s + i.price, 0);
+    +   return Math.round(net * 1.2 * 100) / 100;
+      }
+  when portrait
+    set #snip w=960 size=22
+  say "Code shows the [[difference]] line by line." min=3.6s
+    @difference diff #snip
+
+// 4 2.5D camera with parallax, blur by depth, particles
+scene space in=zoom tdur=0.7s min=4.6s
+  camera persp=1100
+  layer #far x=50% y=50% w=1500 h=820 anchor=center z=-600 radius=40 fill=radial(at 30% 30%, #17845a 0%, #0c2a1f 80%) blur=6 shadow=lg
+  card #c1 "Layer 1" sub="z = -200" w=420 x=26% y=52% anchor=center z=-200 shadow=lg in=pop
+  card #c2 "Layer 2" sub="z = 0" w=420 x=50% y=52% anchor=center z=0 shadow=lg in=pop at=@0.25s
+  card #c3 "Layer 3" sub="z = 250" w=420 x=71% y=52% anchor=center z=250 shadow=lg in=pop at=@0.5s fill=$accent
+  text #pill "Reel" style=label x=9% y=11% fill=$surface pad=14 radius=99 color=$text hud
+  particles #fx count=80 seed=4 x=50% y=55% speed=1100 gravity=1500 life=1.6s
+  when portrait
+    set #c1 x=50% y=30%
+    set #c2 x=50% y=52%
+    set #c3 x=50% y=70%
+  say "[[Layers]] in space, one camera, and then [[fireworks]]." min=4.4s
+    when landscape
+      @Layers anim #camera x 0s:-260 3s:240 roty 0s:-10 3s:10 ; dolly z=160 dur=3s
+    when portrait
+      @Layers anim #camera y 0s:-160 3s:160 rotx 0s:6 3s:-6 ; dolly z=120 dur=3s
+    @fireworks burst #fx
+
+// 5 magic move: the pill grows into the title
+scene end in=magic tdur=0.9s min=3.6s
+  text #pill "Reel" style=display size=200 x=50% y=42% anchor=center color=$mint
+  h3 #bye "One format. Every aspect ratio." y=68% x=50% anchor=center in=rise at=@format
+    when portrait
+      set #bye size=34
+  say "One [[format]], every aspect ratio." min=3.2s

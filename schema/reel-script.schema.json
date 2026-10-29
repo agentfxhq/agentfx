@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentfx.dev/schema/reel-script-0.json",
+  "title": "Reel Script v0 (JSON form)",
+  "description": "1:1 JSON form of the Reel Script text format. Every node is {kind, args, props, body, children}. Value spellings are the same as in text form (\"0.4s\", \"#17845a\", \"$accent\", \"@Reiter+0.2s\"). Typing happens against the catalog (`agentfx catalog`).",
+  "type": "object",
+  "required": [
+    "nodes"
+  ],
+  "properties": {
+    "reel": {
+      "const": "0"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    }
+  },
+  "$defs": {
+    "value": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/value"
+          }
+        }
+      ]
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "element, verb or document node; `at` = event anchor (args[0] = anchor expression)",
+          "examples": [
+            "anim",
+            "at",
+            "bg",
+            "body",
+            "box",
+            "browser",
+            "burst",
+            "callout",
+            "camera",
+            "card",
+            "chapter",
+            "chapterbar",
+            "chart",
+            "circle",
+            "click",
+            "code",
+            "col",
+            "colors",
+            "count",
+            "counter",
+            "cursor",
+            "dblclick",
+            "device",
+            "diagram",
+            "diff",
+            "display",
+            "dolly",
+            "drag",
+            "draw",
+            "ellipse",
+            "emph",
+            "enter",
+            "exit",
+            "focus",
+            "glow",
+            "grid",
+            "group",
+            "h1",
+            "h2",
+            "h3",
+            "hide",
+            "highlight",
+            "hot",
+            "html",
+            "icon",
+            "image",
+            "label",
+            "layer",
+            "layout",
+            "line",
+            "link",
+            "lint",
+            "list",
+            "lottie",
+            "lower3",
+            "motion",
+            "move",
+            "music",
+            "node",
+            "note",
+            "orbit",
+            "pan",
+            "particles",
+            "path",
+            "pause",
+            "phone",
+            "pill",
+            "play",
+            "poly",
+            "pronounce",
+            "pulse",
+            "quote",
+            "rect",
+            "row",
+            "say",
+            "scene",
+            "set",
+            "sfx",
+            "shader",
+            "shake",
+            "show",
+            "small",
+            "spacer",
+            "spotlight",
+            "stack",
+            "star",
+            "stat",
+            "steps",
+            "svg",
+            "swap",
+            "terminal",
+            "text",
+            "textpath",
+            "theme",
+            "title",
+            "toast",
+            "type",
+            "video",
+            "when",
+            "window",
+            "zoom"
+          ]
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/value"
+          }
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/value"
+          }
+        },
+        "body": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      }
+    }
+  }
+}

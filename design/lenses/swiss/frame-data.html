@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swiss: Data</title>
+<style>
+:root {
+  --bg: #f2f0eb; --border: #111111; --text: #111111; --muted: #3d3d3d; --faint: #6b6b6b;
+  --accent: #e3000f; --accent2: #111111; --paper: #ffffff;
+  --display: "Inter"; --body: "Inter"; --mono: "JetBrains Mono";
+  --rule: 3px; --safe-x: 134px; --safe-y: 76px;
+}
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); position: relative; }
+.meta { position: absolute; left: var(--safe-x); top: var(--safe-y); width: 1652px; display: flex; justify-content: space-between; font-size: 28px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding-bottom: 16px; border-bottom: var(--rule) solid var(--border); }
+h1 { position: absolute; left: var(--safe-x); top: 160px; margin: 0; font-family: var(--display); font-size: 108px; font-weight: 800; letter-spacing: -0.045em; line-height: 0.95; }
+.stat { position: absolute; left: var(--safe-x); top: 520px; width: 700px; }
+.stat .big { font-family: var(--display); font-size: 220px; font-weight: 800; letter-spacing: -0.05em; line-height: 0.85; font-variant-numeric: tabular-nums; }
+.stat .unit { margin-top: 28px; padding-top: 18px; border-top: var(--rule) solid var(--border); font-size: 52px; font-weight: 750; letter-spacing: -0.02em; }
+.stat .sub { margin-top: 10px; font-size: 34px; font-weight: 450; color: var(--muted); }
+.chart { position: absolute; left: 960px; top: 280px; width: 826px; height: 724px; }
+.base { position: absolute; left: 0; top: 640px; width: 826px; height: 0; border-top: var(--rule) solid var(--border); }
+.bar { position: absolute; bottom: 84px; width: 160px; background: var(--accent2); }
+.bar.hi { background: var(--accent); }
+.val { position: absolute; width: 160px; font-size: 44px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.val.hi { color: var(--accent); }
+.q { position: absolute; top: 660px; width: 160px; font-size: 34px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.note { position: absolute; left: 666px; top: 0px; width: 300px; font-size: 34px; font-weight: 700; color: var(--accent); line-height: 1.1; }
+.ref { position: absolute; left: 0; width: 826px; height: 0; border-top: 2px solid var(--border); }
+.unitlabel { position: absolute; left: 0; top: 0; font-size: 28px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="meta"><span>Fiscal year 2025</span><span>Four quarters</span></div>
+<h1>Revenue 2025</h1>
+
+<div class="stat">
+  <div class="big">12,480</div>
+  <div class="unit">Orders</div>
+  <div class="sub">across all of 2025</div>
+</div>
+
+<!-- scale: 168 = 504 px (3 px per thousand), baseline at y 640 -->
+<div class="chart">
+  <div class="unitlabel">Revenue in €k</div>
+  <div class="ref" style="top: 388px; width: 826px; border-top: 2px dashed #111111;"></div>
+  <div class="bar" style="left: 0; height: 252px;"></div>
+  <div class="bar" style="left: 222px; height: 291px;"></div>
+  <div class="bar" style="left: 444px; height: 363px;"></div>
+  <div class="bar hi" style="left: 666px; height: 504px;"></div>
+  <div class="val" style="left: 0; top: 330px;">84</div>
+  <div class="val" style="left: 222px; top: 291px;">97</div>
+  <div class="val" style="left: 444px; top: 219px;">121</div>
+  <div class="val hi" style="left: 666px; top: 78px;">168</div>
+  <div class="note" style="top: 88px; left: 236px; width: 400px; text-align: right; white-space: nowrap;">×2 since Q1</div>
+  <div class="base"></div>
+  <div class="q" style="left: 0;">Q1</div>
+  <div class="q" style="left: 222px;">Q2</div>
+  <div class="q" style="left: 444px;">Q3</div>
+  <div class="q" style="left: 666px; color: #e3000f;">Q4</div>
+</div>
+</body>
+</html>

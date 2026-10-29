@@ -1,0 +1,20 @@
+// 2D fluid (X5): pour, stir, a word dissolving into ink, a rewind back into the letters, and an ink reveal.
+video "Fluid" size=1280x720 fps=30 captions=off
+theme studio-light
+  bg #F2EEE6
+
+scene ink dur=6s
+  layer #film x=0 y=0 w=100% h=100%
+    fluid #ink res=1/4 dissipation=0.995 vorticity=18 turbulence=200 seed=3 color=#E8442E shade=0.35
+    text #word "INK" size=420 weight=900 color=#E8442E x=50% y=50% anchor=center nowrap
+  @0s pour #ink at=5%,100% dir=-62deg speed=900 radius=3% rate=5 dur=1.2s
+  @0.4s ink #word into #ink dur=0.4s noise=500
+  @0.9s stir #ink at=50%,50% radius=28% strength=3.5 dur=1.2s
+  @3.8s rewind #film speed=2 dur=1.6s then=hold
+
+scene reveal dur=4s
+  rect #card w=70% h=70% x=50% y=50% anchor=center fill=#2979FF radius=24
+  fluid #stain res=1/4 dissipation=1 vorticity=14 turbulence=150 seed=5 color=#141414 density=3
+  @0s pour #stain at=50%,60% dir=-90deg speed=500 radius=7% rate=9 wobble=40 dur=2.5s
+  @0.5s stir #stain at=50%,45% radius=25% strength=4 dur=1.5s
+  reveal #card with #stain

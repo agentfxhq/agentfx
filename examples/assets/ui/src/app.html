@@ -1,0 +1,239 @@
+<!doctype html>
+<!-- Fictional app UI ("Maplewood Studio", a made-up site editor) used to generate the example
+     screenshots in examples/assets/ui/. Everything here is invented: no real product, company,
+     person or website. Regenerate with `node examples/assets/ui/src/shoot.mjs`. -->
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Inter"; src: url("../../../../assets/fonts/Inter.ttf"); font-weight: 100 900; }
+@font-face { font-family: "JetBrains Mono"; src: url("../../../../assets/fonts/JetBrainsMono.ttf"); }
+:root { --bg:#f4f1ec; --panel:#ffffff; --line:#e4ded4; --ink:#1f2328; --muted:#6b7280; --accent:#3b5bdb; --accent2:#e8590c; --ok:#2f9e44; --warn:#f08c00; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1280px; height: 648px; overflow: hidden; background: var(--bg); font: 13px/1.4 Inter, sans-serif; color: var(--ink); }
+.app { position: absolute; inset: 0; }
+.top { position: absolute; left: 0; right: 0; top: 0; height: 60px; background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 16px; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 750; font-size: 15px; height: 28px; }
+.logo { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg,#3b5bdb,#7048e8); display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 800; }
+.crumb { color: var(--muted); font-size: 13px; }
+.crumb b { color: var(--ink); font-weight: 600; }
+.top .sp { flex: 1; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: #ffd8a8; display: grid; place-items: center; font-weight: 700; color: #a34e00; }
+/* left: chat */
+.chat { position: absolute; left: 0; top: 60px; bottom: 0; width: 372px; background: #fbfaf7; border-right: 1px solid var(--line); padding: 16px; }
+.msg { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: 12.5px; }
+.msg.me { background: #edf2ff; border-color: #dbe4ff; margin-left: 40px; }
+.msg .who { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 3px; }
+.prompt { position: absolute; left: 16px; right: 16px; bottom: 60px; height: 76px; background: #fff; border: 1.5px solid #c5d0f5; border-radius: 12px; padding: 10px 12px; color: var(--muted); }
+.acct { position: absolute; left: 16px; bottom: 16px; height: 30px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.send { position: absolute; right: 16px; bottom: 16px; height: 30px; width: 64px; border-radius: 8px; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 12px; }
+/* handles */
+.handle { position: absolute; top: 60px; bottom: 0; width: 12px; display: grid; place-items: center; z-index: 5; }
+.handle i { width: 4px; height: 40px; border-radius: 2px; background: #cfc8bb; }
+.handle.hot i { background: var(--accent); height: 64px; }
+/* stage */
+.stage-wrap { position: absolute; top: 60px; bottom: 0; left: 384px; padding: 14px; }
+.devices { display: flex; gap: 6px; margin-bottom: 12px; }
+.dev { width: 34px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: #fff; display: grid; place-items: center; }
+.dev.on { background: var(--ink); border-color: var(--ink); }
+.dev.on svg { stroke: #fff; }
+.stage { position: absolute; left: 14px; right: 14px; top: 56px; bottom: 14px; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+.site-nav { height: 40px; display: flex; align-items: center; padding: 0 18px; gap: 16px; font-size: 12px; border-bottom: 1px solid #eee; }
+.site-nav b { font-size: 14px; margin-right: auto; color: #7a3e12; }
+.hero { height: 220px; position: relative; background: linear-gradient(120deg,#ff922b 0%,#f06595 45%,#7950f2 100%); color: #fff; padding: 34px 26px; overflow: hidden; }
+.hero h1, .hero p, .hero .btn { position: relative; z-index: 2; }
+.hero h1 { font-size: 30px; line-height: 1.1; font-weight: 800; max-width: 300px; }
+.hero p { margin-top: 10px; max-width: 280px; font-size: 13px; opacity: .92; }
+.hero .btn { display: inline-block; margin-top: 16px; background: #fff; color: #c2255c; font-weight: 700; padding: 8px 14px; border-radius: 20px; font-size: 12px; }
+.sun { position: absolute; right: -60px; top: 30px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle at 40% 40%,#ffe066,#fab005 60%,#f76707); }
+.hill { position: absolute; left: -40px; right: -40px; bottom: -96px; height: 140px; border-radius: 50%; background: #2b8a3e; }
+.hill.b { left: 46%; bottom: -104px; background: #37b24d; }
+.cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 16px 18px; }
+.c { border-radius: 10px; overflow: hidden; border: 1px solid #eee; }
+.c .img { height: 70px; }
+.c .t { padding: 8px 10px; font-weight: 650; font-size: 12px; }
+.c .s { padding: 0 10px 10px; color: var(--muted); font-size: 11px; }
+.c1 .img { background: linear-gradient(135deg,#74c0fc,#1c7ed6); }
+.c2 .img { background: linear-gradient(135deg,#8ce99a,#2b8a3e); }
+.c3 .img { background: linear-gradient(135deg,#ffc078,#e8590c); }
+/* side panel */
+.side { position: absolute; top: 60px; bottom: 0; right: 0; background: var(--panel); border-left: 1px solid var(--line); }
+.strip { height: 34px; margin: 8px 12px 0; border-radius: 9px; background: #fff4e6; border: 1px solid #ffd8a8; display: flex; align-items: center; padding: 0 6px 0 12px; font-size: 12px; color: #a34e00; gap: 8px; }
+.strip .sp { flex: 1; }
+.strip .go { height: 22px; padding: 0 10px; border-radius: 6px; background: var(--accent2); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 11.5px; }
+.tabs { display: flex; margin: 6px 12px 0; border-bottom: 1px solid var(--line); }
+.tab { flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12.5px; color: var(--muted); border-bottom: 2px solid transparent; }
+.tab.on { color: var(--ink); font-weight: 650; border-color: var(--accent); }
+.badge { min-width: 18px; height: 18px; border-radius: 9px; background: var(--accent2); color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; padding: 0 5px; }
+.badge.blue { background: var(--accent); }
+.pane { padding: 14px 14px; }
+.pane h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 4px 0 8px; }
+.row { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; display: flex; gap: 10px; align-items: center; }
+.row .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); flex: none; }
+.row .dot.ok { background: var(--ok); }
+.row .what { flex: 1; }
+.row .what b { display: block; font-weight: 600; font-size: 12.5px; }
+.row .what span { color: var(--muted); font-size: 11.5px; }
+.pill { font-size: 11px; padding: 3px 8px; border-radius: 12px; background: #f1f3f5; color: #495057; }
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.field .in { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; }
+.swatches { display: flex; gap: 6px; }
+.sw { width: 28px; height: 28px; border-radius: 7px; }
+.pick { height: 34px; border: 1px solid var(--line); border-radius: 9px; display: flex; align-items: center; padding: 0 12px; gap: 8px; font-weight: 600; }
+.pick .sp { flex: 1; }
+.menu { position: absolute; z-index: 9; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.14); padding: 4px; }
+.opt { height: 31px; display: flex; align-items: center; padding: 0 10px; border-radius: 7px; gap: 8px; font-size: 12.5px; }
+.opt.hover { background: #edf2ff; }
+.host { display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 12px; background: #f1f3f5; padding: 2px 6px; border-radius: 5px; }
+.effect { border-radius: 10px; background: #f8f9fa; border: 1px solid var(--line); padding: 10px 12px; font-size: 12px; color: #495057; line-height: 1.5; margin: 10px 0 14px; }
+.big { height: 36px; border-radius: 9px; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 650; font-size: 13px; }
+.big.hover { background: #2f4ac0; }
+.big.busy { background: #91a7ff; }
+.big.done { background: var(--ok); }
+.xref { margin-top: 8px; font-size: 12px; color: var(--muted); height: 18px; }
+.xref a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.btn2 { height: 30px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: #fff; display: inline-grid; place-items: center; font-size: 12px; font-weight: 600; }
+.btn2.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.dir { height: 24px; padding: 0 8px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-grid; place-items: center; background: #e7f5ff; color: #1971c2; }
+.dir.sel { background: #1971c2; color: #fff; }
+.veil { position: absolute; inset: 0; background: rgba(20,24,32,.38); z-index: 20; }
+.modal { position: absolute; z-index: 21; background: #fff; border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,.25); padding: 18px; }
+.modal h3 { font-size: 16px; margin-bottom: 10px; }
+.diffcols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; }
+.diffcols div { border-radius: 8px; padding: 10px; line-height: 1.6; }
+.del { background: #fff5f5; } .del s { background: #ffc9c9; text-decoration: none; padding: 0 2px; }
+.add { background: #ebfbee; } .add u { background: #b2f2bb; text-decoration: none; padding: 0 2px; }
+.toastline { display: flex; align-items: center; gap: 8px; color: var(--ok); font-weight: 600; font-size: 12px; margin: 6px 0 10px; }
+.hidden { display: none !important; }
+</style></head>
+<body>
+<div class="app" id="app">
+  <div class="top">
+    <div class="brand" data-hot="brand"><div class="logo">M</div>Maplewood Studio</div>
+    <div class="crumb">Projects / <b>Harbor Bakery</b></div>
+    <div class="sp"></div>
+    <div class="crumb">Draft saved</div>
+    <div class="avatar">AK</div>
+  </div>
+
+  <div class="chat" data-hot="chat">
+    <div class="msg"><div class="who">Assistant</div>The opening hours on the contact page are updated. Want me to add the Sunday brunch menu as well?</div>
+    <div class="msg me"><div class="who">You</div>Yes, and make the hero headline a bit shorter.</div>
+    <div class="msg"><div class="who">Assistant</div>Done: “Fresh bread, every morning.” Three changes are waiting in the side panel.</div>
+    <div class="prompt" data-hot="prompt">Ask for a change…</div>
+    <div class="acct" data-hot="acct"><div class="avatar" style="width:22px;height:22px;font-size:10px">AK</div>Alex K. · Editor</div>
+    <div class="send" data-hot="send">Send</div>
+  </div>
+  <div class="handle" id="h-chat" data-hot="rs-chat" style="left:372px"><i></i></div>
+
+  <div class="stage-wrap" id="stagewrap">
+    <div class="devices">
+      <div class="dev on" data-hot="dev-desktop"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+      <div class="dev" data-hot="dev-tablet"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/></svg></div>
+      <div class="dev" data-hot="dev-mobile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><rect x="7" y="3" width="10" height="18" rx="2"/></svg></div>
+    </div>
+    <div class="stage" data-hot="stage">
+      <div class="site-nav"><b>Harbor Bakery</b><span>Bread</span><span>Cakes</span><span>Brunch</span><span>Visit</span></div>
+      <div class="hero"><div class="sun"></div><div class="hill"></div><div class="hill b"></div>
+        <h1>Fresh bread, every morning.</h1><p>Sourdough, pastries and slow coffee by the old harbour since 1998.</p><span class="btn">See today’s bakes</span></div>
+      <div class="cards">
+        <div class="c c1"><div class="img"></div><div class="t">Sunday brunch</div><div class="s">Every Sunday, 9 to 14</div></div>
+        <div class="c c2"><div class="img"></div><div class="t">Garden terrace</div><div class="s">40 seats outside</div></div>
+        <div class="c c3"><div class="img"></div><div class="t">Order a cake</div><div class="s">Two days ahead</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="handle" id="h-side" data-hot="rs-side"><i></i></div>
+
+  <div class="side" id="side">
+    <div class="strip" data-hot="strip"><span>3 changes not on staging yet</span><span class="sp"></span><span class="go" data-hot="strip-publish">Publish</span></div>
+    <div class="tabs">
+      <div class="tab" id="t-changes" data-hot="tab-changes">Changes <span class="badge">3</span></div>
+      <div class="tab" id="t-content" data-hot="tab-content">Content <span class="badge blue">1</span></div>
+      <div class="tab" id="t-publish" data-hot="tab-publish">Publish</div>
+      <div class="tab" id="t-pages" data-hot="tab-pages">Pages <span class="badge">2</span></div>
+      <div class="tab" id="t-history" data-hot="tab-history">History</div>
+    </div>
+
+    <div class="pane" id="p-changes">
+      <h4>Waiting for staging</h4>
+      <div class="row"><span class="dot"></span><div class="what"><b>Hero headline shortened</b><span>Home · 2 min ago</span></div><span class="pill">Text</span></div>
+      <div class="row"><span class="dot"></span><div class="what"><b>Sunday brunch card added</b><span>Home · 4 min ago</span></div><span class="pill">Block</span></div>
+      <div class="row"><span class="dot"></span><div class="what"><b>Opening hours updated</b><span>Visit · 9 min ago</span></div><span class="pill">Text</span></div>
+      <h4 style="margin-top:14px">Already live</h4>
+      <div class="row"><span class="dot ok"></span><div class="what"><b>New footer address</b><span>All pages · yesterday</span></div><span class="pill">Global</span></div>
+    </div>
+
+    <div class="pane" id="p-content">
+      <h4>Hero block</h4>
+      <div class="field"><label>Headline</label><div class="in">Fresh bread, every morning.</div></div>
+      <div class="field"><label>Intro</label><div class="in">Sourdough, pastries and slow coffee by the old harbour since 1998.</div></div>
+      <div class="field"><label>Button</label><div class="in">See today’s bakes</div></div>
+      <div class="field"><label>Colours</label><div class="swatches"><span class="sw" style="background:#ff922b"></span><span class="sw" style="background:#f06595"></span><span class="sw" style="background:#7950f2"></span><span class="sw" style="background:#2b8a3e"></span><span class="sw" style="background:#fab005"></span></div></div>
+    </div>
+
+    <div class="pane" id="p-publish">
+      <h4>Publish to</h4>
+      <div class="pick" data-hot="pub-pick"><span id="pick-label">Preview</span><span class="sp"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)">Target: <span class="host" data-hot="pub-host" id="host">preview.example.test</span></div>
+      <div class="effect" data-hot="pub-effect" id="effect">Builds the current draft and opens a private preview link. Nothing changes for visitors.</div>
+      <div class="big" data-hot="pub-go" id="go">Publish to preview</div>
+      <div class="xref" data-hot="pub-xref">Page texts are synced separately under <a data-hot="xref-pages">Pages</a>.</div>
+    </div>
+
+    <div class="pane" id="p-pages">
+      <div class="toastline hidden" id="pg-toast">✓ Synced 2 pages</div>
+      <h4>Page texts vs staging</h4>
+      <div class="row" data-hot="row-home" style="flex-wrap:wrap"><span class="dot"></span><div class="what"><b>Home</b><span>Changed here and on staging</span></div><span class="btn2" data-hot="cmp-home">Compare</span><div style="width:100%;display:flex;gap:6px;padding-left:18px"><span class="dir" data-hot="dir-home-push" id="d1">Here → staging</span><span class="dir" style="background:#f1f3f5;color:#495057">Staging → here</span></div></div>
+      <div class="row" data-hot="row-visit" style="flex-wrap:wrap"><span class="dot"></span><div class="what"><b>Visit</b><span>Changed here</span></div><div style="width:100%;display:flex;gap:6px;padding-left:18px"><span class="dir sel" data-hot="dir-visit-push">Here → staging</span></div></div>
+      <div class="row"><span class="dot ok"></span><div class="what"><b>Cakes</b><span>In sync</span></div></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px"><span class="btn2 hidden" data-hot="cs-undo" id="undo">Undo</span><span class="btn2 primary" data-hot="cs-apply" id="apply">Sync 2 pages</span></div>
+    </div>
+  </div>
+
+  <div class="menu hidden" id="menu"><div class="opt" data-hot="opt-preview" id="o1">● Preview</div><div class="opt" data-hot="opt-staging" id="o2">● Staging</div></div>
+  <div class="veil hidden" id="veil"></div>
+  <div class="modal hidden" id="diff" style="left:300px;top:150px;width:680px" data-hot="diff">
+    <h3>Home · hero intro</h3>
+    <div class="diffcols"><div class="del">Sourdough, pastries and <s>slow</s> coffee by the old harbour since 1998.</div><div class="add">Sourdough, pastries and <u>good</u> coffee by the old harbour since 1998.</div></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px"><span class="btn2" data-hot="diff-close">Close</span></div>
+  </div>
+  <div class="modal hidden" id="confirm" style="left:470px;top:220px;width:340px" data-hot="confirm">
+    <h3>Sync 2 pages to staging?</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Staging keeps a copy, so you can undo this later.</p>
+    <div style="display:flex;justify-content:flex-end;gap:8px"><span class="btn2">Cancel</span><span class="btn2 primary" data-hot="cf-ok">Sync</span></div>
+  </div>
+</div>
+<script>
+// layout + states; window.setState(name) is called by shoot.mjs
+const W = 1280, $ = (s) => document.querySelector(s);
+function layout(sideW) {
+  const side = $('#side'); side.style.width = sideW + 'px';
+  $('#h-side').style.left = (W - sideW - 12) + 'px';
+  $('#stagewrap').style.width = (W - sideW - 12 - 384) + 'px';
+}
+function tab(name) {
+  for (const t of ['changes','content','publish','pages','history']) {
+    $('#t-' + t).classList.toggle('on', t === name);
+    const p = $('#p-' + t); if (p) p.classList.toggle('hidden', t !== name);
+  }
+}
+function menuAt() { const r = $('[data-hot=pub-pick]').getBoundingClientRect(); const m = $('#menu'); m.style.left = r.left + 'px'; m.style.top = (r.bottom + 4) + 'px'; m.style.width = r.width + 'px'; m.classList.remove('hidden'); }
+function staging() { $('#pick-label').textContent = 'Staging'; $('#host').textContent = 'staging.example.test'; $('#effect').textContent = 'Runs the deploy pipeline and updates the staging site. Takes about a minute; visitors of the live site see nothing yet.'; $('#go').textContent = 'Publish to staging'; }
+window.setState = (s) => {
+  layout(s === 'drag' ? 520 : s === 'wide' ? 560 : 412);
+  $('#h-side').classList.toggle('hot', ['hot','drag','wide'].includes(s));
+  const t = { changes:'changes', content:'content', hot:'changes', drag:'changes', wide:'changes' }[s] || (s.startsWith('pub') ? 'publish' : s.startsWith('pg') ? 'pages' : 'changes');
+  tab(t);
+  if (s.startsWith('pub-menu')) menuAt();
+  if (s === 'pub-menu-staging') $('#o2').classList.add('hover');
+  if (['pub-staging','pub-hover','pub-busy','pub-sent'].includes(s)) staging();
+  if (s === 'pub-hover') $('#go').classList.add('hover');
+  if (s === 'pub-busy') { $('#go').classList.add('busy'); $('#go').textContent = 'Publishing…'; }
+  if (s === 'pub-sent') { $('#go').classList.add('done'); $('#go').textContent = '✓ Staging is up to date'; }
+  if (s === 'pg-diff') { $('#veil').classList.remove('hidden'); $('#diff').classList.remove('hidden'); }
+  if (['pg-push','pg-confirm','pg-done'].includes(s)) $('#d1').classList.add('sel');
+  if (s === 'pg-confirm') { $('#veil').classList.remove('hidden'); $('#confirm').classList.remove('hidden'); }
+  if (s === 'pg-done') { $('#pg-toast').classList.remove('hidden'); $('#undo').classList.remove('hidden'); $('#apply').classList.add('hidden'); for (const d of document.querySelectorAll('#p-pages .dot')) d.classList.add('ok'); }
+};
+</script>
+</body></html>

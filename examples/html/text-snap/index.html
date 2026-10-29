@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8">
+<meta name="reel-duration" content="0.5">
+<meta name="reel-fps" content="30">
+<title>reel scene: inline text line snapping (M4d)</title>
+<style>
+@font-face { font-family: "Inter"; src: url("../../scenes/_shared/Inter.ttf") format("truetype"); font-weight: 100 900; }
+body { margin: 0; background: #fff; font: 12.5px/1.4 "Inter", sans-serif; color: #15181d; }
+.stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+/* Chrome rounds each line box top to a whole CSS px in the scaled wrapper's space (then Skia
+   rounds the baseline in device px): line tops 20 / 37.5 / 55 (+ f) under scale(1.25). */
+.w { position: absolute; left: 0; top: 0; width: 1600px; height: 400px; transform-origin: 0 0; transform: scale(1.25); }
+.blk { position: absolute; width: 400px; }
+p { margin: 0; }
+</style>
+</head>
+<body>
+<div class="stage"><div class="w">
+  <div class="blk" style="left: 100px; top: 20px"><p>Hello world the local site<br>Hello world the local site<br>Hello world the local site</p></div>
+  <div class="blk" style="left: 600px; top: 20.5px"><p>Hello world the local site<br>Hello world the local site<br>Hello world the local site</p></div>
+  <div class="blk" style="left: 1100px; top: 20.25px"><p>Hello world the local site<br>Hello world the local site<br>Hello world the local site</p></div>
+</div></div>
+</body></html>

@@ -1,0 +1,77 @@
+{
+ "language": "en",
+ "segments": [
+  {
+   "start": 0.0,
+   "end": 4.6,
+   "text": "Every format gets its own safe area, so nothing hides behind the interface.",
+   "words": [
+    {
+     "word": "Every",
+     "start": 0.0,
+     "end": 0.26
+    },
+    {
+     "word": "format",
+     "start": 0.26,
+     "end": 0.68
+    },
+    {
+     "word": "gets",
+     "start": 0.68,
+     "end": 0.98
+    },
+    {
+     "word": "its",
+     "start": 0.98,
+     "end": 1.24
+    },
+    {
+     "word": "own",
+     "start": 1.24,
+     "end": 1.44
+    },
+    {
+     "word": "safe",
+     "start": 1.44,
+     "end": 1.7
+    },
+    {
+     "word": "area,",
+     "start": 1.7,
+     "end": 2.26
+    },
+    {
+     "word": "so",
+     "start": 2.52,
+     "end": 2.86
+    },
+    {
+     "word": "nothing",
+     "start": 2.86,
+     "end": 3.12
+    },
+    {
+     "word": "hides",
+     "start": 3.12,
+     "end": 3.54
+    },
+    {
+     "word": "behind",
+     "start": 3.54,
+     "end": 3.92
+    },
+    {
+     "word": "the",
+     "start": 3.92,
+     "end": 4.24
+    },
+    {
+     "word": "interface.",
+     "start": 4.24,
+     "end": 4.6
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,22 @@
+// Technical blueprint (L1 lens), cyanotype drawing sheet. Tokens for Reel Script components. Essay: LENS.md
+design "Technical Blueprint" base=dark lens=blueprint
+  colors bg=#0e3d73 bg2=#0b3566 surface=#114680 surface2=#15508f border=#cfe6ff text=#ffffff muted=#b7d3f2 faint=#9cc3ea mint=#ffd23f accent=#ffd23f accent2=#7fe3ff danger=#ff8a7a warn=#ffd23f ink=#0b3566 paper=#ffffff code-bg=#0a2f5a
+  bg #0e3d73
+  type display="Space Grotesk" body="Space Grotesk" mono="JetBrains Mono" base=36 ratio=1.333 display-weight=600 heading-weight=500 body-weight=400 label-weight=500 display-tracking=-0.02 heading-tracking=0 label-tracking=0.12 label-case=upper lh-display=1.05 lh-body=1.3
+  space unit=8 scale=[8, 16, 24, 40, 64, 96, 144]
+  layout radius=0 radius-sm=0 safe=7%
+  surface style=outline border=2
+  elevation shadow=none
+  texture bg=solid grain=0
+  icons style=outline stroke=2
+  scale components=1.05 diagram=1.4 chart=1.15
+  motion enter=inout-cubic exit=in-quad move=inout-cubic emphasis=out-cubic enter-dur=0.8s exit-dur=0.3s move-dur=0.7s stagger=90ms
+  skin node=tag
+  treatment grid-bg draw-on hairlines caps-labels frame-rules numbered
+  do "A visible drawing grid (40 px minor, 200 px major) under everything; content snaps to it"
+  do "Line work in white and cyan, 2 px for objects, 1.5 px for dimension and leader lines"
+  do "Mono caps for every label, part number and measurement; dimension lines with arrowheads carry quantities"
+  do "Amber is the red pencil: only the active part and its callout"
+  dont "Filled shapes, rounded corners, drop shadows, gradients, glows"
+  dont "Proportional body text for labels; any color outside white, cyan and one amber"
+  dont "Things that pop or bounce in; strokes draw on, labels type or fade after their line arrives"

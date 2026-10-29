@@ -1,0 +1,8 @@
+video "Chart parts" size=1920x1080
+scene a
+  row gap=60
+    chart #rev type=bar data=[84, 97, 121, 168] labels=["Q1", "Q2", "Q3", "Q4"] unit=k w=700 h=420 in=draw
+    chart #conv type=line data=[1.8, 1.9, 2.1, 2.0, 2.4, 2.7] labels=["Jan", "Feb", "Mär", "Apr", "Mai", "Jun"] unit=% w=700 h=420 values in=draw at=@0.5s
+  say "Im vierten [[Quartal]] der Sprung, und im [[Juni]] der Höchstwert."
+    @Quartal pulse #rev.b4 scale=1.15 ; glow #rev.b4
+    @Juni pulse #conv.d6 scale=1.6

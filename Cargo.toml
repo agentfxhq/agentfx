@@ -1,0 +1,27 @@
+[workspace]
+members = ["crates/ir", "crates/render", "crates/script"]
+default-members = ["crates/ir", "crates/render", "crates/script"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+license = "Apache-2.0"
+homepage = "https://agentfx.dev"
+authors = ["Levels Branding and Webdevelopment OG"]
+
+# Patched Blitz/Parley/Stylo (see vendor/README.md): subset painting (element identity),
+# CSS visibility semantics, gradient stops outside 0..100 %, outline-offset, automatic
+# optical sizing, layout rounding switches. `grep -rn "reel patch" vendor/`.
+[patch.crates-io]
+blitz-paint = { path = "vendor/blitz-paint" }
+blitz-dom = { path = "vendor/blitz-dom" }
+parley = { path = "vendor/parley" }
+stylo = { path = "vendor/stylo" }
+
+[profile.release]
+opt-level = 3
+debug = false
+codegen-units = 16
+
+[profile.release.package."*"]
+opt-level = 3

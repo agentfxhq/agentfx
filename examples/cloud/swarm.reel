@@ -1,0 +1,11 @@
+// Point cloud demo: 20k points, one layer. Formations, staggered spring morphs, drift, color rules.
+video "Swarm" size=1920x1080 fps=30
+theme studio-dark
+  bg #0C0B0A
+scene s dur=6s
+  cloud #swarm n=20000 seed=7 r=2.4 jitter=0.25 palette=[#F2EEE6, #E8442E] weights=[0.64, 0.36] mblur=8
+    form 0s field flow=[70, -12] noise=40 noise-scale=300 noise-speed=0.2
+    form 0.6s text "3000" weight=800 dur=0.9s stagger=0.5s by=x ease=spring(150,15) color=dir angle=30 split=[0.64, 0.36]
+    form 2.2s spiral r=48% squash=0.62 spin=30 dur=1s stagger=0.4s by=distance ease=spring(90,14) color=distance split=[0.64, 0.36]
+    form 3.6s terrain amp=60 speed=0.3 dot=0.8 dur=0.9s stagger=0.4s by=y ease=spring(110,16) color=dir angle=80 wave=[110, 900] split=[0.64, 0.36]
+    form 4.8s text "reel" weight=900 dur=0.8s stagger=0.35s by=x ease=spring(130,13) color=y split=[0.36, 0.64] noise=1.5 noise-scale=60 noise-speed=0.5

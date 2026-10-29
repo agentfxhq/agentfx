@@ -1,0 +1,17 @@
+// Time remap of a subtree: rewind (reverse at a speed factor) and timemap (piecewise-linear local time).
+video "Time remap" size=1280x720 fps=30 captions=off
+
+scene remap dur=7s
+  layer #film x=0 y=0 w=100% h=100%
+    text #word "Scattered" style=display split=char x=50% y=26% anchor=center in=rise stagger=40ms at=@0.1s
+    ellipse #dot w=36 h=36 fill=$mint x=50% y=46% anchor=center
+    path #line d="M0 20 C 120 -20 280 60 400 20" w=400 h=40 stroke=$mint sw=8 trim=0 x=50% y=80% anchor=center
+    particles #spray count=40 seed=7 x=50% y=64% speed=650 gravity=900 life=1.1s shape=dot
+  label #tc "film time" x=4% y=6% color=$muted
+  @0.2s anim #dot y 0s:0 0.8s:130~spring(170,9)
+  @0.3s draw #line dur=1s
+  @1.3s burst #spray ; hide #dot
+  // hook: rewind hard at 4x for 0.4 s (1.6 s back), then play on
+  @2.4s rewind #film speed=4 dur=0.4s
+  // finale: hold 0.3 s, scrub everything back 4x, hold
+  @4.6s timemap #scene 0s:0s 0.3s:0s 1.4s:-4.4s then=hold

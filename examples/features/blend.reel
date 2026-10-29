@@ -1,0 +1,73 @@
+// Blend modes in direct mode: the full W3C set (separable and non-separable) plus `plus`
+// (additive). Each tile blends an orange-to-violet disc over the same striped backdrop.
+video "Blend" size=1920x1080 fps=30 captions=off
+
+scene blend dur=3s bg=#14161B
+  layer #t0 w=250 h=250 x=8.5% y=15.0% anchor=center
+    rect #bg0 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d0 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=normal
+  text #l0 "normal" size=26 weight=700 color=#FFFFFF x=8.5% y=29.0% anchor=center nowrap
+  layer #t1 w=250 h=250 x=25.1% y=15.0% anchor=center
+    rect #bg1 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d1 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=multiply
+  text #l1 "multiply" size=26 weight=700 color=#FFFFFF x=25.1% y=29.0% anchor=center nowrap
+  layer #t2 w=250 h=250 x=41.7% y=15.0% anchor=center
+    rect #bg2 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d2 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=screen
+  text #l2 "screen" size=26 weight=700 color=#FFFFFF x=41.7% y=29.0% anchor=center nowrap
+  layer #t3 w=250 h=250 x=58.3% y=15.0% anchor=center
+    rect #bg3 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d3 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=overlay
+  text #l3 "overlay" size=26 weight=700 color=#FFFFFF x=58.3% y=29.0% anchor=center nowrap
+  layer #t4 w=250 h=250 x=74.9% y=15.0% anchor=center
+    rect #bg4 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d4 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=darken
+  text #l4 "darken" size=26 weight=700 color=#FFFFFF x=74.9% y=29.0% anchor=center nowrap
+  layer #t5 w=250 h=250 x=91.5% y=15.0% anchor=center
+    rect #bg5 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d5 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=lighten
+  text #l5 "lighten" size=26 weight=700 color=#FFFFFF x=91.5% y=29.0% anchor=center nowrap
+  layer #t6 w=250 h=250 x=8.5% y=46.0% anchor=center
+    rect #bg6 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d6 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=color-dodge
+  text #l6 "color-dodge" size=26 weight=700 color=#FFFFFF x=8.5% y=60.0% anchor=center nowrap
+  layer #t7 w=250 h=250 x=25.1% y=46.0% anchor=center
+    rect #bg7 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d7 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=color-burn
+  text #l7 "color-burn" size=26 weight=700 color=#FFFFFF x=25.1% y=60.0% anchor=center nowrap
+  layer #t8 w=250 h=250 x=41.7% y=46.0% anchor=center
+    rect #bg8 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d8 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=hard-light
+  text #l8 "hard-light" size=26 weight=700 color=#FFFFFF x=41.7% y=60.0% anchor=center nowrap
+  layer #t9 w=250 h=250 x=58.3% y=46.0% anchor=center
+    rect #bg9 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d9 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=soft-light
+  text #l9 "soft-light" size=26 weight=700 color=#FFFFFF x=58.3% y=60.0% anchor=center nowrap
+  layer #t10 w=250 h=250 x=74.9% y=46.0% anchor=center
+    rect #bg10 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d10 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=difference
+  text #l10 "difference" size=26 weight=700 color=#FFFFFF x=74.9% y=60.0% anchor=center nowrap
+  layer #t11 w=250 h=250 x=91.5% y=46.0% anchor=center
+    rect #bg11 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d11 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=exclusion
+  text #l11 "exclusion" size=26 weight=700 color=#FFFFFF x=91.5% y=60.0% anchor=center nowrap
+  layer #t12 w=250 h=250 x=8.5% y=77.0% anchor=center
+    rect #bg12 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d12 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=hue
+  text #l12 "hue" size=26 weight=700 color=#FFFFFF x=8.5% y=91.0% anchor=center nowrap
+  layer #t13 w=250 h=250 x=25.1% y=77.0% anchor=center
+    rect #bg13 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d13 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=saturation
+  text #l13 "saturation" size=26 weight=700 color=#FFFFFF x=25.1% y=91.0% anchor=center nowrap
+  layer #t14 w=250 h=250 x=41.7% y=77.0% anchor=center
+    rect #bg14 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d14 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=color
+  text #l14 "color" size=26 weight=700 color=#FFFFFF x=41.7% y=91.0% anchor=center nowrap
+  layer #t15 w=250 h=250 x=58.3% y=77.0% anchor=center
+    rect #bg15 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d15 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=luminosity
+  text #l15 "luminosity" size=26 weight=700 color=#FFFFFF x=58.3% y=91.0% anchor=center nowrap
+  layer #t16 w=250 h=250 x=74.9% y=77.0% anchor=center
+    rect #bg16 w=250 h=250 x=0 y=0 radius=16 fill=linear(90deg, #1F6FEB 0%, #1F6FEB 33%, #E6EDF3 33%, #E6EDF3 66%, #2EA043 66%, #2EA043 100%)
+    ellipse #d16 w=190 h=190 x=50% y=50% anchor=center fill=linear(135deg, #FF8A3D, #8B5CF6) blend=plus
+  text #l16 "plus" size=26 weight=700 color=#FFFFFF x=74.9% y=91.0% anchor=center nowrap

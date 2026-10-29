@@ -1,0 +1,22 @@
+<!--
+skin: node/tag   (technical label: hairline box, mono kicker, for blueprint / editorial diagrams)
+slots: label sub kicker n
+parts: active, done
+size: w=330
+-->
+<style>
+.skin-node-tag{position:relative;box-sizing:border-box;display:flex;flex-direction:column;gap:{{px:8}};padding:{{px:20}} {{px:24}} {{px:22}};border:{{px:2}} solid var(--text);border-radius:var(--radius-sm);font-family:var(--font-body);background:var(--bg)}
+.skin-node-tag .k{font-family:var(--font-mono);font-size:{{px:22}};letter-spacing:0.08em;text-transform:uppercase;color:var(--accent2)}
+.skin-node-tag .lb{font-family:var(--font-display);font-weight:var(--w-heading);font-size:{{px:36}};line-height:1.1;color:var(--text);white-space:nowrap}
+.skin-node-tag .sb{font-family:var(--font-mono);font-size:{{px:22}};color:var(--muted)}
+.skin-node-tag .act{position:absolute;left:{{px:-8}};top:{{px:-8}};right:{{px:-8}};bottom:{{px:-8}};border:{{px:3}} solid var(--mint)}
+.skin-node-tag .done{position:absolute;right:{{px:-14}};top:{{px:-14}};width:{{px:40}};height:{{px:40}};background:var(--mint);display:flex;align-items:center;justify-content:center}
+.skin-node-tag .done svg{width:{{px:24}};height:{{px:24}}}
+</style>
+<div class="skin-node-tag" style="width:100%">
+  <div class="k">{{n}} {{kicker}}</div>
+  <div class="lb">{{label}}</div>
+  <div class="sb">{{sub}}</div>
+  <div class="act" data-part="active"></div>
+  <div class="done" data-part="done">{{icon:check:bg}}</div>
+</div>

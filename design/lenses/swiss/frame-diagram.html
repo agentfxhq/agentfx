@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swiss: Diagram</title>
+<style>
+:root {
+  --bg: #f2f0eb; --surface: #ffffff; --border: #111111; --text: #111111; --muted: #3d3d3d; --faint: #6b6b6b;
+  --accent: #e3000f; --accent2: #111111; --paper: #ffffff;
+  --display: "Inter"; --body: "Inter"; --mono: "JetBrains Mono";
+  --rule: 3px; --gut: 40px; --safe-x: 134px; --safe-y: 76px;
+}
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); position: relative; }
+.frame { position: absolute; left: var(--safe-x); top: var(--safe-y); width: 1652px; height: 928px; display: flex; flex-direction: column; }
+.meta { display: flex; justify-content: space-between; font-size: 28px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding-bottom: 16px; border-bottom: var(--rule) solid var(--border); }
+.meta .num { font-variant-numeric: tabular-nums; }
+h1 { margin: 36px 0 0 0; font-family: var(--display); font-size: 108px; font-weight: 800; letter-spacing: -0.045em; line-height: 0.95; }
+.steps { margin-top: 56px; display: flex; gap: var(--gut); }
+.step { position: relative; width: 242px; height: 262px; box-sizing: border-box; border: var(--rule) solid var(--border); padding: 20px 20px 22px 20px; display: flex; flex-direction: column; justify-content: space-between; background: var(--surface); }
+.step .n { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.step .label { font-size: 38px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.0; }
+.step svg.ic { width: 52px; height: 52px; }
+.step .badge { position: absolute; right: -3px; top: -3px; width: 52px; height: 52px; background: var(--border); display: flex; align-items: center; justify-content: center; }
+.step .badge svg { width: 34px; height: 34px; }
+.step.active { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.step.next { border-color: var(--faint); color: var(--faint); background: transparent; }
+.arrow { position: absolute; right: -40px; top: 113px; width: 40px; height: 36px; }
+.progress { margin-top: 24px; display: flex; gap: var(--gut); }
+.seg { width: 242px; height: 16px; box-sizing: border-box; }
+.seg.done { background: var(--border); }
+.seg.now { background: var(--accent); }
+.seg.todo { border: var(--rule) solid var(--faint); }
+.lower { margin-top: 56px; display: flex; gap: var(--gut); }
+.lead { width: 806px; }
+.kicker { font-size: 28px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.lead p { margin: 18px 0 0 0; font-size: 44px; font-weight: 450; line-height: 1.2; letter-spacing: -0.01em; max-width: 760px; }
+.panel { width: 806px; border-top: var(--rule) solid var(--border); }
+.panel .head { display: flex; justify-content: space-between; align-items: baseline; padding: 18px 0 14px 0; border-bottom: 2px solid var(--border); }
+.panel .head .t { font-size: 44px; font-weight: 750; letter-spacing: -0.02em; }
+.panel .head .s { font-size: 28px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.row { display: flex; align-items: center; height: 78px; border-bottom: 2px solid var(--border); font-size: 38px; }
+.row svg { width: 36px; height: 36px; margin-right: 20px; }
+.row .job { flex: 1; font-weight: 600; }
+.row .time { width: 140px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); margin-right: 28px; }
+.chip { width: 150px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: var(--border); color: var(--paper); }
+.chip.run { background: var(--accent); }
+.dots { width: 36px; margin-right: 20px; font-size: 38px; font-weight: 800; color: var(--accent); line-height: 1; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="meta"><span>Deployment</span><span class="num">Step 04 / 06</span></div>
+  <h1>How a change goes live</h1>
+
+  <div class="steps">
+    <div class="step">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <span class="n">01</span>
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2"><path d="M4 5h16v11H10l-6 4z"/></svg>
+      <span class="label">Chat</span>
+      <svg class="arrow" viewBox="0 0 40 36" fill="none" stroke="#111111" stroke-width="3"><path d="M6 18h26M24 10l8 8-8 8"/></svg>
+    </div>
+    <div class="step">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <span class="n">02</span>
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>
+      <span class="label">Agent</span>
+      <svg class="arrow" viewBox="0 0 40 36" fill="none" stroke="#111111" stroke-width="3"><path d="M6 18h26M24 10l8 8-8 8"/></svg>
+    </div>
+    <div class="step">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <span class="n">03</span>
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M2 12h6M16 12h6"/></svg>
+      <span class="label">Git Commit</span>
+      <svg class="arrow" viewBox="0 0 40 36" fill="none" stroke="#111111" stroke-width="3"><path d="M6 18h26M24 10l8 8-8 8"/></svg>
+    </div>
+    <div class="step active">
+      <span class="n">04</span>
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><rect x="3" y="4" width="6" height="6"/><rect x="15" y="14" width="6" height="6"/><path d="M9 7h4a2 2 0 0 1 2 2v5"/></svg>
+      <span class="label">Pipeline</span>
+      <svg class="arrow" viewBox="0 0 40 36" fill="none" stroke="#6b6b6b" stroke-width="3"><path d="M6 18h26M24 10l8 8-8 8"/></svg>
+    </div>
+    <div class="step next">
+      <span class="n">05</span>
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#6b6b6b" stroke-width="2"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/></svg>
+      <span class="label">Staging</span>
+      <svg class="arrow" viewBox="0 0 40 36" fill="none" stroke="#6b6b6b" stroke-width="3"><path d="M6 18h26M24 10l8 8-8 8"/></svg>
+    </div>
+    <div class="step next">
+      <span class="n">06</span>
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#6b6b6b" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
+      <span class="label">Production</span>
+    </div>
+  </div>
+
+  <div class="progress">
+    <div class="seg done"></div><div class="seg done"></div><div class="seg done"></div>
+    <div class="seg now"></div><div class="seg todo"></div><div class="seg todo"></div>
+  </div>
+
+  <div class="lower">
+    <div class="lead">
+      <div class="kicker">Active now</div>
+      <p>The pipeline builds the commit, tests it and ships it to staging.</p>
+    </div>
+    <div class="panel">
+      <div class="head"><span class="t">Pipeline #482</span><span class="s">3 jobs</span></div>
+      <div class="row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="3"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        <span class="job">build</span><span class="time">1:12</span><span class="chip">passed</span>
+      </div>
+      <div class="row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="3"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        <span class="job">test</span><span class="time">0:48</span><span class="chip">passed</span>
+      </div>
+      <div class="row">
+        <span class="dots">…</span>
+        <span class="job">deploy</span><span class="time">0:21</span><span class="chip run">running</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

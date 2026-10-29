@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flat: Diagram</title>
+<style>
+:root {
+  --bg: #141a46; --bg2: #1b2259; --surface: #252d6e; --surface2: #2e3680; --border: #3a4290;
+  --text: #ffffff; --muted: #b9bfe8; --faint: #7d84c2; --accent: #ffc84a; --accent2: #4fd1e8;
+  --ok: #3ddc97; --coral: #ff6f61; --ink: #0f1336;
+  --display: "Nunito"; --body: "Nunito"; --mono: "JetBrains Mono";
+  --r: 36px; --r-sm: 18px;
+}
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body { background: radial-gradient(circle at 28% 18%, #26307a 0%, #141a46 75%); color: var(--text); font-family: var(--body); position: relative; }
+.deco { position: absolute; left: 0; top: 0; }
+h1 { position: absolute; left: 134px; top: 70px; margin: 0; font-family: var(--display); font-size: 88px; font-weight: 900; letter-spacing: -0.01em; line-height: 1.05; }
+h1 span { color: var(--accent); }
+.prog { position: absolute; right: 134px; top: 92px; height: 72px; box-sizing: border-box; padding: 0 30px 0 26px; border-radius: 36px; background: var(--surface); display: flex; align-items: center; gap: 14px; }
+.prog i { display: block; width: 22px; height: 22px; border-radius: 11px; background: var(--accent2); }
+.prog i.now { width: 48px; background: var(--accent); }
+.prog i.todo { background: var(--border); }
+.prog b { margin-left: 12px; font-size: 34px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.row { position: absolute; left: 134px; top: 252px; width: 1652px; display: flex; gap: 40px; align-items: flex-end; height: 330px; }
+.node { position: relative; width: 242px; height: 286px; box-sizing: border-box; border-radius: var(--r); background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+.disc { width: 116px; height: 116px; border-radius: 58px; display: flex; align-items: center; justify-content: center; background: var(--accent2); }
+.disc svg { width: 60px; height: 60px; }
+.node .l { font-size: 36px; font-weight: 800; }
+.badge { position: absolute; right: 16px; top: 16px; width: 50px; height: 50px; border-radius: 25px; background: var(--ok); display: flex; align-items: center; justify-content: center; }
+.badge svg { width: 30px; height: 30px; }
+.node.active { height: 320px; background: var(--surface2); border: 6px solid var(--accent); box-shadow: 0 16px 0 #0f1336; }
+.node.active .disc { width: 136px; height: 136px; border-radius: 68px; background: var(--accent); }
+.node.active .disc svg { width: 70px; height: 70px; }
+.node.active .l { font-size: 40px; font-weight: 900; }
+.node.next .disc { background: var(--border); }
+.node.next .l { color: var(--muted); }
+.link { position: absolute; right: -36px; bottom: 136px; width: 32px; height: 12px; }
+.panel { position: absolute; left: 700px; top: 640px; width: 1086px; height: 360px; box-sizing: border-box; border-radius: var(--r); background: var(--surface); padding: 30px 40px; box-shadow: 0 14px 0 #0f1336; }
+.panel .h { display: flex; align-items: center; justify-content: space-between; }
+.panel .h .t { font-size: 46px; font-weight: 900; }
+.panel .h .t span { color: var(--muted); font-weight: 800; }
+.rows { margin-top: 18px; display: flex; flex-direction: column; gap: 14px; }
+.r { height: 70px; border-radius: 35px; background: var(--bg2); display: flex; align-items: center; padding: 0 12px 0 10px; }
+.r .ico { width: 52px; height: 52px; border-radius: 26px; background: var(--ok); display: flex; align-items: center; justify-content: center; margin-right: 20px; }
+.r .ico svg { width: 32px; height: 32px; }
+.r .ico.run { background: var(--accent); }
+.r .job { flex: 1; font-size: 36px; font-weight: 800; }
+.r .time { font-size: 32px; font-weight: 700; color: var(--muted); margin-right: 22px; font-variant-numeric: tabular-nums; }
+.chip { height: 50px; width: 140px; border-radius: 25px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; color: var(--ink); background: var(--ok); }
+.chip.run { background: var(--accent); }
+.cap { position: absolute; left: 134px; top: 892px; width: 520px; font-size: 34px; font-weight: 700; line-height: 1.25; color: var(--muted); }
+.cap b { color: var(--text); font-weight: 900; }
+</style>
+</head>
+<body>
+<!-- stars and a planet, kept clear of the content -->
+<svg class="deco" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <g fill="#8c93d6">
+    <circle cx="1240" cy="70" r="4"/><circle cx="1380" cy="150" r="3"/><circle cx="980" cy="120" r="3"/><circle cx="60" cy="300" r="4"/>
+    <circle cx="640" cy="620" r="3"/><circle cx="90" cy="760" r="3"/><circle cx="1860" cy="420" r="4"/><circle cx="1880" cy="1040" r="3"/>
+  </g>
+  <g fill="#ffffff"><circle cx="1110" cy="200" r="5"/><circle cx="560" cy="640" r="5"/><circle cx="40" cy="560" r="5"/></g>
+  <!-- rocket on its pad, waiting for step 6 -->
+  <g transform="translate(250 590)">
+    <ellipse cx="130" cy="285" rx="150" ry="20" fill="#1b2259"/>
+    <path d="M130 0 C175 40 190 110 182 200 L78 200 C70 110 85 40 130 0 Z" fill="#ffffff"/>
+    <path d="M130 0 C150 18 165 40 174 66 L86 66 C95 40 110 18 130 0 Z" fill="#ff6f61"/>
+    <circle cx="130" cy="120" r="30" fill="#4fd1e8"/><circle cx="130" cy="120" r="18" fill="#26307a"/>
+    <path d="M78 150 L36 222 L82 214 Z" fill="#ff6f61"/><path d="M182 150 L224 222 L178 214 Z" fill="#ff6f61"/>
+    <rect x="98" y="200" width="64" height="24" rx="8" fill="#b9bfe8"/>
+    <rect x="50" y="232" width="160" height="38" rx="19" fill="#3a4290"/>
+  </g>
+</svg>
+
+<h1>How a change goes <span>live</span></h1>
+<div class="prog"><i></i><i></i><i></i><i class="now"></i><i class="todo"></i><i class="todo"></i><b>4 of 6</b></div>
+
+<div class="row">
+  <div class="node">
+    <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="#0f1336" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <div class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="#0f1336" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-6 4z"/></svg></div>
+    <span class="l">Chat</span>
+    <svg class="link" viewBox="0 0 32 12"><g fill="#4fd1e8"><circle cx="5" cy="6" r="5"/><circle cx="27" cy="6" r="5"/></g></svg>
+  </div>
+  <div class="node">
+    <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="#0f1336" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <div class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="#0f1336" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01"/></svg></div>
+    <span class="l">Agent</span>
+    <svg class="link" viewBox="0 0 32 12"><g fill="#4fd1e8"><circle cx="5" cy="6" r="5"/><circle cx="27" cy="6" r="5"/></g></svg>
+  </div>
+  <div class="node">
+    <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="#0f1336" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <div class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="#0f1336" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M2 12h6M16 12h6"/></svg></div>
+    <span class="l">Git Commit</span>
+    <svg class="link" viewBox="0 0 32 12"><g fill="#ffc84a"><circle cx="5" cy="6" r="5"/><circle cx="27" cy="6" r="5"/></g></svg>
+  </div>
+  <div class="node active">
+    <div class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="#0f1336" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="6" height="6" rx="2"/><rect x="15" y="14" width="6" height="6" rx="2"/><path d="M9 7h4a2 2 0 0 1 2 2v5"/></svg></div>
+    <span class="l">Pipeline</span>
+    <svg class="link" viewBox="0 0 32 12"><g fill="#3a4290"><circle cx="5" cy="6" r="5"/><circle cx="27" cy="6" r="5"/></g></svg>
+  </div>
+  <div class="node next">
+    <div class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="#b9bfe8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/></svg></div>
+    <span class="l">Staging</span>
+    <svg class="link" viewBox="0 0 32 12"><g fill="#3a4290"><circle cx="5" cy="6" r="5"/><circle cx="27" cy="6" r="5"/></g></svg>
+  </div>
+  <div class="node next">
+    <div class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="#b9bfe8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></div>
+    <span class="l">Production</span>
+  </div>
+</div>
+
+<div class="cap"><b>Almost there.</b> First the pipeline, then the rocket can launch.</div>
+
+<div class="panel">
+  <div class="h"><span class="t">Pipeline <span>#482</span></span><span class="chip run">running</span></div>
+  <div class="rows">
+    <div class="r"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#0f1336" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><span class="job">build</span><span class="time">1:12</span><span class="chip">passed</span></div>
+    <div class="r"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#0f1336" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><span class="job">test</span><span class="time">0:48</span><span class="chip">passed</span></div>
+    <div class="r"><div class="ico run"><svg viewBox="0 0 24 24" fill="#0f1336"><circle cx="5.5" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="18.5" cy="12" r="2.3"/></svg></div><span class="job">deploy</span><span class="time">0:21</span><span class="chip run">running</span></div>
+  </div>
+</div>
+</body>
+</html>

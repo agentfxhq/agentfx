@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flat: Data</title>
+<style>
+:root {
+  --bg: #141a46; --bg2: #1b2259; --surface: #252d6e; --surface2: #2e3680; --border: #3a4290;
+  --text: #ffffff; --muted: #b9bfe8; --faint: #7d84c2; --accent: #ffc84a; --accent2: #4fd1e8;
+  --coral: #ff6f61; --ink: #0f1336;
+  --display: "Nunito"; --body: "Nunito"; --mono: "JetBrains Mono";
+  --r: 36px; --r-sm: 18px;
+}
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body { background: radial-gradient(circle at 28% 18%, #26307a 0%, #141a46 75%); color: var(--text); font-family: var(--body); position: relative; }
+.abs { position: absolute; left: 0; top: 0; }
+h1 { position: absolute; left: 134px; top: 70px; margin: 0; font-family: var(--display); font-size: 88px; font-weight: 900; letter-spacing: -0.01em; }
+.sub { position: absolute; left: 134px; top: 182px; font-size: 38px; font-weight: 700; color: var(--muted); }
+.badge { position: absolute; left: 134px; top: 330px; width: 560px; height: 560px; border-radius: 280px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.badge .ic { width: 140px; height: 140px; border-radius: 70px; background: var(--coral); display: flex; align-items: center; justify-content: center; margin-bottom: 26px; }
+.badge .ic svg { width: 76px; height: 76px; }
+.badge .big { font-family: var(--display); font-size: 150px; font-weight: 900; line-height: 0.95; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--text); }
+.badge .unit { margin-top: 10px; font-size: 44px; font-weight: 800; }
+.bar { position: absolute; width: 170px; border-radius: 28px 28px 0 0; background: var(--accent2); }
+.bar.hi { background: var(--accent); }
+.v { position: absolute; width: 170px; text-align: center; font-size: 44px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.q { position: absolute; top: 930px; width: 170px; text-align: center; font-size: 36px; font-weight: 800; color: var(--muted); }
+.bubble { position: absolute; left: 1120px; top: 248px; width: 400px; height: 84px; border-radius: 42px; background: var(--text); color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 38px; font-weight: 900; }
+</style>
+</head>
+<body>
+<svg class="abs" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <g fill="#8c93d6"><circle cx="1240" cy="70" r="4"/><circle cx="1500" cy="160" r="3"/><circle cx="760" cy="250" r="3"/><circle cx="60" cy="300" r="4"/><circle cx="740" cy="980" r="3"/><circle cx="1870" cy="560" r="4"/></g>
+  <g fill="#ffffff"><circle cx="1010" cy="140" r="5"/><circle cx="40" cy="760" r="5"/><circle cx="1860" cy="240" r="5"/></g>
+  <!-- ground capsule the bars stand on -->
+  <rect x="846" y="896" width="940" height="22" rx="11" fill="#3a4290"/>
+  <!-- bubble tail toward the Q4 bar -->
+  <path d="M1480 322 L1560 372 L1440 330 Z" fill="#ffffff"/>
+</svg>
+
+<h1>Revenue 2025</h1>
+<div class="sub">thousands of euros, per quarter</div>
+
+<div class="badge">
+  <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></div>
+  <div class="big">12,480</div>
+  <div class="unit">Orders</div>
+</div>
+
+<!-- baseline y 900, 2.8 px per thousand -->
+<div class="bar" style="left: 870px; top: 665px; height: 235px;"></div>
+<div class="bar" style="left: 1110px; top: 628px; height: 272px;"></div>
+<div class="bar" style="left: 1350px; top: 561px; height: 339px;"></div>
+<div class="bar hi" style="left: 1590px; top: 430px; height: 470px;"></div>
+<div class="v" style="left: 870px; top: 600px;">84</div>
+<div class="v" style="left: 1110px; top: 563px;">97</div>
+<div class="v" style="left: 1350px; top: 496px;">121</div>
+<div class="v" style="left: 1590px; top: 365px; color: #ffc84a;">168</div>
+<div class="bubble">×2 since Q1</div>
+<div class="q" style="left: 870px;">Q1</div>
+<div class="q" style="left: 1110px;">Q2</div>
+<div class="q" style="left: 1350px;">Q3</div>
+<div class="q" style="left: 1590px; color: #ffc84a;">Q4</div>
+</body>
+</html>

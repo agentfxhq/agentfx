@@ -1,0 +1,34 @@
+// S1 fixture: features that need the compiler to own layout (native, no Chrome):
+// zoom to a laid-out element, move to=#id, split=line, layout channels, raw html block.
+video "S1 layout" size=1920x1080 fps=30 captions=plain formats=[16:9, 9:16]
+
+scene zoomer min=5s
+  row #r gap=60
+    card #a "Eingang" sub="Rohdaten"
+    card #b "Modell" sub="Training"
+    card #c "Ausgabe" sub="Bericht"
+  text #poem "Ein langer Satz, der in mehrere Zeilen umbricht, damit jede Zeile einzeln erscheint." style=body w=760 split=line in=rise stagger=180ms
+  say "Erst [[Eingang]], dann das [[Modell]], am Ende die [[Ausgabe]]."
+    @Eingang zoom #a dur=0.8s
+    @Modell zoom #b dur=0.8s
+    @Ausgabe zoom out dur=0.8s ; move #a to=#c dur=0.9s
+
+scene raw min=4s
+  html #block w=900 in=rise |
+    <style>
+      .k { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; font-family: Inter, sans-serif; }
+      .k div { background: linear-gradient(160deg, #ffffff22, #ffffff08); border: 1px solid #ffffff33;
+               border-radius: 18px; padding: 22px 26px; color: #fff; font-size: 30px; font-weight: 700; }
+      .k small { display: block; color: #8fe0bb; font-size: 20px; font-weight: 600; margin-top: 6px; }
+    </style>
+    <div class="k">
+      <div>Blitz<small>HTML + CSS</small></div>
+      <div>Stylo<small>Selektoren</small></div>
+      <div data-part="taffy">Taffy<small>Flex + Grid</small></div>
+      <div>Parley<small>Text</small><img src="assets/dot.png" style="width:24px;height:24px;margin-top:6px"></div>
+    </div>
+  text #wide "Breiter" style=h2 in=fade
+  say "Ein [[Block]] aus rohem HTML, nativ gerendert, und Text, der [[breiter]] wird."
+    @breiter anim #wide wght 0s:400 0.8s:900 tracking 0s:0 0.8s:0.08
+    @Block.end set #block.taffy color=#ffc857
+    @Block anim #block.taffy scale 0s:1 0.4s:1.15 0.9s:1 rot 0s:0 0.4s:-4 0.9s:0

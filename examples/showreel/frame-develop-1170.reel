@@ -1,0 +1,21 @@
+video "Exposure develop t = 00:39.000" size=1920x1080 fps=30
+theme studio-light
+  bg #F2EEE6
+scene s dur=1s
+  rect #rule0 w=1728.00 h=1.5 x=96 y=150 fill=#141414
+  rect #rule1 w=1728.00 h=1.5 x=96 y=930 fill=#141414
+  rect #tick0 w=1.5 h=14 x=96.0 y=150 fill=#141414
+  rect #tick1 w=1.5 h=14 x=242.0 y=150 fill=#141414
+  rect #tick2 w=1.5 h=14 x=388.0 y=150 fill=#141414
+  rect #tick3 w=1.5 h=14 x=534.0 y=150 fill=#141414
+  rect #tick4 w=1.5 h=14 x=680.0 y=150 fill=#141414
+  rect #tick5 w=1.5 h=14 x=826.0 y=150 fill=#141414
+  rect #tick6 w=1.5 h=14 x=972.0 y=150 fill=#141414
+  rect #tick7 w=1.5 h=14 x=1118.0 y=150 fill=#141414
+  rect #tick8 w=1.5 h=14 x=1264.0 y=150 fill=#141414
+  rect #tick9 w=1.5 h=14 x=1410.0 y=150 fill=#141414
+  rect #tick10 w=1.5 h=14 x=1556.0 y=150 fill=#141414
+  rect #tick11 w=1.5 h=14 x=1702.0 y=150 fill=#141414
+  image #exposure src=frame-develop-1170-exposure.png w=1920 h=1080 x=0 y=0
+  text #tc "t = 00:39.000" font=mono size=22 color=#141414 x=96 y=958
+  text #drawn "560 / 1200 frames drawn" font=mono size=22 color=#141414 x=1824 y=958 anchor=top-right nowrap

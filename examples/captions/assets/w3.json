@@ -1,0 +1,82 @@
+{
+ "language": "en",
+ "segments": [
+  {
+   "start": 0.0,
+   "end": 4.34,
+   "text": "And the linter checks that each caption stays on screen long enough to read.",
+   "words": [
+    {
+     "word": "And",
+     "start": 0.0,
+     "end": 0.1
+    },
+    {
+     "word": "the",
+     "start": 0.1,
+     "end": 0.22
+    },
+    {
+     "word": "linter",
+     "start": 0.22,
+     "end": 0.44
+    },
+    {
+     "word": "checks",
+     "start": 0.44,
+     "end": 0.78
+    },
+    {
+     "word": "that",
+     "start": 0.78,
+     "end": 1.56
+    },
+    {
+     "word": "each",
+     "start": 1.56,
+     "end": 1.78
+    },
+    {
+     "word": "caption",
+     "start": 1.78,
+     "end": 2.18
+    },
+    {
+     "word": "stays",
+     "start": 2.18,
+     "end": 2.62
+    },
+    {
+     "word": "on",
+     "start": 2.62,
+     "end": 2.92
+    },
+    {
+     "word": "screen",
+     "start": 2.92,
+     "end": 3.26
+    },
+    {
+     "word": "long",
+     "start": 3.26,
+     "end": 3.6
+    },
+    {
+     "word": "enough",
+     "start": 3.6,
+     "end": 3.86
+    },
+    {
+     "word": "to",
+     "start": 3.86,
+     "end": 4.12
+    },
+    {
+     "word": "read.",
+     "start": 4.12,
+     "end": 4.34
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Editorial: Diagram</title>
+<style>
+:root {
+  --bg: #faf7f2; --bg2: #f1ece3; --surface: #ffffff; --surface2: #f6efe6; --border: #d9d2c5;
+  --text: #1a1a1a; --muted: #57534e; --faint: #6f6a62; --accent: #b8321f; --accent2: #2f5d8a; --paper: #ffffff;
+  --display: "Source Serif 4"; --body: "Libre Franklin"; --mono: "JetBrains Mono";
+  --safe-x: 134px; --safe-y: 76px;
+}
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); position: relative; }
+.top { position: absolute; left: var(--safe-x); top: var(--safe-y); width: 1652px; }
+.kick { display: flex; justify-content: space-between; font-size: 28px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.kick .k { color: var(--accent); }
+.kick .p { color: var(--muted); font-variant-numeric: tabular-nums; }
+h1 { margin: 14px 0 0 0; font-family: var(--display); font-size: 90px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.02; }
+.dek { margin: 16px 0 0 0; font-size: 36px; line-height: 1.3; color: var(--muted); max-width: 1300px; }
+.line { position: absolute; left: 0; top: 0; }
+.cols { position: absolute; left: var(--safe-x); top: 352px; width: 1652px; display: flex; gap: 40px; }
+.col { width: 242px; box-sizing: border-box; padding: 84px 16px 22px 16px; position: relative; }
+.col.active { background: var(--surface2); border-top: 6px solid var(--accent); padding-top: 78px; }
+.col .n { font-size: 26px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.col .t { margin-top: 6px; font-size: 38px; font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; }
+.col .d { margin-top: 10px; font-size: 28px; line-height: 1.25; color: var(--muted); }
+.col.next .t, .col.next .n, .col.next .d { color: var(--faint); }
+.col.next .t { font-weight: 500; }
+.col.active .n { color: var(--accent); }
+.note { position: absolute; left: var(--safe-x); top: 700px; width: 760px; }
+.note p { margin: 0; font-family: var(--display); font-style: italic; font-size: 40px; line-height: 1.25; }
+.note .src { margin-top: 28px; font-size: 26px; color: var(--faint); }
+.panel { position: absolute; left: 980px; top: 700px; width: 806px; }
+.panel .h { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 12px; border-bottom: 3px solid var(--text); }
+.panel .h .t { font-family: var(--display); font-size: 44px; font-weight: 600; }
+.panel .h .s { font-size: 26px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.row { display: flex; align-items: center; height: 74px; border-bottom: 2px solid var(--border); font-size: 36px; }
+.row .ic { width: 44px; height: 36px; }
+.row .job { flex: 1; font-weight: 600; }
+.row .time { width: 120px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 24px; }
+.chip { width: 140px; height: 46px; box-sizing: border-box; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; letter-spacing: 0.04em; border: 2px solid var(--text); }
+.chip.run { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="kick"><span class="k">How it works</span><span class="p">Step 4 of 6</span></div>
+  <h1>How a change goes live</h1>
+  <p class="dek">Six steps from chat to production.</p>
+</div>
+
+<div class="cols">
+  <div class="col"><div class="n">Step 1</div><div class="t">Chat</div><div class="d">Request noted</div></div>
+  <div class="col"><div class="n">Step 2</div><div class="t">Agent</div><div class="d">writes code</div></div>
+  <div class="col"><div class="n">Step 3</div><div class="t">Git Commit</div><div class="d">Version saved</div></div>
+  <div class="col active"><div class="n">Step 4</div><div class="t">Pipeline</div><div class="d">builds and tests</div></div>
+  <div class="col next"><div class="n">Step 5</div><div class="t">Staging</div><div class="d">Trial run</div></div>
+  <div class="col next"><div class="n">Step 6</div><div class="t">Production</div><div class="d">live for all</div></div>
+</div>
+
+<!-- timeline: markers at column centers, line solid through step 4, dotted after -->
+<svg class="line" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <line x1="255" y1="402" x2="1101" y2="402" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="1101" y1="402" x2="1665" y2="402" stroke="#6f6a62" stroke-width="3" stroke-dasharray="4 10" stroke-linecap="round"/>
+  <g fill="#1a1a1a">
+    <circle cx="255" cy="402" r="22"/><circle cx="537" cy="402" r="22"/><circle cx="819" cy="402" r="22"/>
+  </g>
+  <g fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M244 403l7 7 14-15"/><path d="M526 403l7 7 14-15"/><path d="M808 403l7 7 14-15"/>
+  </g>
+  <circle cx="1101" cy="402" r="30" fill="#faf7f2" stroke="#b8321f" stroke-width="5"/>
+  <circle cx="1101" cy="402" r="15" fill="#b8321f"/>
+  <circle cx="1383" cy="402" r="18" fill="#faf7f2" stroke="#6f6a62" stroke-width="3"/>
+  <circle cx="1665" cy="402" r="18" fill="#faf7f2" stroke="#6f6a62" stroke-width="3"/>
+  <!-- annotation leader from the active step to the detail table -->
+  <path d="M1101 630 L1101 686" fill="none" stroke="#b8321f" stroke-width="2.5"/>
+  <circle cx="1101" cy="630" r="6" fill="#b8321f"/>
+</svg>
+
+<div class="note">
+  <p>Build and tests have passed. Now it ships, to staging first.</p>
+  <div class="src">Source: sample pipeline, run #482</div>
+</div>
+
+<div class="panel">
+  <div class="h"><span class="t">Pipeline #482</span><span class="s">Duration</span></div>
+  <div class="row">
+    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+    <span class="job">build</span><span class="time">1:12</span><span class="chip">passed</span>
+  </div>
+  <div class="row">
+    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+    <span class="job">test</span><span class="time">0:48</span><span class="chip">passed</span>
+  </div>
+  <div class="row">
+    <svg class="ic" viewBox="0 0 24 24" fill="#b8321f"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/></svg>
+    <span class="job">deploy</span><span class="time">0:21</span><span class="chip run">running</span>
+  </div>
+</div>
+</body>
+</html>

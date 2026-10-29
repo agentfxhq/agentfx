@@ -1,0 +1,107 @@
+// Product tour of a fictional app ("Maplewood Studio", made up for this example).
+// UI states are screenshots with hotspot files (assets/ui/<state>.png + .json), generated from
+// assets/ui/src/app.html by assets/ui/src/shoot.mjs.
+video "What's new in Maplewood Studio" size=1920x1080 fps=30 rate=+6% lead=2f tail=6f captions=plain
+theme studio-dark
+  layout safe-y=4%
+pronounce "staging.example.test" "staging dot example dot test"
+chapterbar label="What's new · Maplewood Studio" scenes=[panels, publish, pages]
+
+scene intro pre=16f post=10f nocaptions
+  col #all gap=60 out=fade until=@end-12f
+    col #head gap=22 in=zoom dur=16f
+      row gap=30
+        svg w=120 h=120 |
+          <svg viewBox="0 0 32 32" width="100%" height="100%"><rect width="32" height="32" rx="8" fill="#4c5fd5"/><path d="M8 23V10l8 8 8-8v13" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        display "What's new" size=104
+      h3 #date "Maplewood Studio" color=$mint in=fade at=@12f
+    row #cards dir=auto gap=36 stagger=16f at=@36f
+      card #c1 dir=row w=480 gap=22 in=rise
+        box w=68 h=68 radius=16 fill=$accent pad=16
+          icon name=panels size=36
+        col align=start gap=4
+          text "Panels" size=38 weight=750 align=left
+          text "Tabs with counts. Drag to resize." size=25 color=$muted align=left
+      card #c2 dir=row w=480 gap=22 in=rise
+        box w=68 h=68 radius=16 fill=$accent pad=16
+          icon name=upload size=36
+        col align=start gap=4
+          text "Publish" size=38 weight=750 align=left
+          text "Pick a target, one click." size=25 color=$muted align=left
+      card #c3 dir=row w=480 gap=22 in=rise
+        box w=68 h=68 radius=16 fill=$accent pad=16
+          icon name=sync size=36
+        col align=start gap=4
+          text "Page sync" size=38 weight=750 align=left
+          text "Sync page texts with staging." size=25 color=$muted align=left
+  say "New in Maplewood Studio: panels, publishing and page sync." min=4.3s
+
+scene panels title="Panels" pre=40f post=0
+  chapter "Panels" n=1
+  browser #app url=studio.example.test/harbor-bakery shot=assets/ui/changes.png w=1600
+  say "The side [[panel]] now has tabs. [[Counts]] show where something is open." min=4.5s
+    @panel zoom x=0.84 y=0.33 z=1.9 ; cursor -> #tab-history dy=60
+    @Counts pulse #tab-changes ; pulse #tab-content ; pulse #tab-pages
+  say "The [[strip]] on top lists what is not on staging yet." min=2.7s
+    @strip highlight #strip for=2s
+  say "One [[click]] switches the [[tab]]." min=3s
+    @click click #tab-content ; swap #app shot=assets/ui/content.png via=cut
+    @tab.end click #tab-changes ; swap #app shot=assets/ui/changes.png via=cut
+  say "You can drag the [[panels]] [[wider]] or narrower. A [[double-click|reset]] resets them." min=5.4s
+    @panels zoom x=0.594 y=0.509 z=1.12 ; cursor -> #rs-side
+    @panels.end swap #app shot=assets/ui/hot.png via=cut
+    @wider drag #rs-side dx=-140 dur=1.6s ; swap #app shot=assets/ui/drag.png dur=1.6s
+    @reset swap #app shot=assets/ui/wide.png via=cut ; dblclick #rs-side
+    @reset+0.3s swap #app shot=assets/ui/changes.png ; callout #rs-side "Double-click: back to the default width" side=left for=1s
+
+scene publish title="Publish" pre=40f post=0
+  chapter "Publish" n=2
+  browser #app url=studio.example.test/harbor-bakery shot=assets/ui/pub.png w=1600
+  @0s zoom x=0.84 y=0.4 z=1.85 dur=1f
+  say "Under “Publish” you first pick the [[target]]." min=2.7s
+    @target click #pub-pick ; swap #app shot=assets/ui/pub-menu.png via=cut
+  say "“[[Preview]]” opens a private link. “[[Staging]]” updates [[staging.example.test|host]] through the deploy pipeline." min=7s
+    @Preview cursor -> #opt-preview dur=0.4s
+    @Staging cursor -> #opt-staging dur=0.4s ; swap #app shot=assets/ui/pub-menu-staging.png via=cut
+    @Staging.end click #opt-staging ; swap #app shot=assets/ui/pub-staging.png via=cut
+    @host highlight #pub-host for=2.6s ; cursor -> #pub-host dx=50
+  say "The [[box]] explains what will happen. Then one [[click]]." min=3.6s
+    @box highlight #pub-effect for=1.4s ; cursor -> #pub-effect dx=110
+    @click swap #app shot=assets/ui/pub-hover.png via=cut ; click #pub-go
+    @click+0.15s swap #app shot=assets/ui/pub-busy.png via=cut
+  say "After about a [[minute]] staging is up to date. [[Page texts|xref]] go separately, under “[[Pages]]”." min=6s
+    @minute swap #app shot=assets/ui/pub-sent.png dur=0.4s ; cursor -> #pub-go dx=150 dy=-34
+    @xref highlight #pub-xref for=2.6s
+    @Pages cursor -> #xref-pages
+
+scene pages title="Page sync" pre=40f post=0
+  chapter "Page sync" n=3
+  browser #app url=studio.example.test/harbor-bakery shot=assets/ui/pg-start.png w=1600
+    toast #synced "Synced 2 pages. Undo in the Pages tab." in=rise at=@done out=fade until=@end-0.3s
+  @0s zoom x=0.84 y=0.45 z=1.4 dur=1f
+  say "Under “Pages” you sync [[page texts|texts]] with staging." min=3.6s
+    @texts cursor -> #row-home
+  say "Each [[page]] shows where it changed and suggests a [[direction]]." min=4.2s
+    @page highlight #row-home for=1.6s
+    @direction highlight #dir-visit-push for=1.6s
+  say "Changed on both sides? [[Compare]] first. [[Red]] is only here, [[green]] only on staging." min=6.6s
+    @Compare click #cmp-home ; swap #app shot=assets/ui/pg-diff.png dur=0.3s ; zoom x=0.5 y=0.4 z=1.12 dur=0.6s
+    @Red cursor -> #diff-close dx=-400 dy=-120
+    @green.end click #diff-close ; swap #app shot=assets/ui/pg-start.png dur=0.3s ; zoom x=0.84 y=0.45 z=1.4 dur=0.6s
+  say "Then pick a [[direction|pick]] and click “[[Sync]]”." min=3.6s
+    @pick click #dir-home-push ; swap #app shot=assets/ui/pg-push.png via=cut
+    @Sync click #cs-apply ; swap #app shot=assets/ui/pg-confirm.png dur=0.3s ; zoom x=0.5 y=0.45 z=1.12 dur=0.5s
+    @Sync.end+0.8s click #cf-ok
+  say "Every [[sync|done]] can be [[undone]]." min=4.8s
+    @done swap #app shot=assets/ui/pg-done.png dur=0.3s ; zoom x=0.84 y=0.5 z=1.4 dur=0.6s
+    @undone cursor -> #cs-undo
+
+scene outro pre=16f post=10f nocaptions
+  col #brand gap=0 in=zoom dur=18f
+    row gap=28
+      svg w=120 h=120 |
+        <svg viewBox="0 0 32 32" width="100%" height="100%"><rect width="32" height="32" rx="8" fill="#4c5fd5"/><path d="M8 23V10l8 8 8-8v13" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      display "Maplewood" size=110
+  h2 #l1 "All in the side panel." size=52 weight=700 in=fade at=@12f
+  h3 #l2 "Questions? Ask in the chat." size=40 weight=400 color=#c9d2ff in=fade at=@40f
+  say "All in the side panel. Questions? Ask in the chat." min=3.7s

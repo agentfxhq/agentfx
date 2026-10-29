@@ -1,0 +1,66 @@
+video "J1 hook t=1.0" size=1920x1080 fps=30
+theme studio-light
+  bg #F2EEE6
+scene s dur=4s
+  camera persp=1600
+  anim #camera z 0s:612.1 4s:612.1 x 0s:-395.5 4s:-395.5
+  rect #rule0 w=1728 h=1.5 x=96 y=150 fill=#141414
+  rect #rule1 w=1728 h=1.5 x=96 y=930 fill=#141414
+  rect #ct0 w=1.5 h=14 x=96 y=150 fill=#141414
+  rect #ct1 w=1.5 h=14 x=242 y=150 fill=#141414
+  rect #ct2 w=1.5 h=14 x=388 y=150 fill=#141414
+  rect #ct3 w=1.5 h=14 x=534 y=150 fill=#141414
+  rect #ct4 w=1.5 h=14 x=680 y=150 fill=#141414
+  rect #ct5 w=1.5 h=14 x=826 y=150 fill=#141414
+  rect #ct6 w=1.5 h=14 x=972 y=150 fill=#141414
+  rect #ct7 w=1.5 h=14 x=1118 y=150 fill=#141414
+  rect #ct8 w=1.5 h=14 x=1264 y=150 fill=#141414
+  rect #ct9 w=1.5 h=14 x=1410 y=150 fill=#141414
+  rect #ct10 w=1.5 h=14 x=1556 y=150 fill=#141414
+  rect #ct11 w=1.5 h=14 x=1702 y=150 fill=#141414
+  rect #cg1 w=1 h=778 x=242.5 y=151.5 fill=#141414 opacity=0.08
+  rect #cg2 w=1 h=778 x=388.5 y=151.5 fill=#141414 opacity=0.08
+  rect #cg3 w=1 h=778 x=534.5 y=151.5 fill=#141414 opacity=0.08
+  rect #cg4 w=1 h=778 x=680.5 y=151.5 fill=#141414 opacity=0.08
+  rect #cg5 w=1 h=778 x=826.5 y=151.5 fill=#141414 opacity=0.08
+  rect #cg6 w=1 h=778 x=972.5 y=151.5 fill=#141414 opacity=0.08
+  rect #cg7 w=1 h=778 x=1118.5 y=151.5 fill=#141414 opacity=0.08
+  rect #cg8 w=1 h=778 x=1264.5 y=151.5 fill=#141414 opacity=0.08
+  rect #cg9 w=1 h=778 x=1410.5 y=151.5 fill=#141414 opacity=0.08
+  rect #cg10 w=1 h=778 x=1556.5 y=151.5 fill=#141414 opacity=0.08
+  rect #cg11 w=1 h=778 x=1702.5 y=151.5 fill=#141414 opacity=0.08
+  text #g0 "c" size=118 weight=800 color=#141414 x=144.5 y=581.9 anchor=center rot=-90 nowrap
+    anim y 0s:265 0.90s:265 1.70s:0~spring(260,20)
+  text #g1 "h" size=118 weight=800 color=#141414 x=144.5 y=512.9 anchor=center rot=-90 nowrap
+    anim y 0s:265 0.87s:265 1.67s:0~spring(260,20)
+  text #g2 "a" size=118 weight=800 color=#141414 x=144.5 y=444.0 anchor=center rot=-90 nowrap
+    anim y 0s:265 0.84s:265 1.64s:0~spring(260,20)
+  text #g3 "n" size=118 weight=800 color=#141414 x=144.5 y=375.1 anchor=center rot=-90 nowrap
+    anim y 0s:265 0.81s:265 1.61s:0~spring(260,20)
+  text #g4 "g" size=118 weight=800 color=#141414 x=144.5 y=303.5 anchor=center rot=-90 nowrap
+    anim y 0s:265 0.78s:265 1.58s:0~spring(260,20)
+  text #g5 "e" size=118 weight=800 color=#141414 x=144.5 y=233.7 anchor=center rot=-90 nowrap
+    anim y 0s:265 0.75s:265 1.55s:0~spring(260,20)
+  rect #dmr w=1302.0 h=778 x=522.0 y=151.5 fill=#141414 opacity=0.86
+  rect #og4 w=1 h=778 x=680.5 y=151.5 fill=#F2EEE6 opacity=0.16
+  rect #og5 w=1 h=778 x=826.5 y=151.5 fill=#F2EEE6 opacity=0.16
+  rect #og6 w=1 h=778 x=972.5 y=151.5 fill=#F2EEE6 opacity=0.16
+  rect #og7 w=1 h=778 x=1118.5 y=151.5 fill=#F2EEE6 opacity=0.16
+  rect #og8 w=1 h=778 x=1264.5 y=151.5 fill=#F2EEE6 opacity=0.16
+  rect #og9 w=1 h=778 x=1410.5 y=151.5 fill=#F2EEE6 opacity=0.16
+  rect #og10 w=1 h=778 x=1556.5 y=151.5 fill=#F2EEE6 opacity=0.16
+  rect #og11 w=1 h=778 x=1702.5 y=151.5 fill=#F2EEE6 opacity=0.16
+  rect #ot3 w=1.5 h=14 x=534 y=150 fill=#F2EEE6 opacity=0.4
+  rect #ot4 w=1.5 h=14 x=680 y=150 fill=#F2EEE6 opacity=0.4
+  rect #ot5 w=1.5 h=14 x=826 y=150 fill=#F2EEE6 opacity=0.4
+  rect #ot6 w=1.5 h=14 x=972 y=150 fill=#F2EEE6 opacity=0.4
+  rect #ot7 w=1.5 h=14 x=1118 y=150 fill=#F2EEE6 opacity=0.4
+  rect #ot8 w=1.5 h=14 x=1264 y=150 fill=#F2EEE6 opacity=0.4
+  rect #ot9 w=1.5 h=14 x=1410 y=150 fill=#F2EEE6 opacity=0.4
+  rect #ot10 w=1.5 h=14 x=1556 y=150 fill=#F2EEE6 opacity=0.4
+  rect #ot11 w=1.5 h=14 x=1702 y=150 fill=#F2EEE6 opacity=0.4
+  rect #orl0 w=1302 h=1.5 x=522 y=150 fill=#F2EEE6 opacity=0.3
+  rect #orl1 w=1302 h=1.5 x=522 y=930 fill=#F2EEE6 opacity=0.3
+  layer #hud x=0 y=0 w=1920 h=1080 hud
+    text #tc "t = 00:01.000" font=mono size=22 color=#F2EEE6 opacity=0.75 x=1836 y=935 anchor=top-right nowrap
+    text #lb "01 / 09" font=mono size=22 color=#F2EEE6 opacity=0.5 x=1836 y=110 anchor=top-right nowrap

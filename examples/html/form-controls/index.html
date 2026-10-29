@@ -1,0 +1,43 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8">
+<meta name="reel-duration" content="0.5">
+<meta name="reel-fps" content="30">
+<title>reel scene: form controls (checkbox / radio, accent-color)</title>
+<style>
+body { margin: 0; background: #f5f6f8; font: 12px sans-serif; color: #5d6572; }
+:root { --accent: #17845a; }
+.stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+.row { position: absolute; display: flex; gap: 20px; align-items: flex-start; }
+input { margin: 0; }
+.big { transform-origin: 0 0; transform: scale(4); }
+.lbl { display: inline-flex; align-items: center; gap: 5px; }
+.card { background: #fff; padding: 10px; border: 1px solid #e2e5ea; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- 1x: checked/unchecked checkbox with accent, auto accent, radio, disabled, 20px -->
+  <div class="row" style="left: 100px; top: 100px">
+    <input id="c1" type="checkbox" checked style="accent-color: var(--accent)">
+    <input id="c2" type="checkbox" style="accent-color: var(--accent)">
+    <input id="c3" type="checkbox" checked>
+    <input id="c4" type="checkbox">
+    <input id="r1" type="radio" checked style="accent-color: var(--accent)">
+    <input id="r2" type="radio" style="accent-color: var(--accent)">
+    <input id="c5" type="checkbox" checked style="accent-color: var(--accent); width: 20px; height: 20px">
+    <input id="c6" type="checkbox" checked disabled style="accent-color: var(--accent)">
+    <label class="lbl"><input id="c7" type="checkbox" checked style="accent-color: var(--accent)"> Hide pages that match</label>
+  </div>
+  <!-- 4x (the geometry probe): same controls under a scale -->
+  <div class="row big" style="left: 100px; top: 200px">
+    <input id="b1" type="checkbox" checked style="accent-color: var(--accent)">
+    <input id="b2" type="checkbox" style="accent-color: var(--accent)">
+    <input id="b3" type="checkbox" checked>
+    <input id="b4" type="radio" checked style="accent-color: var(--accent)">
+    <input id="b5" type="radio" style="accent-color: var(--accent)">
+    <input id="b6" type="checkbox" checked disabled style="accent-color: var(--accent)">
+    <div class="card lbl"><input id="b7" type="checkbox" checked style="accent-color: var(--accent)"> Hide pages that match</div>
+  </div>
+</div>
+</body></html>

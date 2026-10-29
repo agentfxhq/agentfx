@@ -1,0 +1,24 @@
+video "Exposure live t = 00:00.900" size=1920x1080 fps=30
+theme studio-light
+  bg #F2EEE6
+scene s dur=1s
+  image #exposure src=frame-live-0027-exposure.png w=1920 h=1080 x=0 y=0
+  rect #rule0 w=1649.28 h=1.5 x=96 y=150 fill=#141414
+  rect #rule1 w=1649.28 h=1.5 x=96 y=930 fill=#141414
+  rect #tick0 w=1.5 h=14 x=96.0 y=150 fill=#141414
+  rect #tick1 w=1.5 h=14 x=242.0 y=150 fill=#141414
+  rect #tick2 w=1.5 h=14 x=388.0 y=150 fill=#141414
+  rect #tick3 w=1.5 h=14 x=534.0 y=150 fill=#141414
+  rect #tick4 w=1.5 h=14 x=680.0 y=150 fill=#141414
+  rect #tick5 w=1.5 h=14 x=826.0 y=150 fill=#141414
+  rect #tick6 w=1.5 h=14 x=972.0 y=150 fill=#141414
+  rect #tick7 w=1.5 h=14 x=1118.0 y=150 fill=#141414
+  rect #tick8 w=1.5 h=14 x=1264.0 y=150 fill=#141414
+  rect #tick9 w=1.5 h=14 x=1410.0 y=150 fill=#141414
+  rect #tick10 w=1.5 h=14 x=1556.0 y=150 fill=#141414
+  rect #tick11 w=1.5 h=14 x=1702.0 y=150 fill=#141414
+  rect #tip0 w=18 h=6 x=1729.28 y=147 fill=#E8442E
+  rect #tip1 w=18 h=6 x=1729.28 y=927 fill=#E8442E
+  rect #dw1 w=112 h=416 x=101 y=200 fill=#E8442E
+  text #w1 "change" size=118 weight=800 color=#F2EEE6 x=144.50 y=407.66 anchor=center rot=-90 nowrap
+  text #tc "t = 00:00.900" font=mono size=22 color=#141414 x=96 y=958

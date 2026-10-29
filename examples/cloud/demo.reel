@@ -1,0 +1,14 @@
+// cloud demo (6 s, 20k points, one layer): flow field -> "3000" -> galaxy -> terrain fly-over
+// under the scene camera -> "reel". Motion blur on the cloud.
+video "Cloud demo" size=1920x1080 fps=30
+theme studio-dark
+  bg #0C0B0A
+scene s dur=6s
+  camera persp=1100
+  cloud #swarm n=20000 seed=7 r=2.3 jitter=0.25 palette=[#F2EEE6, #E8442E] weights=[0.64, 0.36] mblur=8
+    form 0s field flow=[80, -14] noise=45 noise-scale=320 noise-speed=0.22
+    form 0.5s text "3000" weight=800 size=46% dur=0.9s stagger=0.45s by=x ease=spring(150,15) color=dir angle=30 split=[0.64, 0.36]
+    form 1.9s galaxy r=50% squash=0.62 spin=35 dur=0.9s stagger=0.35s by=distance ease=spring(90,14) color=distance split=[0.64, 0.36]
+    form 3.0s terrain z=on amp=85 speed=0.35 rows=110 dot=1.4 dur=0.9s stagger=0.4s by=y ease=spring(100,16) color=dir angle=0 wave=[260, 800] split=[0.64, 0.36]
+    form 4.6s text "reel" weight=900 size=46% dur=0.8s stagger=0.3s by=x ease=spring(130,13) color=y split=[0.36, 0.64] noise=1.5 noise-scale=60 noise-speed=0.5
+  @2.9s anim #camera rotx 0s:0 0.8s:24~inout-cubic 1.6s:20 2.1s:0~inout-cubic

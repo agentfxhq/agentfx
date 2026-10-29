@@ -1,0 +1,7 @@
+video "Hello" size=1920x1080 fps=30 captions=karaoke
+
+scene intro
+  title #t "Hello {AgentFX}" sub="A first test" in=rise
+  say "This is a [[short]] test with [[animation]]."
+    @short pulse #t
+    @animation exit #t blur

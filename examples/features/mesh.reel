@@ -1,0 +1,14 @@
+// Mesh gradients and image fills in direct mode. A 3x3 mesh (bicubic in OKLab, rastered once,
+// static) fills a box, a star path, display text and a mask; the bottom row fills a box, a
+// blob path and text with a screenshot (fill=image(...)).
+video "Mesh" size=1920x1080 fps=30 captions=off
+
+scene mesh dur=4s bg=#0E1116
+  rect #m1 w=520 h=380 x=16% y=30% anchor=center radius=28 fill=mesh(3x3, #FF5E5B, #FFB25B, #FFE45B, #B35BFF, #F7F7F7, #5BFF9C, #3D5BFF, #5BD0FF, #18C29C)
+  star #m2 points=6 inner=0.55 size=380 x=43% y=30% anchor=center fill=mesh(2x2, #FF48B0, #FFE800, #0078BF, #18C29C) stroke=#FFFFFF sw=4
+    anim rot 0s:0 4s:30~inout-sine
+  text #m3 "MESH" size=230 weight=900 x=74% y=30% anchor=center nowrap fill=mesh(3x2, #FF5E5B, #FFE45B, #5BFF9C, #3D5BFF, #B35BFF, #FF48B0)
+  rect #m4 w=1800 h=40 x=50% y=55% anchor=center fill=#FFFFFF mask=mesh(3x1, #000000, #FFFFFF, #000000) mask-mode=luma
+  rect #i1 w=520 h=300 x=16% y=78% anchor=center radius=28 fill=image(../assets/ui/content.png cover)
+  path #i2 d="M30 150 C30 40 130 0 210 30 S390 40 400 150 S300 290 200 280 S30 260 30 150 Z" w=420 h=300 x=43% y=78% anchor=center fill=image(../assets/ui/content.png cover) stroke=#FFFFFF sw=3
+  text #i3 "IMAGE" size=210 weight=900 x=74% y=78% anchor=center nowrap fill=image(../assets/ui/content.png cover)

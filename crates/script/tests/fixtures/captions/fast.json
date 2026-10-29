@@ -1,0 +1,6 @@
+{"segments": [
+ {"start": 0.0, "end": 0.12, "text": "Hi.", "words": [{"word": "Hi.", "start": 0.0, "end": 0.12}]},
+ {"start": 0.22, "end": 1.4, "text": "Then a normal sentence follows.", "words": [
+  {"word": "Then", "start": 0.22, "end": 0.4}, {"word": "a", "start": 0.4, "end": 0.48}, {"word": "normal", "start": 0.48, "end": 0.8},
+  {"word": "sentence", "start": 0.8, "end": 1.15}, {"word": "follows.", "start": 1.15, "end": 1.4}]}
+]}

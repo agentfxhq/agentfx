@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Director's desk</title>
+<link rel="stylesheet" href="/static/desk.css">
+<script>
+  // theme before first paint, so there is no flash
+  document.documentElement.dataset.theme = localStorage.getItem("desk-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top" id="top">
+  <div class="bar">
+    <a class="brand" href="/" data-link aria-label="All projects">
+      <span class="mark" aria-hidden="true"></span><span class="brand-name">Desk</span>
+    </a>
+    <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
+    <div class="right">
+      <span class="live" id="live" title="Live: the page follows the agent's changes" aria-live="polite"></span>
+      <button class="btn ghost kbtn" id="open-palette" aria-label="Command palette" title="Command palette (Ctrl+K)">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+        <span class="kbd-hint"><kbd id="mod-key">Ctrl</kbd><kbd>K</kbd></span>
+      </button>
+      <button class="btn ghost outbox-btn hidden" id="open-outbox" aria-haspopup="dialog" aria-controls="outbox">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 9.5V13h12V9.5M2 9.5 4 3h8l2 6.5M2 9.5h3.5l1 1.5h3l1-1.5H14"/></svg>
+        <span class="ob-label">Outbox</span><span class="count" id="outbox-count">0</span>
+      </button>
+      <button class="btn ghost icon-btn" id="open-help" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">?</button>
+      <button class="btn ghost icon-btn" id="theme" aria-label="Toggle light and dark" title="Light or dark">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="projhead hidden" id="projhead">
+    <div class="ph-row">
+      <div class="ph-title">
+        <h1 id="ptitle"></h1>
+        <div class="ph-meta" id="pmeta"></div>
+      </div>
+      <div class="ph-actions" id="pactions"></div>
+    </div>
+    <nav class="rail" id="rail" aria-label="Project state: open a stage"></nav>
+  </div>
+</header>
+
+<div id="content" tabindex="-1">
+  <main class="view" id="home" hidden></main>
+  <main class="view" id="project" hidden>
+    <div class="banner hidden" id="archived-banner"></div>
+    <div class="banner warn hidden" id="stale"></div>
+    <div class="pcols">
+      <div class="stream-col">
+        <div class="stream-head"><h2 class="label" id="stream-title">Your turn</h2><span class="muted" id="stream-sub"></span></div>
+        <div class="stream" id="stream" aria-live="polite"></div>
+        <section class="history" id="history" aria-label="Answered and withdrawn cards"></section>
+      </div>
+      <aside class="side-col" id="side" aria-label="Project at a glance"></aside>
+    </div>
+  </main>
+  <main class="view" id="missing" hidden></main>
+</div>
+
+<!-- stage panel: the v2 stage views, opened from the state rail -->
+<div class="panel" id="panel" hidden>
+  <div class="sheet-scrim" data-close-panel></div>
+  <div class="panel-sheet" role="dialog" aria-modal="true" aria-labelledby="panel-title">
+    <div class="panel-head">
+      <button class="btn ghost small" data-close-panel title="Back to the stream (Esc)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8.5 2.5 4 7l4.5 4.5"/></svg>Stream</button>
+      <span class="panel-title" id="panel-title"></span>
+      <span class="panel-nav">
+        <button class="btn ghost icon-btn" id="panel-prev" aria-label="Previous stage ([)" title="Previous stage ([)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8.5 2.5 4 7l4.5 4.5"/></svg></button>
+        <button class="btn ghost icon-btn" id="panel-next" aria-label="Next stage (])" title="Next stage (])"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5.5 2.5 10 7l-4.5 4.5"/></svg></button>
+        <button class="btn ghost icon-btn" data-close-panel aria-label="Close (Esc)"><svg width="14" height="14" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 2l10 10M12 2 2 12"/></svg></button>
+      </span>
+    </div>
+    <div class="panel-body" id="panel-body">
+      <details class="locks" id="locks"><summary id="locks-sum"></summary><div class="chips" id="locks-chips"></div></details>
+      <section class="stage" data-stage="mode"></section>
+      <section class="stage" data-stage="brief"></section>
+      <section class="stage" data-stage="directions"></section>
+      <section class="stage" data-stage="dramaturgy"></section>
+      <section class="stage" data-stage="storyboard"></section>
+      <section class="stage" data-stage="variants"></section>
+      <section class="stage" data-stage="render"></section>
+    </div>
+  </div>
+</div>
+
+<!-- selection as context: what the human pointed at, sent with the next answer or note -->
+<div class="ctxchip" id="ctxchip" hidden role="status" aria-live="polite"></div>
+
+<!-- project switcher (dropdown on desktop, sheet on phones) -->
+<div class="switcher" id="switcher" hidden>
+  <div class="sheet-scrim" data-close-switcher></div>
+  <div class="switcher-panel" role="dialog" aria-label="Switch project">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sw-head"><span class="label">Switch project</span><kbd class="sw-kbd" title="Command palette">Ctrl K</kbd></div>
+    <div class="sw-list" id="sw-list"></div>
+    <div class="sw-foot">
+      <a class="sw-link" href="/" data-link>All projects</a>
+      <button class="sw-link" data-new-project>New project</button>
+    </div>
+  </div>
+</div>
+
+<!-- outbox drawer -->
+<div class="drawer" id="outbox" hidden>
+  <div class="sheet-scrim" data-close-outbox></div>
+  <aside class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="outbox-title">
+    <div class="drawer-head">
+      <div><div class="label">Outbox</div><h2 id="outbox-title">Sent to the agent</h2></div>
+      <button class="btn ghost icon-btn" data-close-outbox aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 2l10 10M12 2 2 12"/></svg>
+      </button>
+    </div>
+    <p class="drawer-sub" id="outbox-sub"></p>
+    <div class="ob-list" id="outbox-list"></div>
+  </aside>
+</div>
+
+<!-- command palette -->
+<dialog class="palette" id="palette" aria-label="Command palette">
+  <div class="pal-input">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+    <input id="pal-q" type="text" placeholder="Jump to a project, a stage or a command" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="pal-list">
+    <kbd>Esc</kbd>
+  </div>
+  <div class="pal-list" id="pal-list" role="listbox"></div>
+  <div class="pal-foot"><span><kbd>&uarr;</kbd><kbd>&darr;</kbd> move</span><span><kbd>Enter</kbd> open</span></div>
+</dialog>
+
+<!-- new project -->
+<dialog class="modal" id="newdlg" aria-labelledby="new-title">
+  <form method="dialog" id="newform" novalidate>
+    <div class="modal-head">
+      <div><div class="label">New project</div><h2 id="new-title">Start a film</h2></div>
+      <button type="button" class="btn ghost icon-btn" data-close-dialog aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 2l10 10M12 2 2 12"/></svg>
+      </button>
+    </div>
+    <p class="muted modal-sub">The agent picks it up from the project's inbox and opens the brief dialogue with you.</p>
+    <label class="field"><span class="label">Name</span><input type="text" name="name" required maxlength="80" placeholder="Spring campaign teaser"></label>
+    <label class="field"><span class="label">Client</span><input type="text" name="client" maxlength="80" placeholder="Acme Studio"></label>
+    <label class="field"><span class="label">Goal, in one line</span><input type="text" name="goal" maxlength="240" placeholder="What should the viewer do or feel afterwards?"></label>
+    <div class="field-row">
+      <fieldset class="field">
+        <legend class="label">Aspect</legend>
+        <div class="toggles" id="new-aspects">
+          <label class="toggle"><input type="checkbox" name="aspect" value="16:9" checked><span><i class="ar" style="--w:16;--h:9"></i>16:9</span></label>
+          <label class="toggle"><input type="checkbox" name="aspect" value="9:16"><span><i class="ar" style="--w:9;--h:16"></i>9:16</span></label>
+          <label class="toggle"><input type="checkbox" name="aspect" value="1:1"><span><i class="ar" style="--w:1;--h:1"></i>1:1</span></label>
+          <label class="toggle"><input type="checkbox" name="aspect" value="4:5"><span><i class="ar" style="--w:4;--h:5"></i>4:5</span></label>
+        </div>
+      </fieldset>
+      <label class="field len"><span class="label">Length</span>
+        <span class="suffix"><input type="number" name="length_s" min="1" max="600" step="0.5" value="30" inputmode="decimal"><span>s</span></span>
+      </label>
+    </div>
+    <div class="presets" id="len-presets" aria-label="Length presets">
+      <button type="button" class="chip" data-len="6">6 s loop</button><button type="button" class="chip" data-len="15">15 s</button><button type="button" class="chip" data-len="30">30 s</button><button type="button" class="chip" data-len="45">45 s</button><button type="button" class="chip" data-len="60">60 s</button>
+    </div>
+    <p class="form-err" id="new-err" role="alert"></p>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-close-dialog>Cancel</button>
+      <button type="submit" class="btn primary" id="new-submit">Create project</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- small text prompt (branch, none of these) -->
+<dialog class="modal small" id="askdlg" aria-labelledby="ask-title">
+  <form method="dialog" id="askform">
+    <div class="modal-head"><h2 id="ask-title"></h2></div>
+    <p class="muted modal-sub" id="ask-sub"></p>
+    <textarea id="ask-text" rows="3"></textarea>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-close-dialog>Cancel</button>
+      <button type="submit" class="btn primary" id="ask-ok">Send</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- keyboard help -->
+<dialog class="modal" id="helpdlg" aria-labelledby="help-title">
+  <div class="modal-head">
+    <div><div class="label">Keyboard</div><h2 id="help-title">Shortcuts</h2></div>
+    <button type="button" class="btn ghost icon-btn" data-close-dialog aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 2l10 10M12 2 2 12"/></svg>
+    </button>
+  </div>
+  <div class="keys">
+    <div class="kgroup"><div class="label">Anywhere</div>
+      <div class="krow"><span><kbd class="modk">Ctrl</kbd><kbd>K</kbd></span>Command palette: projects, stages, commands</div>
+      <div class="krow"><span><kbd>?</kbd></span>This overlay</div>
+      <div class="krow"><span><kbd>G</kbd> <kbd>H</kbd></span>All projects</div>
+      <div class="krow"><span><kbd>Esc</kbd></span>Close what is open</div>
+    </div>
+    <div class="kgroup"><div class="label">Projects</div>
+      <div class="krow"><span><kbd>/</kbd></span>Search projects</div>
+      <div class="krow"><span><kbd>C</kbd></span>New project</div>
+    </div>
+    <div class="kgroup"><div class="label">The stream</div>
+      <div class="krow"><span><kbd>J</kbd> <kbd>K</kbd></span>Next or previous open card</div>
+      <div class="krow"><span><kbd>1</kbd> to <kbd>4</kbd></span>Select that option or clip</div>
+      <div class="krow"><span><kbd>Enter</kbd></span>Send the selection, or accept the proposed default</div>
+      <div class="krow"><span><kbd>N</kbd></span>Write a note on the card</div>
+      <div class="krow"><span><kbd>Space</kbd></span>Play or pause the card's clips</div>
+      <div class="krow"><span><kbd>I</kbd> <kbd>O</kbd></span>Mark the in and out of a range in the player</div>
+      <div class="krow"><span><kbd>X</kbd></span>Clear the context selection</div>
+      <div class="krow"><span><kbd>1</kbd> to <kbd>6</kbd> with <kbd>Shift</kbd></span>Open a stage panel</div>
+    </div>
+    <div class="kgroup"><div class="label">In a stage panel</div>
+      <div class="krow"><span><kbd>[</kbd> <kbd>]</kbd></span>Previous or next stage</div>
+      <div class="krow"><span><kbd>J</kbd> <kbd>K</kbd> or <kbd>&larr;</kbd> <kbd>&rarr;</kbd></span>Move between variants or directions</div>
+      <div class="krow"><span><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></span>Pick that variant or direction</div>
+      <div class="krow"><span><kbd>Space</kbd></span>Play or pause the variants</div>
+      <div class="krow"><span><kbd>N</kbd></span>Write a note</div>
+      <div class="krow"><span><kbd>Esc</kbd></span>Back to the stream</div>
+    </div>
+    <div class="kgroup"><div class="label">Also</div>
+      <div class="krow"><span><kbd>Shift</kbd> <kbd>O</kbd></span>Outbox: everything sent to the agent</div>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/static/desk.js"></script>
+</body>
+</html>

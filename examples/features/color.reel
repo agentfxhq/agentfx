@@ -1,0 +1,17 @@
+// Color adjust and grading (reel-ir `color` effect). Top row: the CSS filter channels, animated
+// (saturate from grey, a full hue turn, brightness + contrast punch). Bottom row: tint, levels
+// and a .cube LUT (direct mode only; the HTML backend ignores those three).
+video "Color" size=1920x1080 fps=30 captions=off
+
+scene grade dur=6s bg=#101418
+  image #sat src=../assets/ui/content.png w=560 h=320 x=17% y=30% anchor=center fit=cover saturate=0 radius=18
+    anim saturate 0.5s:0 3s:1.8~inout-sine 6s:1
+  image #hue src=../assets/ui/content.png w=560 h=320 x=50% y=30% anchor=center fit=cover radius=18
+    anim hue 0s:0deg 6s:360deg~linear
+  image #punch src=../assets/ui/content.png w=560 h=320 x=83% y=30% anchor=center fit=cover radius=18
+    anim brightness 0s:0.35 1.5s:1.1~out-cubic
+    anim contrast 0s:0.6 3s:1.6~inout-sine 6s:1
+  image #tint src=../assets/ui/content.png w=560 h=320 x=17% y=70% anchor=center fit=cover radius=18 tint=#F2C14E tint-amount=0.85
+  image #levels src=../assets/ui/content.png w=560 h=320 x=50% y=70% anchor=center fit=cover radius=18 levels=0.2,0.8,1.4
+  image #lut src=../assets/ui/content.png w=560 h=320 x=83% y=70% anchor=center fit=cover radius=18 lut=assets/teal-orange.cube
+  text #cap "saturate · hue · brightness+contrast · tint · levels · LUT" size=30 weight=600 color=#C9D1D9 x=50% y=93% anchor=center nowrap

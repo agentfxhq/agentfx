@@ -1,0 +1,37 @@
+video "Meet the presenter" size=1920x1080 fps=30 captions=off
+
+scene flat dur=4.5s post=0s
+  text #title "A LITTLE GUIDANCE" x=100 y=110 size=34 color=$mint
+  text "Find your\nway." x=100 y=170 size=128 weight=800 align=left
+  box #tabs x=400 y=600 w=640 h=170 fill=$accent radius=34
+    text "Overview   /   Activity" size=48 weight=600 color=$paper
+  text "01   FLAT" x=100 y=960 size=30 color=$muted
+  presenter #mira skin=flat x=79% y=57% h=88% look=#title seed=12
+  say "The [[panel]] keeps your work together. [[Hello]] there." min=4.5s
+    @0.35s gesture #mira nod
+    @panel gesture #mira point #tabs
+    @Hello gesture #mira wave ; mood #mira happy
+
+scene line dur=4.5s post=0s
+  text #title "CLEAR BY DESIGN" x=100 y=110 size=34 color=$mint
+  text "Three\nsteps." x=100 y=170 size=128 weight=800 align=left
+  box #steps x=400 y=600 w=640 h=170 fill=$accent radius=34
+    text "Choose. Edit. Share." size=48 weight=600 color=$paper
+  text "02   LINE" x=100 y=960 size=30 color=$muted
+  presenter #mira skin=line x=79% y=57% h=88% look=#steps seed=23
+  say "[[Three]] simple steps. Ready to [[start]] your work?" min=4.5s
+    @0.3s mood #mira surprised
+    @Three gesture #mira count 3
+    @start gesture #mira nod ; mood #mira happy
+
+scene paper dur=4.5s post=0s
+  text #title "NEW IDEAS" x=100 y=110 size=34 color=$mint
+  text "Make it\nyours." x=100 y=170 size=128 weight=800 align=left
+  box #ideas x=400 y=600 w=640 h=170 fill=$accent radius=34
+    text "Your next idea" size=48 weight=600 color=$paper
+  text "03   PAPER" x=100 y=960 size=30 color=$muted
+  presenter #mira skin=paper x=79% y=57% h=88% look=#ideas seed=34
+  say "[[Think]] of something new. Then [[share]] it with everyone." min=4.5s
+    @0.3s gesture #mira shrug
+    @Think gesture #mira think ; mood #mira serious
+    @share gesture #mira present #ideas ; mood #mira happy

@@ -1,0 +1,18 @@
+// Caption pack sample, 16:9. Voice: piper en_US-ljspeech-medium (LJ Speech, public domain), words: faster-whisper; last scene from an SRT.
+video "Captions 16:9" size=1920x1080 fps=30 captions=off
+
+scene karaoke bg=linear(150deg, #1b2a41 0%, #0b0b0e 75%) pre=0.3s
+  label "style=karaoke" place=top
+  captions src=assets/w1.json audio=assets/w1.mp3 style=karaoke
+
+scene rise bg=linear(150deg, #2a1b41 0%, #0b0b0e 75%) pre=0.2s
+  label "style=rise" place=top
+  captions src=assets/w2.json audio=assets/w2.mp3 style=rise
+
+scene typewriter bg=linear(150deg, #1b3a33 0%, #0b0b0e 75%) pre=0.2s
+  label "style=typewriter" place=top
+  captions src=assets/w3.json audio=assets/w3.mp3 style=typewriter
+
+scene outline bg=linear(150deg, #41321b 0%, #0b0b0e 75%) pre=0.2s
+  label "style=outline (SRT)" place=top
+  captions src=assets/w4.srt audio=assets/w4.mp3 style=outline

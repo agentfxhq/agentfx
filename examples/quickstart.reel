@@ -1,0 +1,9 @@
+video "Hello AgentFX" size=1280x720 fps=30 captions=off
+scene ink dur=4s
+  layer #film x=0 y=0 w=100% h=100%
+    fluid #ink res=1/4 vorticity=18 seed=3 color=#3CBF87
+    text #word "AGENTFX" size=200 weight=900 color=#3CBF87 x=50% y=50% anchor=center nowrap
+      when portrait
+        set #word size=110
+  @1s ink #word into #ink dur=0.5s noise=400
+  @1.4s stir #ink at=50%,50% radius=30% strength=3 dur=1.4s

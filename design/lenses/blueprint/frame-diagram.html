@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Blueprint: Diagram</title>
+<style>
+:root {
+  --bg: #0e3d73; --bg2: #0b3566; --surface: #114680; --border: #cfe6ff;
+  --text: #ffffff; --muted: #b7d3f2; --faint: #9cc3ea; --accent: #ffd23f; --accent2: #7fe3ff;
+  --display: "Space Grotesk"; --body: "Space Grotesk"; --mono: "JetBrains Mono";
+}
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); position: relative; }
+.abs { position: absolute; left: 0; top: 0; }
+.mono { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.12em; }
+.kick { position: absolute; left: 134px; top: 76px; font-size: 28px; color: var(--accent2); }
+h1 { position: absolute; left: 134px; top: 118px; margin: 0; font-family: var(--display); font-size: 84px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; }
+.dim { position: absolute; font-size: 26px; color: var(--accent2); padding: 0 12px; background: var(--bg); }
+.node { position: absolute; top: 340px; width: 242px; height: 220px; box-sizing: border-box; border: 2px solid var(--border); padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; }
+.node .pn { font-size: 26px; color: var(--muted); }
+.node svg.ic { width: 56px; height: 56px; }
+.node .l { font-size: 36px; font-weight: 500; letter-spacing: -0.01em; }
+.node.active { border: 3px solid var(--accent); }
+.node.active .pn { color: var(--accent); }
+.node.next { border: 2px dashed var(--faint); }
+.node.next .l, .node.next .pn { color: var(--faint); }
+.ok { position: absolute; right: 14px; top: 14px; width: 40px; height: 40px; }
+.panel { position: absolute; left: 980px; top: 680px; width: 806px; box-sizing: border-box; border: 2px solid var(--border); }
+.panel .h { height: 76px; box-sizing: border-box; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--border); }
+.panel .h .t { font-size: 30px; color: var(--accent); }
+.panel .h .s { font-size: 26px; color: var(--muted); }
+.r { height: 74px; display: flex; align-items: center; border-bottom: 1.5px solid var(--faint); font-size: 34px; }
+.r:last-child { border-bottom: 0; }
+.r .c1 { width: 70px; display: flex; justify-content: center; }
+.r .c1 svg { width: 34px; height: 34px; }
+.r .job { flex: 1; font-family: var(--mono); font-size: 32px; }
+.r .time { width: 130px; font-family: var(--mono); font-size: 30px; color: var(--muted); text-align: right; margin-right: 22px; }
+.chip { width: 150px; height: 46px; box-sizing: border-box; border: 2px solid var(--accent2); color: var(--accent2); display: flex; align-items: center; justify-content: center; font-size: 26px; margin-right: 22px; }
+.chip.run { border-color: var(--accent); color: var(--accent); }
+.tb { position: absolute; left: 134px; top: 680px; width: 760px; box-sizing: border-box; border: 2px solid var(--border); }
+.tb .cell { padding: 11px 20px; border-bottom: 1.5px solid var(--faint); }
+.tb .cell:last-child { border-bottom: 0; }
+.tb .k { font-size: 26px; color: var(--muted); }
+.tb .v { margin-top: 4px; font-size: 34px; }
+.tb .two { display: flex; }
+.tb .two .cell { flex: 1; border-bottom: 0; }
+.tb .two .cell + .cell { border-left: 1.5px solid var(--faint); }
+.tb .twowrap { border-bottom: 1.5px solid var(--faint); }
+</style>
+</head>
+<body>
+<!-- drawing grid: 40 px minor, 200 px major -->
+<svg class="abs" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <path d="M40 0V1080M80 0V1080M120 0V1080M160 0V1080M240 0V1080M280 0V1080M320 0V1080M360 0V1080M440 0V1080M480 0V1080M520 0V1080M560 0V1080M640 0V1080M680 0V1080M720 0V1080M760 0V1080M840 0V1080M880 0V1080M920 0V1080M960 0V1080M1040 0V1080M1080 0V1080M1120 0V1080M1160 0V1080M1240 0V1080M1280 0V1080M1320 0V1080M1360 0V1080M1440 0V1080M1480 0V1080M1520 0V1080M1560 0V1080M1640 0V1080M1680 0V1080M1720 0V1080M1760 0V1080M1840 0V1080M1880 0V1080M1920 0V1080M0 40H1920M0 80H1920M0 120H1920M0 160H1920M0 240H1920M0 280H1920M0 320H1920M0 360H1920M0 440H1920M0 480H1920M0 520H1920M0 560H1920M0 640H1920M0 680H1920M0 720H1920M0 760H1920M0 840H1920M0 880H1920M0 920H1920M0 960H1920M0 1040H1920M0 1080H1920" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1"/>
+  <path d="M0 0V1080M200 0V1080M400 0V1080M600 0V1080M800 0V1080M1000 0V1080M1200 0V1080M1400 0V1080M1600 0V1080M1800 0V1080M0 0H1920M0 200H1920M0 400H1920M0 600H1920M0 800H1920M0 1000H1920" fill="none" stroke="#ffffff" stroke-opacity="0.13" stroke-width="1.5"/>
+  <rect x="40" y="40" width="1840" height="1000" fill="none" stroke="#cfe6ff" stroke-opacity="0.5" stroke-width="2"/>
+</svg>
+
+<!-- line work: dimension lines, flow arrows, leader -->
+<svg class="abs" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <g stroke="#7fe3ff" stroke-width="1.5" fill="none">
+    <!-- overall dimension -->
+    <path d="M134 290v34M1786 290v34M134 300H1786"/>
+    <path d="M150 292l-16 8 16 8M1770 292l16 8-16 8"/>
+    <!-- progress dimension: steps 1 to 4 -->
+    <path d="M134 576v40M1222 576v40M134 606H1222"/>
+    <path d="M150 598l-16 8 16 8M1206 598l16 8-16 8"/>
+  </g>
+  <g stroke="#ffffff" stroke-width="2" fill="none">
+    <path d="M378 450h36M396 442l18 8-18 8"/>
+    <path d="M660 450h36M678 442l18 8-18 8"/>
+    <path d="M942 450h36M960 442l18 8-18 8"/>
+  </g>
+  <g stroke="#9cc3ea" stroke-width="2" fill="none" stroke-dasharray="6 6">
+    <path d="M1224 450h36"/><path d="M1506 450h36"/>
+  </g>
+  <!-- callout from the active part to detail A -->
+  <g stroke="#ffd23f" stroke-width="1.5" fill="none">
+    <path d="M1101 560V646H1050V680"/>
+  </g>
+  <circle cx="1101" cy="646" r="7" fill="#ffd23f"/>
+</svg>
+<div class="dim mono" style="left: 818px; top: 282px;">6 steps</div>
+<div class="dim mono" style="left: 548px; top: 588px; color: #ffd23f;">Progress 4 / 6</div>
+
+<div class="kick mono">Sheet 04 / 06, Deployment</div>
+<h1>How a change goes live</h1>
+
+<div class="node" style="left: 134px;">
+  <svg class="ok" viewBox="0 0 24 24" fill="none" stroke="#7fe3ff" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+  <span class="pn mono">S-01</span>
+  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#7fe3ff" stroke-width="1.4"><path d="M4 5h16v11H10l-6 4z"/></svg>
+  <span class="l">Chat</span>
+</div>
+<div class="node" style="left: 416px;">
+  <svg class="ok" viewBox="0 0 24 24" fill="none" stroke="#7fe3ff" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+  <span class="pn mono">S-02</span>
+  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#7fe3ff" stroke-width="1.4"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>
+  <span class="l">Agent</span>
+</div>
+<div class="node" style="left: 698px;">
+  <svg class="ok" viewBox="0 0 24 24" fill="none" stroke="#7fe3ff" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+  <span class="pn mono">S-03</span>
+  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#7fe3ff" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M2 12h6M16 12h6"/></svg>
+  <span class="l">Git Commit</span>
+</div>
+<div class="node active" style="left: 980px;">
+  <span class="pn mono">S-04 Active</span>
+  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#ffd23f" stroke-width="1.4"><rect x="3" y="4" width="6" height="6"/><rect x="15" y="14" width="6" height="6"/><path d="M9 7h4a2 2 0 0 1 2 2v5"/></svg>
+  <span class="l">Pipeline</span>
+</div>
+<div class="node next" style="left: 1262px;">
+  <span class="pn mono">S-05</span>
+  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#9cc3ea" stroke-width="1.4"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/></svg>
+  <span class="l">Staging</span>
+</div>
+<div class="node next" style="left: 1544px;">
+  <span class="pn mono">S-06</span>
+  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#9cc3ea" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
+  <span class="l">Production</span>
+</div>
+
+<div class="tb">
+  <div class="cell"><div class="k mono">Drawing</div><div class="v">Flow of a change, chat to production</div></div>
+  <div class="twowrap"><div class="two">
+    <div class="cell"><div class="k mono">Status</div><div class="v">Step 4 of 6</div></div>
+    <div class="cell"><div class="k mono">Rev.</div><div class="v">#482</div></div>
+  </div></div>
+  <div class="cell"><div class="k mono">Note</div><div class="v">Build and test have passed.</div></div>
+</div>
+
+<div class="panel">
+  <div class="h"><span class="t mono">Detail A: Pipeline #482</span><span class="s mono">Time</span></div>
+  <div class="r">
+    <span class="c1"><svg viewBox="0 0 24 24" fill="none" stroke="#7fe3ff" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+    <span class="job">build</span><span class="chip mono">ok</span><span class="time">1:12</span>
+  </div>
+  <div class="r">
+    <span class="c1"><svg viewBox="0 0 24 24" fill="none" stroke="#7fe3ff" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+    <span class="job">test</span><span class="chip mono">ok</span><span class="time">0:48</span>
+  </div>
+  <div class="r">
+    <span class="c1"><svg viewBox="0 0 24 24" fill="#ffd23f"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></span>
+    <span class="job">deploy</span><span class="chip run mono">running</span><span class="time">0:21</span>
+  </div>
+</div>
+</body>
+</html>

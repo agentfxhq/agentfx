@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Blueprint: Data</title>
+<style>
+:root {
+  --bg: #0e3d73; --bg2: #0b3566; --border: #cfe6ff;
+  --text: #ffffff; --muted: #b7d3f2; --faint: #9cc3ea; --accent: #ffd23f; --accent2: #7fe3ff;
+  --display: "Space Grotesk"; --body: "Space Grotesk"; --mono: "JetBrains Mono";
+}
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); position: relative; }
+.abs { position: absolute; left: 0; top: 0; }
+.mono { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.12em; }
+.kick { position: absolute; left: 134px; top: 76px; font-size: 28px; color: var(--accent2); }
+h1 { position: absolute; left: 134px; top: 118px; margin: 0; font-family: var(--display); font-size: 84px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; }
+.box { position: absolute; left: 134px; top: 340px; width: 560px; box-sizing: border-box; border: 2px solid var(--border); }
+.box .cell { padding: 18px 24px; border-bottom: 1.5px solid var(--faint); }
+.box .cell:last-child { border-bottom: 0; }
+.box .k { font-size: 26px; color: var(--muted); }
+.box .big { font-family: var(--display); font-size: 140px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.0; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.box .v { margin-top: 4px; font-size: 34px; }
+.tick { position: absolute; width: 90px; text-align: right; font-family: var(--mono); font-size: 26px; color: var(--muted); }
+.val { position: absolute; width: 160px; text-align: center; font-family: var(--mono); font-size: 32px; }
+.q { position: absolute; top: 940px; width: 160px; text-align: center; font-family: var(--mono); font-size: 30px; color: var(--muted); letter-spacing: 0.12em; }
+.ann { position: absolute; left: 1150px; top: 450px; width: 400px; text-align: right; font-size: 28px; color: var(--accent); }
+</style>
+</head>
+<body>
+<svg class="abs" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <path d="M40 0V1080M80 0V1080M120 0V1080M160 0V1080M240 0V1080M280 0V1080M320 0V1080M360 0V1080M440 0V1080M480 0V1080M520 0V1080M560 0V1080M640 0V1080M680 0V1080M720 0V1080M760 0V1080M840 0V1080M880 0V1080M920 0V1080M960 0V1080M1040 0V1080M1080 0V1080M1120 0V1080M1160 0V1080M1240 0V1080M1280 0V1080M1320 0V1080M1360 0V1080M1440 0V1080M1480 0V1080M1520 0V1080M1560 0V1080M1640 0V1080M1680 0V1080M1720 0V1080M1760 0V1080M1840 0V1080M1880 0V1080M1920 0V1080M0 40H1920M0 80H1920M0 120H1920M0 160H1920M0 240H1920M0 280H1920M0 320H1920M0 360H1920M0 440H1920M0 480H1920M0 520H1920M0 560H1920M0 640H1920M0 680H1920M0 720H1920M0 760H1920M0 840H1920M0 880H1920M0 920H1920M0 960H1920M0 1040H1920M0 1080H1920" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1"/>
+  <path d="M0 0V1080M200 0V1080M400 0V1080M600 0V1080M800 0V1080M1000 0V1080M1200 0V1080M1400 0V1080M1600 0V1080M1800 0V1080M0 0H1920M0 200H1920M0 400H1920M0 600H1920M0 800H1920M0 1000H1920" fill="none" stroke="#ffffff" stroke-opacity="0.13" stroke-width="1.5"/>
+  <rect x="40" y="40" width="1840" height="1000" fill="none" stroke="#cfe6ff" stroke-opacity="0.5" stroke-width="2"/>
+
+  <!-- axes: baseline y 920, 2.8 px per thousand -->
+  <g stroke="#cfe6ff" stroke-width="2" fill="none">
+    <path d="M860 380V920H1786"/>
+    <path d="M848 920h12M848 780h12M848 640h12M848 500h12"/>
+  </g>
+  <!-- bars: hatched parts with outline -->
+  <path d="M900 904L916 920M900 888L932 920M900 872L948 920M900 856L964 920M900 840L980 920M900 824L996 920M900 808L1012 920M900 792L1028 920M900 776L1044 920M900 760L1060 920M900 744L1060 904M900 728L1060 888M900 712L1060 872M900 696L1060 856M905 685L1060 840M921 685L1060 824M937 685L1060 808M953 685L1060 792M969 685L1060 776M985 685L1060 760M1001 685L1060 744M1017 685L1060 728M1033 685L1060 712M1049 685L1060 696" stroke="#7fe3ff" stroke-opacity="0.45" stroke-width="2" fill="none"/><rect x="900" y="685" width="160" height="235" fill="none" stroke="#7fe3ff" stroke-width="2"/>
+  <path d="M1130 904L1146 920M1130 888L1162 920M1130 872L1178 920M1130 856L1194 920M1130 840L1210 920M1130 824L1226 920M1130 808L1242 920M1130 792L1258 920M1130 776L1274 920M1130 760L1290 920M1130 744L1290 904M1130 728L1290 888M1130 712L1290 872M1130 696L1290 856M1130 680L1290 840M1130 664L1290 824M1130 648L1290 808M1146 648L1290 792M1162 648L1290 776M1178 648L1290 760M1194 648L1290 744M1210 648L1290 728M1226 648L1290 712M1242 648L1290 696M1258 648L1290 680M1274 648L1290 664" stroke="#7fe3ff" stroke-opacity="0.45" stroke-width="2" fill="none"/><rect x="1130" y="648" width="160" height="272" fill="none" stroke="#7fe3ff" stroke-width="2"/>
+  <path d="M1360 904L1376 920M1360 888L1392 920M1360 872L1408 920M1360 856L1424 920M1360 840L1440 920M1360 824L1456 920M1360 808L1472 920M1360 792L1488 920M1360 776L1504 920M1360 760L1520 920M1360 744L1520 904M1360 728L1520 888M1360 712L1520 872M1360 696L1520 856M1360 680L1520 840M1360 664L1520 824M1360 648L1520 808M1360 632L1520 792M1360 616L1520 776M1360 600L1520 760M1360 584L1520 744M1373 581L1520 728M1389 581L1520 712M1405 581L1520 696M1421 581L1520 680M1437 581L1520 664M1453 581L1520 648M1469 581L1520 632M1485 581L1520 616M1501 581L1520 600M1517 581L1520 584" stroke="#7fe3ff" stroke-opacity="0.45" stroke-width="2" fill="none"/><rect x="1360" y="581" width="160" height="339" fill="none" stroke="#7fe3ff" stroke-width="2"/>
+  <path d="M1590 904L1606 920M1590 888L1622 920M1590 872L1638 920M1590 856L1654 920M1590 840L1670 920M1590 824L1686 920M1590 808L1702 920M1590 792L1718 920M1590 776L1734 920M1590 760L1750 920M1590 744L1750 904M1590 728L1750 888M1590 712L1750 872M1590 696L1750 856M1590 680L1750 840M1590 664L1750 824M1590 648L1750 808M1590 632L1750 792M1590 616L1750 776M1590 600L1750 760M1590 584L1750 744M1590 568L1750 728M1590 552L1750 712M1590 536L1750 696M1590 520L1750 680M1590 504L1750 664M1590 488L1750 648M1590 472L1750 632M1590 456L1750 616M1600 450L1750 600M1616 450L1750 584M1632 450L1750 568M1648 450L1750 552M1664 450L1750 536M1680 450L1750 520M1696 450L1750 504M1712 450L1750 488M1728 450L1750 472M1744 450L1750 456" stroke="#ffd23f" stroke-opacity="0.6" stroke-width="2" fill="none"/><rect x="1590" y="450" width="160" height="470" fill="none" stroke="#ffd23f" stroke-width="3"/>
+  <!-- extension line at Q1 level and doubling dimension -->
+  <path d="M1060 685H1584" stroke="#9cc3ea" stroke-width="1.5" stroke-dasharray="6 6" fill="none"/>
+  <path d="M1570 450H1584M1565 450V685" stroke="#ffd23f" stroke-width="1.5" fill="none"/>
+  <path d="M1557 466l8-16 8 16M1557 669l8 16 8-16" stroke="#ffd23f" stroke-width="1.5" fill="none"/>
+</svg>
+
+<div class="kick mono">Sheet K-01, Key figures</div>
+<h1>Revenue 2025</h1>
+
+<div class="box">
+  <div class="cell"><div class="k mono">Item 1, Orders</div><div class="big">12,480</div></div>
+  <div class="cell"><div class="k mono">Unit</div><div class="v">Orders in 2025</div></div>
+  <div class="cell"><div class="k mono">Item 2, Revenue</div><div class="v">thousands of €, per quarter</div></div>
+</div>
+
+<div class="tick mono" style="left: 750px; top: 904px;">0</div>
+<div class="tick mono" style="left: 750px; top: 764px;">50</div>
+<div class="tick mono" style="left: 750px; top: 624px;">100</div>
+<div class="tick mono" style="left: 750px; top: 484px;">150</div>
+<div class="tick mono" style="left: 690px; top: 360px; width: 150px;">€k</div>
+
+<div class="val" style="left: 900px; top: 636px;">84</div>
+<div class="val" style="left: 1130px; top: 599px;">97</div>
+<div class="val" style="left: 1360px; top: 532px;">121</div>
+<div class="val" style="left: 1590px; top: 400px; color: #ffd23f;">168</div>
+<div class="ann mono">×2 since Q1</div>
+
+<div class="q" style="left: 900px;">Q1</div>
+<div class="q" style="left: 1130px;">Q2</div>
+<div class="q" style="left: 1360px;">Q3</div>
+<div class="q" style="left: 1590px; color: #ffd23f;">Q4</div>
+</body>
+</html>

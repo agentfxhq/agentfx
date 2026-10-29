@@ -1,0 +1,60 @@
+video "J1 swing t=7.15" size=1920x1080 fps=30
+theme studio-light
+  bg #F2EEE6
+scene s dur=9s
+  camera persp=1600
+  anim #camera roty 0s:-8 9s:-8 z 0s:15 9s:15 x 0s:-280 9s:-280
+  layer #far x=0 y=0 w=1920 h=1080 z=-320
+    rect #rule0 w=1728 h=1.5 x=96 y=150 fill=#141414
+    rect #rule1 w=1728 h=1.5 x=96 y=930 fill=#141414
+    rect #ct0 w=1.5 h=14 x=96 y=150 fill=#141414
+    rect #ct1 w=1.5 h=14 x=242 y=150 fill=#141414
+    rect #ct2 w=1.5 h=14 x=388 y=150 fill=#141414
+    rect #ct3 w=1.5 h=14 x=534 y=150 fill=#141414
+    rect #ct4 w=1.5 h=14 x=680 y=150 fill=#141414
+    rect #ct5 w=1.5 h=14 x=826 y=150 fill=#141414
+    rect #ct6 w=1.5 h=14 x=972 y=150 fill=#141414
+    rect #ct7 w=1.5 h=14 x=1118 y=150 fill=#141414
+    rect #ct8 w=1.5 h=14 x=1264 y=150 fill=#141414
+    rect #ct9 w=1.5 h=14 x=1410 y=150 fill=#141414
+    rect #ct10 w=1.5 h=14 x=1556 y=150 fill=#141414
+    rect #ct11 w=1.5 h=14 x=1702 y=150 fill=#141414
+    rect #cg1 w=1 h=778 x=242.5 y=151.5 fill=#141414 opacity=0.08
+    rect #cg2 w=1 h=778 x=388.5 y=151.5 fill=#141414 opacity=0.08
+    rect #cg3 w=1 h=778 x=534.5 y=151.5 fill=#141414 opacity=0.08
+    rect #cg4 w=1 h=778 x=680.5 y=151.5 fill=#141414 opacity=0.08
+    rect #cg5 w=1 h=778 x=826.5 y=151.5 fill=#141414 opacity=0.08
+    rect #cg6 w=1 h=778 x=972.5 y=151.5 fill=#141414 opacity=0.08
+    rect #cg7 w=1 h=778 x=1118.5 y=151.5 fill=#141414 opacity=0.08
+    rect #cg8 w=1 h=778 x=1264.5 y=151.5 fill=#141414 opacity=0.08
+    rect #cg9 w=1 h=778 x=1410.5 y=151.5 fill=#141414 opacity=0.08
+    rect #cg10 w=1 h=778 x=1556.5 y=151.5 fill=#141414 opacity=0.08
+    rect #cg11 w=1 h=778 x=1702.5 y=151.5 fill=#141414 opacity=0.08
+  layer #near x=0 y=0 w=1920 h=1080 z=12
+    text #w1 "change" size=118 weight=800 color=#141414 x=144.5 y=407.7 anchor=center rot=-90 nowrap
+    rect #hair w=146.0 h=2 x=212.5 y=256.5 fill=#141414
+    text #w3 "weight" size=118 weight=900 color=#141414 x=582.5 y=680.0 anchor=center rot=-90 nowrap
+    rect #cb0 w=68.0 h=38 x=664.5 y=237.5 fill=#141414
+    rect #cb1 w=151.0 h=38 x=664.5 y=523.5 fill=#141414
+    rect #cb2 w=108.7 h=38 x=664.5 y=804.5 fill=#141414
+    text #m0 "every" font=mono size=22 color=#141414 x=839.5 y=206.0 nowrap
+    text #m1 "frame" font=mono size=22 color=#141414 x=839.5 y=245.0 nowrap
+    text #m2 "is" font=mono size=22 color=#141414 x=839.5 y=284.0 nowrap
+    text #m3 "a" font=mono size=22 color=#141414 x=839.5 y=323.0 nowrap
+    text #m4 "pure" font=mono size=22 color=#141414 x=839.5 y=362.0 nowrap
+    text #m5 "function" font=mono size=22 color=#141414 x=839.5 y=401.0 nowrap
+    text #m6 "of" font=mono size=22 color=#141414 x=839.5 y=440.0 nowrap
+    text #m7 "time" font=mono size=22 color=#141414 x=839.5 y=479.0 nowrap
+    text #m8 "t" font=mono size=22 color=#141414 x=839.5 y=518.0 nowrap
+    text #b0 "near" size=96 weight=800 color=#141414 x=1159.5 y=785.0 anchor=center rot=-90 nowrap blur=14.0
+    text #b1 "focus" size=96 weight=800 color=#141414 x=1159.5 y=547.5 anchor=center rot=-90 nowrap blur=0.0
+    text #b2 "far" size=96 weight=800 color=#141414 x=1159.5 y=285.0 anchor=center rot=-90 nowrap blur=16.0
+  layer #hud x=0 y=0 w=1920 h=1080 hud
+    rect #tk0 w=1.5 h=10 x=375.8 y=931 fill=#8C9196
+    rect #tk1 w=1.5 h=10 x=556.8 y=931 fill=#8C9196
+    rect #tk2 w=1.5 h=10 x=737.8 y=931 fill=#8C9196
+    rect #tk3 w=1.5 h=10 x=902.4 y=931 fill=#8C9196
+    rect #tk4 w=1.5 h=10 x=1067.0 y=931 fill=#8C9196
+    rect #ph w=2 h=26 x=1272.7 y=918 fill=#8C9196
+    text #tc "t = 00:07.150" font=mono size=22 color=#141414 x=96 y=958 nowrap
+    text #lb "06 / 09" font=mono size=22 color=#141414 x=1824 y=958 anchor=top-right nowrap

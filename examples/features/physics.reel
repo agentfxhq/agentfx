@@ -1,0 +1,9 @@
+video "Heavy type" size=1920x1080 fps=30 captions=off
+scene gravity dur=6s
+  text #letters "HEAVY" split=char size=520 weight=900 color=#F8F032 x=50% y=0% anchor=top w=100%
+  text "EVERY LETTER HAS WEIGHT." size=48 weight=800 color=#FFFFFF x=4% y=6%
+  rect #floor x=0 y=94% w=100% h=6% fill=#F8F032
+  // letters start tilted in a row, fall, tumble and pile on the floor
+  @0s drop #letters at=#floor gravity=3200 bounce=0.3 friction=0.7 stagger=110ms spin=140deg scatter=380
+  // finale: a shove sends the pile skidding
+  @3.5s push #letters at=#floor dir=-20deg speed=1100 gravity=3200 bounce=0.2

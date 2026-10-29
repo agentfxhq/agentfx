@@ -1,0 +1,85 @@
+// World canvas + camera director (X9): one continuous camera move, no cuts, through a world
+// nested in powers of ten. It starts inside the counter of one letter of a paragraph, pulls
+// back through the paragraph, the app screen it sits on (focus beat: the KPI under a dark
+// overlay while it counts), a grid of twelve screens, out to the giant wordmark whose "o"
+// holds the grid. ~30000x zoom; text stays crisp at every level (renderer mip tile cache
+// while moving, exact vectors at rest).
+video "World zoom" size=1920x1080 fps=30 captions=off
+
+scene zoom dur=12.3s bg=#0B0B0E
+  world #w 16000x9000 bg=#0B0B0E
+    text #mark "zoom" size=6200 weight=900 color=#FF4A1C x=600 y=-700 nowrap tracking=-0.04
+    place #grid at 5405,3613 scale=0.52 w=1920 h=1080
+      place #s1 at 255,264 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#F4F1EA radius=40
+        text "Inbox" size=150 weight=800 color=#16151A x=120 y=110
+        rect w=1680 h=520 x=120 y=420 fill=#16151A radius=30
+      place #s2 at 725,264 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#FF4A1C radius=40
+        text "Ship it." size=220 weight=900 color=#0B0B0E x=120 y=110
+        rect w=760 h=420 x=120 y=520 fill=#0B0B0E radius=30
+        rect w=760 h=420 x=1040 y=520 fill=#F4F1EA radius=30
+      place #s3 at 1195,264 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#F4F1EA radius=40
+        text "Roadmap" size=150 weight=800 color=#16151A x=120 y=110
+        rect w=500 h=520 x=120 y=420 fill=#2B59FF radius=30
+        rect w=500 h=520 x=710 y=420 fill=#FFC93C radius=30
+        rect w=500 h=520 x=1300 y=420 fill=#16151A radius=30
+      place #s4 at 1665,264 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#2B59FF radius=40
+        text "98 %" size=420 weight=900 color=#F4F1EA x=120 y=200
+      place #s5 at 255,540 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#16151A radius=40
+        text "Search" size=150 weight=800 color=#F4F1EA x=120 y=110
+        rect w=1680 h=130 x=120 y=380 fill=#2E2D35 radius=65
+        rect w=1680 h=90 x=120 y=600 fill=#2E2D35 radius=20
+        rect w=1200 h=90 x=120 y=740 fill=#2E2D35 radius=20
+      place #app at 725,540 scale=0.23
+        rect #app-bg x=0 y=0 w=1920 h=1080 fill=#F4F1EA radius=40
+        rect x=0 y=0 w=1920 h=150 fill=#16151A radius=40
+        text "Weekly report" size=72 weight=800 color=#F4F1EA x=110 y=36
+        text #kpi-label "Active users" size=46 weight=700 color=#55525C x=110 y=230
+        layer #kpi x=110 y=300 w=820 h=330
+          rect x=0 y=0 w=820 h=330 fill=#FF4A1C radius=34
+          counter #kpi-n from=12480 size=190 weight=900 color=#0B0B0E x=60 y=50 suffix=""
+          text "+38 % since July" size=44 weight=700 color=#0B0B0E x=64 y=250
+        layer #bars x=1010 y=230 w=800 h=400
+          rect #b1 w=110 h=150 x=0 y=250 fill=#16151A radius=12
+          rect #b2 w=110 h=220 x=170 y=180 fill=#16151A radius=12
+          rect #b3 w=110 h=190 x=340 y=210 fill=#16151A radius=12
+          rect #b4 w=110 h=300 x=510 y=100 fill=#16151A radius=12
+          rect #b5 w=110 h=400 x=680 y=0 fill=#FF4A1C radius=12
+        text #para "Small moves, every day. One sentence holds a word, a word holds a letter, and a letter holds a whole world of its own. Zoom in far enough and the page becomes a place." size=34 weight=500 color=#16151A x=110 y=700 w=1700 lh=1.45
+        place #seed at 253.3,727.7 scale=0.004 w=1920 h=1080
+          text #tiny "start here" size=300 weight=900 color=#FF4A1C nowrap
+      place #s7 at 1195,540 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#FFC93C radius=40
+        text "Hello." size=300 weight=900 color=#16151A x=120 y=200
+      place #s8 at 1665,540 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#F4F1EA radius=40
+        text "Settings" size=150 weight=800 color=#16151A x=120 y=110
+        rect w=1680 h=110 x=120 y=420 fill=#16151A radius=55
+        rect w=1680 h=110 x=120 y=580 fill=#16151A radius=55
+        rect w=1680 h=110 x=120 y=740 fill=#FF4A1C radius=55
+      place #s9 at 255,816 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#F4F1EA radius=40
+        text "Calendar" size=150 weight=800 color=#16151A x=120 y=110
+        rect w=1680 h=560 x=120 y=400 fill=#2B59FF radius=30
+      place #s10 at 725,816 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#16151A radius=40
+        text "{ code }" size=260 weight=900 color=#FFC93C x=120 y=300
+      place #s11 at 1195,816 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#FF4A1C radius=40
+        text "Done." size=300 weight=900 color=#F4F1EA x=120 y=200
+      place #s12 at 1665,816 scale=0.23
+        rect x=0 y=0 w=1920 h=1080 fill=#F4F1EA radius=40
+        text "Team" size=150 weight=800 color=#16151A x=120 y=110
+        circle size=300 x=120 y=420 fill=#2B59FF
+        circle size=300 x=480 y=420 fill=#FFC93C
+        circle size=300 x=840 y=420 fill=#FF4A1C
+  @0s anim #tiny scale 0s:1 0.8s:1.08~inout-sine 1.6s:1~inout-sine
+  @0s camera zoom-through #seed -> #para -> #app dur=4.0s ease=cubic(0.25,0.35,0.35,1)
+  @4.0s camera focus #kpi overlay=#000000d8 fit=0.6 move=0.9s for=1.3s
+  @4.7s count #kpi-n to=17220 dur=1.4s
+  @4.6s anim #b5 sy 0s:1 0.6s:1.25~spring(170,14)
+  @6.5s camera zoom-through #grid -> #mark dur=5.0s fit=0.95 ease=cubic(0.5,0,0.3,1)

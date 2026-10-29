@@ -1,0 +1,12 @@
+// Motion blur (reel-ir motion_blur): mblur=<samples> shutter=<angle|frames> on any element or anim.
+video "Motion blur" size=1280x720 fps=30 captions=off
+
+scene blur dur=3s
+  label #l1 "mblur=16 shutter=180deg" x=6% y=18% color=$muted
+  ellipse #a w=70 h=70 fill=$mint x=12% y=32% anchor=center mblur=16 shutter=180deg
+  label #l2 "no motion blur" x=6% y=50% color=$muted
+  ellipse #b w=70 h=70 fill=$warn x=12% y=64% anchor=center
+  star #s points=5 inner=0.45 size=110 fill=$accent x=82% y=78% anchor=center
+  @0.3s anim #a x 0s:0 0.4s:900~inout-cubic 1.2s:900 1.6s:0~inout-cubic
+  @0.3s anim #b x 0s:0 0.4s:900~inout-cubic 1.2s:900 1.6s:0~inout-cubic
+  @0.3s anim #s rot 0s:0deg 1.2s:720deg~inout-cubic mblur=24 shutter=360deg

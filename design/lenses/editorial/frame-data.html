@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Editorial: Data</title>
+<style>
+:root {
+  --bg: #faf7f2; --bg2: #f1ece3; --surface2: #f6efe6; --border: #d9d2c5;
+  --text: #1a1a1a; --muted: #57534e; --faint: #6f6a62; --accent: #b8321f; --accent2: #2f5d8a; --paper: #ffffff;
+  --display: "Source Serif 4"; --body: "Libre Franklin"; --mono: "JetBrains Mono";
+  --safe-x: 134px; --safe-y: 76px;
+}
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); position: relative; }
+.top { position: absolute; left: var(--safe-x); top: var(--safe-y); width: 1652px; }
+.kick { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 14px 0 0 0; font-family: var(--display); font-size: 90px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.02; }
+.dek { margin: 16px 0 0 0; font-size: 36px; line-height: 1.3; color: var(--muted); }
+.abs { position: absolute; }
+.tick { position: absolute; left: 134px; width: 80px; text-align: right; font-size: 28px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { position: absolute; width: 160px; background: var(--accent2); }
+.bar.hi { background: var(--accent); }
+.bar span { position: absolute; left: 0; top: 12px; width: 160px; text-align: center; color: var(--paper); font-size: 38px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.q { position: absolute; top: 918px; width: 160px; text-align: center; font-size: 32px; font-weight: 600; }
+.ann { position: absolute; left: 600px; top: 500px; width: 310px; text-align: right; font-size: 32px; line-height: 1.2; }
+.ann b { color: var(--accent); font-weight: 700; }
+.side { position: absolute; left: 1330px; top: 380px; width: 456px; border-top: 3px solid var(--text); padding-top: 18px; }
+.side .lab { font-size: 26px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.side .big { margin-top: 10px; font-family: var(--display); font-size: 150px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: lining-nums tabular-nums; }
+.side .unit { margin-top: 8px; font-size: 40px; font-weight: 700; }
+.side .sub { margin-top: 18px; font-size: 32px; line-height: 1.3; color: var(--muted); border-top: 2px solid var(--border); padding-top: 18px; }
+.src { position: absolute; left: 134px; top: 980px; font-size: 26px; color: var(--faint); }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="kick">Fiscal year 2025</div>
+  <h1>Revenue 2025</h1>
+  <p class="dek">Quarterly revenue, thousands of euros</p>
+</div>
+
+<!-- plot: baseline y 900, 2.6 px per thousand, gridlines at 0/50/100/150 -->
+<svg class="abs" style="left:0; top:0;" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <g stroke="#d9d2c5" stroke-width="2">
+    <line x1="230" y1="770" x2="1130" y2="770"/>
+    <line x1="230" y1="640" x2="1130" y2="640"/>
+    <line x1="230" y1="510" x2="1130" y2="510"/>
+  </g>
+</svg>
+<div class="tick" style="top: 884px;">0</div>
+<div class="tick" style="top: 754px;">50</div>
+<div class="tick" style="top: 624px;">100</div>
+<div class="tick" style="top: 494px;">150</div>
+<div class="tick" style="top: 446px; width: 140px; text-align: left; left: 134px; font-weight: 600;">€k</div>
+
+<div class="bar" style="left: 265px; top: 682px; height: 218px;"><span>84</span></div>
+<div class="bar" style="left: 495px; top: 648px; height: 252px;"><span>97</span></div>
+<div class="bar" style="left: 725px; top: 585px; height: 315px;"><span>121</span></div>
+<div class="bar hi" style="left: 955px; top: 463px; height: 437px;"><span>168</span></div>
+
+<svg class="abs" style="left:0; top:0;" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <line x1="230" y1="900" x2="1130" y2="900" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- Q1 reference, carried across to Q4 -->
+  <g stroke="#1a1a1a" stroke-width="2" stroke-dasharray="8 8"><line x1="425" y1="682" x2="495" y2="682"/><line x1="655" y1="682" x2="725" y2="682"/><line x1="885" y1="682" x2="955" y2="682"/></g>
+  <!-- doubling bracket on Q4 -->
+  <path d="M942 682 L930 682 L930 463 L942 463" fill="none" stroke="#b8321f" stroke-width="3"/>
+  <line x1="914" y1="572" x2="930" y2="572" stroke="#b8321f" stroke-width="3"/>
+</svg>
+<div class="ann"><b>×2 since Q1</b><br>from 84 to 168</div>
+
+<div class="q" style="left: 265px;">Q1</div>
+<div class="q" style="left: 495px;">Q2</div>
+<div class="q" style="left: 725px;">Q3</div>
+<div class="q" style="left: 955px; color: #b8321f; font-weight: 700;">Q4</div>
+
+<div class="side">
+  <div class="lab">Same year</div>
+  <div class="big">12,480</div>
+  <div class="unit">Orders 2025</div>
+  <div class="sub">On average 34 orders a day.</div>
+</div>
+
+<div class="src">Source: sample data, net revenue</div>
+</body>
+</html>

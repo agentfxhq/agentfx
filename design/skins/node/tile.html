@@ -1,0 +1,26 @@
+<!--
+skin: node/tile   (L3, HTML/CSS skin bound to the node contract)
+slots: label sub icon kicker
+parts: active (accent state, `activate`), done (check badge, `done`)
+size: w=300
+tokens: --bg --surface --surface2 --border --text --muted --accent --accent2 --mint --paper --radius --radius-sm --border-w --shadow --font-display --font-body --w-heading --w-label --tr-label --label-case
+-->
+<style>
+.skin-node-tile{position:relative;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:{{px:14}};padding:{{px:30}} {{px:22}} {{px:28}};background:var(--surface);border:var(--border-w) solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);font-family:var(--font-body);text-align:center}
+.skin-node-tile.surface-outline{background:transparent}
+.skin-node-tile .ic{width:{{px:76}};height:{{px:76}};border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;background:var(--bg2);color:var(--accent2);border:var(--border-w) solid var(--border)}
+.skin-node-tile .ic svg{width:{{px:40}};height:{{px:40}}}
+.skin-node-tile.no-icon .ic{display:none}
+.skin-node-tile .lb{font-family:var(--font-display);font-weight:var(--w-heading);font-size:{{px:38}};line-height:1.1;color:var(--text);white-space:nowrap}
+.skin-node-tile .sb{font-size:{{px:26}};line-height:1.25;color:var(--muted)}
+.skin-node-tile .act{position:absolute;left:{{px:-4}};top:{{px:-4}};right:{{px:-4}};bottom:{{px:-4}};border:{{px:4}} solid var(--mint);border-radius:var(--radius);background:transparent}
+.skin-node-tile .done{position:absolute;right:{{px:-16}};top:{{px:-16}};width:{{px:46}};height:{{px:46}};border-radius:{{px:46}};background:var(--accent2);border:{{px:4}} solid var(--bg);display:flex;align-items:center;justify-content:center}
+.skin-node-tile .done svg{width:{{px:26}};height:{{px:26}}}
+</style>
+<div class="skin-node-tile {{has-icon}}" style="width:100%">
+  <div class="ic">{{icon}}</div>
+  <div class="lb">{{label}}</div>
+  <div class="sb">{{sub}}</div>
+  <div class="act" data-part="active"></div>
+  <div class="done" data-part="done">{{icon:check:paper}}</div>
+</div>

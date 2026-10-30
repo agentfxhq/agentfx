@@ -113,9 +113,11 @@ fn run_reel(ir_path: &Path, args: &[&str]) -> Result<Value> {
     if !bin.exists() {
         bail!("renderer not found at {} (build it with `cargo build --release` at the repository root, or run tools/install.sh, which installs agentfx-render next to agentfx; or set AGENTFX_RENDERER)", bin.display());
     }
+    let work_dir = ir_path.parent().unwrap_or(Path::new("."));
     let out = Command::new(&bin).arg("render").arg(ir_path).args(args).output().with_context(|| format!("running {}", bin.display()))?;
     if !out.status.success() {
-        bail!("agentfx render failed: {}", String::from_utf8_lossy(&out.stderr));
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        bail!("agentfx-render failed (work dir: {}): {}", work_dir.display(), stderr);
     }
     let s = String::from_utf8_lossy(&out.stdout);
     let last = s.lines().rev().find(|l| l.trim_start().starts_with('{')).unwrap_or("{}");
@@ -166,7 +168,7 @@ pub fn render_with_options(ir: &Ir, scene: &Value, out: &Path, segments: usize, 
             if matches!(ext.as_str(), "mp4" | "mov") { mux.args(["-movflags", "+faststart"]); }
             let s = mux.arg(out).status()?;
             if !s.success() {
-                bail!("audio mux failed");
+                bail!("audio mux failed (writing to {})", dir.display());
             }
             let _ = std::fs::remove_file(&wav);
             let _ = std::fs::remove_file(&video);
@@ -385,7 +387,7 @@ pub fn frames(scene: &Value, frames: &[u32], dir: &Path, jobs: usize) -> Result<
                     let png = dir.join(format!("f{i:03}.png"));
                     let s = Command::new(&ffmpeg).args(["-v", "error", "-y", "-i"]).arg(&mkv).args(["-frames:v", "1"]).arg(&png).status()?;
                     if !s.success() {
-                        bail!("png extract failed");
+                        bail!("png extract failed (ffmpeg in {})", dir.display());
                     }
                     let _ = std::fs::remove_file(&mkv);
                     let _ = std::fs::remove_file(&p);
@@ -467,7 +469,7 @@ pub fn sheet_with_energy(cells: &[(PathBuf, Option<PathBuf>, String)], energy: O
     let _ = std::fs::remove_file(&mkv);
     let _ = std::fs::remove_file(&p);
     if !s.success() {
-        bail!("sheet png failed");
+        bail!("sheet png failed (ffmpeg in {})", dir.display());
     }
     Ok(())
 }
@@ -542,14 +544,14 @@ pub fn render_cached(ir: &Ir, scene: &Value, out: &Path, cache: &Path) -> Result
     let video = out.with_extension("video.mp4");
     let st = Command::new(crate::run::ffmpeg()).args(["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i"]).arg(&list).args(["-c", "copy"]).arg(&video).status()?;
     if !st.success() {
-        bail!("segment concat failed");
+        bail!("segment concat failed (ffmpeg in {})", work.display());
     }
     let wav = out.with_extension("wav");
     if crate::run::mix_audio(ir, &wav).map_err(|e| anyhow::anyhow!(e))? {
         let s = Command::new(crate::run::ffmpeg()).args(["-v", "error", "-y", "-i"]).arg(&video).arg("-i").arg(&wav)
             .args(["-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart"]).arg(out).status()?;
         if !s.success() {
-            bail!("audio mux failed");
+            bail!("audio mux failed (writing to {})", work.display());
         }
         let _ = std::fs::remove_file(&wav);
         let _ = std::fs::remove_file(&video);

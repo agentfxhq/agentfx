@@ -15,7 +15,7 @@ USAGE:
   agentfx html   <file> [--format 9:16] [-o out.html] [--no-embed] [--tts piper|edge|none] [--no-tts]
   agentfx frame  <file> --at <anchor|scene:anchor|12.5s|12.5> [--format F] [-o frame.png]
   agentfx sheet  <file> [--n 12 | --every 2s | --at a,b,c | --events] [--cols 4] [--energy] [--ref ref.mp4] [--format F] [-o sheet.png]
-  agentfx render <file> [--format F] [-o out.mp4] [--segments 1 | --cache] [--fps 30] [--mode cfr|vfr] [--alpha] [--backend reel|chrome]
+  agentfx render <file> [--format F] [-o out.mp4] [--segments 1 | --cache] [--fps 30] [--mode cfr|vfr] [--alpha] [--keep-debug] [--backend reel|chrome]
   (frame/sheet/render use direct mode (native layout -> AgentFX IR -> agentfx-render) by default;
    --backend chrome renders the HTML backend in Chrome, the reference)
   agentfx motion mine <recorder-out-dir>... [--json out.json]   (motion statistics -> motion tokens)
@@ -309,6 +309,7 @@ fn main() {
                 let (ir, h, d) = compile_html(&b, Some(f), false);
                 let mut fd = d;
                 fd.extend(lint::static_rules(&b.doc, &b.tl, &ir));
+                fd.extend(lint::fixed_px_rules(&b.doc, &ir, formats.len() > 1));
                 // fluid reveals the ink never reaches (geometric estimate on the native layout)
                 match agentfx_script::reveal_lint::reveal_rules_native(&ir, &b.tl) {
                     Ok(r) => fd.extend(r),
@@ -323,6 +324,7 @@ fn main() {
                         Ok(mut nat) => {
                             let m = lint::measure_native(&ir, &mut nat, &times);
                             fd.extend(lint::measured_rules(&m, &ir, &b.tl, &b.doc));
+                            fd.extend(lint::word_break_rules(&ir, &nat));
                             fd.extend(taste_diags(&b, &agentfx_script::energy::compute_native(&ir, &nat)));
                         }
                         Err(e) => fd.push(Diag::warn("W_MEASURE", format!("native layout failed: {e:#}"), "report this; `--chrome` measures in Chrome", Default::default())),
@@ -528,8 +530,16 @@ fn main() {
                         let _ = std::fs::remove_dir(&work);
                     }
                 }
+                let keep_debug = a.has("--keep-debug");
+                let ir_path = o.with_extension("ir.json");
+                let ffmpeg_log = o.with_extension("ffmpeg.log");
                 match res {
                     Ok(v) => {
+                        // clean up debug files unless --keep-debug
+                        if a.cmd == "render" && !keep_debug {
+                            let _ = std::fs::remove_file(&ir_path);
+                            let _ = std::fs::remove_file(&ffmpeg_log);
+                        }
                         let warn: Vec<&Diag> = c.diags.iter().filter(|d| d.severity != Severity::Info).collect();
                         if !warn.is_empty() {
                             eprintln!("{}", serde_json::to_string_pretty(&warn).unwrap());
@@ -537,6 +547,10 @@ fn main() {
                         println!("{}", serde_json::to_string_pretty(&v).unwrap())
                     }
                     Err(e) => {
+                        // on failure, keep the ffmpeg log and print its path
+                        if ffmpeg_log.exists() {
+                            eprintln!("ffmpeg log: {}", ffmpeg_log.display());
+                        }
                         eprintln!("{e}");
                         std::process::exit(1)
                     }

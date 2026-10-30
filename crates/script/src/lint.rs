@@ -344,6 +344,123 @@ pub fn measured_rules(m: &serde_json::Value, ir: &Ir, tl: &Timeline, doc: &Docum
     d
 }
 
+/// W_FIXED_PX: large fixed-px elements (w or h >= threshold) in a multi-format video that lack
+/// per-format overrides. The element likely overflows or wastes space in the alternate format.
+pub fn fixed_px_rules(doc: &crate::ast::Document, ir: &Ir, multi: bool) -> Vec<Diag> {
+    if !multi { return vec![]; }
+    let mut d = vec![];
+    // threshold: elements wider/taller than 30% of the frame in px are likely format-sensitive
+    let threshold = (ir.w.max(ir.h) as f64 * 0.3).max(300.0);
+    // collect ids that have a `when` > `set #id w=` or `h=` override
+    let mut overridden: std::collections::HashSet<String> = std::collections::HashSet::new();
+    fn find_overrides(nodes: &[crate::ast::Node], out: &mut std::collections::HashSet<String>) {
+        for n in nodes {
+            if n.kind == "when" {
+                for c in &n.children {
+                    if c.kind == "set" {
+                        if c.props.contains_key("w") || c.props.contains_key("h") || c.props.contains_key("size") || c.props.contains_key("x") || c.props.contains_key("y") {
+                            if let Some(id) = c.args.iter().find(|a| a.raw().starts_with('#')) {
+                                out.insert(id.raw().trim_start_matches('#').to_string());
+                            }
+                        }
+                    }
+                    // also count elements inside `when` as having an override (they exist only in that format)
+                    if let Some(id) = c.args.iter().find(|a| a.raw().starts_with('#')) {
+                        out.insert(id.raw().trim_start_matches('#').to_string());
+                    }
+                }
+                find_overrides(&n.children, out);
+            }
+            find_overrides(&n.children, out);
+        }
+    }
+    find_overrides(&doc.nodes, &mut overridden);
+    // check layers with large fixed px sizes
+    ir.root.walk(&mut |l| {
+        let name = l.name.clone().unwrap_or(l.id.clone());
+        if overridden.contains(&name) || overridden.contains(&l.id) { return; }
+        // skip elements inside browsers/worlds (framed by camera)
+        if l.tags.iter().any(|t| t == "browser" || t == "world" || t == "presenter-bone" || t == "cap-local") { return; }
+        let check = |len: &Option<Len>, dim: &str| -> Option<Diag> {
+            if let Some(ln) = len {
+                if ln.unit == "px" && ln.v >= threshold {
+                    return Some(Diag::info("I_FIXED_PX",
+                        format!("`#{name}` has {dim}={:.0}px, which may not fit all formats", ln.v),
+                        format!("use %, vw/vh or add `when portrait` > `set #{name} {dim}=<value>`"),
+                        Span::default()).with_id(name.clone()));
+                }
+            }
+            None
+        };
+        if let Some(diag) = check(&l.layout.w, "w") { d.push(diag); return; }
+        if let Some(diag) = check(&l.layout.h, "h") { d.push(diag); return; }
+        // large text size (px, not relative)
+        if let Some(sz) = l.style.size {
+            if sz >= threshold * 0.3 {
+                // only warn if it's a text element
+                if matches!(l.kind, Kind::Text { .. }) && !overridden.contains(&name) {
+                    d.push(Diag::info("I_FIXED_PX",
+                        format!("`#{name}` has size={sz:.0}px, which may be oversized in some formats"),
+                        format!("use a `when portrait` > `set #{name} size=<smaller>` override"),
+                        Span::default()).with_id(name));
+                }
+            }
+        }
+    });
+    d
+}
+
+/// W_WORD_BREAK: measured text line breaks inside a word. Detects mid-word splits caused by
+/// tracking, large text in a narrow box, or nowrap text that wraps anyway.
+pub fn word_break_rules(ir: &Ir, nat: &crate::native::Native) -> Vec<Diag> {
+    let mut d = vec![];
+    ir.root.walk(&mut |l| {
+        let is_text = matches!(l.kind, Kind::Text { .. });
+        if !is_text { return; }
+        // skip nowrap text (if it wraps, the overflow check catches it) and
+        // elements inside browsers/worlds
+        if l.style.nowrap { return; }
+        if l.tags.iter().any(|t| t == "browser" || t == "world" || t == "cap-local") { return; }
+        let lines = nat.lines(&l.id);
+        if lines.len() < 2 { return; }
+        let name = l.name.clone().unwrap_or(l.id.clone());
+        // collect the full text
+        let full: String = match &l.kind {
+            Kind::Text { runs } => runs.iter().map(|r| r.text.as_str()).collect(),
+            _ => return,
+        };
+        // check each line break: if the text around the break is not at a word boundary
+        // (space, punctuation, hyphen), it's a mid-word break
+        for i in 0..lines.len() - 1 {
+            let line_text = lines[i].text.trim_end();
+            let next_text = lines[i + 1].text.trim_start();
+            if line_text.is_empty() || next_text.is_empty() { continue; }
+            // a proper break is at whitespace -- the line ends with a complete word
+            // and the next line starts with a new word
+            let last_char = line_text.chars().last().unwrap_or(' ');
+            let first_char = next_text.chars().next().unwrap_or(' ');
+            // if the line ends mid-word and the next starts continuing that word
+            if last_char.is_alphanumeric() && first_char.is_alphanumeric() {
+                // check if there's a space between them in the full text
+                let end_frag = &line_text[line_text.len().saturating_sub(8)..];
+                let start_frag = &next_text[..next_text.len().min(8)];
+                // find this junction in the full text
+                let needle = format!("{end_frag}{start_frag}");
+                if full.contains(&needle) {
+                    // no space between them in the source -- mid-word break
+                    let preview: String = full.chars().take(40).collect();
+                    d.push(Diag::warn("W_WORD_BREAK",
+                        format!("`#{name}` breaks mid-word between lines {} and {}: \"...{end_frag}|{start_frag}...\"", i + 1, i + 2),
+                        format!("reduce size= or tracking=, widen the box (w=), or use `fit` to auto-shrink; text: \"{preview}\""),
+                        Span::default()).with_id(name.clone()));
+                    break; // one warning per element is enough
+                }
+            }
+        }
+    });
+    d
+}
+
 pub fn dedup(v: Vec<Diag>) -> Vec<Diag> {
     let mut out: Vec<Diag> = vec![];
     for d in v {

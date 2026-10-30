@@ -33,7 +33,7 @@ pub mod presenter;
 pub mod physics;
 pub mod fracture;
 pub mod timefx;
-pub mod fluid;
+pub mod fluid; pub mod reveal_lint;
 pub mod look;
 pub mod world;
 pub mod nest;

@@ -309,6 +309,11 @@ fn main() {
                 let (ir, h, d) = compile_html(&b, Some(f), false);
                 let mut fd = d;
                 fd.extend(lint::static_rules(&b.doc, &b.tl, &ir));
+                // fluid reveals the ink never reaches (geometric estimate on the native layout)
+                match agentfx_script::reveal_lint::reveal_rules_native(&ir, &b.tl) {
+                    Ok(r) => fd.extend(r),
+                    Err(e) => fd.push(Diag::warn("W_MEASURE", format!("reveal check: {e}"), "report this", Default::default())),
+                }
                 if a.has("--measure") && !a.has("--chrome") {
                     // S1: measured natively (Blitz layout + motion IR transforms), no browser
                     let times = lint::sample_times(&b.tl);

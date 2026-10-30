@@ -13,7 +13,7 @@ can look before it renders, and renders the video with its own Rust renderer. Ou
 what the script says (copy, brand colours, timing), and the same script always gives the same
 frames.
 
-Website: [agentfx.dev](https://agentfx.dev)
+Website: [agentfx.dev](https://agentfx.dev) · Videos: [YouTube @agentfxdev](https://www.youtube.com/@agentfxdev) · Trailer: [watch on YouTube](https://youtu.be/R8wOTUdO-5Y)
 
 ## Quick start (Linux)
 

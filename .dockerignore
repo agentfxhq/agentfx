@@ -1,0 +1,14 @@
+target/
+out/
+cache/
+node_modules/
+.venv/
+.cargo/config.toml
+.zig-cache/
+*.mp4
+frames/
+__pycache__/
+*.pyc
+agentfx-projects/
+.git/
+.github/

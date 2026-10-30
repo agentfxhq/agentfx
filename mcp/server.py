@@ -4,7 +4,7 @@
 Exposes the agent loop of the `agentfx` CLI as tools. The CLI's JSON diagnostics are passed
 through unchanged.
 
-  agentfx_spec          the Reel Script spec (docs/SPEC.md) as text
+  agentfx_spec          the Reel Script spec (compact overview by default; section= for detail)
   agentfx_catalog       capability catalog: every element kind, verb, effect, status (JSON)
   agentfx_lint          lint a .reel source (static, or measured in every format)
   agentfx_timing        resolved timeline (scenes, sentences, word anchors)
@@ -30,6 +30,7 @@ Environment:
 import base64
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -53,8 +54,8 @@ SRC = {"source": {"type": "string", "description": "Reel Script text (alternativ
        "assets_dir": {"type": "string", "description": "directory relative asset paths resolve against (inline source)"}}
 FMT = {"type": "string", "description": "16:9, 9:16, 1:1 or 4:5"}
 TOOLS = [
-    {"name": "agentfx_spec", "description": "Return the Reel Script spec. Read it before writing a script.",
-     "inputSchema": {"type": "object", "properties": {}}},
+    {"name": "agentfx_spec", "description": "Reel Script spec. Returns a compact overview by default (section ids + essentials). Pass section= for one section in full, or section=\"all\" for the entire spec.",
+     "inputSchema": {"type": "object", "properties": {"section": {"type": "string", "description": "section number/id (e.g. '3', '7', 'values', 'story'), or 'all' for the full spec"}}}},
     {"name": "agentfx_catalog", "description": "Capability catalog (every element kind, verb, effect, channel, status). The source of truth for what AgentFX can do.",
      "inputSchema": {"type": "object", "properties": {"md": {"type": "boolean", "description": "Markdown instead of JSON"}}}},
     {"name": "agentfx_lint", "description": "Lint a Reel Script video. JSON diagnostics with fix hints. measure=true checks real layout in every format.",
@@ -78,6 +79,76 @@ TOOLS = [
 ]
 
 
+# -- spec section support --
+
+def _parse_spec_sections(text):
+    """Split SPEC.md into sections by ## headings. Returns [(id, title, body), ...]."""
+    sections = []
+    current_id = None
+    current_title = None
+    current_lines = []
+    for line in text.splitlines():
+        m = re.match(r'^## +(\d+)\.\s+(.*)', line)
+        if not m:
+            m = re.match(r'^## +(.*)', line)
+        if m:
+            if current_id is not None:
+                sections.append((current_id, current_title, "\n".join(current_lines)))
+            groups = m.groups()
+            if len(groups) == 2:
+                current_id = groups[0]
+                current_title = groups[1]
+            else:
+                current_id = groups[0].split()[0].rstrip(".")
+                current_title = groups[0]
+            current_lines = [line]
+        else:
+            current_lines.append(line)
+    if current_id is not None:
+        sections.append((current_id, current_title, "\n".join(current_lines)))
+    return sections
+
+
+def _spec_overview(text):
+    """Compact overview: section ids, the first 5 sections in full (enough to write a script),
+    and one-line summaries of the rest."""
+    sections = _parse_spec_sections(text)
+    # sections 1-7 are the essentials to write a first script
+    essential_ids = {"1", "2", "3", "4", "5", "6", "7"}
+    parts = ["# Reel Script spec -- compact overview\n"]
+    parts.append("Sections: " + ", ".join(f"{s[0]}. {s[1]}" for s in sections))
+    parts.append("\nUse agentfx_spec(section=\"<id>\") for any section in full, or section=\"all\" for the entire spec.\n")
+    parts.append("--- Essential sections (enough to write a first script) ---\n")
+    for sid, title, body in sections:
+        if sid in essential_ids:
+            parts.append(body.strip())
+            parts.append("")
+    parts.append("--- Remaining sections (request by id for full text) ---\n")
+    for sid, title, body in sections:
+        if sid not in essential_ids:
+            # first non-empty non-heading line as summary
+            summary_lines = [l.strip() for l in body.splitlines() if l.strip() and not l.startswith("#")]
+            summary = summary_lines[0][:200] if summary_lines else ""
+            parts.append(f"  {sid}. {title}: {summary}")
+    return "\n".join(parts)
+
+
+def _spec_section(text, query):
+    """Return one section by number or keyword match."""
+    sections = _parse_spec_sections(text)
+    q = query.strip().lower().rstrip(".")
+    # exact id match
+    for sid, title, body in sections:
+        if sid.lower() == q:
+            return body
+    # keyword match in title
+    for sid, title, body in sections:
+        if q in title.lower():
+            return body
+    available = ", ".join(f"{s[0]}. {s[1]}" for s in sections)
+    return f"Section '{query}' not found. Available: {available}"
+
+
 def src_path(args):
     if args.get("file"):
         return os.path.abspath(args["file"]), None
@@ -98,42 +169,73 @@ def read(*parts):
         return f.read()
 
 
+def _tmpdir():
+    """Return the temp directory, included in failure messages."""
+    return tempfile.gettempdir()
+
+
 def call(name, args):
     if name == "agentfx_spec":
-        return [{"type": "text", "text": read("docs", "SPEC.md")}]
+        spec_text = read("docs", "SPEC.md")
+        section = args.get("section")
+        if section and section.lower() == "all":
+            return [{"type": "text", "text": spec_text}]
+        if section:
+            return [{"type": "text", "text": _spec_section(spec_text, section)}]
+        return [{"type": "text", "text": _spec_overview(spec_text)}]
+
     if name == "agentfx_catalog":
         return [{"type": "text", "text": run(["catalog"] + (["--md"] if args.get("md") else []))[1]}]
+
     if name == "agentfx_design_guide":
         root = os.path.join(HOME, "design", "lenses")
         lenses = sorted(d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d)))
         return [{"type": "text", "text": read("design", "AUTHORING.md") + "\n\nLenses: " + ", ".join(lenses)}]
+
     if name == "agentfx_lens":
         d = os.path.basename(args["name"])
         return [{"type": "text", "text": read("design", "lenses", d, "LENS.md") + "\n\n" + read("design", "lenses", d, "design.reel")}]
+
     if name == "agentfx_critique":
+        file_path = args.get("file", "")
+        if not file_path:
+            return _tool_error("file is required")
+        abs_path = os.path.abspath(file_path)
+        if not os.path.isfile(abs_path):
+            return _tool_error(f"file not found: {abs_path}")
         py = os.path.join(HOME, ".venv", "bin", "python")
         py = py if os.path.exists(py) else sys.executable
-        argv = [os.path.abspath(args["file"]), "--tag", "mcp"] + (["--brief", args["brief"]] if args.get("brief") else []) + (["--model", args["model"]] if args.get("model") else [])
+        argv = [abs_path, "--tag", "mcp"] + (["--brief", args["brief"]] if args.get("brief") else []) + (["--model", args["model"]] if args.get("model") else [])
         r = subprocess.run([py, os.path.join(HOME, "tools", "critique.py")] + argv, capture_output=True, text=True, cwd=HOME)
+        if r.returncode != 0 and not r.stdout.strip():
+            return _tool_error(f"critique failed (exit {r.returncode}): {r.stderr[-3000:]}")
         return [{"type": "text", "text": r.stdout or r.stderr[-3000:]}]
+
     path, tmp = src_path(args)
     cwd = os.path.dirname(path)
     try:
         if name == "agentfx_lint":
             cmd = ["lint", path] + (["--measure", "--all-formats"] if args.get("measure", True) else []) + (["--no-tts"] if args.get("no_tts") else [])
-            _, out, err = run(cmd, cwd)
+            code, out, err = run(cmd, cwd)
+            # lint diagnostics are data, not failures -- return them even on non-zero exit
+            # (exit 1 = has errors, which is normal lint output)
             return [{"type": "text", "text": out + "\n" + (err.strip().splitlines() or [""])[-1]}]
+
         if name == "agentfx_timing":
-            _, out, err = run(["timing", path] + (["--no-tts"] if args.get("no_tts") else []), cwd)
+            code, out, err = run(["timing", path] + (["--no-tts"] if args.get("no_tts") else []), cwd)
+            if code != 0 and not out.strip():
+                return _tool_error(f"timing failed (exit {code}, tmp: {_tmpdir()}): {err[-3000:]}")
             return [{"type": "text", "text": out or err}]
+
         if name == "agentfx_render":
             out_path = os.path.abspath(args["out"])
             cmd = ["render", path, "-o", out_path] + (["--format", args["format"]] if args.get("format") else []) \
                 + (["--no-tts"] if args.get("no_tts") else []) + (["--alpha"] if args.get("alpha") else [])
             code, out, err = run(cmd, cwd)
             if code != 0 or not os.path.exists(out_path):
-                return [{"type": "text", "text": "render failed:\n" + err[-4000:]}]
+                return _tool_error(f"render failed (exit {code}, work: {cwd}, tmp: {_tmpdir()}):\n{err[-4000:]}")
             return [{"type": "text", "text": f"rendered {out_path} ({os.path.getsize(out_path)} bytes)\n" + (out or err)[-2000:]}]
+
         if name in ("agentfx_sheet", "agentfx_frame"):
             fd, png = tempfile.mkstemp(suffix=".png")
             os.close(fd)
@@ -149,7 +251,7 @@ def call(name, args):
             code, out, err = run(cmd, cwd)
             try:
                 if code != 0 or os.path.getsize(png) == 0:
-                    return [{"type": "text", "text": "render failed:\n" + err[-4000:]}]
+                    return _tool_error(f"{'sheet' if name == 'agentfx_sheet' else 'frame'} failed (exit {code}, work: {cwd}, tmp: {_tmpdir()}):\n{err[-4000:]}")
                 with open(png, "rb") as f:
                     data = base64.b64encode(f.read()).decode()
             finally:
@@ -159,6 +261,11 @@ def call(name, args):
         if tmp:
             os.remove(tmp)
     raise ValueError(f"unknown tool {name}")
+
+
+def _tool_error(msg):
+    """Return an isError result with a clean message."""
+    return [{"type": "text", "text": msg, "_isError": True}]
 
 
 def main():
@@ -175,7 +282,11 @@ def main():
             elif method == "tools/list":
                 res = {"tools": TOOLS}
             elif method == "tools/call":
-                res = {"content": call(params["name"], params.get("arguments") or {})}
+                content = call(params["name"], params.get("arguments") or {})
+                is_error = any(c.pop("_isError", False) for c in content if isinstance(c, dict))
+                res = {"content": content}
+                if is_error:
+                    res["isError"] = True
             elif method == "ping":
                 res = {}
             else:

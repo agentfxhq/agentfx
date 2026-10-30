@@ -4,7 +4,6 @@
 
 <p>
   <img src="docs/media/fluid-ink.webp" width="32%" alt="A word dissolving into fluid ink">
-  <img src="docs/media/physics.webp" width="32%" alt="Letters falling and piling up with rigid-body physics">
   <img src="docs/media/infinite-zoom.webp" width="32%" alt="A seamless infinite zoom loop">
 </p>
 

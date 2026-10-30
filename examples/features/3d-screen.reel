@@ -4,7 +4,7 @@ video "Screen in 3D" size=1920x1080 fps=30 captions=off
 scene desk dur=4s bg=#05080A
   code #src lang=rust x=0 y=0 w=1280 h=800 size=54 in=type |
     fn review(pr: &Pr) -> Verdict {
-        if pr.tests_pass() { Verdict::Lgtm }
+        if pr.tests_pass() { Verdict::Approve }
         else { Verdict::Changes }
     }
   scene3d #room fov=40 camera=(-4, 2.5, 7) target=(0, 1.2, 0) light=(-3, 6, 5) ambient=0.4 fog=#05080A fog-near=8 fog-far=24 outline=2 outline-color=#020405

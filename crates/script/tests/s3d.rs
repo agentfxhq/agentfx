@@ -52,31 +52,28 @@ fn showcase_lowers_to_valid_reel_ir() {
         Some(Content::Scene3d(c)) => c.clone(),
         _ => unreachable!(),
     };
-    // letter blocks: 4 boxes each with an extruded letter child, plus the floor
-    let blocks = s3("blocks");
-    let letters: Vec<&str> = blocks.objects.iter().filter_map(|o| match &o.shape {
-        Shape3d::Extrude { text: Some(t), .. } => Some(t.as_str()),
-        _ => None,
-    }).collect();
-    assert_eq!(letters, ["L", "G", "T", "M"]);
+    // the mark: two extruded SVG paths (chevron + spark) in a group, a torus ring, the floor
+    let blocks = s3("logo");
+    let paths = blocks.objects.iter().filter(|o| matches!(&o.shape, Shape3d::Extrude { text: None, .. })).count();
+    assert_eq!(paths, 2, "chevron and spark are path extrusions");
     for o in &blocks.objects {
-        if let (Shape3d::Extrude { font, .. }, Some(p)) = (&o.shape, o.parent) {
-            assert!(*font < s.fonts.len(), "font index in range");
-            assert!(matches!(blocks.objects[p].shape, Shape3d::Box { .. }), "letters sit on their blocks");
+        if let (Shape3d::Extrude { .. }, Some(p)) = (&o.shape, o.parent) {
+            assert!(matches!(blocks.objects[p].shape, Shape3d::Group), "the mark sits in its group");
         }
     }
+    assert!(blocks.objects.iter().any(|o| matches!(o.shape, Shape3d::Torus { .. })), "a ring");
     assert!(blocks.objects.iter().any(|o| o.receive), "a floor receives shadows");
     assert!(blocks.bloom.is_some() && blocks.fog.is_some());
     // the orbit is baked into camera tracks: the camera moves around the target, distance kept
-    let n = find3("blocks");
+    let n = find3("logo");
     let (x0, z0) = (num(&s, n, "s3d.cam.x", 0.0).unwrap(), num(&s, n, "s3d.cam.z", 0.0).unwrap());
     let (x1, z1) = (num(&s, n, "s3d.cam.x", 2.7).unwrap(), num(&s, n, "s3d.cam.z", 2.7).unwrap());
     assert!((x1 - x0).abs() > 1.0, "orbit moved the camera: {x0} -> {x1}");
     let (r0, r1) = ((x0 * x0 + z0 * z0).sqrt(), (x1 * x1 + z1 * z1).sqrt());
     assert!((r0 - r1).abs() < 0.6, "orbit keeps the distance roughly (pitch changes it a little): {r0} {r1}");
     // in=drop: the block falls (y track above its rest at the start, resting later)
-    let yi = blocks.objects.iter().position(|o| o.id == "bM").unwrap();
-    let y_start = num(&s, n, &format!("s3d.obj.{yi}.y"), 0.79).unwrap();
+    let yi = blocks.objects.iter().position(|o| o.id == "spark").unwrap();
+    let y_start = num(&s, n, &format!("s3d.obj.{yi}.y"), 0.56).unwrap();
     let y_rest = num(&s, n, &format!("s3d.obj.{yi}.y"), 2.5).unwrap();
     assert!(y_start > y_rest + 3.0, "drop starts high: {y_start} vs {y_rest}");
     // ship: stack piles the containers of a group (bottom on the group's origin)
@@ -169,7 +166,7 @@ fn scene3d_text_roundtrips() {
     // tuples stay one value
     let scene = doc.nodes.iter().find(|n| n.kind == "scene").unwrap();
     let s3 = scene.children.iter().find(|n| n.kind == "scene3d").unwrap();
-    assert_eq!(s3.props["camera"].raw(), "(-2.5, 2.6, 9.5)");
+    assert_eq!(s3.props["camera"].raw(), "(-2.2, 2.2, 10.5)");
     let json = agentfx_script::json::to_json(&doc);
     let back = agentfx_script::json::from_json(&json).unwrap();
     assert_eq!(print::print(&back), text);

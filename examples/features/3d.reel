@@ -1,26 +1,22 @@
-// Stylised 3D (scene3d): extruded letter blocks dropping in on the beat, a cardboard box whose
-// flaps open, a container ship stacked crate by crate, and a keynote stage whose screen shows a
-// normal 2D layer. Toon shading, outlines, emissive glow, fog, orbit/dolly camera moves.
-video "LGTM in 3D" size=1920x1080 fps=30 captions=off
+// Stylised 3D (scene3d): the AgentFX mark extruded from SVG paths and assembled under a spinning
+// ring, a cardboard box whose flaps open, a container ship stacked crate by crate, and a keynote
+// stage whose screen shows a normal 2D layer. Toon shading, outlines, emissive glow, fog, orbit/dolly.
+video "AgentFX in 3D" size=1920x1080 fps=30 captions=off
 
 music src=assets/beat-128bpm-drop.mp3 vol=0.8
 
-// ---------------------------------------------------------------- 1. LGTM blocks
-scene lgtm dur=2.8s bg=#03070A
-  scene3d #blocks fov=34 camera=(-2.5, 2.6, 9.5) target=(0, 0.3, 0) light=(-4, 7, 5) ambient=0.45 fog=#03070A fog-near=9 fog-far=24 outline=3 outline-color=#3DDC6A bloom=18
-    floor #ground y=-0.85 color=#08130C
-    group #row
-      box #bL size=1.5 x=-2.85 color=#123A20 in=drop at=@0.07s from=5
-        extrude "L" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
-      box #bG size=1.5 x=-0.95 color=#123A20 in=drop at=@0.31s from=5
-        extrude "G" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
-      box #bT size=1.5 x=0.95 color=#123A20 in=drop at=@0.54s from=5
-        extrude "T" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
-      box #bM size=1.5 x=2.85 color=#123A20 in=drop at=@0.78s from=5
-        extrude "M" size=1.25 depth=0.25 z=0.76 color=#7CFF6B emissive=0.45 outline=2
-  text #tag "looks good to me" size=40 weight=700 color=#7CFF6B x=50% y=88% anchor=center nowrap in=fade at=@1.6s font="JetBrains Mono"
-  @0s orbit #blocks by=38deg pitch=-6deg dur=2.8s ease=inout-sine
-  @1.7s spin #bG by=360deg dur=0.8s ease=inout-cubic
+// ---------------------------------------------------------------- 1. the mark
+scene mark dur=2.8s bg=#07070D
+  scene3d #logo x=0 y=0 w=1920 h=1080 fov=34 camera=(-2.2, 2.2, 10.5) target=(0.1, 1.3, 0) light=(-4, 7, 5) ambient=0.45 fog=#07070D fog-near=9 fog-far=24 outline=3 outline-color=#020205 bloom=20
+    floor #ground y=-1.15 color=#0E0E18
+    torus #ring r=2.2 tube=0.07 x=0.1 y=1.3 rx=72 color=#3DD8FF emissive=0.7 in=pop at=@0.9s
+    group #markg y=1.3
+      extrude #chev d="M16 38 L30 26 L70 60 L30 94 L16 82 L44 60 Z" size=2.4 depth=0.45 x=-0.85 color=#C8FF2E emissive=0.45 in=assemble at=@0.05s
+      extrude #spark d="M90 34 C92 52 96 56 114 60 C96 64 92 68 90 86 C88 68 84 64 66 60 C84 56 88 52 90 34 Z" size=1.8 depth=0.45 x=1.05 color=#FF3DA5 emissive=0.5 in=drop at=@0.55s from=5
+  text #tag "› render it in 3d" size=40 weight=700 color=#C8FF2E x=50% y=88% anchor=center nowrap in=fade at=@1.6s font="JetBrains Mono"
+  @0s camera3d #logo orbit=34deg dur=2.8s ease=inout-sine
+  @0.9s spin #ring by=180deg dur=1.9s ease=inout-sine
+  @1.7s spin #spark by=360deg dur=0.8s ease=inout-cubic
 
 // ---------------------------------------------------------------- 2. the box
 scene parcel dur=2.4s bg=#05010D in=fade tdur=0.3s
@@ -83,16 +79,16 @@ scene ship dur=2.6s bg=#061018 in=fade tdur=0.3s
 
 // ---------------------------------------------------------------- 4. the keynote
 scene keynote dur=3s bg=#020203 in=fade tdur=0.3s
-  layer #slides x=0 y=0 w=1920 h=1080 fill=#0B1410
-    text "LGTM" size=300 weight=900 color=#7CFF6B x=50% y=36% anchor=center nowrap
-    text "ship it." size=90 weight=700 color=#E6FFE0 x=50% y=64% anchor=center nowrap font="JetBrains Mono"
-    rect #bar x=20% y=78% w=60% h=18 radius=9 fill=#123A20
-    rect #fillbar x=20% y=78% w=60% h=18 radius=9 fill=#7CFF6B origin=left
+  layer #slides x=0 y=0 w=1920 h=1080 fill=#0B0B12
+    text "agentFX" size=260 weight=800 color=#C8FF2E x=50% y=36% anchor=center nowrap
+    text "render it." size=90 weight=700 color=#F5F5F0 x=50% y=64% anchor=center nowrap font="JetBrains Mono"
+    rect #bar x=20% y=78% w=60% h=18 radius=9 fill=#1E2A10
+    rect #fillbar x=20% y=78% w=60% h=18 radius=9 fill=#C8FF2E origin=left
   scene3d #stage fov=38 camera=(0, 2.2, 11) target=(0, 2.2, 0) light=(2, 6, 6) ambient=0.35 fog=#020203 fog-near=10 fog-far=30 outline=2 outline-color=#000000 bloom=22
     floor y=0 color=#0A0C0B
     box #riser w=9 h=0.5 d=3 y=0.25 z=-1 color=#1C2420
-    screen #wall w=7.2 h=4.05 y=3.3 z=-2.4 src=#slides emissive=0.25 outline=3 outline-color=#7CFF6B
-    light point=(0, 4, 3) color=#7CFF6B intensity=0.5 range=6
+    screen #wall w=7.2 h=4.05 y=3.3 z=-2.4 src=#slides emissive=0.25 outline=3 outline-color=#C8FF2E
+    light point=(0, 4, 3) color=#C8FF2E intensity=0.5 range=6
     group #crowd z=4.2
       sphere r=0.32 x=-3 y=1.55 material=flat color=#000000
       cylinder r=0.5 h=1.4 x=-3 y=0.7 material=flat color=#000000

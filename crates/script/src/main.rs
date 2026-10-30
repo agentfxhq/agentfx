@@ -309,7 +309,7 @@ fn main() {
                 let (ir, h, d) = compile_html(&b, Some(f), false);
                 let mut fd = d;
                 fd.extend(lint::static_rules(&b.doc, &b.tl, &ir));
-                fd.extend(lint::fixed_px_rules(&b.doc, &ir, formats.len() > 1));
+                fd.extend(lint::fixed_px_rules(&b.doc, &ir));
                 // fluid reveals the ink never reaches (geometric estimate on the native layout)
                 match agentfx_script::reveal_lint::reveal_rules_native(&ir, &b.tl) {
                     Ok(r) => fd.extend(r),

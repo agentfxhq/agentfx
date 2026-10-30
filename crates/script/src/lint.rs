@@ -344,14 +344,22 @@ pub fn measured_rules(m: &serde_json::Value, ir: &Ir, tl: &Timeline, doc: &Docum
     d
 }
 
-/// W_FIXED_PX: large fixed-px elements (w or h >= threshold) in a multi-format video that lack
-/// per-format overrides. The element likely overflows or wastes space in the alternate format.
-pub fn fixed_px_rules(doc: &crate::ast::Document, ir: &Ir, multi: bool) -> Vec<Diag> {
-    if !multi { return vec![]; }
+/// Returns true when the video node itself declares more than one target format
+/// (e.g. `formats=[16:9, 9:16]`). The `--all-formats` CLI flag does NOT count.
+pub fn video_is_multi_format(doc: &crate::ast::Document) -> bool {
+    let video = doc.nodes.iter().find(|n| n.kind == "video");
+    match video.and_then(|v| v.props.get("formats")) {
+        Some(crate::ast::Value::List(l)) => l.len() > 1,
+        _ => false,
+    }
+}
+
+/// I_FIXED_PX: large fixed-px elements in a video that declares multiple target formats, without
+/// per-format `when` overrides. Capped at 5 diagnostics + summary.
+pub fn fixed_px_rules(doc: &crate::ast::Document, ir: &Ir) -> Vec<Diag> {
+    if !video_is_multi_format(doc) { return vec![]; }
     let mut d = vec![];
-    // threshold: elements wider/taller than 30% of the frame in px are likely format-sensitive
     let threshold = (ir.w.max(ir.h) as f64 * 0.3).max(300.0);
-    // collect ids that have a `when` > `set #id w=` or `h=` override
     let mut overridden: std::collections::HashSet<String> = std::collections::HashSet::new();
     fn find_overrides(nodes: &[crate::ast::Node], out: &mut std::collections::HashSet<String>) {
         for n in nodes {
@@ -364,7 +372,6 @@ pub fn fixed_px_rules(doc: &crate::ast::Document, ir: &Ir, multi: bool) -> Vec<D
                             }
                         }
                     }
-                    // also count elements inside `when` as having an override (they exist only in that format)
                     if let Some(id) = c.args.iter().find(|a| a.raw().starts_with('#')) {
                         out.insert(id.raw().trim_start_matches('#').to_string());
                     }
@@ -375,11 +382,11 @@ pub fn fixed_px_rules(doc: &crate::ast::Document, ir: &Ir, multi: bool) -> Vec<D
         }
     }
     find_overrides(&doc.nodes, &mut overridden);
-    // check layers with large fixed px sizes
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
     ir.root.walk(&mut |l| {
         let name = l.name.clone().unwrap_or(l.id.clone());
+        if seen.contains(&name) { return; }
         if overridden.contains(&name) || overridden.contains(&l.id) { return; }
-        // skip elements inside browsers/worlds (framed by camera)
         if l.tags.iter().any(|t| t == "browser" || t == "world" || t == "presenter-bone" || t == "cap-local") { return; }
         let check = |len: &Option<Len>, dim: &str| -> Option<Diag> {
             if let Some(ln) = len {
@@ -392,21 +399,29 @@ pub fn fixed_px_rules(doc: &crate::ast::Document, ir: &Ir, multi: bool) -> Vec<D
             }
             None
         };
-        if let Some(diag) = check(&l.layout.w, "w") { d.push(diag); return; }
-        if let Some(diag) = check(&l.layout.h, "h") { d.push(diag); return; }
-        // large text size (px, not relative)
+        if let Some(diag) = check(&l.layout.w, "w") { d.push(diag); seen.insert(name); return; }
+        if let Some(diag) = check(&l.layout.h, "h") { d.push(diag); seen.insert(name); return; }
         if let Some(sz) = l.style.size {
             if sz >= threshold * 0.3 {
-                // only warn if it's a text element
                 if matches!(l.kind, Kind::Text { .. }) && !overridden.contains(&name) {
                     d.push(Diag::info("I_FIXED_PX",
                         format!("`#{name}` has size={sz:.0}px, which may be oversized in some formats"),
                         format!("use a `when portrait` > `set #{name} size=<smaller>` override"),
-                        Span::default()).with_id(name));
+                        Span::default()).with_id(name.clone()));
+                    seen.insert(name);
                 }
             }
         }
     });
+    // cap at 5 per video + summary
+    if d.len() > 5 {
+        let extra = d.len() - 5;
+        d.truncate(5);
+        d.push(Diag::info("I_FIXED_PX",
+            format!("...and {extra} more elements with large fixed-px sizes"),
+            "add `when portrait` overrides or use relative units".to_string(),
+            Span::default()));
+    }
     d
 }
 

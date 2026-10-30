@@ -26,6 +26,7 @@ RUN apt-get update \
        ffmpeg \
        ca-certificates \
        fontconfig \
+       python3 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /src/target/release/agentfx     /usr/local/bin/agentfx
@@ -40,5 +41,10 @@ ENV AGENTFX_HOME=/usr/local/share/agentfx
 ENV AGENTFX_GPU=0
 
 WORKDIR /work
+
+# MCP registry: the image is the package for io.github.agentfxhq/agentfx (see server.json).
+# MCP server: docker run -i --rm -v "$PWD:/work" --entrypoint python3 <image> /usr/local/share/agentfx/mcp/server.py
+LABEL io.modelcontextprotocol.server.name="io.github.agentfxhq/agentfx"
+LABEL org.opencontainers.image.source="https://github.com/agentfxhq/agentfx"
 
 ENTRYPOINT ["agentfx"]

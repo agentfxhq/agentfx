@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.agentfxhq/agentfx",
+  "title": "AgentFX",
+  "description": "Motion graphics and video effects your AI agent can script, lint, preview and render.",
+  "version": "0.1.1",
+  "websiteUrl": "https://agentfx.dev",
+  "repository": {
+    "url": "https://github.com/agentfxhq/agentfx",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/agentfxhq/agentfx:0.1.1",
+      "transport": { "type": "stdio" },
+      "runtimeHint": "docker",
+      "runtimeArguments": [
+        { "type": "positional", "value": "-i" },
+        { "type": "positional", "value": "--rm" },
+        { "type": "named", "name": "-v", "value": "{work_dir}:/work",
+          "variables": {
+            "work_dir": { "description": "Folder for .reel scripts and rendered videos", "isRequired": true }
+          } },
+        { "type": "named", "name": "--entrypoint", "value": "python3" }
+      ],
+      "packageArguments": [
+        { "type": "positional", "value": "/usr/local/share/agentfx/mcp/server.py" }
+      ]
+    }
+  ]
+}

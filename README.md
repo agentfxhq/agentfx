@@ -108,7 +108,9 @@ WebP, PNG sequences; 16:9, 9:16, 1:1 and 4:5 from one script.
 AgentFX is early software (0.1.0). Expect the format and the CLI to change.
 
 - **Platforms:** tested on Linux (x86_64). macOS and Windows are experimental and untested.
-- **GPU:** GPU effects use Vulkan only (via wgpu). Without a usable GPU everything renders on the CPU.
+- **GPU:** GPU effects use Vulkan only (via wgpu). Without a usable GPU (common in
+  containers, CI, and WSL) everything renders on the CPU automatically. Set
+  `AGENTFX_GPU=0` to skip the GPU probe. See [docs/BUILD.md](docs/BUILD.md) for details.
 - **No true 3D:** a 2.5D camera, parallax and projected point clouds, but no 3D meshes or lighting.
 - **No timeline editor:** the script is the source of truth.
 - **Text to speech:** piper (local) is the default. The `edge` engine uses an undocumented

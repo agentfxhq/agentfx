@@ -90,3 +90,22 @@ their code (`git grep -n AGENTFX_ crates/render`) and are not a stable interface
 
 On Linux, when the render node cannot be opened but the user is in group `render` and
 `sg` exists, hardware encodes run through `sg render`.
+
+## GPU effects in containers and WSL
+
+GPU effects (fluid simulation, blur kernels, mesh projection) use Vulkan via wgpu.
+The renderer probes for a usable Vulkan device at startup. When none is found it
+falls back to CPU and prints a one-line notice; all effects still render, just slower.
+Set `AGENTFX_GPU=0` to skip the probe entirely (the Dockerfile does this).
+
+| Environment | Vulkan available? | Notes |
+|---|---|---|
+| Bare-metal Linux with a discrete GPU | Yes | install the vendor Vulkan ICD (`mesa-vulkan-drivers`, `nvidia-driver`, etc.) |
+| Docker / OCI container | Rarely | requires `--device /dev/dri` plus the host ICD; most CI images lack both |
+| WSL 2 (Windows) | Sometimes | needs a recent Windows GPU driver with WSL Vulkan support; older setups fall back to CPU |
+| macOS | No | wgpu requests Vulkan only; Metal is not wired in yet |
+| Headless cloud VM (no GPU) | No | CPU fallback is automatic |
+
+**In practice, containers and CI always run CPU-only.** This is fine for correctness;
+GPU mainly accelerates fluid simulation and large blur passes. The Dockerfile sets
+`AGENTFX_GPU=0` so the probe is never attempted.

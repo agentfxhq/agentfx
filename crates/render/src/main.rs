@@ -24,6 +24,7 @@ mod dither;
 mod cssval;
 mod effects;
 mod fluid;
+mod generator;
 mod gpu;
 mod encode;
 mod export;

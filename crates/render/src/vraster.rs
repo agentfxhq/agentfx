@@ -69,6 +69,7 @@ pub enum PContent {
     Cloud(Box<crate::cloud::Cloud>),
     Fluid(Box<crate::fluid::Fluid>),
     Scene3d(Box<s3d_paint::Prep3d>),
+    Gen(Box<crate::generator::Prep>),
 }
 
 pub struct Prepared {
@@ -262,6 +263,7 @@ impl Prepared {
                     Some(PContent::Cloud(Box::new(crate::cloud::Cloud::new(c, &mut sampler).with_context(|| format!("node {ni} cloud"))?)))
                 }
                 Some(Content::Fluid(c)) => Some(PContent::Fluid(Box::new(crate::fluid::Fluid::new(c, scene.fps as f64, scene.frames as usize)))),
+                Some(Content::Gen(c)) => Some(PContent::Gen(Box::new(crate::generator::Prep::new(c).with_context(|| format!("node {ni} generator"))?))),
                 Some(Content::Scene3d(c)) => {
                     let tr: Vec<&agentfx_ir::Track> = scene.tracks.iter().filter(|t| t.node == ni).collect();
                     Some(PContent::Scene3d(Box::new(s3d_paint::prep3d(c, &fonts, &mut shaper, &images, base, &tr).with_context(|| format!("node {ni} {:?} scene3d", node.name))?)))
@@ -559,6 +561,7 @@ impl ContentInfo for Info<'_> {
             PContent::Cloud(c) => c.bounds(t),
             PContent::Fluid(fl) => fl.bounds(fluid_time(scene, &self.tracks[n], fl, t)),
             PContent::Scene3d(p) => Some(p.c.rect),
+            PContent::Gen(g) => Some(g.c.rect),
             _ => schedule::content_rect(scene.nodes[n].content.as_ref()?),
         }
     }
@@ -592,6 +595,7 @@ impl ContentInfo for Info<'_> {
             Some(PContent::Cloud(c)) => c.sig(t).hash(&mut h),
             Some(PContent::Fluid(fl)) => fl.sig(fluid_time(scene, &self.tracks[n], fl, t)).hash(&mut h),
             Some(PContent::Scene3d(p)) => s3d_paint::sig3d(scene, &self.tracks[n], p, t, &mut h),
+            Some(PContent::Gen(g)) => g.sig(scene, &self.tracks[n], t).hash(&mut h),
             _ => {}
         }
         h.finish()
@@ -603,6 +607,8 @@ impl ContentInfo for Info<'_> {
             Some(PContent::Cloud(_) | PContent::Fluid(_)) => true,
             // per-unit key times depend on t itself
             Some(PContent::TextFx(b)) => b.0.keyed,
+            // generator parameter tracks are the node's own; some kinds move with t itself
+            Some(PContent::Gen(g)) => g.kind.time,
             _ => false,
         }
     }
@@ -897,6 +903,7 @@ impl<'a> Painter<'a> {
                 Some(PContent::Switch(states)) => !states.iter().any(|s| has_blend(s)),
                 Some(PContent::Text(_)) => glyph_tracks(scene, &info.tracks[n]).is_empty(),
                 Some(PContent::Path(_)) => !info.tracks[n].iter().any(|&i| scene.tracks[i].property.starts_with("trim") || scene.tracks[i].property.ends_with(".color")),
+                Some(PContent::Gen(g)) => !g.animated(scene, &info.tracks[n]),
                 _ => false,
             })
             .collect();
@@ -1251,6 +1258,7 @@ impl<'a> Painter<'a> {
             PContent::Cloud(_) => "cloud.splat",
             PContent::Fluid(_) => "fluid.draw",
             PContent::Scene3d(_) => "s3d.draw",
+            PContent::Gen(_) => "gen.draw",
         });
         match c {
             PContent::Raster { rect } => {
@@ -1336,6 +1344,7 @@ impl<'a> Painter<'a> {
             }
             PContent::Cloud(c) => self.draw_cloud(ctx, n, c, view.t, chain)?,
             PContent::Fluid(fl) => self.draw_fluid(ctx, view, n, fl, chain)?,
+            PContent::Gen(g) => self.draw_gen(ctx, view, n, g, chain),
             PContent::Scene3d(p) => self.draw_scene3d(ctx, view, view_frame(view, self.scene, self.sched), n, p, chain)?,
             PContent::Path(p) => {
                 let a = schedule::number_at(self.scene, &self.info.tracks[n], "trim-start", view.t, p.trim[0]);
@@ -2502,6 +2511,36 @@ fn snap_glyphs(t: Affine, glyphs: &[vello_cpu::Glyph]) -> Vec<vello_cpu::Glyph> 
 }
 
 /// Draw a premultiplied pixmap 1:1 at (x, y) in the current transform's space.
+impl Painter<'_> {
+    /// A generator node: evaluated per device pixel over the visible part of its rect (crisp
+    /// under any transform), then filled into the rect (anti-aliased edges).
+    fn draw_gen(&mut self, ctx: &mut RenderContext, view: &View, n: NodeId, g: &crate::generator::Prep, chain: Affine) {
+        let r = g.c.rect;
+        let dev = transform_bbox(&ra(chain), r);
+        let x0 = dev[0].floor().max(0.0);
+        let y0 = dev[1].floor().max(0.0);
+        let x1 = (dev[0] + dev[2]).ceil().min(ctx.width() as f64);
+        let y1 = (dev[1] + dev[3]).ceil().min(ctx.height() as f64);
+        if x1 <= x0 || y1 <= y0 || chain.determinant().abs() < 1e-12 {
+            return;
+        }
+        let (w, h) = ((x1 - x0) as usize, (y1 - y0) as usize);
+        let unit = Affine::scale(2.0 / r[3]) * Affine::translate((-(r[0] + r[2] / 2.0), -(r[1] + r[3] / 2.0))) * chain.inverse() * Affine::translate((x0, y0));
+        let p = g.params(self.scene, &self.info.tracks[n], view.t);
+        let mut px = Pixmap::new(w as u16, h as u16);
+        g.render(&p, view.t, w, h, (x0 as i32, y0 as i32), unit.as_coeffs(), px.data_as_u8_slice_mut());
+        ctx.set_transform(chain);
+        ctx.set_paint(Paint::Image(peniko::ImageBrush {
+            image: ImageSource::Pixmap(Arc::new(px)),
+            sampler: peniko::ImageSampler { x_extend: peniko::Extend::Pad, y_extend: peniko::Extend::Pad, quality: peniko::ImageQuality::Low, alpha: 1.0 },
+        }));
+        ctx.set_paint_transform(chain.inverse() * Affine::translate((x0, y0)));
+        ctx.set_fill_rule(Fill::NonZero);
+        ctx.fill_rect(&Rect::new(r[0], r[1], r[0] + r[2], r[1] + r[3]));
+        ctx.reset_paint_transform();
+    }
+}
+
 fn draw_pixmap(ctx: &mut RenderContext, px: Arc<Pixmap>, x: f64, y: f64) {
     draw_pixmap_alpha(ctx, px, x, y, 1.0)
 }

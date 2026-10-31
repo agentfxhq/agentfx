@@ -1,0 +1,146 @@
+//! Generator kinds (`Content::Gen`): the declared parameters of every kind (names, defaults,
+//! ranges) and the named palettes. Shared by IR validation, the Reel Script compiler (parsing,
+//! lint, catalog) and the renderer (`agentfx-render/src/generator/`, which holds the CPU and GPU
+//! implementations). Adding a kind: one `Kind` entry in `KINDS` here, see docs/GENERATORS.md.
+
+/// One numeric parameter of a generator kind. Animatable through a `gen.<name>` track.
+#[derive(Clone, Copy, Debug)]
+pub struct Param {
+    pub name: &'static str,
+    pub default: f64,
+    pub min: f64,
+    pub max: f64,
+    pub doc: &'static str,
+}
+
+/// A generator kind as the IR, the compiler and the catalog see it.
+#[derive(Clone, Copy, Debug)]
+pub struct Kind {
+    pub name: &'static str,
+    pub doc: &'static str,
+    /// Parameters in a fixed order (the renderer passes them to the CPU and GPU code in this order).
+    pub params: &'static [Param],
+    /// The renderer has a GPU kernel for it (otherwise it always runs on the CPU).
+    pub gpu: bool,
+    /// Largest effective zoom (`zoom * 2^depth`) the f32 GPU kernel resolves (lint W_GEN_ZOOM).
+    pub gpu_zoom_max: Option<f64>,
+    /// The image changes with time itself (not only through parameter tracks).
+    pub time: bool,
+}
+
+const fn p(name: &'static str, default: f64, min: f64, max: f64, doc: &'static str) -> Param {
+    Param { name, default, min, max, doc }
+}
+
+const ZOOM: Param = p("zoom", 1.0, 1e-6, 1e15, "magnification (1 = the whole set fits the height)");
+const DEPTH: Param = p("depth", 0.0, -40.0, 60.0, "extra zoom in octaves: effective zoom = zoom * 2^depth (animate linearly for a constant-speed dive)");
+const TURN: Param = p("turn", 0.0, -1e6, 1e6, "rotation of the view, degrees");
+const ITER: Param = p("iter", 300.0, 1.0, 20000.0, "maximum iterations");
+const BAILOUT: Param = p("bailout", 64.0, 2.0, 1e6, "escape radius (large values give smoother colour)");
+const SPEED: Param = p("color-speed", 1.0, -100.0, 100.0, "palette cycles per unit of log2 escape count");
+const OFFSET: Param = p("color-offset", 0.0, -1e6, 1e6, "palette phase (animate to cycle the colours)");
+const AA: Param = p("aa", 2.0, 1.0, 4.0, "supersampling: samples per pixel axis (1..4)");
+
+/// Every kind the renderer implements.
+pub const KINDS: &[Kind] = &[
+    Kind {
+        name: "julia",
+        doc: "Julia set z -> z^2 + c with smooth escape-time colouring; animate cx/cy to make it breathe",
+        params: &[
+            p("cx", -0.8, -4.0, 4.0, "real part of c"),
+            p("cy", 0.156, -4.0, 4.0, "imaginary part of c"),
+            p("re", 0.0, -4.0, 4.0, "view centre, real axis"),
+            p("im", 0.0, -4.0, 4.0, "view centre, imaginary axis"),
+            ZOOM, DEPTH, TURN, ITER, BAILOUT, SPEED, OFFSET, AA,
+        ],
+        gpu: true,
+        gpu_zoom_max: Some(2e4),
+        time: false,
+    },
+    Kind {
+        name: "mandelbrot",
+        doc: "Mandelbrot set with smooth escape-time colouring; CPU in f64 (deep zooms), GPU in f32 (to about 2e4x)",
+        params: &[
+            p("re", -0.6, -4.0, 4.0, "view centre, real axis"),
+            p("im", 0.0, -4.0, 4.0, "view centre, imaginary axis"),
+            ZOOM, DEPTH, TURN, ITER, BAILOUT, SPEED, OFFSET, AA,
+        ],
+        gpu: true,
+        gpu_zoom_max: Some(2e4),
+        time: false,
+    },
+];
+
+pub fn kind(name: &str) -> Option<&'static Kind> {
+    KINDS.iter().find(|k| k.name == name)
+}
+
+impl Kind {
+    pub fn param(&self, name: &str) -> Option<&'static Param> {
+        self.params.iter().find(|p| p.name == name)
+    }
+    pub fn index(&self, name: &str) -> Option<usize> {
+        self.params.iter().position(|p| p.name == name)
+    }
+}
+
+/// Every parameter name of every kind (deduplicated, first-seen order).
+pub fn param_names() -> Vec<&'static str> {
+    let mut v: Vec<&'static str> = vec![];
+    for k in KINDS {
+        for p in k.params {
+            if !v.contains(&p.name) {
+                v.push(p.name);
+            }
+        }
+    }
+    v
+}
+
+/// Most palette stops a generator takes (the GPU kernels read a fixed-size table).
+pub const PALETTE_MAX: usize = 16;
+
+/// Named palettes: sRGB hex stops, cyclic (the last stop blends back into the first).
+pub const PALETTES: &[(&str, &[&str])] = &[
+    ("neon", &["#06001a", "#2a0a8c", "#ff1fae", "#ffd36e", "#00e5ff", "#1b0466"]),
+    ("vapor", &["#140832", "#ff71ce", "#fffb96", "#01cdfe", "#b967ff", "#3b0f6e"]),
+    ("acid", &["#050505", "#39ff14", "#faff00", "#ff00a0", "#00ffd0", "#101010"]),
+    ("ember", &["#040000", "#5c0a00", "#d43a00", "#ff9a1f", "#ffe6a8", "#7a1400"]),
+    ("ice", &["#00040f", "#022a5c", "#1f7ae0", "#9be7ff", "#ffffff", "#0b3a7a"]),
+    ("mono", &["#000000", "#ffffff"]),
+];
+
+/// The stops of a named palette (straight sRGB RGBA 0..1).
+pub fn palette(name: &str) -> Option<Vec<[f64; 4]>> {
+    let (_, stops) = PALETTES.iter().find(|(n, _)| *n == name)?;
+    stops.iter().map(|s| hex(s)).collect()
+}
+
+/// `#rrggbb` / `#rrggbbaa` to straight RGBA 0..1.
+pub fn hex(s: &str) -> Option<[f64; 4]> {
+    let h = s.strip_prefix('#')?;
+    let b = |i: usize| u8::from_str_radix(h.get(i..i + 2)?, 16).ok().map(|v| v as f64 / 255.0);
+    match h.len() {
+        6 => Some([b(0)?, b(2)?, b(4)?, 1.0]),
+        8 => Some([b(0)?, b(2)?, b(4)?, b(6)?]),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn kinds_are_well_formed() {
+        for k in KINDS {
+            for (i, p) in k.params.iter().enumerate() {
+                assert!(p.min <= p.default && p.default <= p.max, "{}.{}", k.name, p.name);
+                assert!(k.params[..i].iter().all(|q| q.name != p.name), "{}.{} twice", k.name, p.name);
+            }
+        }
+        for (n, _) in PALETTES {
+            let s = palette(n).unwrap();
+            assert!(!s.is_empty() && s.len() <= PALETTE_MAX, "{n}");
+        }
+    }
+}

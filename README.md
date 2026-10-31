@@ -17,7 +17,7 @@ Website: [agentfx.dev](https://agentfx.dev) · Videos: [YouTube @agentfxdev](htt
 
 ## Quick start (Linux)
 
-You need Rust stable (1.85 or newer) and `ffmpeg`. Optional: a Vulkan driver for GPU effects,
+You need Rust stable (1.85 or newer) and `ffmpeg`. Optional: Vulkan on Linux or Metal on macOS for GPU effects,
 and [piper](https://github.com/OHF-Voice/piper1-gpl) for text to speech.
 
 ```sh
@@ -103,15 +103,15 @@ It binds to 127.0.0.1 only and has no authentication. See [skill/agentfx/desk.md
   camera moves, spin, drop, assemble and stack verbs ([examples/features/3d.reel](examples/features/3d.reel)).
 - **Motion blur** (shutter-accurate), masks and mattes, blend modes.
 
-Output: MP4 (H.264 via x264, VAAPI/QSV or NVENC), ProRes 4444 and VP9 with alpha, GIF, animated
+Output: MP4 (H.264 via x264, VAAPI/QSV, NVENC or macOS VideoToolbox), ProRes 4444 and VP9 with alpha, GIF, animated
 WebP, PNG sequences; 16:9, 9:16, 1:1 and 4:5 from one script.
 
 ## Status and limits
 
 AgentFX is early software (0.1.0). Expect the format and the CLI to change.
 
-- **Platforms:** tested on Linux (x86_64). macOS and Windows are experimental and untested.
-- **GPU:** GPU effects use Vulkan only (via wgpu). Without a usable GPU (common in
+- **Platforms:** tested on Linux (x86_64). macOS has a CI build and CPU-test job; its Metal GPU and VideoToolbox paths require macOS hardware CI coverage. Windows is experimental and untested.
+- **GPU:** GPU effects use Vulkan on Linux, Metal on macOS, and DX12 or Vulkan on Windows (via wgpu). Without a usable GPU (common in
   containers, CI, and WSL) everything renders on the CPU automatically. Set
   `AGENTFX_GPU=0` to skip the GPU probe. See [docs/BUILD.md](docs/BUILD.md) for details.
 - **Stylised 3D, not photoreal:** `scene3d` renders boxes, spheres, cylinders, tori, extruded

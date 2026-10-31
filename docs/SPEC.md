@@ -12,6 +12,9 @@ anchored to narration, layout by constraints, every error explainable.
   `render` run without Chrome; `render` goes Reel Script -> reel-ir -> the reel renderer. The
   HTML/Chrome backend stays as preview and reference (`--backend chrome`).
 
+MP4 output accepts `--encoder auto|x264|vaapi|qsv|nvenc|nvenc-hevc|videotoolbox|videotoolbox-hevc`.
+On macOS, `auto` probes H.264 VideoToolbox first and falls back to x264 when unavailable.
+
 ## 1. Design rules for LLM writability
 
 1. **Few tokens.** Defaults come from the theme; one line carries an element or an event.

@@ -5,12 +5,14 @@
 - Rust stable with edition 2024 support (1.85 or newer) and a C linker (`cc`).
 - At run time: `ffmpeg` and `ffprobe` (ffmpeg with libx264) on `PATH`, or pointed at by
   `AGENTFX_FFMPEG` / `AGENTFX_FFPROBE`.
-- Optional: a Vulkan driver for GPU effects (`--gpu`), VAAPI/QSV or NVENC for hardware
-  encoding, `piper` for text to speech (see [INSTALL-NOTES.md](INSTALL-NOTES.md)), Node.js
+- Optional: Vulkan on Linux or Metal on macOS for GPU effects (`--gpu`), VAAPI/QSV or NVENC on
+  Linux, or VideoToolbox on macOS for hardware encoding, `piper` for text to speech (see
+  [INSTALL-NOTES.md](INSTALL-NOTES.md)), Node.js
   with `playwright-core` only for the Chrome reference backend (`--backend chrome`).
 
-Linux (x86_64) is the tested platform. macOS and Windows are untested; the code is plain
-Rust and may build there, but GPU effects use Vulkan only (no Metal or DirectX backend yet).
+Linux (x86_64) is the tested platform. macOS is built and CPU-tested in CI on `macos-latest`; GPU effects select Metal and
+hardware encoding probes VideoToolbox there. Windows selects DX12 or Vulkan but remains
+experimental and untested.
 
 ## Build and test
 
@@ -64,12 +66,12 @@ still accepted as a fallback (`AGENTFX_FFMPEG` wins over `REEL_FFMPEG`).
 | Variable | Used by | Default | Purpose |
 |---|---|---|---|
 | `AGENTFX_HOME` | agentfx | `<exe>/../share/agentfx`, else the source tree | read-only data directory (fonts, design, tools) |
-| `AGENTFX_CACHE` | agentfx | the data dir in a source tree, else `$XDG_CACHE_HOME/agentfx` or `~/.cache/agentfx` | caches (`cache/tts`, `cache/mesh`, `cache/segments`) and scratch files |
+| `AGENTFX_CACHE` | agentfx | the data dir in a source tree, else `$XDG_CACHE_HOME/agentfx`, `~/Library/Caches/agentfx` on macOS, or `~/.cache/agentfx` | caches (`cache/tts`, `cache/mesh`, `cache/segments`) and scratch files |
 | `AGENTFX_RENDERER` | agentfx | `agentfx-render` next to `agentfx`, then on `PATH` | renderer binary |
 | `AGENTFX_FFMPEG` | both | `ffmpeg` on `PATH` | ffmpeg for x264, export formats, audio |
 | `AGENTFX_FFPROBE` | both | `ffprobe` on `PATH` | ffprobe (TTS durations, tests) |
 | `AGENTFX_FFMPEG_HW` | agentfx-render | `AGENTFX_FFMPEG`, then each `ffmpeg` on `PATH` | ffmpeg for VAAPI/QSV/NVENC; the first that passes a probe encode is used |
-| `AGENTFX_VAAPI_DEVICE` | agentfx-render | `/dev/dri/renderD128` | DRM render node for VAAPI/QSV |
+| `AGENTFX_VAAPI_DEVICE` | agentfx-render | `/dev/dri/renderD128` | Linux DRM render node for VAAPI/QSV |
 | `AGENTFX_NVENC_SESSIONS` | agentfx-render | from the NVIDIA driver version, else 3 | concurrent NVENC sessions |
 | `AGENTFX_GPU` | agentfx-render | `0` | GPU effects: `0`, `1` or `auto` (same as `--gpu`) |
 | `AGENTFX_JOBS_DIR` | agentfx-render | unset (off) | write job status JSON files there (same as `--jobs-dir`) |
@@ -91,10 +93,10 @@ their code (`git grep -n AGENTFX_ crates/render`) and are not a stable interface
 On Linux, when the render node cannot be opened but the user is in group `render` and
 `sg` exists, hardware encodes run through `sg render`.
 
-## GPU effects in containers and WSL
+## GPU effects in containers, macOS and WSL
 
-GPU effects (fluid simulation, blur kernels, mesh projection) use Vulkan via wgpu.
-The renderer probes for a usable Vulkan device at startup. When none is found it
+GPU effects (fluid simulation, blur kernels, mesh projection) use wgpu: Vulkan on Linux,
+Metal on macOS, and DX12 or Vulkan on Windows. The renderer probes for a usable device at startup. When none is found it
 falls back to CPU and prints a one-line notice; all effects still render, just slower.
 Set `AGENTFX_GPU=0` to skip the probe entirely (the Dockerfile does this).
 
@@ -103,7 +105,7 @@ Set `AGENTFX_GPU=0` to skip the probe entirely (the Dockerfile does this).
 | Bare-metal Linux with a discrete GPU | Yes | install the vendor Vulkan ICD (`mesa-vulkan-drivers`, `nvidia-driver`, etc.) |
 | Docker / OCI container | Rarely | requires `--device /dev/dri` plus the host ICD; most CI images lack both |
 | WSL 2 (Windows) | Sometimes | needs a recent Windows GPU driver with WSL Vulkan support; older setups fall back to CPU |
-| macOS | No | wgpu requests Vulkan only; Metal is not wired in yet |
+| macOS (Apple Silicon or Intel) | Yes | Metal is selected automatically; `WGPU_BACKEND` can override it for debugging |
 | Headless cloud VM (no GPU) | No | CPU fallback is automatic |
 
 **In practice, containers and CI always run CPU-only.** This is fine for correctness;

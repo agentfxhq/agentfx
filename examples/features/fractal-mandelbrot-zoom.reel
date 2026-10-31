@@ -1,0 +1,10 @@
+// Generators: a constant-speed dive past seahorse valley into a Mandelbrot double spiral (depth = log2 zoom, linear).
+video "Mandelbrot dive" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #000000
+
+scene dive dur=8s
+  gen #m kind=mandelbrot re=-0.77568377 im=0.13646737 iter=900 bailout=256 color-speed=1.6 palette=neon
+  anim #m depth 0s:3.5 8s:14 ease=linear
+  anim #m color-offset 0s:0 8s:-0.6 ease=linear
+  anim #m turn 0s:0 8s:-45 ease=inout-sine

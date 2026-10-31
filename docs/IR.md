@@ -1,5 +1,9 @@
 # reel IR (v1)
 
+> **Changes (generators, 2026-10-31)**: additive: new content type `gen` (procedural images:
+> Julia, Mandelbrot; a registry for more kinds) and the track properties `gen.<param>`; see
+> [Generator](#generator). Files without it load and render unchanged.
+
 > **Changes (stylised 3D, 2026-10-29)**: additive: new content type `scene3d` (camera, lights,
 > fog, objects with flat/lambert/toon/phong/wire materials, outlines, screens that show other
 > nodes; rasterised by the renderer into one layer) and the track properties `s3d.*`; see
@@ -162,6 +166,7 @@ coordinates.
 
 | `cloud` | `count`, `seed`, `radius`, `radius_jitter`, `palette`, `weights`, `forms`, `projection` | instanced point cloud, see [Point cloud](#point-cloud) |
 | `scene3d` | `rect`, `camera`, `ambient`, `ambient_color`, `lights`, `fog`, `bg`, `aa`, `bloom`, `shadow`, `objects` | stylised 3D rasterised into one layer, see [Scene 3D](#scene-3d) |
+| `gen` | `kind`, `rect`, `params?`, `palette?`, `seed?`, `time_offset?` | procedural generator evaluated per pixel, see [Generator](#generator) |
 
 **Draw** (display-list items, the anyrender command set; all geometry scene space,
 optional `transform` `[a,b,c,d,e,f]`):
@@ -367,6 +372,42 @@ step of coverage). Bounds = `rect` from the first dye frame to that frame (`diss
 the end), else none; signature = shown frame position. Not with the tiny-skia backend.
 `fluid` as a matte source (`reveal`) needs no `hidden` (no warning).
 
+### Generator
+
+`{"type": "gen", "kind": "julia", "rect": [x, y, w, h], "params": {"cx": -0.8, "zoom": 2}, "palette": [[r, g, b, a], ...], "seed": 0}`:
+a procedural image evaluated per device pixel over `rect`, through the node's full transform (crisp
+under any scale or rotation, edges anti-aliased by the rect fill). `kind` names a registered
+generator; `params` override its defaults (unknown names or values outside the declared range are
+validation errors). The kinds, their parameters, defaults and ranges are declared in
+`crates/ir/src/generator.rs` (`KINDS`) and listed by `agentfx catalog`.
+
+| kind | parameters (default) |
+|---|---|
+| `julia` | `cx` (-0.8), `cy` (0.156): c; `re`, `im` (0, 0): view centre; `zoom` (1), `depth` (0), `turn` (0 deg), `iter` (300), `bailout` (64), `color-speed` (1), `color-offset` (0), `aa` (2) |
+| `mandelbrot` | `re` (-0.6), `im` (0), `zoom`, `depth`, `turn`, `iter`, `bailout`, `color-speed`, `color-offset`, `aa` as above |
+
+Unit space: origin at the rect centre, v from -1 (top) to 1 (bottom), u scaled like v. Fractals map
+it to the complex plane as `centre + rotate(turn) * (u, -v) * half / (zoom * 2^depth)` (half = 1.3
+for Julia, 1.25 for Mandelbrot), iterate z -> z^2 + c up to `iter` times and colour escaping points
+by the smooth escape count `mu = n + 1 - log2(log2 |z|)`: palette position
+`color-offset + color-speed * log2(1 + mu) / 2`; points that never escape are opaque black.
+`aa` = samples per pixel axis (1..4), averaged premultiplied; output is dithered to 8 bits with a
+fixed per-device-pixel hash (`seed`), so gradients do not band.
+
+`palette`: up to 16 straight sRGB RGBA stops, evenly spaced and cyclic (the last blends back into
+the first); empty = the `neon` palette. The compiler resolves named palettes (`neon vapor acid ember
+ice mono`) into stops.
+
+Tracks `gen.<param>` (number) animate any parameter (`gen.zoom`, `gen.cx`, ...); values are clamped
+to the declared range. `time_offset` (s) is added to t for kinds that change with time itself
+(none of the fractals do). **Planner.** Bounds = `rect`; signature = the parameter values at t
+(plus t for time-dependent kinds); a generator without `gen.*` tracks is static and cached at rest.
+
+**Precision.** The CPU reference runs in f64 (Mandelbrot zooms to about 1e12). The GPU kernels
+(`--gpu`, WGSL compute) run in f32 and resolve effective zooms (`zoom * 2^depth`) to about 2e4;
+the compiler warns (`W_GEN_ZOOM`) above that. GPU and CPU agree within 1/255 per channel when the
+CPU runs in f32 mode (the conformance tests).
+
 ### Time effects
 
 `"time": {...}` on a node: the node's subtree (content + children, like `motion_blur`) is
@@ -524,6 +565,7 @@ the default per segment.
 | `trim-start` / `trim-end` | number 0..1 | path | per-frame redraw of the path; damage = path ink |
 | `fill.color` / `stroke.color` | `{"color": [r,g,b,a]}` straight sRGB 0..1, interpolated per channel | path with a fill / stroke | the brush is replaced by that solid color; per-frame redraw of the path; damage = path ink |
 | `fluid.time` | number (s) | fluid node | simulation time shown; damage = rect while the shown frame changes |
+| `gen.<param>` | number | `gen` node whose kind declares `<param>` | per-frame re-evaluation while the value changes; damage = rect |
 | `text.fill` / `text.stroke` | color | `paint` content | every glyph run's fill / stroke brush replaced by that solid color; per-frame redraw of the list; damage = list ink |
 | `text.stroke-width` | number (run units) | `paint` content | stroke width of every glyph run (adds a black stroke below the fill where a run has none) |
 | `text.path-offset` | number (px) | `paint` with `text.path` | arc length where the text starts; damage = evaluated glyph ink |

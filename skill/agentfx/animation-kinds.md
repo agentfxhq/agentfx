@@ -47,7 +47,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Shatter | `shatter #x pieces=18 force=1500 gravity=3600` | implemented | release, drops, "breaking" problems |
 | Push, drop, pile, swing | `push #x dir= speed=` / `drop #x into #box` / `pile` / `swing` | implemented | playful energy, weight |
 
-## Fluid, particles, point clouds (direct only)
+## Fluid, particles, point clouds, generators (direct only)
 
 | Kind | Syntax | Status | Good for |
 |---|---|---|---|
@@ -56,6 +56,8 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Pour | `pour #ink at= dir=` | implemented | openings |
 | Particle burst | `particles #p ... ; burst #p` | implemented | celebrations, hits |
 | Point cloud formations | `cloud n=16000` + `form text\|galaxy\|sphere\|terrain\|spiral` | implemented | numbers, data, logos made of dots |
+| Breathing fractal | `gen #j kind=julia palette=vapor` + `anim #j cx 0s:-0.8 6s:-0.745` + `anim #j color-offset 0s:0 6s:1` | implemented | hypnotic backgrounds, intros, music loops |
+| Infinite zoom | `gen #m kind=mandelbrot re= im=` + `anim #m depth 0s:0 8s:13 ease=linear` | implemented (GPU f32 to about 2e4x, CPU f64 deeper) | dives, "going deeper" beats |
 
 ## Time
 

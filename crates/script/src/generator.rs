@@ -1,0 +1,146 @@
+//! `gen #id kind=julia [w= h= x= y=] <param>=<number>... palette=neon|linear(#a, #b, ...) seed=`:
+//! generator layers (reel-ir `gen` content). Kinds and their parameters come from
+//! `agentfx_ir::generator::KINDS`; every parameter is a channel (`anim #g zoom 0s:1 8s:400`)
+//! that lowers to a `gen.<param>` track. Direct mode only.
+use crate::ast::{Node, Span};
+use crate::diag::Diag;
+use crate::ir::*;
+use crate::lower::*;
+use crate::values::*;
+use agentfx_ir::generator as g;
+use serde::Serialize;
+use serde_json::{json, Value};
+use std::collections::BTreeMap;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct GenCfg {
+    pub kind: String,
+    /// parameters as written (the kind's defaults fill the rest)
+    pub params: BTreeMap<String, f64>,
+    pub palette: Vec<Rgba>,
+    pub seed: u64,
+}
+
+fn praw(n: &Node, k: &str) -> Option<String> {
+    n.props.get(k).map(|v| v.raw())
+}
+
+impl<'a> Ctx<'a> {
+    pub fn gen_el(&mut self, parent: usize, _si: usize, n: &Node, lid: String) -> usize {
+        let names: Vec<&str> = g::KINDS.iter().map(|k| k.name).collect();
+        let raw = praw(n, "kind").unwrap_or_default();
+        let kind = match g::kind(&raw) {
+            Some(k) => k,
+            None => {
+                let hint = suggest(&raw, &names).map(|s| format!("did you mean `kind={s}`?")).unwrap_or_else(|| format!("kinds: {}", names.join(" ")));
+                self.err("E_GEN", format!("gen: unknown kind `{raw}`"), hint, n.span);
+                &g::KINDS[0]
+            }
+        };
+        let mut params = BTreeMap::new();
+        let all = g::param_names();
+        for k in n.props.keys() {
+            match kind.param(k) {
+                Some(p) => {
+                    // a literal keeps every digit (`raw()` prints 6 decimals)
+                    let lit = match n.props.get(k) {
+                        Some(crate::ast::Value::Num(v)) => Some(*v),
+                        _ => None,
+                    };
+                    if let Some(v) = lit.or_else(|| self.num(n, k)) {
+                        if v.is_finite() && (p.min..=p.max).contains(&v) {
+                            params.insert(p.name.to_string(), v);
+                        } else {
+                            self.err("E_GEN", format!("gen {}: {k}={v} outside {}..{}", kind.name, p.min, p.max), format!("{k}: {} (default {})", p.doc, p.default), n.span);
+                        }
+                    }
+                }
+                // another kind's parameter or a near miss of this kind's
+                None => {
+                    let own: Vec<&str> = kind.params.iter().map(|p| p.name).collect();
+                    if all.contains(&k.as_str()) || suggest(k, &own).is_some() {
+                        let hint = suggest(k, &own).map(|s| format!("did you mean `{s}`?")).unwrap_or_else(|| format!("`{}` takes: {}", kind.name, own.join(" ")));
+                        self.warn("W_GEN_PROP", format!("gen {}: unknown parameter `{k}`", kind.name), hint, n.span);
+                    }
+                }
+            }
+        }
+        let palette = match praw(n, "palette") {
+            None => vec![],
+            Some(p) => self.gen_palette(&p, n.span),
+        };
+        let seed = self.num(n, "seed").unwrap_or(0.0).max(0.0) as u64;
+        let mut l = Layer::new(lid, Kind::Gen(Box::new(GenCfg { kind: kind.name.to_string(), params, palette, seed })));
+        l.tags.push("gen".into());
+        let sized = ["w", "h", "x", "y", "place"].iter().any(|k| n.props.contains_key(*k));
+        if !sized {
+            l.layout.pos = Pos::Fill;
+        }
+        self.add(Some(parent), l)
+    }
+
+    /// `neon` (named) or `linear(#a, #b, ...)` (stops evenly spaced, cyclic).
+    fn gen_palette(&mut self, raw: &str, span: Span) -> Vec<Rgba> {
+        if let Some(stops) = g::palette(raw) {
+            return stops.iter().map(|c| Rgba { r: c[0], g: c[1], b: c[2], a: c[3] }).collect();
+        }
+        let names: Vec<&str> = g::PALETTES.iter().map(|p| p.0).collect();
+        let stops = match parse_paint(raw).map(|p| self.th.paint(&p)) {
+            Ok(Paint::Linear { stops, .. } | Paint::Radial { stops, .. } | Paint::Conic { stops, .. }) => stops,
+            _ => {
+                let hint = suggest(raw, &names).map(|s| format!("did you mean `palette={s}`?")).unwrap_or_else(|| format!("palettes: {} or `linear(#a, #b, ...)`", names.join(" ")));
+                self.err("E_GEN", format!("gen: unknown palette `{raw}`"), hint, span);
+                return vec![];
+            }
+        };
+        if stops.len() > g::PALETTE_MAX {
+            self.err("E_GEN", format!("gen: palette has {} stops", stops.len()), format!("at most {}", g::PALETTE_MAX), span);
+        }
+        stops.iter().take(g::PALETTE_MAX).filter_map(|s| self.th.color(&s.color)).collect()
+    }
+}
+
+/// The reel-ir `gen` content of a layer laid out at `r`.
+pub fn ir_gen(cfg: &GenCfg, r: [f64; 4]) -> Value {
+    let r4 = |v: f64| (v * 1e4).round() / 1e4;
+    let pal: Vec<Value> = cfg.palette.iter().map(|c| json!([c.r, c.g, c.b, c.a])).collect();
+    json!({"type": "gen", "kind": cfg.kind, "rect": [r4(r[0]), r4(r[1]), r4(r[2]), r4(r[3])], "params": cfg.params, "palette": pal, "seed": cfg.seed})
+}
+
+/// E_GEN (a parameter channel on the wrong layer) and W_GEN_ZOOM (an effective zoom past the
+/// f32 GPU kernel's range: the GPU path would show blocky, smeared detail).
+pub fn rules(ir: &Ir) -> Vec<Diag> {
+    let mut d = vec![];
+    let mut gens: BTreeMap<&str, (&Layer, &GenCfg)> = BTreeMap::new();
+    ir.root.walk(&mut |l| {
+        if let Kind::Gen(c) = &l.kind {
+            gens.insert(l.id.as_str(), (l, c));
+        }
+    });
+    let label = |l: &Layer| l.name.clone().unwrap_or(l.id.clone());
+    for t in &ir.tracks {
+        let Some(p) = t.ch.gen_param() else { continue };
+        match gens.get(t.layer.as_str()) {
+            Some((_, c)) if g::kind(&c.kind).is_some_and(|k| k.param(&p).is_some()) => {}
+            Some((l, c)) => d.push(Diag::error("E_GEN", format!("gen {} `{}` has no parameter `{p}`", c.kind, label(l)), "see `agentfx catalog` > gen for the parameters of each kind", Span::default()).with_id(label(l))),
+            None => d.push(Diag::error("E_GEN", format!("channel `{p}` only animates a gen layer, not `{}`", t.layer), "target the gen layer: `anim #g zoom 0s:1 8s:400`", Span::default()).with_id(t.layer.clone())),
+        }
+    }
+    for (id, (l, c)) in &gens {
+        let Some(k) = g::kind(&c.kind) else { continue };
+        let Some(max) = k.gpu_zoom_max else { continue };
+        let vals = |p: &str| -> Vec<f64> {
+            let base = c.params.get(p).copied().or(k.param(p).map(|x| x.default)).unwrap_or(0.0);
+            let mut v = vec![base];
+            for t in ir.tracks.iter().filter(|t| t.layer == *id && t.ch.gen_param().as_deref() == Some(p)) {
+                v.extend(t.keys.iter().map(|k| k.v.n()));
+            }
+            v
+        };
+        let zoom = vals("zoom").into_iter().fold(0.0, f64::max) * vals("depth").into_iter().fold(f64::MIN, f64::max).exp2();
+        if zoom > max {
+            d.push(Diag::warn("W_GEN_ZOOM", format!("gen {} `{}` zooms to {zoom:.3e}x, past the GPU kernel's f32 range (about {max:.0e}x)", c.kind, label(l)), "fine on the CPU (f64, the default); with --gpu the deep frames lose detail: render those on the CPU or zoom less", Span::default()).with_id(label(l)));
+        }
+    }
+    d
+}

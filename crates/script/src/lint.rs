@@ -178,6 +178,7 @@ pub fn static_rules(doc: &Document, tl: &Timeline, ir: &Ir) -> Vec<Diag> {
     }
     rec(&ir.root, &mut vec![th.paint_avg(&th.bg)], false, &th, ir, scale, &mut d);
     d.extend(glow_cost(ir));
+    d.extend(crate::generator::rules(ir));
     // L0 principles (design/PRINCIPLES.md)
     d.extend(crate::principles::static_rules(doc, tl, &th));
     d.extend(crate::principles::cold_open(ir));

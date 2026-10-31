@@ -1005,6 +1005,12 @@ impl<'a> Em<'a> {
                 self.fluid_nodes.push(idx);
                 content = Some(crate::fluid::ir_fluid(cfg, r));
             }
+            Kind::Gen(cfg) => {
+                if !own.is_empty() {
+                    extra_children.push(json!({"name": format!("{}-box", l.id), "children": [], "content": self.paint_content(&own)}));
+                }
+                content = Some(crate::generator::ir_gen(cfg, r));
+            }
             Kind::Scene3d(cfg) => {
                 if !own.is_empty() {
                     self.note("fill= on a scene3d (use bg= for the 3D background)");
@@ -1198,7 +1204,8 @@ impl<'a> Em<'a> {
             if t.keys.len() > 1 && !t.is_static() {
                 let ok = matches!(t.ch, Ch::Rgbsplit | Ch::RgbsplitDx | Ch::RgbsplitDy | Ch::Glitch | Ch::GlitchRate | Ch::GlitchBlock | Ch::Vhs | Ch::Dither | Ch::Ascii | Ch::Halftone | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
                     || (t.ch == Ch::PathOffset && l.style.text_path.is_some())
-                    || (matches!(l.kind, Kind::Scene3d(_)) && s3d_emit::scene_ch(t.ch));
+                    || (matches!(l.kind, Kind::Scene3d(_)) && s3d_emit::scene_ch(t.ch))
+                    || (matches!(l.kind, Kind::Gen(_)) && t.ch.gen_param().is_some());
                 if !ok {
                     self.note(&format!("channel {} ({:?} stage)", t.ch.name(), t.ch.stage()));
                 }
@@ -1265,6 +1272,16 @@ impl<'a> Em<'a> {
             if let Some(t) = tracks.iter().find(|t| t.ch == Ch::FluidTime && !crate::fluid::identity_time(t)) {
                 let keys: Vec<(f64, Value, Ease)> = t.keys.iter().map(|k| (k.t, json!({"number": r4(k.v.n())}), k.ease.clone())).collect();
                 if let Some(j) = self.track_json(idx, "fluid.time", &keys, "fluid-time") {
+                    self.tracks.push(j);
+                }
+            }
+        }
+        if let Kind::Gen(cfg) = &l.kind {
+            let kind = agentfx_ir::generator::kind(&cfg.kind);
+            for t in &tracks {
+                let Some(p) = t.ch.gen_param().filter(|p| kind.is_some_and(|k| k.param(p).is_some())) else { continue };
+                let keys: Vec<(f64, Value, Ease)> = t.keys.iter().map(|k| (k.t, json!({"number": k.v.n()}), k.ease.clone())).collect();
+                if let Some(j) = self.track_json(idx, &format!("gen.{p}"), &keys, &format!("gen-{p}")) {
                     self.tracks.push(j);
                 }
             }

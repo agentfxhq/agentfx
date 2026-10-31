@@ -279,7 +279,7 @@ pub fn range_ir(scene: &Value, f0: u32, f1: u32) -> Value {
                 }
             }
             if let Some(c) = n.get_mut("content") {
-                if c["type"] == json!("cloud") || c["type"] == json!("fluid") {
+                if c["type"] == json!("cloud") || c["type"] == json!("fluid") || c["type"] == json!("gen") {
                     // clouds evaluate their own time: shift it, keep the motion
                     let o = c["time_offset"].as_f64().unwrap_or(0.0);
                     c["time_offset"] = json!(o + t);

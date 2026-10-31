@@ -124,6 +124,70 @@ fn verbs_write_the_tracks_they_promise() {
 }
 
 #[test]
+fn orbit_keeps_its_target_centered() {
+    // off-origin target, pitch, a second orbit after a lookat, and the same move via camera3d:
+    // at every frame the camera looks at the target and keeps its distance (no drift)
+    let src = format!(
+        "{HEAD}  scene3d #w fov=34 camera=(-2.5, 2.6, 9.5) target=(2, 1, -1)\n    box #a size=1 x=2 y=1 z=-1\n    box #b size=1 x=-3\n  @0s orbit #w by=200deg pitch=-6deg dur=1.2s ease=inout-sine\n  @1.2s lookat #w #b dur=0.6s\n  @1.8s orbit #w by=-90deg pitch=20deg dur=1.2s\n"
+    );
+    let (ir, diags) = compile_src(&src);
+    assert!(!diags.iter().any(|d| d.severity == Severity::Error), "{diags:#?}");
+    let s: Scene = serde_json::from_value(scene_json(&ir)).unwrap();
+    let n = s.nodes.iter().position(|n| n.name == "w").unwrap();
+    let Some(Content::Scene3d(c)) = &s.nodes[n].content else { panic!("scene3d") };
+    let cam0 = c.camera.clone();
+    let at = |prop: &str, t: f64, dflt: f64| num(&s, n, prop, t).unwrap_or(dflt);
+    let state = |t: f64| {
+        let p = [at("s3d.cam.x", t, cam0.pos[0]), at("s3d.cam.y", t, cam0.pos[1]), at("s3d.cam.z", t, cam0.pos[2])];
+        let q = [at("s3d.cam.tx", t, cam0.target[0]), at("s3d.cam.ty", t, cam0.target[1]), at("s3d.cam.tz", t, cam0.target[2])];
+        (p, q)
+    };
+    let dist = |p: [f64; 3], q: [f64; 3]| ((p[0] - q[0]).powi(2) + (p[1] - q[1]).powi(2) + (p[2] - q[2]).powi(2)).sqrt();
+    let (p0, q0) = state(0.0);
+    let r0 = dist(p0, q0);
+    for f in 0..=36 {
+        let t = f as f64 / 30.0;
+        let (p, q) = state(t);
+        assert!(dist(q, q0) < 1e-6, "first orbit: target moved at {t}s: {q:?}");
+        assert!((dist(p, q) - r0).abs() < 2e-3, "first orbit: distance {} vs {r0} at {t}s", dist(p, q));
+    }
+    // after lookat #b the camera keeps orbiting around b at its distance
+    let (p1, q1) = state(1.8);
+    assert!(dist(q1, [-3.0, 0.0, 0.0]) < 1e-3, "lookat aimed at #b: {q1:?}");
+    let r1 = dist(p1, q1);
+    for f in 54..=90 {
+        let t = f as f64 / 30.0;
+        let (p, q) = state(t);
+        assert!(dist(q, q1) < 1e-6 && (dist(p, q) - r1).abs() < 2e-3, "second orbit drifted at {t}s");
+    }
+    // the target projects to the frame center through the renderer's view math
+    let (pm, qm) = state(0.6);
+    let v = agentfx_ir::s3d::View3::new(&agentfx_ir::s3d::Cam3d { pos: pm, target: qm, ..cam0.clone() }, 16.0 / 9.0);
+    let pc = v.view.point(qm);
+    assert!(pc[0].abs() < 1e-9 && pc[1].abs() < 1e-9, "target off center: {pc:?}");
+    // orbit and camera3d orbit= write the same tracks
+    let a = compile_src(&format!("{HEAD}  scene3d #w camera=(0, 2, 8)\n    box size=1\n  @0s orbit #w by=34deg dur=2s ease=inout-sine\n")).0;
+    let b = compile_src(&format!("{HEAD}  scene3d #w camera=(0, 2, 8)\n    box size=1\n  @0s camera3d #w orbit=34deg dur=2s ease=inout-sine\n")).0;
+    assert_eq!(scene_json(&a)["tracks"], scene_json(&b)["tracks"]);
+}
+
+#[test]
+fn orbit_warns_when_the_content_is_not_at_the_target() {
+    // the content sits 3 units beside the target: orbiting swings it across the frame
+    let off = format!("{HEAD}  scene3d #w camera=(0, 1, 8) target=(0, 0, 0)\n    floor y=-1\n    box #a size=1 x=3\n  @0s orbit #w by=90deg dur=2s\n");
+    let (_, diags) = compile_src(&off);
+    assert!(diags.iter().any(|d| d.code == "W_S3D_ORBIT" && d.hint.contains("lookat=")), "{diags:#?}");
+    // centered content, or an aimed orbit: no warning
+    for src in [
+        format!("{HEAD}  scene3d #w camera=(0, 1, 8) target=(0, 0, 0)\n    floor y=-1\n    box #a size=1\n  @0s orbit #w by=40deg dur=2s\n"),
+        format!("{HEAD}  scene3d #w camera=(0, 1, 8) target=(0, 0, 0)\n    box #a size=1 x=3\n  @0s orbit #w by=40deg lookat=#a dur=2s\n"),
+    ] {
+        let (_, diags) = compile_src(&src);
+        assert!(!diags.iter().any(|d| d.code == "W_S3D_ORBIT"), "{src}\n{diags:#?}");
+    }
+}
+
+#[test]
 fn lint_explains_3d_mistakes() {
     let src = format!(
         "{HEAD}  layer #ui x=0 y=0 w=320 h=180\n  scene3d #w camera=(0, 0, 10) fogg=#000\n    box #b size=1 colr=#f00\n    teapot #t\n    box #behind size=1 z=20\n    box #side size=1 x=500\n    box #near size=1 z=9.5\n    screen #s src=#nope\n    screen #s2\n  sphere #lost r=1\n  @0s spin #ui by=90deg\n"

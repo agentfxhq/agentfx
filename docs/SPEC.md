@@ -1497,7 +1497,9 @@ anim #crate ry 0s:0deg 2s:180deg~out-back
   (missing or unknown `src=`, a source that is 3D or contains the scene), `W_S3D_SCREEN` (source
   in the layout flow), `E_S3D_TARGET` (3D verb on a non-3D id), `W_S3D_VIEW` (an object behind the
   camera or outside the frame for all its visible time, sampled every 0.2 s), `W_S3D_CLIP`
-  (crosses the near plane), `W_S3D_SIZE` (absurd size, smaller than 2 px on screen).
+  (crosses the near plane), `W_S3D_SIZE` (absurd size, smaller than 2 px on screen),
+  `W_S3D_ORBIT` (an orbit circles target= while the content sits elsewhere, so the content slides
+  more than 15 % of the frame width: set target= to the content or aim with `lookat=#obj`).
 - **Limits.** No shadow maps (shadows fall only on receiving planes), no bevel on extrusions, no
   glTF, OBJ without materials, no order-independent transparency, no GPU path yet. Direct mode
   only (the HTML/Chrome backend leaves the box empty).

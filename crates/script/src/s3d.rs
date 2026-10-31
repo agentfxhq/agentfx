@@ -818,6 +818,56 @@ impl<'a> Ctx<'a> {
             let cur = self.cur(i, Ch::Roll, t);
             self.track(i, Ch::Roll).to(t, t + d, TV::N(cur + r), ease.clone());
         }
+        if (yaw != 0.0 || pitch != 0.0) && look.is_none() {
+            self.s3d_orbit_pivot_lint(i, t, d, k, t0v, n.span);
+        }
+    }
+
+    /// An orbit circles the camera target, not the content: when the scene's content sits away
+    /// from target=, it slides across the frame during the move. Compares where the content's
+    /// center lands on screen before and after the move.
+    fn s3d_orbit_pivot_lint(&mut self, i: usize, t: f64, d: f64, k: &str, target: V3, span: Span) {
+        let Some(cfg) = self.layers[i].kind.as_scene3d().cloned() else { return };
+        let objs: Vec<usize> = self.kids[i].iter().copied().filter(|&x| match self.layers[x].kind.as_obj3d() {
+            Some(c) => c.light.is_none() && !matches!(c.kind.as_str(), "floor" | "plane"),
+            None => false,
+        }).collect();
+        if objs.is_empty() {
+            return;
+        }
+        let mut c = [0.0; 3];
+        for &o in &objs {
+            c = m::add(c, self.s3d_world_pos(o, t + d));
+        }
+        let c = m::mul(c, 1.0 / objs.len() as f64);
+        let aspect = if self.h > 0.0 { self.w / self.h } else { 16.0 / 9.0 };
+        let screen_x = |me: &mut Self, at: f64| -> Option<f64> {
+            let cam = Cam3d {
+                pos: [me.cur(i, Ch::CamX, at), me.cur(i, Ch::CamY, at), me.cur(i, Ch::CamZ, at)],
+                target: [me.cur(i, Ch::LookX, at), me.cur(i, Ch::LookY, at), me.cur(i, Ch::LookZ, at)],
+                fov: me.cur(i, Ch::Fov, at),
+                roll: me.cur(i, Ch::Roll, at),
+                ..cfg.scene.camera.clone()
+            };
+            let v = m::View3::new(&cam, aspect);
+            let p = v.view.point(c);
+            let depth = -p[2];
+            if depth <= v.near {
+                return None;
+            }
+            // -1..1 across the frame width
+            Some(if v.ortho { p[0] / (v.half_h * v.aspect) } else { p[0] / (depth * v.half_h * v.aspect) })
+        };
+        let (Some(x0), Some(x1)) = (screen_x(self, t), screen_x(self, t + d)) else { return };
+        let slide = (x1 - x0).abs() / 2.0;
+        if slide > 0.15 {
+            self.warn(
+                "W_S3D_ORBIT",
+                format!("{k}: the content slides {:.0}% of the frame width, because the camera circles target=({:.2}, {:.2}, {:.2}) and the content's center is at ({:.2}, {:.2}, {:.2})", slide * 100.0, target[0], target[1], target[2], c[0], c[1], c[2]),
+                "set target= on the scene3d to the content's center, or aim the move: `orbit #world by=30deg lookat=#obj`",
+                span,
+            );
+        }
     }
 
     /// World position of an object's origin at time t (through its groups).

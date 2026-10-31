@@ -76,11 +76,18 @@ pub fn iso_utc(unix: f64) -> String {
     format!("{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}Z", rem / 3600, rem % 3600 / 60, rem % 60)
 }
 
+#[cfg(target_os = "linux")]
 fn hostname() -> String {
     std::fs::read_to_string("/proc/sys/kernel/hostname").map(|s| s.trim().to_string()).unwrap_or_else(|_| "unknown".into())
 }
 
+#[cfg(not(target_os = "linux"))]
+fn hostname() -> String {
+    std::env::var("HOSTNAME").unwrap_or_else(|_| "unknown".into())
+}
+
 /// Peak resident set size of this process in MB (VmHWM), cheap /proc read.
+#[cfg(target_os = "linux")]
 fn peak_rss_mb() -> Option<f64> {
     let s = std::fs::read_to_string("/proc/self/status").ok()?;
     let line = s.lines().find(|l| l.starts_with("VmHWM:"))?;
@@ -88,7 +95,11 @@ fn peak_rss_mb() -> Option<f64> {
     Some((kb / 1024.0 * 10.0).round() / 10.0)
 }
 
+#[cfg(not(target_os = "linux"))]
+fn peak_rss_mb() -> Option<f64> { None }
+
 /// (ppid, comm) from /proc/<pid>/stat; comm may contain spaces and parentheses.
+#[cfg(target_os = "linux")]
 fn proc_parent(pid: u32) -> Option<(u32, String)> {
     let s = std::fs::read_to_string(format!("/proc/{pid}/stat")).ok()?;
     let (open, close) = (s.find('(')?, s.rfind(')')?);
@@ -106,11 +117,13 @@ pub struct Ancestor {
 
 /// Parent chain of this process, nearest first (stops before pid 1, at most 16).
 fn ancestors() -> Vec<Ancestor> {
+    #[cfg(not(target_os = "linux"))]
+    return Vec::new();
+
+    #[cfg(target_os = "linux")]
+    {
     let mut out = Vec::new();
-    #[cfg(unix)]
     let mut pid = std::os::unix::process::parent_id();
-    #[cfg(not(unix))]
-    let mut pid = 0u32;
     while pid > 1 && out.len() < 16 {
         let Some((ppid, comm)) = proc_parent(pid) else { break };
         let cmdline = std::fs::read(format!("/proc/{pid}/cmdline")).map(|b| String::from_utf8_lossy(&b).replace('\0', " ").trim().to_string()).unwrap_or_default();
@@ -118,6 +131,7 @@ fn ancestors() -> Vec<Ancestor> {
         pid = ppid;
     }
     out
+    }
 }
 
 /// Short label of one ancestor (`reel-api` for a process running `reel_api`, else comm).

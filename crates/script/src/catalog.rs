@@ -67,7 +67,7 @@ pub const ITEMS: &[Item] = &[
     it("skins", "story", "component", "layout", "impl", "node #a \"Chat\" sub=\"..\" n=01 skin=tile|step|tag", "HTML/CSS skins for nodes (design/skins), drawn with the design tokens; parts active/done."),
     it("place / x,y", "story", "layout", "layout", "impl", "place=top-left|bottom|... x=40% y=120 anchor=center", "Absolute placement (place uses the safe area)."),
     it("image", "raw", "media", "paint", "impl", "image src=a.png w= h= fit=cover", "Bitmap layer. Direct mode reads PNG only (other formats: W_IR_UNSUPPORTED)."),
-    it("video", "raw", "media", "per-frame", "partial", "video src=clip.mp4", "HTML backend only (seeked per frame); direct mode does not draw video yet (native decode planned)."),
+    it("video", "raw", "media", "per-frame", "impl", "video src=clip.mp4 w= h= fit=cover|contain|fill in= offset= rate=1 loop hold", "Native direct decode through ffmpeg, frame-index exact. `in=`/`offset=` select a source in-point; `loop` repeats, `hold` keeps the last frame. Video audio is not mixed."),
     it("svg", "raw", "media", "paint", "impl", "svg w=120 h=120 |\n  <svg ...>...</svg>", "Inline SVG escape hatch. With w=/h= the root <svg> is scaled into the box (viewBox fit, its preserveAspectRatio; a viewBox is derived from width/height when missing)."),
     it("html", "raw", "media", "layout", "impl", "html #b w=900 |\n  <style>.k{display:grid}</style>\n  <div class=\"k\">...</div>", "Raw HTML + CSS block; laid out and painted natively by Blitz in direct mode (static CSS). data-part=\"x\" makes an inner element the layer #block.x for verbs."),
     it("lottie", "raw", "media", "per-frame", "planned", "lottie src=anim.json", "Planned."),

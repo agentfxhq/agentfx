@@ -116,5 +116,5 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Device mock | `device type=laptop\|phone shot=` | implemented | cases |
 | Cards, stats, steps, diagrams | `card`, `stat`, `steps`, `diagram` + `node`/`link` | implemented | explainers |
 | Talking presenter | `presenter #p skin=flat` + `say` | implemented | explainers with a guide |
-| Native video clips | `video src=clip.mp4` | planned (HTML backend only) | screen recordings |
+| Native video clips | `video src=clip.mp4 fit=cover in=1s rate=1 loop hold` | implemented | screen recordings |
 | Lottie | `lottie src=` | planned | |

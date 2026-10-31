@@ -1,5 +1,9 @@
 # reel IR (v1)
 
+> **Changes (native video, 2026-10-31)**: additive: new content type `video` (runtime `ffmpeg`
+> decode to RGBA, exact decoded-frame selection, source offset/rate/loop/hold); see [Video](#video).
+> Files without it load and render unchanged.
+
 > **Changes (stylised 3D, 2026-10-29)**: additive: new content type `scene3d` (camera, lights,
 > fog, objects with flat/lambert/toon/phong/wire materials, outlines, screens that show other
 > nodes; rasterised by the renderer into one layer) and the track properties `s3d.*`; see
@@ -159,6 +163,7 @@ coordinates.
 | `switch` | `rect`, `frames: [[first_frame, state]]`, `states: [paint]` | content that changes (repaint states, typed text in HTML mode); a switch is damage |
 | `image` | `asset`, `rect`, `variants?` | M0 raster content (`asset.scale` = device px per scene px) |
 | `sequence` | `rect`, `frames: [[first_frame, asset]]` | M0 raster sequence |
+| `video` | `path`, `rect`, `start?`, `offset?`, `rate?`, `looped?`, `hold?` | Native ffmpeg-decoded RGBA video. See [Video](#video). |
 
 | `cloud` | `count`, `seed`, `radius`, `radius_jitter`, `palette`, `weights`, `forms`, `projection` | instanced point cloud, see [Point cloud](#point-cloud) |
 | `scene3d` | `rect`, `camera`, `ambient`, `ambient_color`, `lights`, `fog`, `bg`, `aa`, `bloom`, `shadow`, `objects` | stylised 3D rasterised into one layer, see [Scene 3D](#scene-3d) |
@@ -183,6 +188,18 @@ optional `transform` `[a,b,c,d,e,f]`):
 `{"image": {asset, quality 0|1|2, extend: [x, y], alpha}}` (asset at natural size,
 placed by `brush_transform`). Colors are straight-alpha sRGB 0..1, gradients interpolate
 in sRGB.
+
+### Video
+
+`{"type":"video","path":"clip.mp4","rect":[x,y,w,h]}` decodes through the required
+runtime `ffmpeg` binary to straight RGBA, then premultiplies it for compositing. `start` is the
+scene time at which the clip begins (default 0), `offset` is its source in-point (default 0), and
+`rate` is positive playback speed (default 1). At scene time `t`, the renderer chooses decoded
+source frame `floor((offset + (t - start) * rate) * source_fps)`. It selects by decoded frame
+number, never a wall-clock seek. Before the source begins and after it ends, it draws nothing;
+`looped: true` wraps the source index and `hold: true` uses the last frame. RGBA-capable source
+formats keep their alpha. Video content has a frame signature, so the planner invalidates while
+the decoded index changes and retains stable blank or held frames. Audio is not mixed.
 
 ### Text v2
 

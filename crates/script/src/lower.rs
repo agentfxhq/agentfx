@@ -585,7 +585,8 @@ fn compile_pass(doc0: &Document, tl: &Timeline, fmt: Option<&str>, base: &Path, 
     let precise: std::collections::HashSet<String> = c.layers.iter().filter(|l| l.tags.iter().any(|t| t == "cam-precise")).map(|l| l.id.clone()).collect();
     let mut tracks: Vec<Track> = c.tracks.into_values().filter(|t| !t.keys.is_empty() || t.base != t.ch.default_value()).collect();
     for t in tracks.iter_mut() {
-        normalize_track(t, tl.total, precise.contains(&t.layer));
+        // generator parameters too (fractal centres need every digit at deep zoom)
+        normalize_track(t, tl.total, precise.contains(&t.layer) || t.ch.gen_param().is_some());
     }
     if !c.remaps.is_empty() {
         let mut parent: HashMap<String, String> = HashMap::new();

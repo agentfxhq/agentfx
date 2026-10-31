@@ -11,7 +11,7 @@ pub const ELEMENTS: &[&str] = &[
     "particles", "layer", "group", "rect", "ellipse", "circle", "path", "line", "poly", "star", "lower3", "toast",
     "chapter", "link", "diagram", "node", "camera", "lottie", "shader", "textpath", "stat", "note", "steps", "pill", "quote",
     "list", "window", "device", "progress", "panel", "cloud", "presenter", "light", "world", "place", "fluid", "nest",
-    "scene3d",
+    "scene3d", "gen",
 ];
 
 const ICONS: &[(&str, &str)] = &[
@@ -223,6 +223,7 @@ impl<'a> Ctx<'a> {
             "nest" => self.nest_el(parent, n, lid),
             "cloud" => self.cloud(parent, si, n, lid),
             "fluid" => self.fluid(parent, si, n, lid),
+            "gen" => self.gen_el(parent, si, n, lid),
             "scene3d" => self.scene3d(parent, si, n, lid),
             "light" => self.light_el(si, n, lid),
             "particles" => {

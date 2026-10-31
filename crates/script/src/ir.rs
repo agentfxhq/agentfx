@@ -58,6 +58,9 @@ pub enum Ch {
     Ambient,             // scene3d ambient light
     Emissive,            // object self-illumination
     Intensity,           // 3D light intensity
+    // generator parameters: slot k = `agentfx_ir::generator::param_names()[k]` (`gen_param`)
+    Gen0, Gen1, Gen2, Gen3, Gen4, Gen5, Gen6, Gen7, Gen8, Gen9, Gen10, Gen11,
+    Gen12, Gen13, Gen14, Gen15, Gen16, Gen17, Gen18, Gen19, Gen20, Gen21, Gen22, Gen23,
 }
 
 impl Ch {
@@ -68,6 +71,7 @@ impl Ch {
             Blur | Glow | Brightness | Saturate | Contrast | Hue | Fill | Color | Stroke | TrimStart | TrimEnd | Reveal | MaskX
             | GradAngle | Grad0 | Grad1 | Grad2 | Grad3 | TimeSpan | Halftone | Sweep | Rays | Misreg | FluidTime | PathOffset | Rgbsplit | RgbsplitDx | RgbsplitDy | Glitch | GlitchRate | GlitchBlock | Vhs | Dither | Ascii => Stage::Paint,
             Sz | CamX | CamY | CamZ | LookX | LookY | LookZ | Fov | Roll | Ambient | Emissive | Intensity => Stage::PerFrame,
+            Gen0 | Gen1 | Gen2 | Gen3 | Gen4 | Gen5 | Gen6 | Gen7 | Gen8 | Gen9 | Gen10 | Gen11 | Gen12 | Gen13 | Gen14 | Gen15 | Gen16 | Gen17 | Gen18 | Gen19 | Gen20 | Gen21 | Gen22 | Gen23 => Stage::PerFrame,
             Wght | Wdth | Opsz | Slnt | Axis0 | Axis1 | Axis2 | Axis3 | Tracking | W | H | LineH | Count => Stage::Layout,
         }
     }
@@ -86,6 +90,9 @@ impl Ch {
         matches!(self, Ch::Fill | Ch::Color | Ch::Stroke | Ch::Grad0 | Ch::Grad1 | Ch::Grad2 | Ch::Grad3)
     }
     pub fn name(self) -> String {
+        if let Some(p) = self.gen_param() {
+            return p;
+        }
         serde_json::to_value(self).ok().and_then(|v| v.as_str().map(str::to_string)).unwrap_or_default()
     }
     pub fn parse(s: &str) -> Option<Ch> {
@@ -113,7 +120,7 @@ impl Ch {
             "rgbsplit" => Ch::Rgbsplit, "rgbsplit-dx" => Ch::RgbsplitDx, "rgbsplit-dy" => Ch::RgbsplitDy,
             "glitch" => Ch::Glitch, "glitch-rate" => Ch::GlitchRate, "glitch-block" => Ch::GlitchBlock,
             "vhs" => Ch::Vhs, "dither" => Ch::Dither, "ascii" => Ch::Ascii,
-            _ => return None,
+            _ => return gen_ch(&s),
         })
     }
     /// The axis tag of an axis channel (`wght`, `wdth`, `opsz`, `slnt`, custom tags).
@@ -129,6 +136,11 @@ impl Ch {
             }
             _ => None,
         }
+    }
+    /// The generator parameter of a `Gen` channel (`zoom`, `cx`, ...).
+    pub fn gen_param(self) -> Option<String> {
+        let i = GEN_CHS.iter().position(|c| *c == self)?;
+        agentfx_ir::generator::param_names().get(i).map(|s| s.to_string())
     }
     pub fn is_axis(self) -> bool {
         matches!(self, Ch::Wght | Ch::Wdth | Ch::Opsz | Ch::Slnt | Ch::Axis0 | Ch::Axis1 | Ch::Axis2 | Ch::Axis3)
@@ -146,6 +158,26 @@ impl Ch {
 thread_local! {
     /// Custom axis tags of the current compile, in first-use order (slot k = `Ch::Axis<k>`).
     static AXIS_TAGS: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+pub const GEN_CHS: [Ch; 24] = [
+    Ch::Gen0, Ch::Gen1, Ch::Gen2, Ch::Gen3, Ch::Gen4, Ch::Gen5, Ch::Gen6, Ch::Gen7, Ch::Gen8, Ch::Gen9, Ch::Gen10, Ch::Gen11,
+    Ch::Gen12, Ch::Gen13, Ch::Gen14, Ch::Gen15, Ch::Gen16, Ch::Gen17, Ch::Gen18, Ch::Gen19, Ch::Gen20, Ch::Gen21, Ch::Gen22, Ch::Gen23,
+];
+
+/// Channel of a generator parameter name (any kind's). More distinct parameter names than
+/// `GEN_CHS` slots: add slots (test `gen_channels_cover_every_parameter`).
+pub fn gen_ch(name: &str) -> Option<Ch> {
+    agentfx_ir::generator::param_names().iter().position(|p| *p == name).and_then(|i| GEN_CHS.get(i).copied())
+}
+
+#[test]
+fn gen_channels_cover_every_parameter() {
+    let names = agentfx_ir::generator::param_names();
+    assert!(names.len() <= GEN_CHS.len(), "{} generator parameter names, {} channel slots", names.len(), GEN_CHS.len());
+    for n in names {
+        assert_eq!(Ch::parse(n).and_then(|c| c.gen_param()).as_deref(), Some(n), "`{n}` collides with another channel");
+    }
 }
 
 /// Channel of a custom (uppercase) axis tag; None when four custom axes are already in use.
@@ -312,6 +344,8 @@ pub enum Kind {
     Cloud(Box<CloudCfg>),
     /// 2D fluid (reel-ir `fluid` content): simulated by the native renderer only.
     Fluid(Box<crate::fluid::FluidCfg>),
+    /// Procedural generator (reel-ir `gen` content): drawn by the native renderer only.
+    Gen(Box<crate::generator::GenCfg>),
     /// Stylised 3D scene (reel-ir `scene3d` content); its children are `Obj3d` layers.
     Scene3d(Box<crate::s3d::S3dCfg>),
     /// One object (or light) of a 3D scene; never laid out or drawn as a 2D layer.

@@ -458,6 +458,13 @@ fn check_content(scene: &Scene, c: &Content, ctx: &str, sizes: &[Option<(u32, u3
                 uses.push((asset, *rect));
             }
         }
+        Content::Video { path, rect, start, offset, rate, .. } => {
+            check_rect(rect, ctx, errors);
+            if path.trim().is_empty() { errors.push(format!("{ctx}: video path must not be empty")); }
+            if !start.is_finite() || !offset.is_finite() || !rate.is_finite() || *rate <= 0.0 {
+                errors.push(format!("{ctx}: video start/offset must be finite and rate must be positive"));
+            }
+        }
         Content::Rect { rect, color } => {
             check_rrect(rect, ctx, errors);
             if color.iter().any(|v| !v.is_finite() || !(0.0..=1.0).contains(v)) { errors.push(format!("{ctx}: color components must be in [0,1]")); }

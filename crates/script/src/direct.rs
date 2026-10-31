@@ -291,6 +291,12 @@ pub fn range_ir(scene: &Value, f0: u32, f1: u32) -> Value {
                     let o = c["time_offset"].as_f64().unwrap_or(0.0);
                     c["time_offset"] = json!(o + t);
                 }
+                if c["type"] == json!("video") {
+                    // The range gets a new time origin, like its tracks. Keep the source
+                    // frame mapping unchanged for frame/sheet and cached scene renders.
+                    let start = c["start"].as_f64().unwrap_or(0.0);
+                    c["start"] = json!(start - t);
+                }
                 // text v2 key selectors carry absolute unit times: shift them like the tracks
                 if let Some(anims) = c.get_mut("text").and_then(|x| x.get_mut("animators")).and_then(|a| a.as_array_mut()) {
                     for a in anims {

@@ -50,6 +50,7 @@ mod sdft;
 mod text;
 mod textfx;
 mod timefx;
+mod video;
 mod vraster;
 mod warp;
 

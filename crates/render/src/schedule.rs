@@ -90,7 +90,7 @@ pub struct Schedule {
 
 pub fn content_rect(c: &Content) -> Option<[f64; 4]> {
     match c {
-        Content::Image { rect, .. } | Content::Sequence { rect, .. } | Content::Paint { rect, .. } | Content::Switch { rect, .. } => Some(*rect),
+        Content::Image { rect, .. } | Content::Sequence { rect, .. } | Content::Video { rect, .. } | Content::Paint { rect, .. } | Content::Switch { rect, .. } => Some(*rect),
         Content::Rect { rect, .. } => Some(rect.rect),
         _ => None,
     }
@@ -470,6 +470,7 @@ pub fn build_v1(scene: &Scene, info: &dyn ContentInfo) -> Result<Schedule> {
                     let s = st[i].chain.max_scale();
                     Some(variants.iter().copied().find(|&v| (scene.assets.get(v).map_or(0.0, |a| a.scale) - s).abs() < 1e-6).unwrap_or(*asset))
                 }
+                Some(Content::Video { .. }) => None,
                 Some(Content::Sequence { frames: seq, .. }) => seq.iter().rev().find(|(ff, _)| *ff as usize <= f).map(|x| x.1),
                 Some(Content::Switch { frames: seq, .. }) => seq.iter().rev().find(|(ff, _)| *ff as usize <= f).map(|x| x.1),
                 _ => None,

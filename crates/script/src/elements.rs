@@ -164,7 +164,16 @@ impl<'a> Ctx<'a> {
                 if k == "image" && image_size(std::path::Path::new(&src)).is_none() {
                     self.err("E_ASSET", format!("unsupported or invalid image `{src}`"), "use a local PNG or JPEG image", n.span);
                 }
-                let kind = if k == "image" { Kind::Image { src, fit: praw(n, "fit").unwrap_or("cover".into()) } } else { Kind::Video { src } };
+                let kind = if k == "image" {
+                    Kind::Image { src, fit: praw(n, "fit").unwrap_or("cover".into()) }
+                } else {
+                    let offset = self.dur(n, "offset").or_else(|| self.dur(n, "in")).unwrap_or(0.0);
+                    let rate = self.num(n, "playback-rate").or_else(|| self.num(n, "rate")).unwrap_or(1.0);
+                    if rate <= 0.0 {
+                        self.err("E_VALUE", "video rate must be positive", "write rate=1 or another positive playback rate", n.span);
+                    }
+                    Kind::Video { src, fit: praw(n, "fit").unwrap_or("cover".into()), offset, rate, looped: flag(n, "loop"), hold: flag(n, "hold") }
+                };
                 self.add(Some(parent), Layer::new(lid, kind))
             }
             "svg" | "html" => {
@@ -1558,4 +1567,3 @@ impl<'a> Ctx<'a> {
         self.layers[i].style.motion_blur = samples.map(|s| (s, shutter));
     }
 }
-

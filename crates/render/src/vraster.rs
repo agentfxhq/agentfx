@@ -13,7 +13,7 @@ use peniko::{BlendMode, Compose, Fill, FontData, Mix};
 use agentfx_ir::{Brush, Content, Draw, DrawFilter, Effect, Extend, NodeId, Sampled, Scene, Shape};
 use std::hash::{Hash, Hasher};
 use std::path::Path;
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 use vello_cpu::{ImageSource, PaintType, Pixmap, RenderContext, RenderSettings, Resources};
 
 type Paint = PaintType;
@@ -59,6 +59,7 @@ pub struct PPath {
 pub enum PContent {
     /// rasters (Image/Sequence): per asset image; drawn asset chosen by the schedule
     Raster { rect: [f64; 4] },
+    Video { rect: [f64; 4], decoder: Mutex<crate::video::Decoder>, start: f64, offset: f64, rate: f64, looped: bool, hold: bool },
     Rect { path: BezPath, color: peniko::Color },
     List(Vec<PDraw>),
     Switch(Vec<Vec<PDraw>>),
@@ -209,6 +210,15 @@ impl Prepared {
             let c = match &node.content {
                 None => None,
                 Some(Content::Image { rect, .. }) | Some(Content::Sequence { rect, .. }) => Some(PContent::Raster { rect: *rect }),
+                Some(Content::Video { path, rect, start, offset, rate, looped, hold }) => Some(PContent::Video {
+                    rect: *rect,
+                    decoder: Mutex::new(crate::video::Decoder::new(base.join(path))?),
+                    start: *start,
+                    offset: *offset,
+                    rate: *rate,
+                    looped: *looped,
+                    hold: *hold,
+                }),
                 Some(Content::Rect { rect, color: c }) => {
                     let r = rect.rect;
                     let path = kurbo::RoundedRect::from_rect(Rect::new(r[0], r[1], r[0] + r[2], r[1] + r[3]), kurbo::RoundedRectRadii::new(rect.radius[0], rect.radius[1], rect.radius[2], rect.radius[3])).to_path(0.1);
@@ -560,6 +570,7 @@ impl ContentInfo for Info<'_> {
             }
             PContent::Cloud(c) => c.bounds(t),
             PContent::Fluid(fl) => fl.bounds(fluid_time(scene, &self.tracks[n], fl, t)),
+            PContent::Video { rect, .. } => Some(*rect),
             PContent::Scene3d(p) => Some(p.c.rect),
             PContent::Gen(g) => Some(g.c.rect),
             _ => schedule::content_rect(scene.nodes[n].content.as_ref()?),
@@ -594,6 +605,10 @@ impl ContentInfo for Info<'_> {
             Some(PContent::TextFx(b)) => text_state(scene, &self.tracks[n], &b.0, t).hash_into(&mut h),
             Some(PContent::Cloud(c)) => c.sig(t).hash(&mut h),
             Some(PContent::Fluid(fl)) => fl.sig(fluid_time(scene, &self.tracks[n], fl, t)).hash(&mut h),
+            Some(PContent::Video { decoder, start, offset, rate, looped, hold, .. }) => {
+                let decoder = decoder.lock().expect("video decoder lock poisoned");
+                crate::video::frame_index(decoder.meta, t, *start, *offset, *rate, *looped, *hold).hash(&mut h);
+            }
             Some(PContent::Scene3d(p)) => s3d_paint::sig3d(scene, &self.tracks[n], p, t, &mut h),
             Some(PContent::Gen(g)) => g.sig(scene, &self.tracks[n], t).hash(&mut h),
             _ => {}
@@ -604,7 +619,7 @@ impl ContentInfo for Info<'_> {
         // text glyph tracks and path trims are the node's own tracks (covered by the
         // planner's activity intervals); clouds and fluids change with t itself
         match self.prep.contents[n].as_ref() {
-            Some(PContent::Cloud(_) | PContent::Fluid(_)) => true,
+            Some(PContent::Cloud(_) | PContent::Fluid(_) | PContent::Video { .. }) => true,
             // per-unit key times depend on t itself
             Some(PContent::TextFx(b)) => b.0.keyed,
             // generator parameter tracks are the node's own; some kinds move with t itself
@@ -652,9 +667,9 @@ pub struct Painter<'a> {
     pub stats: PainterStats,
     /// static-content raster cache (nodes at rest): exact for the same transform
     cacheable: Vec<bool>,
-    cache: std::collections::HashMap<(NodeId, usize, [u64; 6]), (Arc<Pixmap>, i32, i32)>,
+    cache: std::collections::HashMap<(NodeId, usize, u64, [u64; 6]), (Arc<Pixmap>, i32, i32)>,
     /// sightings of a cache key: (count over distinct frames, last frame time bits)
-    seen: std::collections::HashMap<(NodeId, usize, [u64; 6]), (u32, u64)>,
+    seen: std::collections::HashMap<(NodeId, usize, u64, [u64; 6]), (u32, u64)>,
     /// rasterized box shadows (blurred rounded rects), keyed by geometry/colour/scale
     shadow_cache: std::collections::HashMap<[u64; 9], (Arc<Pixmap>, f64, f64)>,
     cache_bytes: usize,
@@ -901,6 +916,7 @@ impl<'a> Painter<'a> {
                 Some(PContent::List(items)) => !has_blend(items),
                 Some(PContent::TextFx(b)) => !has_blend(&b.1) && !b.0.keyed && b.0.fx.path.is_none() && b.0.fx.animators.is_empty() && info.tracks[n].is_empty(),
                 Some(PContent::Switch(states)) => !states.iter().any(|s| has_blend(s)),
+                Some(PContent::Video { .. }) => true,
                 Some(PContent::Text(_)) => glyph_tracks(scene, &info.tracks[n]).is_empty(),
                 Some(PContent::Path(_)) => !info.tracks[n].iter().any(|&i| scene.tracks[i].property.starts_with("trim") || scene.tracks[i].property.ends_with(".color")),
                 Some(PContent::Gen(g)) => !g.animated(scene, &info.tracks[n]),
@@ -1191,7 +1207,7 @@ impl<'a> Painter<'a> {
             }
         }
         let lin = [c[0], c[1], c[2], c[3], fx, fy];
-        let key = (n, view.content[n].unwrap_or(usize::MAX), lin.map(f64::to_bits));
+        let key = (n, view.content[n].unwrap_or(usize::MAX), self.info.sig(self.scene, n, view.t), lin.map(f64::to_bits));
         if !self.cache.contains_key(&key) {
             // count distinct frames only (several damage rects of one frame are one sighting)
             let cnt = self.seen.entry(key).or_insert((0, u64::MAX));
@@ -1250,6 +1266,7 @@ impl<'a> Painter<'a> {
         }
         let _p = crate::prof::scope(match c {
             PContent::Raster { .. } => "draw.raster",
+            PContent::Video { .. } => "draw.video",
             PContent::Rect { .. } => "draw.rect",
             PContent::List(_) | PContent::Switch(_) => "draw.paint",
             PContent::TextFx(_) => "draw.textfx",
@@ -1271,6 +1288,20 @@ impl<'a> Painter<'a> {
                         sampler: peniko::ImageSampler { x_extend: peniko::Extend::Pad, y_extend: peniko::Extend::Pad, quality: peniko::ImageQuality::Medium, alpha: 1.0 },
                     }));
                     ctx.set_paint_transform(Affine::translate((rect[0], rect[1])) * Affine::scale(1.0 / s));
+                    ctx.fill_rect(&Rect::new(rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3]));
+                    ctx.reset_paint_transform();
+                }
+            }
+            PContent::Video { rect, decoder, start, offset, rate, looped, hold } => {
+                let mut decoder = decoder.lock().map_err(|_| anyhow::anyhow!("video decoder lock poisoned"))?;
+                if let Some(frame) = crate::video::frame_index(decoder.meta, view.t, *start, *offset, *rate, *looped, *hold) {
+                    let px = decoder.frame(frame)?;
+                    ctx.set_transform(chain);
+                    ctx.set_paint(Paint::Image(peniko::ImageBrush {
+                        image: ImageSource::Pixmap(px),
+                        sampler: peniko::ImageSampler { x_extend: peniko::Extend::Pad, y_extend: peniko::Extend::Pad, quality: peniko::ImageQuality::Medium, alpha: 1.0 },
+                    }));
+                    ctx.set_paint_transform(Affine::translate((rect[0], rect[1])) * Affine::scale_non_uniform(rect[2] / decoder.meta.width as f64, rect[3] / decoder.meta.height as f64));
                     ctx.fill_rect(&Rect::new(rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3]));
                     ctx.reset_paint_transform();
                 }

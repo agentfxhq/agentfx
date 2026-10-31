@@ -693,10 +693,11 @@ impl Page {
                 let u = self.url(src);
                 let _ = write!(self.body, "<img src=\"{}\" style=\"width:100%;height:100%;object-fit:{};display:block\">", esc(&u), if fit == "fill" { "fill" } else { fit });
             }
-            Kind::Video { src } => {
+            Kind::Video { src, fit, offset, rate, looped, hold } => {
                 open(&mut self.body, "");
                 let u = self.url(src);
-                let _ = write!(self.body, "<video src=\"{}\" muted playsinline preload=\"auto\" style=\"width:100%;height:100%;object-fit:cover;display:block\"></video>", esc(&u));
+                let loop_attr = if *looped { " loop" } else { "" };
+                let _ = write!(self.body, "<video src=\"{}\" muted playsinline preload=\"auto\"{} data-offset=\"{}\" data-rate=\"{}\" data-hold=\"{}\" style=\"width:100%;height:100%;object-fit:{};display:block\"></video>", esc(&u), loop_attr, offset, rate, hold, fit);
             }
             Kind::Html { markup } if l.children.iter().any(|c| c.tags.iter().any(|t| t == "part")) => {
                 open(&mut self.body, "");
@@ -832,7 +833,15 @@ R.seek = async (t) => {
   for (const a of R.anims) a.currentTime = t * 1000;
   for (const v of R.videos) {
     const s = v.closest('.t-scene'); const t0 = s ? parseFloat(s.dataset.start || '0') : 0;
-    const want = Math.max(0, t - t0);
+    const offset = parseFloat(v.dataset.offset || '0'), rate = parseFloat(v.dataset.rate || '1');
+    let want = offset + (t - t0) * rate;
+    const dur = v.duration;
+    const loop = v.loop, hold = v.dataset.hold === 'true';
+    const show = want >= 0 && (loop || hold || !Number.isFinite(dur) || want < dur);
+    v.style.visibility = show ? '' : 'hidden';
+    if (!show || !Number.isFinite(dur) || dur <= 0) continue;
+    if (loop) want %= dur;
+    else if (hold) want = Math.min(want, Math.max(0, dur - 1 / 1000000));
     if (Math.abs(v.currentTime - want) > 1e-3) await new Promise((res) => { v.addEventListener('seeked', res, { once: true }); v.currentTime = want; });
   }
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));

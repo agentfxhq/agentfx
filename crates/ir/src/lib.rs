@@ -246,6 +246,24 @@ pub enum Content {
     /// Raster content that changes: `frames[i] = (first_frame, asset)`, sorted,
     /// first entry at frame 0. All assets cover `rect`.
     Sequence { rect: [f64; 4], frames: Vec<(u32, AssetId)> },
+    /// A decoded video frame. Source selection uses decoded frame indices rather than
+    /// presentation time, so direct renders are deterministic.
+    Video {
+        path: String,
+        rect: [f64; 4],
+        /// Scene time at which clip time zero begins. Standalone IR normally leaves this at 0;
+        /// the Reel Script compiler sets it to the containing scene's start.
+        #[serde(default)]
+        start: f64,
+        #[serde(default)]
+        offset: f64,
+        #[serde(default = "one_f64")]
+        rate: f64,
+        #[serde(default)]
+        looped: bool,
+        #[serde(default)]
+        hold: bool,
+    },
     /// Solid rounded rectangle (vector). color = straight RGBA 0..1.
     Rect { rect: RRect, color: [f64; 4] },
     /// Resolved vector display list (M1): what the HTML frontend emits for one paint
@@ -291,6 +309,10 @@ pub enum Content {
     /// outlines, screens showing other nodes): rasterised by the renderer into one layer. See
     /// IR.md "Scene 3D" and `s3d.rs`.
     Scene3d(Box<s3d::Scene3d>),
+}
+
+fn one_f64() -> f64 {
+    1.0
 }
 
 /// 2D affine as `[a, b, c, d, e, f]` (CSS matrix order), used in display lists.

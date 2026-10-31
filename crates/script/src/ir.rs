@@ -302,7 +302,7 @@ pub enum Kind {
     /// Text; `runs` carry inline styling. Kinetic type splits text into child layers instead.
     Text { runs: Vec<Run> },
     Image { src: String, fit: String },
-    Video { src: String },
+    Video { src: String, fit: String, offset: f64, rate: f64, looped: bool, hold: bool },
     /// Raw escape hatches (rendered by the HTML path / Chrome fallback in the native renderer).
     Html { markup: String },
     Svg { markup: String },

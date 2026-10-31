@@ -49,6 +49,7 @@ mod sdft;
 mod text;
 mod textfx;
 mod timefx;
+mod video;
 mod vraster;
 
 use anyhow::{Context, Result, bail};

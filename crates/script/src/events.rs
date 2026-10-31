@@ -88,16 +88,21 @@ impl<'a> Ctx<'a> {
         if let Some(d) = self.dur(n, "delay") {
             t0 += d;
         }
-        if let (Some(p), Some(id)) = (praw(n, "in"), id.clone()) {
-            let mut e = Node { kind: "enter".into(), args: vec![Value::Str(format!("#{id}")), Value::Str(p)], span: n.span, ..Default::default() };
-            for k in ["dur", "ease", "stagger", "to", "value", "from"] {
-                if let Some(v) = n.props.get(k) {
-                    e.props.insert(k.into(), v.clone());
+        // `video in=1.2s` is the source in-point. A named enter preset still works on a
+        // video layer (`in=rise`), but a duration must not be turned into an enter verb.
+        let video_in_point = n.kind == "video" && self.dur(n, "in").is_some();
+        if !video_in_point {
+            if let (Some(p), Some(id)) = (praw(n, "in"), id.clone()) {
+                let mut e = Node { kind: "enter".into(), args: vec![Value::Str(format!("#{id}")), Value::Str(p)], span: n.span, ..Default::default() };
+                for k in ["dur", "ease", "stagger", "to", "value", "from"] {
+                    if let Some(v) = n.props.get(k) {
+                        e.props.insert(k.into(), v.clone());
+                    }
                 }
+                self.push_ev(t0, si, e, None);
+            } else if n.props.contains_key("in") {
+                self.warn("W_IN_NO_ID", "in= needs an element id to animate", "add an id, e.g. `text #hello \"...\" in=rise`", n.span);
             }
-            self.push_ev(t0, si, e, None);
-        } else if n.props.contains_key("in") {
-            self.warn("W_IN_NO_ID", "in= needs an element id to animate", "add an id, e.g. `text #hello \"...\" in=rise`", n.span);
         }
         if let (Some(p), Some(id)) = (praw(n, "out"), id.clone()) {
             let t1 = match praw(n, "until") {

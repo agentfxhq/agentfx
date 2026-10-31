@@ -24,6 +24,7 @@ use crate::values::{ColorRef, Ease, Paint, Rgba, Stop};
 use agentfx_ir::{Brush, Draw};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::process::Command;
 
 pub struct Out {
     pub scene: Value,
@@ -36,6 +37,14 @@ fn rgba(c: &Rgba) -> Value {
 }
 fn r4(v: f64) -> f64 {
     (v * 10000.0).round() / 10000.0
+}
+
+fn video_size(path: &str) -> Option<(f64, f64)> {
+    let probe = std::env::var("AGENTFX_FFPROBE").unwrap_or_else(|_| "ffprobe".into());
+    let out = Command::new(probe).args(["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=p=0:s=x", path]).output().ok()?;
+    let text = String::from_utf8(out.stdout).ok()?;
+    let (w, h) = text.trim().split_once('x')?;
+    Some((w.parse().ok()?, h.parse().ok()?))
 }
 fn lit(c: &ColorRef) -> Rgba {
     match c {
@@ -596,6 +605,22 @@ impl<'a> Em<'a> {
         }
         None
     }
+
+    /// Reel clips restart at their containing scene, as the HTML reference does.
+    fn scene_start(&self, id: &str) -> f64 {
+        let mut cur = Some(id.to_string());
+        while let Some(layer) = cur {
+            if let Some(start) = self
+                .ir_layer(&layer)
+                .and_then(|l| l.tags.iter().find_map(|t| t.strip_prefix("start:")))
+                .and_then(|s| s.parse().ok())
+            {
+                return start;
+            }
+            cur = self.parent.get(&layer).cloned();
+        }
+        0.0
+    }
     /// Id of the layer named `name` (same scene first), like `find_named`.
     fn find_named_id(&self, from: &str, name: &str) -> Option<String> {
         let sc = self.scene_of(from);
@@ -1064,7 +1089,28 @@ impl<'a> Em<'a> {
                     None => self.note("unsupported image"),
                 }
             }
-            Kind::Video { .. } => self.note("video layer (native decode planned, reel M6)"),
+            Kind::Video { src, fit, offset, rate, looped, hold } => {
+                if !own.is_empty() {
+                    extra_children.push(json!({"name": format!("{}-box", l.id), "children": [], "content": self.paint_content(&own)}));
+                }
+                match video_size(src) {
+                    Some((pw, ph)) => {
+                        let cr = self.nat.content_rect(&l.id).unwrap_or(r);
+                        let (dw, dh) = match fit.as_str() {
+                            "cover" => { let s = (cr[2] / pw).max(cr[3] / ph); (pw * s, ph * s) }
+                            "contain" => { let s = (cr[2] / pw).min(cr[3] / ph); (pw * s, ph * s) }
+                            _ => (cr[2], cr[3]),
+                        };
+                        let rect = [cr[0] + (cr[2] - dw) / 2.0, cr[1] + (cr[3] - dh) / 2.0, dw, dh];
+                        let mut video = json!({"name": format!("{}-video", l.id), "children": [], "content": {"type": "video", "path": src, "rect": [r4(rect[0]), r4(rect[1]), r4(rect[2]), r4(rect[3])], "start": self.scene_start(&l.id), "offset": offset, "rate": rate, "looped": looped, "hold": hold}});
+                        if fit == "cover" && (dw > cr[2] + 0.5 || dh > cr[3] + 0.5) {
+                            video["clips"] = json!([{"rect": [r4(cr[0]), r4(cr[1]), r4(cr[2]), r4(cr[3])], "radius": [l.style.radius, l.style.radius, l.style.radius, l.style.radius]}]);
+                        }
+                        extra_children.push(video);
+                    }
+                    None => self.note("invalid video"),
+                }
+            }
             Kind::Path { d, vb, .. } => {
                 let dd = if let Some(ld) = self.link_d.get(&l.id) {
                     ld.clone()

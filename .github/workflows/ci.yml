@@ -26,15 +26,16 @@ jobs:
       - name: MCP server e2e
         run: python3 tools/mcp-e2e.py
 
-  # macOS is untested and its runners are scarce: run this check by hand (Actions > CI > Run workflow).
   macos:
-    name: macOS check (experimental)
-    if: github.event_name == 'workflow_dispatch'
+    name: macOS build and CPU test
     runs-on: macos-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Check
-        run: cargo check --workspace --locked
+      - name: Build
+        run: cargo build --release --locked
+      - name: CPU test
+        env:
+          AGENTFX_GPU: "0"
+        run: cargo test --release --locked

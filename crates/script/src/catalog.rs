@@ -23,6 +23,7 @@ const fn it(name: &'static str, level: &'static str, group: &'static str, stage:
 pub const ITEMS: &[Item] = &[
     // ---- document
     it("video", "doc", "document", "-", "impl", "video \"Title\" size=1920x1080 fps=30 voice=<tts voice> rate=+6% theme=studio-dark captions=plain|karaoke|off formats=[16:9, 9:16] lead=2f tail=6f", "Header. One per file."),
+    it("render encoder", "doc", "output", "-", "impl", "agentfx render film.reel --encoder auto|x264|vaapi|qsv|nvenc|nvenc-hevc|videotoolbox|videotoolbox-hevc", "MP4 encoder choice. auto probes VideoToolbox on macOS, then falls back to x264."),
     it("theme", "doc", "document", "-", "impl", "theme studio-dark\n  colors accent=#17845a ...\n  type h1=92 min=20\n  motion base=0.5s pop=spring(260,20)\n  layout safe=6% radius=18\n  lint min-contrast=3 no-emdash=true\n  bg linear(...)", "Brand tokens; referenced as $name."),
     it("pronounce", "doc", "document", "-", "impl", "pronounce \"staging.example.test\" \"staging dot example dot test\"", "Spoken substitution; captions keep the written form."),
     it("music", "doc", "audio", "audio", "impl", "music src=bed.mp3 vol=0.25 duck=0.08", "Music bed, auto-ducked under every say."),

@@ -9,6 +9,13 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 **planned** (may be shown greyed with "planned", never chosen).
 "Direct only" means the native renderer path (the default); the HTML backend ignores it.
 
+## Output runtime
+
+| Kind | Syntax | Status | Good for |
+|---|---|---|---|
+| macOS hardware encode | `agentfx render film.reel --encoder videotoolbox\|videotoolbox-hevc` | implemented | MP4 export on Apple Silicon and Intel Macs; `auto` probes it first, then falls back to x264 |
+| GPU backend | `agentfx-render ... --gpu=auto` | implemented | Vulkan on Linux, Metal on macOS, DX12 or Vulkan on Windows; CPU fallback stays automatic |
+
 ## Type
 
 | Kind | Syntax | Status | Good for |

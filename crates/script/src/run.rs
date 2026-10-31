@@ -51,7 +51,8 @@ pub fn home() -> PathBuf {
 
 /// Writable root for caches (`cache/<sub>`) and scratch files (`out/tmp`): `$AGENTFX_CACHE`,
 /// else the data directory when it is `$AGENTFX_HOME` or the build tree (the layout the build
-/// tree has always used), else `$XDG_CACHE_HOME/agentfx` or `~/.cache/agentfx`.
+/// tree has always used), else `$XDG_CACHE_HOME/agentfx`, `~/Library/Caches/agentfx` on
+/// macOS, or `~/.cache/agentfx` elsewhere.
 pub fn work_root() -> PathBuf {
     if let Some(c) = agentfx_ir::env::var_os("AGENTFX_CACHE").filter(|c| !c.is_empty()) {
         return PathBuf::from(c);
@@ -61,7 +62,13 @@ pub fn work_root() -> PathBuf {
         return home.clone();
     }
     let xdg = std::env::var_os("XDG_CACHE_HOME").filter(|x| !x.is_empty()).map(PathBuf::from);
-    xdg.or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))
+    xdg.or_else(|| std::env::var_os("HOME").map(|h| {
+        let home = PathBuf::from(h);
+        #[cfg(target_os = "macos")]
+        { home.join("Library/Caches") }
+        #[cfg(not(target_os = "macos"))]
+        { home.join(".cache") }
+    }))
         .unwrap_or_else(std::env::temp_dir)
         .join("agentfx")
 }

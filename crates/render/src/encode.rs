@@ -19,6 +19,10 @@ pub enum Codec {
     Nvenc,
     /// NVIDIA NVENC HEVC (`hevc_nvenc`; Pascal: no B-frames, no temporal AQ; main10 with `ten_bit`).
     NvencHevc,
+    /// Apple VideoToolbox H.264 (`h264_videotoolbox`).
+    VideoToolbox,
+    /// Apple VideoToolbox HEVC (`hevc_videotoolbox`; main10 with `ten_bit`).
+    VideoToolboxHevc,
 }
 
 impl Codec {
@@ -27,6 +31,7 @@ impl Codec {
     pub fn is_hw(self) -> bool { self != Codec::X264 }
     /// NVIDIA NVENC (system-memory frames, no hwupload, session-capped).
     pub fn is_nvenc(self) -> bool { matches!(self, Codec::Nvenc | Codec::NvencHevc) }
+    pub fn is_videotoolbox(self) -> bool { matches!(self, Codec::VideoToolbox | Codec::VideoToolboxHevc) }
     /// Default quality when `--qp` is not given: VAAPI CQP 21 (M3); NVENC CQ
     /// (matches x264 crf 18 in encode SSIM on a recorded product tour).
     pub fn default_quality(self, ten_bit: bool) -> u32 {
@@ -218,7 +223,7 @@ fn hw_input_args(codec: Codec) -> Vec<String> {
     match codec {
         Codec::Vaapi => vec!["-vaapi_device".into(), render_node()],
         Codec::Qsv => ["-init_hw_device", &format!("qsv=hw:{}", render_node()), "-filter_hw_device", "hw"].map(String::from).to_vec(),
-        Codec::X264 | Codec::Nvenc | Codec::NvencHevc => vec![],
+        Codec::X264 | Codec::Nvenc | Codec::NvencHevc | Codec::VideoToolbox | Codec::VideoToolboxHevc => vec![],
     }
 }
 
@@ -227,13 +232,13 @@ fn hw_upload(codec: Codec) -> &'static str {
 }
 
 fn probe(ffmpeg: &std::path::Path, codec: Codec, access: Access) -> Result<(), String> {
-    let enc = match codec { Codec::Qsv => "h264_qsv", Codec::Nvenc => "h264_nvenc", Codec::NvencHevc => "hevc_nvenc", _ => "h264_vaapi" };
+    let enc = match codec { Codec::Qsv => "h264_qsv", Codec::Nvenc => "h264_nvenc", Codec::NvencHevc => "hevc_nvenc", Codec::VideoToolbox => "h264_videotoolbox", Codec::VideoToolboxHevc => "hevc_videotoolbox", _ => "h264_vaapi" };
     let mut args = vec!["-hide_banner".to_string(), "-v".into(), "error".into()];
     args.extend(hw_input_args(codec));
     // NVENC HEVC rejects frames below ~128x64; B-frames off (Pascal HEVC has none)
-    let vf = if codec.is_nvenc() { "format=nv12" } else { hw_upload(codec) };
+    let vf = if codec.is_nvenc() || codec.is_videotoolbox() { "format=nv12" } else { hw_upload(codec) };
     args.extend(["-f", "lavfi", "-i", "color=c=gray:s=128x128:d=0.2", "-vf", vf, "-c:v", enc].map(String::from));
-    if codec.is_nvenc() { args.extend(["-bf", "0"].map(String::from)); }
+    if codec.is_nvenc() || codec.is_videotoolbox() { args.extend(["-bf", "0"].map(String::from)); }
     args.extend(["-f", "null", "-"].map(String::from));
     let out = ffmpeg_command(ffmpeg, access, &args)
         .stdin(Stdio::null()).output().map_err(|e| format!("cannot run {}: {e}", ffmpeg.display()))?;
@@ -270,6 +275,9 @@ fn detect_full(codec: Codec) -> Result<(Access, PathBuf), String> {
         if cands.is_empty() { return Err("ffmpeg not found (set AGENTFX_FFMPEG_HW or AGENTFX_FFMPEG, or put ffmpeg on PATH)".into()); }
         let access = if codec.is_nvenc() {
             if cfg!(target_os = "linux") && !std::path::Path::new(NVIDIA_NODE).exists() { return Err(format!("no NVIDIA device ({NVIDIA_NODE})")); }
+            Access::Direct
+        } else if codec.is_videotoolbox() {
+            if !cfg!(target_os = "macos") { return Err("VideoToolbox is available only on macOS".into()); }
             Access::Direct
         } else {
             let node = render_node();
@@ -378,7 +386,7 @@ impl I420Frame {
     pub fn for_codec(codec: Codec, hw: &HwOpts, w: usize, h: usize) -> Self {
         match codec {
             Codec::X264 => Self::new(w, h),
-            Codec::NvencHevc if hw.ten_bit && ten_bit_native() => Self::new_p10(w, h),
+            Codec::NvencHevc | Codec::VideoToolboxHevc if hw.ten_bit && ten_bit_native() => Self::new_p10(w, h),
             _ => Self::new_nv12(w, h),
         }
     }
@@ -655,7 +663,7 @@ impl Encoder {
             ensure!(opts.hw.qp <= 51, "hardware quality must be in 0..=51");
             ensure!(!(opts.hw.low_power && opts.hw.rc != RateControl::Cqp), "VAAPI low power supports only CQP");
             ensure!(opts.codec != Codec::Qsv || opts.hw.rc == RateControl::Cqp && !opts.hw.low_power, "QSV takes only --qp (global_quality)");
-            ensure!(!opts.hw.ten_bit || opts.codec == Codec::NvencHevc, "--10bit needs --encoder nvenc-hevc");
+            ensure!(!opts.hw.ten_bit || matches!(opts.codec, Codec::NvencHevc | Codec::VideoToolboxHevc), "--10bit needs --encoder nvenc-hevc or videotoolbox-hevc");
             ensure!(!opts.codec.is_nvenc() || (1..=7).contains(&opts.hw.nv_preset), "NVENC preset must be p1..p7");
         } else {
             ensure!(opts.crf <= 51, "x264 CRF must be in 0..=51");
@@ -664,7 +672,7 @@ impl Encoder {
         ensure!(opts.out.extension().is_some_and(|x| x.eq_ignore_ascii_case("mp4")), "output must have .mp4 extension");
         ensure!(opts.out != opts.log, "output and log paths must differ");
         let px = (opts.width as usize).checked_mul(opts.height as usize).context("frame size overflow")?;
-        let p10 = opts.hw.ten_bit && opts.codec == Codec::NvencHevc && ten_bit_native();
+        let p10 = opts.hw.ten_bit && matches!(opts.codec, Codec::NvencHevc | Codec::VideoToolboxHevc) && ten_bit_native();
         let frame_bytes = match (opts.yuv, p10) { (false, _) => px * 4, (true, false) => px * 3 / 2, (true, true) => px * 3 };
         ensure!(frame_bytes <= u32::MAX as usize, "RGBA frame exceeds bitmap size limit");
         let bframes = match opts.codec {
@@ -677,14 +685,15 @@ impl Encoder {
             // 84). B-frames only with --mode cfr; HEVC on Pascal has none.
             Codec::Nvenc => if opts.mode == Mode::Cfr { B_FRAMES } else { 0 },
             Codec::NvencHevc => 0,
+            Codec::VideoToolbox | Codec::VideoToolboxHevc => 0,
         };
         let mut log = File::create(&opts.log).context("create ffmpeg log")?;
         let mut a: Vec<String> = Vec::new();
         let mut push = |xs: &[&str]| a.extend(xs.iter().map(|x| x.to_string()));
         push(&["-hide_banner", "-y"]);
         let infmt = match (opts.yuv, hw) { (false, _) => "rgba", (true, false) => "yuv420p", (true, true) if p10 => "yuv420p10le", (true, true) => "nv12" };
-        // VAAPI/QSV upload to GPU surfaces; NVENC takes system-memory frames like x264
-        let upload = hw && !opts.codec.is_nvenc();
+        // VAAPI/QSV upload to GPU surfaces; NVENC and VideoToolbox take system-memory frames.
+        let upload = hw && !opts.codec.is_nvenc() && !opts.codec.is_videotoolbox();
         if hw { let h = hw_input_args(opts.codec); a.extend(h); }
         let mut push = |xs: &[&str]| a.extend(xs.iter().map(|x| x.to_string()));
         match opts.mode {
@@ -695,7 +704,7 @@ impl Encoder {
         // settb rounds integer timestamps onto the frame grid without the floating-point
         // truncation that a setpts expression can introduce.
         let mut vf = if opts.mode == Mode::Vfr { vec![format!("settb=expr=1/{}", opts.fps)] } else { vec![] };
-        if opts.codec == Codec::NvencHevc && opts.hw.ten_bit {
+        if matches!(opts.codec, Codec::NvencHevc | Codec::VideoToolboxHevc) && opts.hw.ten_bit {
             vf.push("format=p010le".into());
         }
         if upload {
@@ -734,6 +743,11 @@ impl Encoder {
                 if opts.hw.spatial_aq { push(&["-spatial-aq", "1"]); }
                 if opts.hw.temporal_aq && !hevc { push(&["-temporal-aq", "1"]); }
                 if bframes == 0 { push(&["-bf", "0"]); }
+            }
+            Codec::VideoToolbox | Codec::VideoToolboxHevc => {
+                let hevc = opts.codec == Codec::VideoToolboxHevc;
+                push(&["-c:v", if hevc { "hevc_videotoolbox" } else { "h264_videotoolbox" }, "-allow_sw", "0", "-realtime", "0", "-q:v", &opts.hw.qp.to_string(), "-bf", "0"]);
+                if hevc { push(&["-tag:v", "hvc1"]); }
             }
         }
         if opts.mode == Mode::Vfr { push(&["-fps_mode", "passthrough"]); } else { push(&["-fps_mode", "cfr", "-r", &opts.fps.to_string()]); }
@@ -909,7 +923,7 @@ fn header(opts: &EncoderOpts) -> Vec<u8> {
     bitmap.extend(opts.width.to_le_bytes());
     bitmap.extend(opts.height.to_le_bytes());
     bitmap.extend(1u16.to_le_bytes());
-    let p10 = opts.yuv && opts.hw.ten_bit && opts.codec == Codec::NvencHevc && ten_bit_native();
+    let p10 = opts.yuv && opts.hw.ten_bit && matches!(opts.codec, Codec::NvencHevc | Codec::VideoToolboxHevc) && ten_bit_native();
     if opts.yuv {
         bitmap.extend(12u16.to_le_bytes());
         bitmap.extend(if opts.codec == Codec::X264 { b"I420" } else { b"NV12" });

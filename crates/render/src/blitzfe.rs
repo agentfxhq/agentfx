@@ -57,10 +57,15 @@ pub(crate) fn font_ctx(scene_dir: &Path) -> parley::FontContext {
     let mut collection = Collection::new(CollectionOptions { shared: false, system_fonts: false });
     let mut dirs = vec![scene_dir.join("fonts"), scene_dir.join("../_shared")];
     if let Some(h) = std::env::var_os("HOME") {
+        #[cfg(target_os = "macos")]
+        dirs.push(PathBuf::from(h).join("Library/Fonts"));
+        #[cfg(not(target_os = "macos"))]
         dirs.push(PathBuf::from(h).join(".local/share/fonts"));
     }
-    dirs.push(PathBuf::from("/usr/share/fonts/truetype/liberation"));
-    dirs.push(PathBuf::from("/usr/share/fonts/truetype/noto"));
+    #[cfg(target_os = "macos")]
+    dirs.extend([PathBuf::from("/Library/Fonts"), PathBuf::from("/System/Library/Fonts")]);
+    #[cfg(not(target_os = "macos"))]
+    dirs.extend([PathBuf::from("/usr/share/fonts/truetype/liberation"), PathBuf::from("/usr/share/fonts/truetype/noto")]);
     for d in dirs {
         let Ok(rd) = std::fs::read_dir(&d) else { continue };
         let mut files: Vec<PathBuf> = rd.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|e| e == "ttf" || e == "otf")).collect();
@@ -71,17 +76,20 @@ pub(crate) fn font_ctx(scene_dir: &Path) -> parley::FontContext {
             }
         }
     }
-    let nimbus = PathBuf::from("/usr/share/fonts/opentype/urw-base35/NimbusSans-Regular.otf");
-    for f in ["NimbusSans-Regular.otf", "NimbusSans-Bold.otf"] {
-        if let Ok(data) = std::fs::read(nimbus.with_file_name(f)) {
-            collection.register_fonts(Blob::new(Arc::new(data)), None);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let nimbus = PathBuf::from("/usr/share/fonts/opentype/urw-base35/NimbusSans-Regular.otf");
+        for f in ["NimbusSans-Regular.otf", "NimbusSans-Bold.otf"] {
+            if let Ok(data) = std::fs::read(nimbus.with_file_name(f)) {
+                collection.register_fonts(Blob::new(Arc::new(data)), None);
+            }
         }
     }
     let pick = |c: &mut Collection, names: &[&str]| names.iter().find_map(|n| c.family_id(n));
-    let sans = pick(&mut collection, &["Liberation Sans", "Inter"]);
-    let serif = pick(&mut collection, &["Liberation Serif"]);
-    let mono = pick(&mut collection, &["Liberation Mono"]);
-    let sys = pick(&mut collection, &["Nimbus Sans", "Liberation Sans"]);
+    let sans = pick(&mut collection, &["Helvetica", "Arial", "Liberation Sans", "Inter"]);
+    let serif = pick(&mut collection, &["Times", "Times New Roman", "Liberation Serif"]);
+    let mono = pick(&mut collection, &["Menlo", "SF Mono", "Liberation Mono"]);
+    let sys = pick(&mut collection, &[".AppleSystemUIFont", "Helvetica", "Nimbus Sans", "Liberation Sans"]);
     for (g, id) in [(GenericFamily::SansSerif, sans), (GenericFamily::SystemUi, sys), (GenericFamily::Serif, serif), (GenericFamily::Monospace, mono)] {
         if let Some(id) = id {
             collection.set_generic_families(g, std::iter::once(id));

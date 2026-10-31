@@ -5,7 +5,7 @@
 //!   reel stats  <scene.ir.json> [--out stats.json]       schedule/damage stats
 //!   agentfx render <scene.ir.json> --out x.mp4 [--mode cfr|vfr] [--lossless x.mkv]
 //!               [--filter bilinear|bicubic] [--no-mips] [--stats render.json]
-//!               [--encoder auto|x264|nvenc|nvenc-hevc|vaapi|qsv] [--qp N] [--rc cqp|icq|qvbr]
+//!               [--encoder auto|x264|nvenc|nvenc-hevc|vaapi|qsv|videotoolbox|videotoolbox-hevc] [--qp N] [--rc cqp|icq|qvbr]
 //!               [--low-power 0|1] [--compression-level N] [--segments N]
 //!               [--nv-preset 1..7] [--aq none|spatial|temporal|both] [--10bit]
 //!               [--gpu[=on|off|auto]]  GPU compute for heavy effects (AGENTFX_GPU, default off)
@@ -81,8 +81,9 @@ fn html_frontend(scene_dir: &Path, out_dir: &Path) -> Result<(html::HtmlOut, ser
     Ok((o, s))
 }
 
-/// `--encoder auto|x264|nvenc|nvenc-hevc|vaapi|qsv` (default auto: NVENC H.264 when its
-/// probe encode succeeds, else VAAPI, else x264, each step with a one-line reason),
+/// `--encoder auto|x264|nvenc|nvenc-hevc|vaapi|qsv|videotoolbox|videotoolbox-hevc`
+/// (default auto: VideoToolbox H.264 on macOS, otherwise NVENC H.264, then VAAPI, then
+/// x264, each step with a one-line reason),
 /// `--qp N` (VAAPI qp/ICQ/QVBR, QSV global_quality, NVENC -cq; default per codec),
 /// `--rc cqp|icq|qvbr`, `--low-power 0|1`, `--compression-level N`; NVENC:
 /// `--nv-preset 1..7`, `--aq none|spatial|temporal|both`, `--10bit` (nvenc-hevc main10).
@@ -114,10 +115,14 @@ fn encoder_opts(args: &[String]) -> Result<(encode::Codec, encode::HwOpts)> {
         "qsv" => Codec::Qsv,
         "nvenc" => Codec::Nvenc,
         "nvenc-hevc" => Codec::NvencHevc,
+        "videotoolbox" => Codec::VideoToolbox,
+        "videotoolbox-hevc" => Codec::VideoToolboxHevc,
         "auto" => {
             if rgba || no_encode { return Ok((Codec::X264, hw)); }
             // --10bit asks for HEVC main10; otherwise auto stays H.264
-            let order: &[Codec] = if hw.ten_bit { &[Codec::NvencHevc] } else { &[Codec::Nvenc, Codec::Vaapi] };
+            let order: &[Codec] = if cfg!(target_os = "macos") {
+                if hw.ten_bit { &[Codec::VideoToolboxHevc] } else { &[Codec::VideoToolbox, Codec::Nvenc, Codec::Vaapi] }
+            } else if hw.ten_bit { &[Codec::NvencHevc] } else { &[Codec::Nvenc, Codec::Vaapi] };
             for &c in order {
                 match encode::detect(c) {
                     Ok(a) => { hw.access = a; return Ok(with_quality(c, hw)); }
@@ -128,10 +133,10 @@ fn encoder_opts(args: &[String]) -> Result<(encode::Codec, encode::HwOpts)> {
             hw.ten_bit = false;
             return Ok((Codec::X264, hw));
         }
-        e => bail!("unknown --encoder {e} (auto|x264|nvenc|nvenc-hevc|vaapi|qsv)"),
+        e => bail!("unknown --encoder {e} (auto|x264|nvenc|nvenc-hevc|vaapi|qsv|videotoolbox|videotoolbox-hevc)"),
     };
     if rgba { bail!("--rgba-pipe works only with --encoder x264 (hardware encoders get YUV from reel)"); }
-    if hw.ten_bit && codec != Codec::NvencHevc { bail!("--10bit needs --encoder nvenc-hevc"); }
+    if hw.ten_bit && !matches!(codec, Codec::NvencHevc | Codec::VideoToolboxHevc) { bail!("--10bit needs --encoder nvenc-hevc or videotoolbox-hevc"); }
     hw.access = encode::detect(codec).map_err(|e| anyhow::anyhow!("--encoder {want}: {e}"))?;
     Ok(with_quality(codec, hw))
 }
@@ -300,10 +305,15 @@ fn html_frontend_res(scene_dir: &Path, out_dir: &Path) -> Result<(html::HtmlOut,
 
 /// CPU time (user + sys) of this process, all threads (children excluded).
 fn self_cpu_s() -> f64 {
+    #[cfg(target_os = "linux")]
+    {
     let s = std::fs::read_to_string("/proc/self/stat").unwrap_or_default();
     let f: Vec<&str> = s.rsplit(')').next().unwrap_or("").split_whitespace().collect();
     let tick = |i: usize| f.get(i).and_then(|v| v.parse::<f64>().ok()).unwrap_or(0.0);
     (tick(11) + tick(12)) / 100.0
+    }
+    #[cfg(not(target_os = "linux"))]
+    { 0.0 }
 }
 
 const USAGE: &str = "agentfx-render: AgentFX IR / HTML scene -> video (the AgentFX renderer)
@@ -313,7 +323,7 @@ USAGE:
   agentfx-render html   <html_scene_dir> --out-dir out/x      HTML frontend only: writes scene.ir.json
   agentfx-render render <scene.ir.json> --out x.mp4 [--mode cfr|vfr] [--lossless x.mkv]
                      [--filter bilinear|bicubic] [--no-mips] [--stats render.json]
-                     [--encoder auto|x264|nvenc|nvenc-hevc|vaapi|qsv] [--qp N] [--rc cqp|icq|qvbr]
+                     [--encoder auto|x264|nvenc|nvenc-hevc|vaapi|qsv|videotoolbox|videotoolbox-hevc] [--qp N] [--rc cqp|icq|qvbr]
                      [--low-power 0|1] [--compression-level N] [--segments N]
                      [--nv-preset 1..7] [--aq none|spatial|temporal|both] [--10bit]
                      [--gpu[=on|off|auto]]  GPU compute for heavy effects (AGENTFX_GPU, default off)

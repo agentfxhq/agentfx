@@ -114,7 +114,7 @@ impl Gpu {
     fn new() -> anyhow::Result<Gpu> {
         let mut desc = wgpu::InstanceDescriptor::new_without_display_handle_from_env();
         if std::env::var("WGPU_BACKEND").is_err() {
-            desc.backends = wgpu::Backends::VULKAN;
+            desc.backends = platform_backends();
         }
         let instance = wgpu::Instance::new(desc);
         let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
@@ -193,6 +193,15 @@ impl Gpu {
     pub fn fits(&self, size: u64) -> bool {
         size <= self.limits.max_storage_buffer_binding_size as u64 && size <= self.limits.max_buffer_size
     }
+}
+
+fn platform_backends() -> wgpu::Backends {
+    #[cfg(target_os = "macos")]
+    { wgpu::Backends::METAL }
+    #[cfg(target_os = "windows")]
+    { wgpu::Backends::DX12 | wgpu::Backends::VULKAN }
+    #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
+    { wgpu::Backends::VULKAN }
 }
 
 fn take(pool: &Mutex<Vec<wgpu::Buffer>>, size: u64) -> Option<wgpu::Buffer> {
@@ -419,4 +428,33 @@ pub fn stats_json() -> serde_json::Value {
         "failed_fell_back": FAILED.load(Ordering::Relaxed),
         "min_px": min_px(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn shaders_lower_to_msl() {
+        use naga::back::msl;
+        use naga::valid::{ValidationFlags, Validator};
+        let common = include_str!("common.wgsl");
+        for (name, source) in [("blur", include_str!("blur.wgsl")), ("comp", include_str!("comp.wgsl")), ("halftone", include_str!("halftone.wgsl")), ("light", include_str!("light.wgsl")), ("riso", include_str!("riso.wgsl")), ("shadow", include_str!("shadow.wgsl")), ("time", include_str!("time.wgsl"))] {
+            let module = naga::front::wgsl::parse_str(&format!("{common}\n{source}")).unwrap_or_else(|e| panic!("{name} WGSL: {e}"));
+            let info = Validator::new(ValidationFlags::all(), msl::supported_capabilities()).validate(&module).unwrap_or_else(|e| panic!("{name} validation: {e}"));
+            let mut resources = msl::BindingMap::default();
+            for binding in 0..8 {
+                resources.insert(naga::ResourceBinding { group: 0, binding }, msl::BindTarget {
+                    buffer: Some(binding as u8), mutable: true, ..Default::default()
+                });
+            }
+            let mut entry_points = msl::EntryPointResourceMap::default();
+            for ep in &module.entry_points {
+                entry_points.insert(ep.name.clone(), msl::EntryPointResources {
+                    resources: resources.clone(), immediates_buffer: None, sizes_buffer: None,
+                });
+            }
+            let options = msl::Options { lang_version: (2, 0), per_entry_point_map: entry_points, ..Default::default() };
+            let (out, _) = msl::write_string(&module, &info, &options, &msl::PipelineOptions::default()).unwrap_or_else(|e| panic!("{name} MSL: {e:?}"));
+            assert!(out.contains("kernel"), "{name} did not emit a compute kernel");
+        }
+    }
 }

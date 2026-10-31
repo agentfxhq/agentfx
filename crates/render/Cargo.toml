@@ -37,9 +37,10 @@ bytemuck = "1"
 # planner v2: spatial index for the damage merge
 rstar = "0.12"
 # fallback compositor (M0)
-# E4 GPU effects (compute shaders; Vulkan only, headless)
-wgpu = { version = "30.0.1", default-features = false, features = ["vulkan", "wgsl", "std"] }
+# E4 GPU effects: Vulkan on Linux, Metal on macOS, DX12/Vulkan on Windows.
+wgpu = { version = "30.0.1", default-features = false, features = ["vulkan", "metal", "dx12", "wgsl", "std"] }
 pollster = "1"
 tiny-skia = { version = "0.11", default-features = false, features = ["std", "simd", "png-format"] }
 
 [dev-dependencies]
+naga = { version = "30.0.1", features = ["wgsl-in", "msl-out"] }

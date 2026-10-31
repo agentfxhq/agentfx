@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 pub mod cube;
 pub mod env;
 pub mod eval;
+pub mod generator;
 pub mod s3d;
 pub mod timing;
 pub mod validate;
@@ -291,6 +292,9 @@ pub enum Content {
     /// outlines, screens showing other nodes): rasterised by the renderer into one layer. See
     /// IR.md "Scene 3D" and `s3d.rs`.
     Scene3d(Box<s3d::Scene3d>),
+    /// Procedural generator (fractals, noise, tilings): `kind` names a registered generator
+    /// (`generator::KINDS`), evaluated per pixel over `rect`. See IR.md "Generator".
+    Gen(GenContent),
 }
 
 /// 2D affine as `[a, b, c, d, e, f]` (CSS matrix order), used in display lists.
@@ -684,6 +688,24 @@ fn is_zero(v: &f64) -> bool {
 }
 fn cloud_r() -> f64 {
     2.0
+}
+
+/// Generator content (`Content::Gen`). `params` override the kind's defaults; each one is
+/// animatable with a `gen.<name>` number track. Deterministic: a pure function of the
+/// parameters at t, `seed` and (for kinds with `time`) t + `time_offset`.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct GenContent {
+    pub kind: String,
+    pub rect: [f64; 4],
+    #[serde(default)]
+    pub params: std::collections::BTreeMap<String, f64>,
+    /// Colour stops (straight sRGB RGBA 0..1), cyclic, at most `generator::PALETTE_MAX`. Empty = neon.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub palette: Vec<[f64; 4]>,
+    #[serde(default)]
+    pub seed: u64,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub time_offset: f64,
 }
 
 /// Fluid content (`Content::Fluid`): a dye density field simulated with stable fluids

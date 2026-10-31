@@ -66,6 +66,7 @@ pub fn validate(scene: &Scene, base_dir: &Path) -> Result<Vec<String>, Vec<Strin
                     p if p.starts_with("effects.") => effect_field_ok(node, p),
                     "time.span" => node.time.is_some(),
                     "fluid.time" => matches!(node.content, Some(Content::Fluid(_))),
+                    p if p.starts_with("gen.") => matches!(&node.content, Some(Content::Gen(g)) if crate::generator::kind(&g.kind).is_some_and(|k| k.param(&p[4..]).is_some())),
                     p if p.starts_with("s3d.") => matches!(&node.content, Some(Content::Scene3d(s)) if s3d::property(s, p).is_some()),
                     _ => true,
                 };
@@ -373,6 +374,7 @@ pub fn property_kind(p: &str) -> Option<bool> {
         "text.fill" | "text.stroke" | "text.stroke-width" | "text.path-offset" => Some(false),
         p if p.starts_with("animators.") => Some(false),
         p if p.starts_with("s3d.") => Some(false),
+        p if p.starts_with("gen.") => Some(false),
         _ => None,
     }
 }
@@ -498,6 +500,7 @@ fn check_content(scene: &Scene, c: &Content, ctx: &str, sizes: &[Option<(u32, u3
         Content::Cloud(c) => check_cloud(scene, c, ctx, errors),
         Content::Fluid(_) => {} // checked per node (needs the node index and warnings)
         Content::Scene3d(s) => check_scene3d(scene, s, ctx, used, errors),
+        Content::Gen(g) => check_gen(g, ctx, errors),
     }
     for (id, rect) in uses {
         if id >= scene.assets.len() { errors.push(format!("{ctx}: asset {id} out of range")); continue; }
@@ -560,6 +563,24 @@ fn check_easing(e: &Easing, ctx: &str, errors: &mut Vec<String>) {
         _ => None,
     };
     if let Some(problem) = problem { errors.push(format!("{ctx}: {problem}")); }
+}
+fn check_gen(g: &crate::GenContent, ctx: &str, errors: &mut Vec<String>) {
+    check_rect(&g.rect, ctx, errors);
+    let Some(k) = crate::generator::kind(&g.kind) else {
+        let names: Vec<_> = crate::generator::KINDS.iter().map(|k| k.name).collect();
+        errors.push(format!("{ctx}: unknown generator kind {:?} (kinds: {})", g.kind, names.join(" ")));
+        return;
+    };
+    for (name, v) in &g.params {
+        match k.param(name) {
+            None => errors.push(format!("{ctx}: generator {} has no parameter {name:?}", k.name)),
+            Some(p) if !v.is_finite() || *v < p.min || *v > p.max => errors.push(format!("{ctx}: {}.{name} = {v} outside {}..{}", k.name, p.min, p.max)),
+            _ => {}
+        }
+    }
+    if g.palette.len() > crate::generator::PALETTE_MAX { errors.push(format!("{ctx}: palette has more than {} stops", crate::generator::PALETTE_MAX)); }
+    if g.palette.iter().flatten().any(|v| !v.is_finite() || !(0.0..=1.0).contains(v)) { errors.push(format!("{ctx}: palette components must be in [0,1]")); }
+    if !g.time_offset.is_finite() { errors.push(format!("{ctx}: time_offset must be finite")); }
 }
 fn check_rect(r: &[f64;4], ctx: &str, errors: &mut Vec<String>) {
     if r.iter().any(|v| !v.is_finite()) || r[2] <= 0.0 || r[3] <= 0.0 { errors.push(format!("{ctx}: rect must be finite with positive size")); }

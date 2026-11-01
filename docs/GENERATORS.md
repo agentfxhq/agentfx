@@ -28,7 +28,7 @@ Every generator has:
 | Truchet, Voronoi | tiled arcs, cells | done (`kind=truchet`, `kind=voronoi`) |
 | L-systems | growing plants and curves as drawable paths | done (`kind=lsystem`, CPU) |
 | Cellular automata | Life, elementary rules, Lenia-like | planned |
-| Penrose tilings | P2/P3 by deflation, as paths | planned |
+| Penrose tilings | P2/P3 by deflation, as paths | done: P3 (`kind=penrose`, CPU); P2 planned |
 
 ## How to add a generator
 

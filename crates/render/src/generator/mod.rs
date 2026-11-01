@@ -21,6 +21,7 @@ pub mod julia;
 pub mod lsystem;
 pub mod mandelbrot;
 pub mod noise;
+pub mod penrose;
 pub mod raster;
 pub mod truchet;
 pub mod voronoi;
@@ -61,6 +62,7 @@ pub fn lookup(kind: &str) -> Option<&'static dyn Generator> {
         "truchet" => &truchet::Truchet,
         "voronoi" => &voronoi::Voronoi,
         "lsystem" => &lsystem::LSystem,
+        "penrose" => &penrose::Penrose,
         _ => return None,
     })
 }

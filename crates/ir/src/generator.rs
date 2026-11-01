@@ -163,6 +163,24 @@ pub const KINDS: &[Kind] = &[
         gpu_zoom_max: None,
         time: false,
     },
+    Kind {
+        name: "penrose",
+        doc: "Penrose P3 rhombus tiling by deflation (Robinson triangles): palette-filled thick/thin rhombi with glowing edges; animate grow to spread it from the centre; CPU",
+        params: &[
+            p("depth", 6.0, 0.0, 10.0, "deflation steps (more = smaller tiles; 10 is about 100k triangles)"),
+            GROW,
+            p("thickness", 0.004, 0.0, 0.2, "edge width (unit space; 0 = no edges)"),
+            p("re", 0.0, -100.0, 100.0, "offset, horizontal (unit space)"),
+            p("im", 0.0, -100.0, 100.0, "offset, vertical (unit space)"),
+            p("zoom", 1.0, 1e-3, 1e3, "magnification about the centre of the sun (1 = the tiling covers the rect)"),
+            TURN,
+            p("color-speed", 1.0, -100.0, 100.0, "palette cycles from the centre to the rim (rings of colour)"),
+            OFFSET,
+        ],
+        gpu: false,
+        gpu_zoom_max: None,
+        time: false,
+    },
 ];
 
 /// `lsystem` presets in `preset=` order (Reel Script also takes the names: `preset=dragon`).

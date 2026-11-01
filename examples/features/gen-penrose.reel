@@ -1,0 +1,10 @@
+// Generators: a Penrose P3 tiling spreading out from its centre, slowly turning, colour rings cycling.
+video "Penrose" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #000000
+
+scene sun dur=6s
+  gen #p kind=penrose depth=6 grow=0 palette=vapor
+  anim #p grow 0s:0 3s:1 ease=out-cubic
+  anim #p turn 0s:0 6s:18 ease=inout-sine
+  anim #p color-offset 0s:0 6s:-1 ease=linear

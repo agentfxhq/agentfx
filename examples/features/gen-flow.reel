@@ -1,0 +1,9 @@
+// Generators: glowing particle streaks riding a curl-noise field, over a dim warped-noise ground.
+video "Flow field" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #000000
+
+scene streaks dur=6s
+  gen #bg kind=noise warp=3 zoom=0.7 flow=0.1 color-speed=0.6 palette=neon opacity=0.25
+  gen #f kind=flow particles=1800 trail=0.7 speed=0.45 flow=0.08 palette=neon
+  anim #f color-offset 0s:0 6s:0.35 ease=linear

@@ -59,6 +59,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Breathing fractal | `gen #j kind=julia palette=vapor` + `anim #j cx 0s:-0.8 6s:-0.745` + `anim #j color-offset 0s:0 6s:1` | implemented | hypnotic backgrounds, intros, music loops |
 | Infinite zoom | `gen #m kind=mandelbrot re= im=` + `anim #m depth 0s:0 8s:13 ease=linear` | implemented (GPU f32 to about 2e4x, CPU f64 deeper) | dives, "going deeper" beats |
 | Liquid neon, marble, oil | `gen #n kind=noise palette=neon` + `anim #n warp 0s:2 6s:3.5` | implemented | music-video backgrounds, transitions |
+| Flow-field streaks | `gen #f kind=flow particles=1500 trail=0.6` (over `bg` or a dim noise) | implemented (CPU) | energy, wind, data streams |
 
 ## Time
 

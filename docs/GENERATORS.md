@@ -24,7 +24,7 @@ Every generator has:
 | Strange attractors | Lorenz, Clifford, de Jong; 2D density and 3D point clouds | planned |
 | Reaction-diffusion | Gray-Scott coral, zebra, spots | planned |
 | Domain-warped noise | marble, oil, liquid neon | done (`kind=noise`) |
-| Flow fields | particles streaking through a curl-noise field | planned |
+| Flow fields | particles streaking through a curl-noise field | done (`kind=flow`, CPU) |
 | Truchet, Voronoi | tiled arcs, cells | planned |
 | L-systems | growing plants and curves as drawable paths | planned |
 | Cellular automata | Life, elementary rules, Lenia-like | planned |

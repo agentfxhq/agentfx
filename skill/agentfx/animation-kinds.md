@@ -61,6 +61,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Liquid neon, marble, oil | `gen #n kind=noise palette=neon` + `anim #n warp 0s:2 6s:3.5` | implemented | music-video backgrounds, transitions |
 | Flow-field streaks | `gen #f kind=flow particles=1500 trail=0.6` (over `bg` or a dim noise) | implemented (CPU) | energy, wind, data streams |
 | Truchet weave | `gen #t kind=truchet mode=1` + `anim #t phase 0s:0 4s:4 ease=linear` | implemented | beat-synced twists, retro grids |
+| Voronoi cells | `gen #v kind=voronoi mode=0\|1\|2` | implemented | organic tech, crystals, cell biology |
 
 ## Time
 

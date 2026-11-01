@@ -125,6 +125,24 @@ pub const KINDS: &[Kind] = &[
         gpu_zoom_max: None,
         time: false,
     },
+    Kind {
+        name: "voronoi",
+        doc: "Voronoi cells with drifting seeds: shaded cells, glowing edges or faceted crystal; palette by cell",
+        params: &[
+            RE0, IM0,
+            p("zoom", 1.0, 1e-3, 1e3, "magnification (1 = about 8 cells over the rect height)"),
+            TURN,
+            p("jitter", 1.0, 0.0, 1.0, "how far the seeds wander inside their cells (0 = square grid)"),
+            p("flow", 0.15, -100.0, 100.0, "seed drift speed (cycles per second)"),
+            p("mode", 0.0, 0.0, 2.0, "0 = shaded cells, 1 = glowing edges on black, 2 = crystal facets (F2 - F1)"),
+            p("thickness", 0.04, 0.002, 0.5, "edge width (cell units)"),
+            p("color-speed", 1.0, -100.0, 100.0, "palette spread over the cells"),
+            OFFSET, AA,
+        ],
+        gpu: true,
+        gpu_zoom_max: None,
+        time: true,
+    },
 ];
 
 pub fn kind(name: &str) -> Option<&'static Kind> {

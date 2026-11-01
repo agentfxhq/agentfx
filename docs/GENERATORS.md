@@ -25,7 +25,7 @@ Every generator has:
 | Reaction-diffusion | Gray-Scott coral, zebra, spots | planned |
 | Domain-warped noise | marble, oil, liquid neon | done (`kind=noise`) |
 | Flow fields | particles streaking through a curl-noise field | done (`kind=flow`, CPU) |
-| Truchet, Voronoi | tiled arcs, cells | Truchet done (`kind=truchet`); Voronoi planned |
+| Truchet, Voronoi | tiled arcs, cells | done (`kind=truchet`, `kind=voronoi`) |
 | L-systems | growing plants and curves as drawable paths | planned |
 | Cellular automata | Life, elementary rules, Lenia-like | planned |
 | Penrose tilings | P2/P3 by deflation, as paths | planned |

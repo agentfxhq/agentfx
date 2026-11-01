@@ -22,6 +22,7 @@ pub mod mandelbrot;
 pub mod noise;
 pub mod raster;
 pub mod truchet;
+pub mod voronoi;
 
 use agentfx_ir::generator::Kind;
 use agentfx_ir::{GenContent, Scene};
@@ -57,6 +58,7 @@ pub fn lookup(kind: &str) -> Option<&'static dyn Generator> {
         "noise" => &noise::Noise,
         "flow" => &flow::Flow,
         "truchet" => &truchet::Truchet,
+        "voronoi" => &voronoi::Voronoi,
         _ => return None,
     })
 }
@@ -460,6 +462,9 @@ pub(crate) mod tests {
             ("truchet", &[]),
             ("truchet", &[("phase", 0.45), ("mode", 1.0), ("zoom", 0.6), ("turn", 15.0), ("thickness", 0.03), ("aa", 1.0)]),
             ("truchet", &[("phase", -2.7), ("re", 3.3), ("im", -7.1), ("color-speed", 4.0), ("color-offset", 0.2)]),
+            ("voronoi", &[]),
+            ("voronoi", &[("mode", 1.0), ("zoom", 0.5), ("turn", -25.0), ("flow", 0.7), ("aa", 1.0)]),
+            ("voronoi", &[("mode", 2.0), ("jitter", 0.6), ("re", -4.5), ("im", 2.2), ("color-speed", 2.0), ("thickness", 0.1)]),
         ];
         let (w, h) = (160, 90);
         for (name, over) in cases {

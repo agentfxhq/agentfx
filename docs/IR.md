@@ -388,6 +388,7 @@ validation errors). The kinds, their parameters, defaults and ranges are declare
 | `noise` | `re`, `im` (0, 0): view centre; `zoom` (1), `turn` (0 deg), `warp` (2.5), `octaves` (4), `flow` (0.25 /s), `color-speed` (1), `color-offset` (0), `aa` (2); time-dependent |
 | `flow` | `re`, `im`, `zoom` (1), `turn`: the field view; `particles` (1500), `trail` (0.6), `flow` (0.08 /s, field evolution), `speed` (0.5 unit/s), `thickness` (0.006), `color-speed` (1), `color-offset` (0); time-dependent, CPU, transparent ground |
 | `truchet` | `re`, `im`, `zoom` (1 = 8 tiles per rect height), `turn`, `thickness` (0.06 tile), `phase` (0), `mode` (0 arcs, 1 double arcs), `color-speed` (1), `color-offset` (0), `aa` (2) |
+| `voronoi` | `re`, `im`, `zoom` (1), `turn`, `jitter` (1), `flow` (0.15 /s), `mode` (0 cells, 1 edges, 2 crystal), `thickness` (0.04 cell), `color-speed` (1), `color-offset` (0), `aa` (2); time-dependent |
 
 
 Unit space: origin at the rect centre, v from -1 (top) to 1 (bottom), u scaled like v. Fractals map
@@ -404,7 +405,7 @@ ice mono`) into stops.
 
 Tracks `gen.<param>` (number) animate any parameter (`gen.zoom`, `gen.cx`, ...); values are clamped
 to the declared range. `time_offset` (s) is added to t for kinds that change with time itself
-(`noise`, `flow` do; the compiler sets it to minus the start of the layer's scene, so they
+(`noise`, `flow`, `voronoi` do; the compiler sets it to minus the start of the layer's scene, so they
 run on scene time). **Planner.** Bounds = `rect`; signature = the parameter values at t
 (plus t for time-dependent kinds); a generator without `gen.*` tracks is static and cached at rest.
 

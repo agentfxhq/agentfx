@@ -1,0 +1,14 @@
+// Generators: Voronoi in three moods (shaded cells, glowing edges, crystal facets), seeds drifting.
+video "Voronoi" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #000000
+
+scene cells dur=2s
+  gen #a kind=voronoi mode=0 palette=vapor
+  anim #a color-offset 0s:0 2s:0.2 ease=linear
+scene edges dur=2s
+  gen #b kind=voronoi mode=1 zoom=0.8 thickness=0.03 palette=neon
+  anim #b color-offset 0s:0 2s:0.3 ease=linear
+scene crystal dur=2s
+  gen #c kind=voronoi mode=2 zoom=1.4 jitter=0.9 palette=vapor
+  anim #c color-offset 0s:0 2s:0.2 ease=linear

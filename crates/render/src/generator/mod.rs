@@ -21,9 +21,11 @@ pub mod julia;
 pub mod life;
 pub mod lsystem;
 pub mod mandelbrot;
+pub mod mandelbulb;
 pub mod noise;
 pub mod penrose;
 pub mod raster;
+pub mod ray;
 pub mod truchet;
 pub mod voronoi;
 
@@ -47,6 +49,12 @@ pub trait Generator: Sync {
     fn wgsl(&self) -> Option<&'static str> {
         None
     }
+    /// Values derived from the parameters on the host in f64 (a camera basis, rotation
+    /// matrices: no trigonometry in the kernel), passed to the kernel after the parameters
+    /// (`gp(n + i)`, n = the number of parameters). Default: none.
+    fn uniforms(&self, _p: &[f64]) -> Vec<f64> {
+        Vec::new()
+    }
     /// The whole image: premultiplied RGBA8, `g.w x g.h`. Default: `sample` per pixel.
     fn cpu(&self, g: &Input, out: &mut [u8]) {
         shade(self, g, out)
@@ -65,6 +73,7 @@ pub fn lookup(kind: &str) -> Option<&'static dyn Generator> {
         "lsystem" => &lsystem::LSystem,
         "penrose" => &penrose::Penrose,
         "life" => &life::Life,
+        "mandelbulb" => &mandelbulb::Mandelbulb,
         _ => return None,
     })
 }
@@ -317,7 +326,7 @@ impl Prep {
         if let (Some(src), Some(gpu)) = (self.imp.wgsl().filter(|_| self.kind.gpu), crate::gpu::get()) {
             if w * h >= crate::gpu::min_px() {
                 let t0 = std::time::Instant::now();
-                match run_gpu(gpu, self.kind.name, src, &g, out) {
+                match run_gpu(gpu, self.kind.name, src, &g, &self.imp.uniforms(p), out) {
                     Ok(()) => {
                         crate::gpu::account(1, w * h, t0);
                         return;
@@ -337,8 +346,9 @@ impl Prep {
 }
 
 /// Run a kind's kernel: header words 0 w, 1 h, 2-3 org (i32), 4-9 m (f32), 10 aa, 11 palette
-/// stops, 12 seed, 13 t; parameters from word 16 (f32). Bindings: 1 palette (vec4 f32), 2 out.
-pub fn run_gpu(gpu: &'static crate::gpu::Gpu, name: &'static str, src: &'static str, g: &Input, out: &mut [u8]) -> anyhow::Result<()> {
+/// stops, 12 seed, 13 t; parameters from word 16 (f32), then the kind's `uniforms` (f32).
+/// Bindings: 1 palette (vec4 f32), 2 out.
+pub fn run_gpu(gpu: &'static crate::gpu::Gpu, name: &'static str, src: &'static str, g: &Input, uni: &[f64], out: &mut [u8]) -> anyhow::Result<()> {
     use crate::gpu::{Job, Params};
     let n = g.w * g.h * 4;
     anyhow::ensure!(gpu.fits(n as u64), "{}x{} does not fit the device", g.w, g.h);
@@ -348,7 +358,7 @@ pub fn run_gpu(gpu: &'static crate::gpu::Gpu, name: &'static str, src: &'static 
         p.f(4 + i, *v as f32);
     }
     p.u(10, g.aa).u(11, g.pal.len() as u32).u(12, g.seed as u32).f(13, g.t as f32);
-    for (i, v) in g.p.iter().enumerate() {
+    for (i, v) in g.p.iter().chain(uni).enumerate() {
         p.f(16 + i, *v as f32);
     }
     let pal: Vec<f32> = g.pal.iter().flatten().copied().collect();
@@ -471,6 +481,9 @@ pub(crate) mod tests {
             ("voronoi", &[]),
             ("voronoi", &[("mode", 1.0), ("zoom", 0.5), ("turn", -25.0), ("flow", 0.7), ("aa", 1.0)]),
             ("voronoi", &[("mode", 2.0), ("jitter", 0.6), ("re", -4.5), ("im", 2.2), ("color-speed", 2.0), ("thickness", 0.1)]),
+            ("mandelbulb", &[]),
+            ("mandelbulb", &[("power", 5.5), ("yaw", 120.0), ("pitch", -35.0), ("distance", 2.2), ("halo", 2.0), ("rim", 2.0)]),
+            ("mandelbulb", &[("power", 3.0), ("zoom", 2.5), ("turn", 20.0), ("iter", 6.0), ("steps", 60.0), ("fog", 2.0), ("color-speed", 3.0), ("aa", 2.0)]),
         ];
         let (w, h) = (160, 90);
         for (name, over) in cases {
@@ -481,7 +494,7 @@ pub(crate) mod tests {
             g.f32 = true;
             g.t = 1.75; // time-dependent kinds move; the others ignore it
             let mut gp = vec![0u8; w * h * 4];
-            run_gpu(gpu, k.name, imp.wgsl().unwrap(), &g, &mut gp).unwrap();
+            run_gpu(gpu, k.name, imp.wgsl().unwrap(), &g, &imp.uniforms(g.p), &mut gp).unwrap();
             let mut cpu = vec![0u8; w * h * 4];
             imp.cpu(&g, &mut cpu);
             let (mx, off) = diff(&cpu, &gp);

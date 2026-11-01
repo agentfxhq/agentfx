@@ -46,6 +46,18 @@ const IM0: Param = p("im", 0.0, -1e6, 1e6, "view centre, vertical (pattern units
 const ZOOM1: Param = p("zoom", 1.0, 1e-3, 1e3, "magnification (larger = bigger features)");
 const GROW: Param = p("grow", 1.0, 0.0, 1.0, "draw-on progress 0..1 (animate 0 -> 1)");
 const FLOW: Param = p("flow", 0.25, -100.0, 100.0, "how fast the pattern evolves with time (per second)");
+/// The orbit camera and shading of the raymarched kinds (mandelbulb, kifs).
+const YAW: Param = p("yaw", 30.0, -1e6, 1e6, "camera orbit around the vertical axis, degrees (animate for a turntable)");
+const PITCH: Param = p("pitch", 20.0, -89.0, 89.0, "camera elevation above the equator, degrees");
+const ZOOM3: Param = p("zoom", 1.0, 0.05, 100.0, "lens magnification (1 = 53 degrees vertical field of view)");
+const TURN3: Param = p("turn", 0.0, -1e6, 1e6, "camera roll, degrees");
+const STEPS: Param = p("steps", 140.0, 8.0, 1000.0, "raymarch steps per ray (more = finer detail at grazing angles, slower)");
+const HALO: Param = p("halo", 0.7, 0.0, 10.0, "neon glow around the surface (from rays that pass close by)");
+const FOG: Param = p("fog", 0.4, 0.0, 20.0, "depth fog behind the front of the object (0 = none)");
+const OCCLUSION: Param = p("occlusion", 1.0, 0.0, 4.0, "ambient occlusion from the march step count (0 = flat)");
+const RIM: Param = p("rim", 0.9, 0.0, 8.0, "soft rim light along the silhouettes (complementary palette colour)");
+const SPEED3: Param = p("color-speed", 1.0, -100.0, 100.0, "palette cycles across the orbit trap (0 = one colour)");
+const AA1: Param = p("aa", 1.0, 1.0, 4.0, "supersampling: samples per pixel axis (1..4; raymarching is expensive)");
 
 /// Every kind the renderer implements.
 pub const KINDS: &[Kind] = &[
@@ -199,6 +211,21 @@ pub const KINDS: &[Kind] = &[
         gpu: false,
         gpu_zoom_max: None,
         time: true,
+    },
+    Kind {
+        name: "mandelbulb",
+        doc: "Power-n Mandelbulb, raymarched through its distance estimator: glowing neon structure on black, orbit camera, orbit-trap palette, AO, rim light, fog; animate power to morph, yaw to orbit",
+        params: &[
+            p("power", 8.0, 1.5, 16.0, "the bulb's power n (8 = the classic; animate to morph, 2-4 are blobby, 10+ spiky)"),
+            YAW, PITCH,
+            p("distance", 2.2, 0.2, 50.0, "camera distance from the centre (the bulb has radius about 1.2)"),
+            ZOOM3, TURN3,
+            p("iter", 10.0, 1.0, 40.0, "fractal iterations per distance estimate (detail)"),
+            STEPS, HALO, FOG, OCCLUSION, RIM, SPEED3, OFFSET, AA1,
+        ],
+        gpu: true,
+        gpu_zoom_max: None,
+        time: false,
     },
 ];
 

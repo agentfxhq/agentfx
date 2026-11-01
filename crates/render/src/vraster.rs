@@ -2032,7 +2032,9 @@ impl<'a> Painter<'a> {
         let Some(mut tb) = effects::TiledBlur::new(w, h, sigma) else { return Ok(None) };
         let sc = tb.scale() as i32;
         let out = self.vis.map_or(region, |v| intersect(v, region));
-        let need = intersect([o[0] as f64, o[1] as f64, w as f64, h as f64], schedule::inflate(out, 2.0 * sc as f64 + 2.0));
+        // (the reconstruction is per output pixel: 2 px around the visible area are enough;
+        // a margin of 2 reduction blocks made the crop of a sigma-3300 glow 6x the frame)
+        let need = intersect([o[0] as f64, o[1] as f64, w as f64, h as f64], schedule::inflate(out, 2.0));
         let Some(c) = irect(need) else { return Ok(None) };
         let (cx, cy) = ((c[0] - o[0]).div_euclid(sc) * sc, (c[1] - o[1]).div_euclid(sc) * sc);
         let (cw, ch) = ((c[0] + c[2] - o[0] - cx) as usize, (c[1] + c[3] - o[1] - cy) as usize);

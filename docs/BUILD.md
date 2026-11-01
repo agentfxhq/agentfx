@@ -128,8 +128,18 @@ workflow). Rendering on a real GPU box is not covered by CI yet.
   the golden-file tests expect.
 - **ffmpeg and ffprobe** on `PATH` (or `AGENTFX_FFMPEG` / `AGENTFX_FFPROBE` pointing at the
   `.exe`), a build with libx264, and NVENC for hardware encoding, for example the gyan.dev
-  "full" build or the BtbN GPL build: unpack it and add its `bin` folder to `PATH`, or
-  `winget install Gyan.FFmpeg`.
+  "full" build or the BtbN GPL build: `winget install Gyan.FFmpeg`, or unpack one and add
+  its `bin` folder to `PATH`. ffmpeg 5.1 or newer is required (`-fps_mode`). Other programs
+  put old ffmpeg builds on `PATH` (ImageMagick ships one); `where.exe ffmpeg` shows which one
+  wins, and the renderer stops with "needs ffmpeg 5.1 or newer" naming the path it found.
+  Pin the right one explicitly:
+
+  ```powershell
+  setx AGENTFX_FFMPEG  "C:\path\to\ffmpeg\bin\ffmpeg.exe"
+  setx AGENTFX_FFPROBE "C:\path\to\ffmpeg\bin\ffprobe.exe"
+  ```
+
+  (`setx` affects new shells; use `$env:AGENTFX_FFMPEG = "..."` for the current one.)
 - **GPU driver**: the current NVIDIA (or AMD/Intel) driver, which also installs the Vulkan
   runtime that `--gpu` uses. RTX 50-series (Blackwell) cards need driver 570 or newer and
   an ffmpeg built against NVENC SDK 12.2 or newer for `--encoder nvenc`.

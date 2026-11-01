@@ -15,6 +15,8 @@ USAGE:
   agentfx html   <file> [--format 9:16] [-o out.html] [--no-embed] [--tts piper|edge|none] [--no-tts]
   agentfx frame  <file> --at <anchor|scene:anchor|12.5s|12.5> [--format F] [-o frame.png]
   agentfx sheet  <file> [--n 12 | --every 2s | --at a,b,c | --events] [--cols 4] [--energy] [--ref ref.mp4] [--format F] [-o sheet.png]
+  agentfx storyboard <file> [--format F] [--cols 3] [--seed 1] [--max-shots 16] [--json] [-o storyboard.png]
+                 (hand-drawn sketch panel per shot, motion/camera arrows, notes; `note=` / `@t note \"...\"`)
   agentfx render <file> [--format F] [-o out.mp4] [--segments 1 | --cache] [--fps 30] [--mode cfr|vfr] [--alpha] [--keep-debug] [--backend reel|chrome]
   (frame/sheet/render use direct mode (native layout -> AgentFX IR -> agentfx-render) by default;
    --backend chrome renders the HTML backend in Chrome, the reference)
@@ -71,7 +73,7 @@ fn parse_args() -> Args {
     let mut it = std::env::args().skip(1);
     let cmd = it.next().unwrap_or_default();
     let mut a = Args { cmd, file: None, opts: vec![], flags: vec![] };
-    let valued = ["--tts", "--mode","--backend", "--segments", "--compat", "--target", "--to", "-o", "--format", "--at", "--n", "--every", "--cols", "--ref", "--jobs", "--fps", "--scale"];
+    let valued = ["--tts", "--mode","--backend", "--segments", "--compat", "--target", "--to", "-o", "--format", "--at", "--n", "--every", "--cols", "--ref", "--jobs", "--fps", "--scale", "--seed", "--max-shots"];
     let rest: Vec<String> = it.collect();
     let mut i = 0;
     while i < rest.len() {
@@ -591,6 +593,47 @@ fn main() {
                     eprintln!("{e}");
                     std::process::exit(1)
                 }
+            }
+        }
+        "storyboard" => {
+            let b = build(&a);
+            let c = lower::compile(&b.doc, &b.tl, a.get("--format").as_deref(), &b.base);
+            let mut diags = b.diags.clone();
+            diags.extend(c.diags);
+            if diags.iter().any(|d| d.severity == Severity::Error) {
+                eprintln!("{}", serde_json::to_string_pretty(&diags).unwrap());
+                eprintln!("compile errors: fix them first (`agentfx lint`)");
+                std::process::exit(1);
+            }
+            let ir = c.ir;
+            let t0 = Instant::now();
+            let tmp = run::tmp_dir();
+            let _ = std::fs::create_dir_all(&tmp);
+            let nat = agentfx_script::native::Native::load(&ir, agentfx_script::native::snap_at(&ir, 0.0), &run::home().join("assets/fonts"), &tmp, false).unwrap_or_else(|e| {
+                eprintln!("native layout failed: {e:#}");
+                std::process::exit(1)
+            });
+            let lay = agentfx_script::storyboard::Layout::from_native(&ir, &nat);
+            drop(nat);
+            let title = b.doc.nodes.iter().find(|n| n.kind == "video").and_then(|v| v.args.first()).map(|v| v.raw())
+                .unwrap_or_else(|| a.file.as_ref().and_then(|f| f.file_stem()).map(|s| s.to_string_lossy().to_string()).unwrap_or_default());
+            let opts = agentfx_script::storyboard::Opts {
+                cols: a.get("--cols").and_then(|c| c.parse().ok()),
+                seed: a.get("--seed").and_then(|c| c.parse().ok()).unwrap_or(1),
+                title,
+                max_shots: a.get("--max-shots").and_then(|c| c.parse().ok()).unwrap_or(16),
+            };
+            let sb = agentfx_script::storyboard::Storyboard::new(&ir, &lay, &agentfx_script::storyboard::scene_transitions(&b.doc), opts);
+            let o = out_path(&a, "out/storyboard.png");
+            if let Err(e) = sb.render_png(&o) {
+                eprintln!("{e:#}");
+                std::process::exit(1);
+            }
+            if a.has("--json") {
+                println!("{}", serde_json::to_string_pretty(&serde_json::json!({"file": o, "board": sb.board})).unwrap());
+            } else {
+                let shots: Vec<serde_json::Value> = sb.board.shots.iter().map(|s| serde_json::json!({"shot": s.n, "scene": s.scene, "start": s.start, "end": s.end, "in": s.trans, "note": s.note})).collect();
+                println!("{}", serde_json::to_string_pretty(&serde_json::json!({"file": o, "shots": shots, "s": t0.elapsed().as_secs_f64()})).unwrap());
             }
         }
         "catalog" => {

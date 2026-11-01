@@ -73,6 +73,7 @@ dependencies = [
  "skrifa",
  "stylo",
  "taffy",
+ "tiny-skia",
  "url",
  "wuff",
 ]

@@ -86,7 +86,11 @@ beat anchors, `audio()` drives, visualizers), and align the beat list to its bar
 
 **Stage 4, storyboard.** Per beat: one still (`agentfx frame <film>.reel --at <t>s`), one line of
 motion note, and a menu of 2 to 4 animation kinds from `animation-kinds.md` (verified against the
-catalog). Planned features may be listed only as `planned` and cannot be chosen.
+catalog). Planned features may be listed only as `planned` and cannot be chosen. Show the whole
+film as a director's storyboard too: `agentfx storyboard <film>.reel -o stills/board.png` draws a
+hand-sketched panel per shot with motion and camera arrows, time range, transition and a note.
+Write the beat notes into the source (`scene ... note="..."`, `@t note "..."`: metadata that also
+sets the shot breaks), so the board and the beat list say the same thing.
 
 **Stage 5, hero variants.** Three short clips (3 to 5 s) of the hero beat that differ on ONE named
 axis (motion treatment, pacing, composition, material...). Everything else stays identical,

@@ -39,4 +39,6 @@ url = "2.5"
 anyhow = "1"
 png = "0.18"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+# storyboard sketches (`agentfx storyboard`): the renderer's rasterizer, CPU only
+tiny-skia = { version = "0.11", default-features = false, features = ["std", "simd", "png-format"] }
 

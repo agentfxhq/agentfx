@@ -470,6 +470,8 @@ impl<'a> Storyboard<'a> {
                 }
                 Kind::Text { .. } | Kind::Counter { .. } => (Shape::Text, ra * 0.45),
                 Kind::Image { .. } => (Shape::Media { video: false }, ra),
+                // a procedural image (`gen`): drawn like a still image panel
+                Kind::Gen(_) => (Shape::Media { video: false }, ra),
                 Kind::Video { .. } => (Shape::Media { video: true }, ra),
                 Kind::Html { .. } | Kind::Svg { .. } => (Shape::Raw, ra * 0.5),
                 Kind::Cloud(_) => (Shape::Cloud, ra.min(self.fa) * 0.3),

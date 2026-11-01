@@ -47,6 +47,13 @@ fn texts_of(n: &Node) -> Vec<String> {
 fn walk<'a>(nodes: &'a [Node], out: &mut Vec<&'a Node>) {
     for n in nodes {
         out.push(n);
+        if n.kind == "at" {
+            // storyboard notes (`@t note "..."`) are metadata, not on-screen text
+            for c in n.children.iter().filter(|c| c.kind != "note") {
+                walk(std::slice::from_ref(c), out);
+            }
+            continue;
+        }
         // the objects of a 3D scene are not 2D roles (boxes, text) of the design rules
         if n.kind != "scene3d" {
             walk(&n.children, out);

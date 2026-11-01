@@ -31,9 +31,10 @@ pub const ITEMS: &[Item] = &[
     it("visualizer", "story", "audio", "composite", "impl", "visualizer #v type=bars|radial|circle|waveform count=32 w= h= gap= radius= thick= colors=[..] mirror gain= smooth=", "Music visualizer: a layer of rects with per-frame tracks."),
     it("chapterbar", "doc", "component", "composite", "impl", "chapterbar label=\"...\" scenes=[a, b, c]", "Progress bar for scenes with title=."),
     it("when", "doc", "format", "-", "impl", "when 9:16 | portrait | landscape | square\n  set #id k=v\n  <elements>", "Per-format overrides and format-only elements."),
-    it("scene", "doc", "timing", "-", "impl", "scene <id> title=\"...\" in=fade|push|slide|wipe|iris|zoom|magic|cut tdur=0.6s pre=0.5s post=0.5s dur=<override> min= bg=<paint>", "A shot. Length = narration unless dur= overrides."),
+    it("scene", "doc", "timing", "-", "impl", "scene <id> title=\"...\" in=fade|push|slide|wipe|iris|zoom|magic|cut tdur=0.6s pre=0.5s post=0.5s dur=<override> min= bg=<paint> note=\"...\"", "A shot. Length = narration unless dur= overrides. note= = storyboard note."),
     it("say", "story", "timing", "audio", "impl", "say \"Text with [[anchor]] and [[two words|name]].\" min=5s pre= post= spoken=\"...\"", "Voice-over beat; TTS word timings drive all anchors."),
     it("pause", "story", "timing", "-", "impl", "pause 0.8s", "Silent beat."),
+    it("storyboard note", "story", "timing", "-", "impl", "scene a note=\"title scales in\" ; @4.8s note \"grid draws on, sky opens\"", "Director's note for `agentfx storyboard` (metadata, never drawn): the scene note labels its first shot, a timed note also starts a new shot there. W_NOTE_LONG, I_NOTE_CALLOUT."),
     it("@anchor", "story", "timing", "-", "impl", "@Reiter verb #id ... ; verb ...\n@Reiter.end+0.2s  @2.5s  @start  @end-1s  @prev+0.3s", "Event time: word start/end, scene time, previous event; verbs follow."),
     // ---- story elements
     it("text", "story", "text", "layout", "impl", "text #id \"**bold** {accent} `code`\" style=display|h1|h2|h3|body|small|label size= color= weight= align= upper split=word|char", "Rich text. h1/h2/h3/body/small/label are shorthands."),
@@ -240,6 +241,7 @@ pub const VERB_DOCS: &[VerbDoc] = &[
     VerbDoc { name: "assemble / explode", syntax: "assemble #group dist=4 spin=160 stagger=70ms dur=0.9s seed=1 ; explode #group", doc: "Pieces (the group's children, or the object itself) fly in from seeded offsets and turns, or fly apart and fade." },
     VerbDoc { name: "stack", syntax: "@1s stack #ship axis=y gap=0.04 from=3 stagger=180ms dur=0.45s", doc: "Piles a group's objects along an axis from the group's origin, each falling in from `from` above (containers on a ship). Write it as an event (`@t`)." },
     VerbDoc { name: "3D presets", syntax: "box ... in=fade|pop|rise|drop|spin|flip|assemble out=fade|pop|sink|spin|explode", doc: "Entrances and exits of 3D objects." },
+    VerbDoc { name: "note", syntax: "@4.8s note \"grid draws on, sky opens\"", doc: "Storyboard note (metadata, no effect on the video): starts a new shot at the event in `agentfx storyboard`." },
     VerbDoc { name: "sfx", syntax: "sfx click|pop|whoosh|file.wav gain=0.6", doc: "Sound effect at the event." },
     VerbDoc { name: "focus / play", syntax: "focus #id ; play #video", doc: "Planned." },
 ];

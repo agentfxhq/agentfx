@@ -719,6 +719,21 @@ pub struct Ir {
     pub audio: Vec<AudioClip>,
     /// Determinism: quantization steps for "no visible change" (see SPEC §Determinism).
     pub quant: Quant,
+    /// Storyboard notes (`scene ... note="..."`, `@t note "..."`): metadata, never drawn.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub notes: Vec<ShotNote>,
+}
+
+/// A director's note for `agentfx storyboard`. `at` is video time (s); a timed note
+/// (`@t note "..."`) also starts a new shot there, a scene note (`note=`) labels the scene's
+/// first shot.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct ShotNote {
+    pub scene: usize,
+    pub at: f64,
+    pub text: String,
+    /// true for a timed `@t note` (a shot break), false for the scene's `note=`
+    pub timed: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -57,6 +57,7 @@ pub fn static_rules(doc: &Document, tl: &Timeline, ir: &Ir) -> Vec<Diag> {
         }
     }
     crate::textv2::lint_families(&all, &ir.fonts, &mut d);
+    note_rules(doc, &mut d);
     // events: outside their scene, cursor clicks too dense, zooms overlapping
     let scenes: Vec<&Node> = doc.nodes.iter().filter(|n| n.kind == "scene").collect();
     for (si, sn) in scenes.iter().enumerate() {
@@ -190,6 +191,44 @@ pub const GLOW_LAYERS_MAX: usize = 8;
 
 /// W_GLOW_COST: every glow/blur layer is its own blur pass whenever it changes (every frame under a
 /// moving camera). Nests multiply them: a glow on a nest child is one pass per level.
+/// Storyboard notes (`scene ... note="..."`, `@t note "..."`): short enough to letter under a
+/// panel; a bare `note "..."` directly under a scene is the callout component, not a note.
+pub fn note_rules(doc: &Document, d: &mut Vec<Diag>) {
+    const MAX: usize = 90;
+    let long = |t: &str, span: Span, d: &mut Vec<Diag>| {
+        if t.chars().count() > MAX {
+            d.push(Diag::warn("W_NOTE_LONG", format!("storyboard note has {} characters (about {MAX} fit under a panel)", t.chars().count()), "keep it to what happens: \"title scales in, grid scrolls\"", span));
+        }
+    };
+    fn ats<'n>(nodes: &'n [Node], out: &mut Vec<&'n Node>) {
+        for n in nodes {
+            if n.kind == "at" {
+                out.push(n);
+            }
+            ats(&n.children, out);
+        }
+    }
+    for sn in doc.nodes.iter().filter(|n| n.kind == "scene") {
+        if let Some(v) = sn.props.get("note") {
+            long(&v.raw(), sn.span, d);
+        }
+        let mut at = vec![];
+        ats(&sn.children, &mut at);
+        for a in at {
+            for c in a.children.iter().filter(|c| c.kind == "note") {
+                if let Some(t) = crate::lower::text_arg(c) {
+                    long(&t, c.span, d);
+                }
+            }
+        }
+        for c in sn.children.iter().filter(|c| c.kind == "note") {
+            if crate::lower::id_arg(c).is_none() && c.props.is_empty() {
+                d.push(Diag::info("I_NOTE_CALLOUT", "`note \"...\"` directly under a scene draws a callout box", "for a storyboard note write `scene ... note=\"...\"` or `@4s note \"...\"` (shot break); give the callout an id (`note #n \"...\"`) to keep it", c.span));
+            }
+        }
+    }
+}
+
 pub fn glow_cost(ir: &Ir) -> Vec<Diag> {
     let blurs: std::collections::HashSet<&str> = ir.tracks.iter().filter(|t| matches!(t.ch, Ch::Glow | Ch::Blur) && (t.base.n() > 0.0 || t.keys.iter().any(|k| k.v.n() > 0.0))).map(|t| t.layer.as_str()).collect();
     let mut d = vec![];

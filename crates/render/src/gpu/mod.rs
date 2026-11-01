@@ -6,12 +6,16 @@
 //!
 //! Mode: `AGENTFX_GPU=0|1|auto` or `agentfx-render render ... --gpu[=on|off|auto]` (default
 //! off). `1`/`on` uses the GPU when a hardware adapter exists and says so on stderr when
-//! it falls back; `auto` does the same quietly. Software adapters (llvmpipe) are refused
-//! unless `AGENTFX_GPU_ALLOW_CPU=1` (tests). Routing: an effect buffer goes to the GPU only
-//! when it has at least `AGENTFX_GPU_MIN_PX` pixels (default 65536 = 256x256); small
-//! buffers stay on the CPU, where dispatch + transfer would cost more than the effect.
-//! `AGENTFX_GPU_FX` picks the effects (fx.rs), `AGENTFX_GPU_CHECK=1` compares every chain with
-//! the CPU.
+//! it falls back. `auto` uses only a discrete GPU, and only after a start-up self-test
+//! (`fx::self_test`: a few kernels against the CPU on a small fixture) passes; otherwise it
+//! renders on the CPU (quietly when there is no adapter at all, else with a one-line
+//! notice). Software adapters (llvmpipe) are refused
+//! unless `AGENTFX_GPU_ALLOW_CPU=1` (tests). In every mode a GPU error during a render
+//! replays the affected effects on the CPU. Routing: an effect buffer goes to the GPU only
+//! when it has at least `AGENTFX_GPU_MIN_PX` pixels (default 65536 = 256x256; blur, drop
+//! shadow and glow: `AGENTFX_GPU_BLUR_MIN_PX`); small buffers stay on the CPU, where
+//! dispatch + transfer would cost more than the effect. `AGENTFX_GPU_FX` picks the effects
+//! (fx.rs), `AGENTFX_GPU_CHECK=1` compares every chain with the CPU.
 //!
 //! Exactness: integer parts (hashes, box blurs, blur reductions, tint/over, squared
 //! distances) are bit-identical; float parts differ by GPU rounding (log/exp
@@ -73,6 +77,7 @@ pub struct Gpu {
     pub queue: wgpu::Queue,
     pub name: String,
     pub backend: String,
+    pub device_type: wgpu::DeviceType,
     pub limits: wgpu::Limits,
     modules: Mutex<HashMap<&'static str, Arc<Module>>>,
     pool: Mutex<Vec<wgpu::Buffer>>,
@@ -92,24 +97,45 @@ struct Module {
 
 static GPU: OnceLock<Option<Gpu>> = OnceLock::new();
 
-/// The shared device, when the mode allows it and an adapter exists (created once).
+static SELF_TEST: OnceLock<bool> = OnceLock::new();
+
+/// The shared device, when the mode allows it and an adapter exists (created once; `auto`:
+/// a discrete adapter that passed the self-test).
 pub fn get() -> Option<&'static Gpu> {
     if mode() == Mode::Off {
         return None;
     }
-    GPU.get_or_init(|| match Gpu::new() {
-        Ok(g) => {
-            eprintln!("agentfx-render: GPU effects on {} ({})", g.name, g.backend);
-            Some(g)
-        }
-        Err(e) => {
-            if mode() == Mode::On {
-                eprintln!("agentfx-render: --gpu: no usable GPU ({e:#}); rendering on the CPU");
+    let g = GPU
+        .get_or_init(|| match Gpu::new() {
+            Ok(g) if mode() == Mode::Auto && g.device_type != wgpu::DeviceType::DiscreteGpu && agentfx_ir::env::var("AGENTFX_GPU_ALLOW_CPU").is_err() => {
+                eprintln!("agentfx-render: --gpu=auto: {} is not a discrete GPU ({:?}); rendering on the CPU (--gpu=on uses it)", g.name, g.device_type);
+                None
             }
-            None
-        }
-    })
-    .as_ref()
+            Ok(g) => {
+                eprintln!("agentfx-render: GPU effects on {} ({})", g.name, g.backend);
+                Some(g)
+            }
+            Err(e) => {
+                // (auto stays quiet on machines without a GPU)
+                if mode() == Mode::On {
+                    eprintln!("agentfx-render: --gpu: no usable GPU ({e:#}); rendering on the CPU");
+                }
+                None
+            }
+        })
+        .as_ref()?;
+    if mode() == Mode::Auto
+        && !*SELF_TEST.get_or_init(|| match fx::self_test(g) {
+            Ok(()) => true,
+            Err(e) => {
+                eprintln!("agentfx-render: --gpu=auto: GPU self-test failed on {} ({e:#}); rendering on the CPU", g.name);
+                false
+            }
+        })
+    {
+        return None;
+    }
+    Some(g)
 }
 
 impl Gpu {
@@ -143,6 +169,7 @@ impl Gpu {
             queue,
             name: info.name.clone(),
             backend: format!("{:?} {} {}", info.backend, info.driver, info.driver_info),
+            device_type: info.device_type,
             limits,
             modules: Default::default(),
             pool: Default::default(),
@@ -163,7 +190,6 @@ impl Gpu {
             })
             .clone()
     }
-
 
     fn module(&self, name: &'static str, src: &'static str, nbuf: u32) -> Arc<Module> {
         let mut m = self.modules.lock().unwrap();
@@ -434,5 +460,6 @@ pub fn stats_json() -> serde_json::Value {
         "cpu_routed_small": CPU_ROUTED.load(Ordering::Relaxed),
         "failed_fell_back": FAILED.load(Ordering::Relaxed),
         "min_px": min_px(),
+        "mode": format!("{:?}", mode()).to_lowercase(),
     })
 }

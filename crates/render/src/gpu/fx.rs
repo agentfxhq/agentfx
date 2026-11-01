@@ -882,6 +882,51 @@ fn grain(a: &mut Active, cx: &FxCtx, amount: f64, seed: u64, live: bool, size: f
     Ok(())
 }
 
+// ---------------------------------------------------------------- self-test
+
+/// `--gpu=auto`'s start-up check (a few ms): blur (both paths) and glow bit-exact, vhs,
+/// glitch and grain within 1 of the CPU on a small fixture. An error means this
+/// adapter / driver does not compute what the CPU does: the render stays on the CPU.
+pub fn self_test(g: &'static Gpu) -> anyhow::Result<()> {
+    let (w, h) = (96, 64);
+    let img: Vec<u8> = (0..w * h).flat_map(|i| {
+        let (x, y) = (i % w, i / w);
+        let v = crate::look::hash(i as i32, 0, 7);
+        let a = if (x / 16 + y / 16) % 3 == 0 { 0 } else if x > 60 { 255 } else { (v & 255) as u8 };
+        [(v >> 8) as u8, (x * 2) as u8, (y * 3) as u8, a].map(|c| c.min(a))
+    }).collect();
+    let cx = FxCtx { ox: 3, oy: -2, ax: 0, ay: 0, s: 1.0, frame: 7 };
+    let check = |name: &str, cpu: &[u8], gpu: &[u8], tol: u8| -> anyhow::Result<()> {
+        let mx = cpu.iter().zip(gpu).map(|(a, b)| a.abs_diff(*b)).max().unwrap_or(0);
+        anyhow::ensure!(mx <= tol, "{name}: max channel difference {mx} (allowed {tol})");
+        Ok(())
+    };
+    for sigma in [2.5, 40.0] {
+        let mut cpu = img.clone();
+        crate::effects::glow(&mut cpu, w, h, [1.0, 0.5, 0.2, 1.0], 1.0, sigma);
+        let mut gpu = img.clone();
+        let mut ch = Chain::on(g);
+        anyhow::ensure!(ch.glow(&mut gpu, w, h, [1.0, 0.5, 0.2, 1.0], 1.0, sigma), "glow not on the GPU");
+        ch.finish(&mut gpu)?;
+        check("glow", &cpu, &gpu, 0)?;
+    }
+    let looks = [r#"{"type":"vhs","amount":1,"seed":5}"#, r#"{"type":"glitch","amount":1,"seed":5,"rate":10,"block":6}"#, r#"{"type":"grain","amount":0.3,"seed":5,"live":true,"size":2}"#];
+    for j in looks {
+        let e: Effect = serde_json::from_str(j)?;
+        let mut p = [0.0; NPARAM];
+        for (i, f) in e.look_fields().iter().enumerate() {
+            p[i] = e.look_field(f);
+        }
+        p[TIME] = 0.6;
+        let mut cpu = img.clone();
+        crate::look::apply(&e, &p, &mut cpu, w, h, &cx);
+        let mut gpu = img.clone();
+        anyhow::ensure!(apply_on(g, &e, &p, &mut gpu, w, h, &cx)?, "{j}: not on the GPU");
+        check(j, &cpu, &gpu, 1)?;
+    }
+    Ok(())
+}
+
 // ---------------------------------------------------------------- tests
 
 #[cfg(test)]
@@ -1284,6 +1329,13 @@ pub(crate) mod tests {
                 assert!(cpu.iter().any(|&v| v != 0), "bad fixture (sigma {sigma}, sharp {with_sharp}, scale {scale}, {sw}x{sh})");
             }
         }
+    }
+
+    /// `--gpu=auto`'s start-up self-test passes on the test device.
+    #[test]
+    fn gpu_self_test_passes() {
+        let Some(g) = device() else { return };
+        self_test(g).unwrap();
     }
 
     /// The GPU signed distance field equals light::sdf (alpha plane + exact EDT) within the

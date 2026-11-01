@@ -176,6 +176,42 @@ pub fn find_ffprobe() -> Option<PathBuf> { find_tool("AGENTFX_FFPROBE", "ffprobe
 /// [`find_ffmpeg`], falling back to the bare name (the spawn error then names it).
 pub fn ffmpeg() -> PathBuf { find_ffmpeg().unwrap_or_else(|| PathBuf::from("ffmpeg")) }
 
+/// Oldest ffmpeg the encoder supports: `-fps_mode` arrived in 5.1.
+const MIN_FFMPEG: (u32, u32) = (5, 1);
+
+/// `(major, minor)` from the first line of `ffmpeg -version` (`ffmpeg version 7.1-full_build`,
+/// `n6.1.1`, `6.1.1-3ubuntu5`). None for git snapshots (`N-12345-g...`) and unknown text.
+fn ffmpeg_release(version_text: &str) -> Option<(u32, u32)> {
+    let v = version_text.lines().next()?.strip_prefix("ffmpeg version ")?;
+    let v = v.strip_prefix('n').unwrap_or(v);
+    let mut it = v.split(|c: char| !c.is_ascii_digit());
+    let major = it.next()?.parse().ok()?;
+    let minor = it.next().and_then(|m| m.parse().ok()).unwrap_or(0);
+    Some((major, minor))
+}
+
+/// Fails with a clear message when `ffmpeg` is older than [`MIN_FFMPEG`] (for example the
+/// ffmpeg that ImageMagick puts on `PATH` on Windows). Unknown versions pass; checked once per path.
+fn check_ffmpeg_version(ffmpeg: &std::path::Path) -> Result<()> {
+    use std::sync::{Mutex, OnceLock};
+    static SEEN: OnceLock<Mutex<Vec<(PathBuf, Option<(u32, u32)>)>>> = OnceLock::new();
+    let mut seen = SEEN.get_or_init(|| Mutex::new(Vec::new())).lock().unwrap();
+    let release = match seen.iter().find(|(p, _)| p == ffmpeg) {
+        Some((_, r)) => *r,
+        None => {
+            let out = Command::new(ffmpeg).arg("-version").stdin(Stdio::null()).stderr(Stdio::null()).output();
+            let r = out.ok().and_then(|o| ffmpeg_release(&String::from_utf8_lossy(&o.stdout)));
+            seen.push((ffmpeg.to_path_buf(), r));
+            r
+        }
+    };
+    if let Some((major, minor)) = release.filter(|&r| r < MIN_FFMPEG) {
+        bail!("{} is ffmpeg {major}.{minor}; AgentFX needs ffmpeg {}.{} or newer (set AGENTFX_FFMPEG and AGENTFX_FFPROBE to a current build, or put one first on PATH)",
+            ffmpeg.display(), MIN_FFMPEG.0, MIN_FFMPEG.1);
+    }
+    Ok(())
+}
+
 /// ffmpeg builds tried for a hardware encoder, in order: `$AGENTFX_FFMPEG_HW` alone when set,
 /// else `$AGENTFX_FFMPEG` and then every `ffmpeg` on `PATH` (a static ffmpeg early on `PATH`
 /// often lacks VAAPI/QSV/NVENC while a distribution build later on `PATH` has them).
@@ -678,6 +714,7 @@ impl Encoder {
         }
         ensure!(opts.out.extension().is_some_and(|x| x.eq_ignore_ascii_case("mp4")), "output must have .mp4 extension");
         ensure!(opts.out != opts.log, "output and log paths must differ");
+        check_ffmpeg_version(&opts.ffmpeg)?;
         let px = (opts.width as usize).checked_mul(opts.height as usize).context("frame size overflow")?;
         let p10 = opts.hw.ten_bit && matches!(opts.codec, Codec::NvencHevc | Codec::VideoToolboxHevc) && ten_bit_native();
         let frame_bytes = match (opts.yuv, p10) { (false, _) => px * 4, (true, false) => px * 3 / 2, (true, true) => px * 3 };
@@ -1484,6 +1521,17 @@ mod tests {
         // `exec` in the sg command line makes the child ffmpeg itself (same pid).
         assert!(!std::path::Path::new(&format!("/proc/{pid}")).exists() || std::fs::read_to_string(format!("/proc/{pid}/stat")).map(|s| s.contains(") Z")).unwrap_or(true), "ffmpeg survived drop");
         Ok(())
+    }
+
+    #[test]
+    fn ffmpeg_release_versions() {
+        assert_eq!(ffmpeg_release("ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024"), Some((7, 1)));
+        assert_eq!(ffmpeg_release("ffmpeg version 6.1.1-3ubuntu5 Copyright"), Some((6, 1)));
+        assert_eq!(ffmpeg_release("ffmpeg version n5.0.1 Copyright"), Some((5, 0)));
+        assert_eq!(ffmpeg_release("ffmpeg version 4.2.2-static https://johnvansickle.com"), Some((4, 2)));
+        assert_eq!(ffmpeg_release("ffmpeg version N-113000-g1234abcd Copyright"), None);
+        assert_eq!(ffmpeg_release("ImageMagick 7"), None);
+        assert!(Some((4, 2)) < Some(MIN_FFMPEG) && (5, 1) >= MIN_FFMPEG && (7, 0) >= MIN_FFMPEG);
     }
 
     #[test]

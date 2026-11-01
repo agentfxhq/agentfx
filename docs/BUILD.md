@@ -108,7 +108,7 @@ Set `AGENTFX_GPU=0` to skip the probe entirely (the Dockerfile does this).
 |---|---|---|
 | Bare-metal Linux with a discrete GPU | Yes | install the vendor Vulkan ICD (`mesa-vulkan-drivers`, `nvidia-driver`, etc.) |
 | Docker / OCI container | Rarely | requires `--device /dev/dri` plus the host ICD; most CI images lack both |
-| Native Windows with an NVIDIA/AMD/Intel GPU | Yes | DX12 is selected first, the vendor driver also ships the Vulkan ICD; see [Windows](#windows) |
+| Native Windows with an NVIDIA/AMD/Intel GPU | Yes | wgpu uses DX12 or Vulkan; the vendor driver ships both; see [Windows](#windows) |
 | WSL 2 (Windows) | Sometimes | needs a recent Windows GPU driver with WSL Vulkan support; older setups fall back to CPU |
 | macOS (Apple Silicon or Intel) | Yes | Metal is selected automatically; `WGPU_BACKEND` can override it for debugging |
 | Headless cloud VM (no GPU) | No | CPU fallback is automatic |
@@ -133,8 +133,18 @@ workflow). Rendering on a real GPU box is not covered by CI yet.
   the golden-file tests expect.
 - **ffmpeg and ffprobe** on `PATH` (or `AGENTFX_FFMPEG` / `AGENTFX_FFPROBE` pointing at the
   `.exe`), a build with libx264, and NVENC for hardware encoding, for example the gyan.dev
-  "full" build or the BtbN GPL build: unpack it and add its `bin` folder to `PATH`, or
-  `winget install Gyan.FFmpeg`.
+  "full" build or the BtbN GPL build: `winget install Gyan.FFmpeg`, or unpack one and add
+  its `bin` folder to `PATH`. ffmpeg 5.1 or newer is required (`-fps_mode`). Other programs
+  put old ffmpeg builds on `PATH` (ImageMagick ships one); `where.exe ffmpeg` shows which one
+  wins, and the renderer stops with "needs ffmpeg 5.1 or newer" naming the path it found.
+  Pin the right one explicitly:
+
+  ```powershell
+  setx AGENTFX_FFMPEG  "C:\path\to\ffmpeg\bin\ffmpeg.exe"
+  setx AGENTFX_FFPROBE "C:\path\to\ffmpeg\bin\ffprobe.exe"
+  ```
+
+  (`setx` affects new shells; use `$env:AGENTFX_FFMPEG = "..."` for the current one.)
 - **GPU driver**: the current NVIDIA (or AMD/Intel) driver, which provides the DX12 and
   Vulkan runtimes that `--gpu` uses. RTX 50-series (Blackwell) cards need driver 570 or newer and
   an ffmpeg built against NVENC SDK 12.2 or newer for `--encoder nvenc`.

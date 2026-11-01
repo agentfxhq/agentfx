@@ -24,7 +24,7 @@ fn resolve_home() -> (PathBuf, HomeKind) {
     }
     let share = std::env::current_exe()
         .ok()
-        .and_then(|e| e.canonicalize().ok())
+        .and_then(|e| agentfx_ir::paths::canonicalize(e).ok())
         .and_then(|e| Some(e.parent()?.parent()?.join("share/agentfx")));
     if let Some(share) = share.as_ref().filter(|d| d.join("assets/fonts/fonts.json").is_file()) {
         return (share.clone(), HomeKind::Installed);
@@ -51,8 +51,8 @@ pub fn home() -> PathBuf {
 
 /// Writable root for caches (`cache/<sub>`) and scratch files (`out/tmp`): `$AGENTFX_CACHE`,
 /// else the data directory when it is `$AGENTFX_HOME` or the build tree (the layout the build
-/// tree has always used), else `$XDG_CACHE_HOME/agentfx`, `~/Library/Caches/agentfx` on
-/// macOS, or `~/.cache/agentfx` elsewhere.
+/// tree has always used), else `$XDG_CACHE_HOME/agentfx`, `%LOCALAPPDATA%\agentfx` on Windows,
+/// `~/Library/Caches/agentfx` on macOS, or `~/.cache/agentfx` elsewhere.
 pub fn work_root() -> PathBuf {
     if let Some(c) = agentfx_ir::env::var_os("AGENTFX_CACHE").filter(|c| !c.is_empty()) {
         return PathBuf::from(c);
@@ -62,8 +62,9 @@ pub fn work_root() -> PathBuf {
         return home.clone();
     }
     let xdg = std::env::var_os("XDG_CACHE_HOME").filter(|x| !x.is_empty()).map(PathBuf::from);
-    xdg.or_else(|| std::env::var_os("HOME").map(|h| {
-        let home = PathBuf::from(h);
+    #[cfg(windows)]
+    let xdg = xdg.or_else(|| std::env::var_os("LOCALAPPDATA").filter(|x| !x.is_empty()).map(PathBuf::from));
+    xdg.or_else(|| agentfx_ir::paths::home_dir().map(|home| {
         #[cfg(target_os = "macos")]
         { home.join("Library/Caches") }
         #[cfg(not(target_os = "macos"))]
@@ -83,13 +84,16 @@ pub fn tmp_dir() -> PathBuf {
     work_root().join("out/tmp")
 }
 
-/// Python for the helper scripts: `$AGENTFX_PYTHON`, else `<home>/.venv/bin/python`, else `python3`.
+/// Python for the helper scripts: `$AGENTFX_PYTHON`, else `<home>/.venv/bin/python`, else
+/// `python3`. On Windows: `<home>\.venv\Scripts\python.exe`, else `python` (the python.org
+/// installer has no `python3.exe`; the Store alias of that name only opens the Store).
 pub fn python() -> String {
     if let Ok(p) = agentfx_ir::env::var("AGENTFX_PYTHON") {
         return p;
     }
-    let venv = home().join(".venv/bin/python");
-    if venv.exists() { venv.to_string_lossy().into() } else { "python3".into() }
+    let (venv, fallback) = if cfg!(windows) { (".venv/Scripts/python.exe", "python") } else { (".venv/bin/python", "python3") };
+    let venv = home().join(venv);
+    if venv.exists() { venv.to_string_lossy().into() } else { fallback.into() }
 }
 
 /// `$AGENTFX_FFMPEG`, else `ffmpeg` on PATH.

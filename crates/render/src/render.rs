@@ -485,7 +485,7 @@ fn render_segment(scene: &Scene, base: &Path, prep: &Prepared, info: &Info, sche
 pub(crate) fn concat(ffmpeg: &Path, parts: &[PathBuf], out: &Path) -> Result<()> {
     let list = out.with_extension("concat.txt");
     // ffmpeg concat syntax: single-quoted, a quote is written as '\''
-    let body: String = parts.iter().map(|p| format!("file '{}'\n", std::fs::canonicalize(p).unwrap().display().to_string().replace('\'', "'\\''"))).collect();
+    let body: String = parts.iter().map(|p| format!("file '{}'\n", agentfx_ir::paths::canonicalize(p).unwrap().display().to_string().replace('\'', "'\\''"))).collect();
     std::fs::write(&list, body)?;
     let st = std::process::Command::new(ffmpeg).args(["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i"]).arg(&list).args(["-c", "copy"]).arg(out).status()?;
     if !st.success() {

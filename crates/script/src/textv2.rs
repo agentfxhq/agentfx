@@ -351,7 +351,7 @@ pub fn custom_fonts(doc: &Document, base: &Path, diags: &mut Vec<Diag>) -> Vec<F
             diags.push(Diag::error("E_FONT", format!("font \"{family}\" declared twice"), "one `font` line per family (a variable font covers all weights)", n.span));
             continue;
         }
-        let abs = path.canonicalize().unwrap_or(path);
+        let abs = agentfx_ir::paths::canonicalize(&path).unwrap_or(path);
         out.push(Font { family, src: src.clone(), file: Some(abs.to_string_lossy().into_owned()) });
     }
     out

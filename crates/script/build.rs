@@ -33,6 +33,12 @@ fn main() {
     println!("cargo:rustc-env=AGENTFX_GIT_HASH={hash}");
     let manifest = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
     let root = manifest.join("../..");
-    let root = root.canonicalize().unwrap_or(root);
-    println!("cargo:rustc-env=AGENTFX_ROOT={}", root.display());
+    let root = root.canonicalize().unwrap_or(root).display().to_string();
+    // Windows: drop the verbatim prefix (`\\?\C:\...`); such a path takes `/` literally, so
+    // `join("target/release")` on it would not resolve (agentfx_ir::paths::canonicalize).
+    let root = match root.strip_prefix(r"\\?\") {
+        Some(plain) if plain.as_bytes().get(1) == Some(&b':') => plain.to_string(),
+        _ => root,
+    };
+    println!("cargo:rustc-env=AGENTFX_ROOT={root}");
 }

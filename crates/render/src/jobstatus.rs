@@ -81,9 +81,10 @@ fn hostname() -> String {
     std::fs::read_to_string("/proc/sys/kernel/hostname").map(|s| s.trim().to_string()).unwrap_or_else(|_| "unknown".into())
 }
 
+/// No /proc: COMPUTERNAME is always set on Windows, HOSTNAME when the shell exports it.
 #[cfg(not(target_os = "linux"))]
 fn hostname() -> String {
-    std::env::var("HOSTNAME").unwrap_or_else(|_| "unknown".into())
+    std::env::var("COMPUTERNAME").or_else(|_| std::env::var("HOSTNAME")).unwrap_or_else(|_| "unknown".into())
 }
 
 /// Peak resident set size of this process in MB (VmHWM), cheap /proc read.
@@ -185,7 +186,7 @@ pub fn worktree_name(dir: &Path, home: &Path) -> Option<String> {
 
 fn derive_caller(cwd: &Path, chain: &[Ancestor]) -> String {
     let (kind, idx) = classify(chain);
-    let home = PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "/nonexistent".into()));
+    let home = agentfx_ir::paths::home_dir().unwrap_or_else(|| PathBuf::from("/nonexistent"));
     let place = worktree_name(cwd, &home)
         .or_else(|| idx.and_then(|i| std::fs::read_link(format!("/proc/{}/cwd", chain[i].pid)).ok()).and_then(|p| worktree_name(&p, &home)))
         .or_else(|| cwd.file_name().map(|n| n.to_string_lossy().into_owned()))

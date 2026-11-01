@@ -25,7 +25,7 @@ pub fn extract(file: &Path, w: u32, h: u32, fonts_dir: &Path) -> Result<Value> {
     let html = std::fs::read_to_string(file)?;
     let mut sources = std::collections::HashMap::new();
     let fctx = crate::native::font_ctx_pub(fonts_dir, &mut sources);
-    let base = url::Url::from_file_path(file.canonicalize()?).map(|u| u.to_string()).unwrap_or("file:///".into());
+    let base = url::Url::from_file_path(agentfx_ir::paths::canonicalize(file)?).map(|u| u.to_string()).unwrap_or("file:///".into());
     let mut doc = HtmlDocument::from_html(
         &html,
         DocumentConfig { base_url: Some(base), viewport: Some(Viewport::new(w, h, 1.0, ColorScheme::Light)), font_ctx: Some(fctx), ..Default::default() },

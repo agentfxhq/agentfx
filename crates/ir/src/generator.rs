@@ -181,6 +181,25 @@ pub const KINDS: &[Kind] = &[
         gpu_zoom_max: None,
         time: false,
     },
+    Kind {
+        name: "life",
+        doc: "Cellular automata: Game of Life and any B/S rule (rule=\"B36/S23\"), or 1D elementary rules (mode=1 rule=30); seeded start, steps advance with time; CPU",
+        params: &[
+            p("mode", 0.0, 0.0, 1.0, "0 = 2D (born/survive), 1 = 1D elementary rule scrolling upward"),
+            p("born", 8.0, 0.0, 511.0, "2D: bitmask of neighbour counts that give birth (bit n = n neighbours; B3 = 8). Script: rule=\"B3/S23\""),
+            p("survive", 12.0, 0.0, 511.0, "2D: bitmask of neighbour counts that survive (S23 = 4 + 8 = 12)"),
+            p("rule", 30.0, 0.0, 255.0, "1D: elementary rule number (30, 90, 110, 184, ...)"),
+            p("zoom", 1.0, 0.02, 30.0, "cell size (1 = 72 cells over the rect height)"),
+            p("density", 0.3, 0.0, 1.0, "share of cells alive at the start (1D with 0: one centre cell)"),
+            p("speed", 12.0, 0.0, 240.0, "steps per second"),
+            p("trail", 8.0, 0.0, 64.0, "steps a dead cell takes to fade out (0 = none)"),
+            p("color-speed", 1.0, -100.0, 100.0, "palette cycles over a cell's age (0..24 steps)"),
+            OFFSET,
+        ],
+        gpu: false,
+        gpu_zoom_max: None,
+        time: true,
+    },
 ];
 
 /// `lsystem` presets in `preset=` order (Reel Script also takes the names: `preset=dragon`).

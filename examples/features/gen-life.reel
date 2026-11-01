@@ -1,0 +1,9 @@
+// Generators: cellular automata. Conway's Life with fading ghosts, then elementary rule 30 scrolling up.
+video "Life" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #000000
+
+scene conway dur=3s
+  gen #l kind=life rule="B3/S23" speed=14 trail=10 palette=neon seed=4
+scene rule30 dur=3s
+  gen #e kind=life mode=1 rule=30 density=0 speed=24 trail=0 palette=vapor

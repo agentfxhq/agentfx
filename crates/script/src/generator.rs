@@ -41,6 +41,18 @@ impl<'a> Ctx<'a> {
         };
         let mut params = BTreeMap::new();
         let all = g::param_names();
+        // life: `rule="B36/S23"` (a B/S rule string) sets the born / survive bitmasks
+        let bs_rule = kind.name == "life" && matches!(n.props.get("rule"), Some(crate::ast::Value::Str(_)));
+        if bs_rule {
+            let raw = praw(n, "rule").unwrap_or_default();
+            match parse_bs(&raw) {
+                Some((b, sv)) => {
+                    params.insert("born".to_string(), b as f64);
+                    params.insert("survive".to_string(), sv as f64);
+                }
+                None => self.err("E_GEN", format!("gen life: rule=\"{raw}\" is not a B/S rule"), "e.g. rule=\"B3/S23\" (Conway), \"B36/S23\" (HighLife), or mode=1 rule=30 (1D)", n.span),
+            }
+        }
         // lsystem: `preset=dragon` (a preset name) for its index
         let named_preset = kind.name == "lsystem" && matches!(n.props.get("preset"), Some(crate::ast::Value::Str(_)));
         if named_preset {
@@ -56,7 +68,7 @@ impl<'a> Ctx<'a> {
             }
         }
         for k in n.props.keys() {
-            if (named_preset && k == "preset") || matches!(k.as_str(), "seed" | "palette" | "kind") {
+            if (bs_rule && k == "rule") || (named_preset && k == "preset") || matches!(k.as_str(), "seed" | "palette" | "kind") {
                 continue;
             }
             match kind.param(k) {
@@ -117,6 +129,43 @@ impl<'a> Ctx<'a> {
         }
         stops.iter().take(g::PALETTE_MAX).filter_map(|s| self.th.color(&s.color)).collect()
     }
+}
+
+/// `B3/S23` (any case, either order, `/` optional) -> (born, survive) neighbour-count bitmasks.
+pub fn parse_bs(raw: &str) -> Option<(u32, u32)> {
+    let (mut b, mut s, mut cur, mut seen) = (0u32, 0u32, None::<char>, (false, false));
+    for c in raw.trim().chars() {
+        match c.to_ascii_uppercase() {
+            'B' => {
+                cur = Some('B');
+                seen.0 = true;
+            }
+            'S' => {
+                cur = Some('S');
+                seen.1 = true;
+            }
+            '/' | ' ' => {}
+            d @ '0'..='8' => {
+                let bit = 1 << (d as u32 - '0' as u32);
+                match cur? {
+                    'B' => b |= bit,
+                    _ => s |= bit,
+                }
+            }
+            _ => return None,
+        }
+    }
+    (seen.0 && seen.1).then_some((b, s))
+}
+
+#[test]
+fn bs_rules() {
+    assert_eq!(parse_bs("B3/S23"), Some((8, 12)));
+    assert_eq!(parse_bs("b36/s23"), Some((72, 12)));
+    assert_eq!(parse_bs("B2/S"), Some((4, 0)));
+    assert_eq!(parse_bs("S23/B3"), Some((8, 12)));
+    assert_eq!(parse_bs("B9/S1"), None);
+    assert_eq!(parse_bs("30"), None);
 }
 
 /// The reel-ir `gen` content of a layer laid out at `r`.

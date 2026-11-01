@@ -64,6 +64,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Voronoi cells | `gen #v kind=voronoi mode=0\|1\|2` | implemented | organic tech, crystals, cell biology |
 | Growing L-systems | `gen #l kind=lsystem preset=plant\|dragon\|koch\|hilbert grow=0` + `anim #l grow 0s:0 3s:1` | implemented (CPU) | growth, "building up", reveals |
 | Penrose tiling | `gen #p kind=penrose grow=0` + `anim #p grow 0s:0 3s:1` | implemented (CPU) | sacred-geometry intros, order out of chaos |
+| Game of Life, rule 30 | `gen #c kind=life rule="B3/S23"` / `kind=life mode=1 rule=30` | implemented (CPU) | emergence, computation, pixel aesthetics |
 
 ## Time
 

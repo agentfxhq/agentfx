@@ -1493,7 +1493,8 @@ mod tests {
         assert_eq!(shell_quote("it's"), "'it'\\''s'");
         assert_eq!(shell_quote(""), "''");
         assert_eq!(shell_quote("settb=expr=1/30,format=nv12,hwupload"), "settb=expr=1/30,format=nv12,hwupload");
-        // round trip through a real shell
+        // round trip through a real shell (sg, the only user of the quoting, is Linux-only)
+        #[cfg(unix)]
         for w in ["plain", "a b", "it's", "$HOME", "`x`", "a\"b", "x;y", "*", "\\n"] {
             let out = Command::new("sh").arg("-c").arg(format!("printf %s {}", shell_quote(w))).output().unwrap();
             assert_eq!(String::from_utf8(out.stdout).unwrap(), w);

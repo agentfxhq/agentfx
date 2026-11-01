@@ -27,7 +27,7 @@ Every generator has:
 | Flow fields | particles streaking through a curl-noise field | done (`kind=flow`, CPU) |
 | Truchet, Voronoi | tiled arcs, cells | done (`kind=truchet`, `kind=voronoi`) |
 | L-systems | growing plants and curves as drawable paths | done (`kind=lsystem`, CPU) |
-| Cellular automata | Life, elementary rules, Lenia-like | planned |
+| Cellular automata | Life, elementary rules, Lenia-like | done: Life / B/S rules and 1D elementary (`kind=life`, CPU); Lenia planned |
 | Penrose tilings | P2/P3 by deflation, as paths | done: P3 (`kind=penrose`, CPU); P2 planned |
 
 ## How to add a generator
@@ -39,8 +39,12 @@ into unit space through the layer transform, supersamples (`aa`), premultiplies 
 1. **Declare it**: one `Kind { name, doc, params, gpu, gpu_zoom_max, time }` entry in `KINDS` in
    `crates/ir/src/generator.rs`. The parameter list (name, default, min, max, doc) drives IR
    validation, Reel Script parsing, the `gen.<param>` tracks, lint and the catalog. Parameter
-   names must not collide with existing channels (`x y rot scale angle offset hue ...`, see
-   `Ch::parse` in `crates/script/src/ir.rs`): a colliding name parses as that channel instead.
+   names must not collide with existing channels (`x y rot scale angle offset hue count trim
+   ...`, see `Ch::parse` in `crates/script/src/ir.rs`): a colliding name parses as that channel
+   instead. A name may be shared between kinds with different ranges (`zoom`, `thickness`); each
+   distinct name takes one of the `GEN_CHS` slots (32; add more there). Parameters are numbers
+   only: for strings add a small compile-time translation in `crates/script/src/generator.rs`
+   (as `rule="B3/S23"` -> `born`/`survive` and `preset=dragon` -> `preset=1` do).
    Set `time: true` when the image moves with t itself (noise flow, simulations): the planner
    then redraws it every frame.
 2. **Implement it**: `crates/render/src/generator/<kind>.rs` with a unit struct implementing
@@ -50,8 +54,12 @@ into unit space through the layer transform, supersamples (`aa`), premultiplies 
    then gets your coordinates and needs no transcendental view math, which keeps CPU and GPU
    identical. In `g.f32` mode compute in f32 like the kernel (the `Real` trait makes one generic
    function serve both; use `Real::fma` where the kernel uses WGSL `fma`, because drivers fuse
-   `a * b + c` on their own and chaotic iterations amplify that last bit). Use `g.seed` for
-   randomness and `g.t` for time.
+   `a * b + c` on their own and chaotic iterations amplify that last bit: write every
+   `a * b + c` in a kernel as an explicit `fma`, also in colour maths). Use `g.seed` for
+   randomness (integer hashes, `look::hash` / WGSL `hash`, never sin-based) and `g.t` for
+   time. No trigonometry per pixel: smooth motion can be a smoothed triangle wave (voronoi),
+   a rotation can be rational (truchet). Shared helpers: `gnoise` / `fbm` (gradient noise,
+   identical on both sides) in `generator/mod.rs` and `generator/common.wgsl`.
 3. **GPU kernel** (optional): `crates/render/src/generator/<kind>.wgsl` defining
    `fn sample(u: f32, v: f32) -> vec4<f32>`, parameters via `gp(i)`; return it from `wgsl()` as
    `concat!(include_str!("common.wgsl"), include_str!("<kind>.wgsl"))`. Helpers in
@@ -62,7 +70,10 @@ into unit space through the layer transform, supersamples (`aa`), premultiplies 
 5. **Vector or grid kinds** (L-systems, Penrose, cellular automata): keep `sample` trivial and
    override `cpu(&self, g, out)` to rasterize your geometry into the premultiplied RGBA8 buffer
    (`g.w x g.h`; unit -> pixel is the inverse of `g.m`, e.g. with tiny-skia, already a
-   dependency). `gpu: false`, no `.wgsl`.
+   dependency; `generator/raster.rs` has the helpers: `unit_to_px`, `layer`, `neon` bloom).
+   `gpu: false`, no `.wgsl`. `g.aspect` gives the rect's extent in unit space (u in
+   +-aspect), so a kind can fit or cover the rect. Keep everything a pure function of the
+   parameters, seed and t (simulations replay from step 0 each frame).
 6. **Tests**: `registry_matches_declarations`, `deterministic` and `gpu_matches_cpu` in
    `generator/mod.rs` cover every kind once it is declared and registered; add a few
    parameter cases of yours to the `cases` table in `gpu_matches_cpu` (they must stay within

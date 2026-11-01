@@ -391,7 +391,15 @@ validation errors). The kinds, their parameters, defaults and ranges are declare
 | `voronoi` | `re`, `im`, `zoom` (1), `turn`, `jitter` (1), `flow` (0.15 /s), `mode` (0 cells, 1 edges, 2 crystal), `thickness` (0.04 cell), `color-speed` (1), `color-offset` (0), `aa` (2); time-dependent |
 | `lsystem` | `preset` (1: 0 koch, 1 dragon, 2 sierpinski, 3 plant, 4 hilbert, 5 gosper), `iter` (0 = preset default), `grow` (1), `thickness` (0.008), `re`, `im` (offset), `zoom` (1 = fitted), `turn`, `color-speed` (1), `color-offset` (0); CPU, transparent ground |
 | `penrose` | `depth` (6 deflations), `grow` (1), `thickness` (0.004), `re`, `im` (offset), `zoom` (1 = covers the rect), `turn`, `color-speed` (1), `color-offset` (0); CPU |
+| `life` | `mode` (0 2D, 1 1D), `born` (8), `survive` (12): neighbour-count bitmasks (B3/S23), `rule` (30, 1D Wolfram number), `zoom` (1 = 72 cells per rect height), `density` (0.3), `speed` (12 steps/s), `trail` (8 steps), `color-speed` (1), `color-offset` (0); time-dependent, CPU, transparent ground |
 
+Pixel kinds (`julia mandelbrot noise truchet voronoi`) have a GPU kernel; vector and grid kinds
+(`flow lsystem penrose life`) rasterize their geometry on the CPU (anti-aliased, through the same
+mapping, so they stay crisp under the node transform) and leave the ground transparent where
+nothing is drawn (`penrose` covers the rect). The pattern kinds map unit space to their plane as
+`centre + rotate(turn) * (u, -v) * half / zoom` (half = 0.7 for noise, 4 tiles or cells for
+truchet and voronoi); noise is a gradient-noise fBm on an integer-hash lattice (`seed`), so the
+GPU and CPU agree.
 
 Unit space: origin at the rect centre, v from -1 (top) to 1 (bottom), u scaled like v. Fractals map
 it to the complex plane as `centre + rotate(turn) * (u, -v) * half / (zoom * 2^depth)` (half = 1.3
@@ -407,8 +415,9 @@ ice mono`) into stops.
 
 Tracks `gen.<param>` (number) animate any parameter (`gen.zoom`, `gen.cx`, ...); values are clamped
 to the declared range. `time_offset` (s) is added to t for kinds that change with time itself
-(`noise`, `flow`, `voronoi` do; the compiler sets it to minus the start of the layer's scene, so they
-run on scene time). **Planner.** Bounds = `rect`; signature = the parameter values at t
+(`noise`, `flow`, `voronoi`, `life` do; the compiler sets it to minus the start of the layer's
+scene, so they run on scene time; `life` shows step `floor(t * speed)`, replayed from
+step 0 for each frame). **Planner.** Bounds = `rect`; signature = the parameter values at t
 (plus t for time-dependent kinds); a generator without `gen.*` tracks is static and cached at rest.
 
 **Precision.** The CPU reference runs in f64 (Mandelbrot zooms to about 1e12). The GPU kernels

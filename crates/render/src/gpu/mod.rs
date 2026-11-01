@@ -486,7 +486,10 @@ mod tests {
         use naga::back::msl;
         use naga::valid::{ValidationFlags, Validator};
         let common = include_str!("common.wgsl");
-        for (name, source) in [("blur", include_str!("blur.wgsl")), ("comp", include_str!("comp.wgsl")), ("halftone", include_str!("halftone.wgsl")), ("light", include_str!("light.wgsl")), ("riso", include_str!("riso.wgsl")), ("shadow", include_str!("shadow.wgsl")), ("time", include_str!("time.wgsl"))] {
+        let mut shaders: Vec<(&str, &str)> = vec![("blur", include_str!("blur.wgsl")), ("comp", include_str!("comp.wgsl")), ("digital", include_str!("digital.wgsl")), ("halftone", include_str!("halftone.wgsl")), ("lens", include_str!("lens.wgsl")), ("light", include_str!("light.wgsl")), ("riso", include_str!("riso.wgsl")), ("shadow", include_str!("shadow.wgsl")), ("temporal", include_str!("temporal.wgsl")), ("time", include_str!("time.wgsl")), ("warp", include_str!("warp.wgsl"))];
+        // the generator kernels (each carries its own generator/common.wgsl prefix)
+        shaders.extend(agentfx_ir::generator::KINDS.iter().filter_map(|k| Some((k.name, crate::generator::lookup(k.name)?.wgsl()?))));
+        for (name, source) in shaders {
             let module = naga::front::wgsl::parse_str(&format!("{common}\n{source}")).unwrap_or_else(|e| panic!("{name} WGSL: {e}"));
             let info = Validator::new(ValidationFlags::all(), msl::supported_capabilities()).validate(&module).unwrap_or_else(|e| panic!("{name} validation: {e}"));
             let mut resources = msl::BindingMap::default();

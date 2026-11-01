@@ -19,6 +19,8 @@ pub struct GenCfg {
     pub params: BTreeMap<String, f64>,
     pub palette: Vec<Rgba>,
     pub seed: u64,
+    /// start of the layer's scene, s: time-dependent kinds run on scene time (t = 0 at the cut)
+    pub start: f64,
 }
 
 fn praw(n: &Node, k: &str) -> Option<String> {
@@ -26,7 +28,7 @@ fn praw(n: &Node, k: &str) -> Option<String> {
 }
 
 impl<'a> Ctx<'a> {
-    pub fn gen_el(&mut self, parent: usize, _si: usize, n: &Node, lid: String) -> usize {
+    pub fn gen_el(&mut self, parent: usize, si: usize, n: &Node, lid: String) -> usize {
         let names: Vec<&str> = g::KINDS.iter().map(|k| k.name).collect();
         let raw = praw(n, "kind").unwrap_or_default();
         let kind = match g::kind(&raw) {
@@ -40,6 +42,9 @@ impl<'a> Ctx<'a> {
         let mut params = BTreeMap::new();
         let all = g::param_names();
         for k in n.props.keys() {
+            if matches!(k.as_str(), "seed" | "palette" | "kind") {
+                continue;
+            }
             match kind.param(k) {
                 Some(p) => {
                     // a literal keeps every digit (`raw()` prints 6 decimals)
@@ -70,7 +75,7 @@ impl<'a> Ctx<'a> {
             Some(p) => self.gen_palette(&p, n.span),
         };
         let seed = self.num(n, "seed").unwrap_or(0.0).max(0.0) as u64;
-        let mut l = Layer::new(lid, Kind::Gen(Box::new(GenCfg { kind: kind.name.to_string(), params, palette, seed })));
+        let mut l = Layer::new(lid, Kind::Gen(Box::new(GenCfg { kind: kind.name.to_string(), params, palette, seed, start: self.tl.scenes.get(si).map_or(0.0, |s| s.start) })));
         l.tags.push("gen".into());
         let sized = ["w", "h", "x", "y", "place"].iter().any(|k| n.props.contains_key(*k));
         if !sized {
@@ -104,7 +109,11 @@ impl<'a> Ctx<'a> {
 pub fn ir_gen(cfg: &GenCfg, r: [f64; 4]) -> Value {
     let r4 = |v: f64| (v * 1e4).round() / 1e4;
     let pal: Vec<Value> = cfg.palette.iter().map(|c| json!([c.r, c.g, c.b, c.a])).collect();
-    json!({"type": "gen", "kind": cfg.kind, "rect": [r4(r[0]), r4(r[1]), r4(r[2]), r4(r[3])], "params": cfg.params, "palette": pal, "seed": cfg.seed})
+    let mut c = json!({"type": "gen", "kind": cfg.kind, "rect": [r4(r[0]), r4(r[1]), r4(r[2]), r4(r[3])], "params": cfg.params, "palette": pal, "seed": cfg.seed});
+    if g::kind(&cfg.kind).is_some_and(|k| k.time) && cfg.start != 0.0 {
+        c["time_offset"] = json!(-cfg.start);
+    }
+    c
 }
 
 /// E_GEN (a parameter channel on the wrong layer) and W_GEN_ZOOM (an effective zoom past the

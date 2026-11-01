@@ -63,6 +63,16 @@ pub fn cold_open(ir: &crate::ir::Ir) -> Option<Diag> {
     if ir.tracks.is_empty() {
         return None;
     }
+    // a time-dependent generator (noise, flow, ...) in the first scene moves from frame 0
+    let mut moving = false;
+    ir.root.walk(&mut |l| {
+        if let crate::ir::Kind::Gen(c) = &l.kind {
+            moving |= agentfx_ir::generator::kind(&c.kind).is_some_and(|k| k.time) && c.start <= 2.0 / ir.fps;
+        }
+    });
+    if moving {
+        return None;
+    }
     let mut first: Option<f64> = None;
     for track in &ir.tracks {
         let mut track_first: Option<f64> = None;

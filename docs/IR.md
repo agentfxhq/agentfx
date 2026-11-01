@@ -385,6 +385,8 @@ validation errors). The kinds, their parameters, defaults and ranges are declare
 |---|---|
 | `julia` | `cx` (-0.8), `cy` (0.156): c; `re`, `im` (0, 0): view centre; `zoom` (1), `depth` (0), `turn` (0 deg), `iter` (300), `bailout` (64), `color-speed` (1), `color-offset` (0), `aa` (2) |
 | `mandelbrot` | `re` (-0.6), `im` (0), `zoom`, `depth`, `turn`, `iter`, `bailout`, `color-speed`, `color-offset`, `aa` as above |
+| `noise` | `re`, `im` (0, 0): view centre; `zoom` (1), `turn` (0 deg), `warp` (2.5), `octaves` (4), `flow` (0.25 /s), `color-speed` (1), `color-offset` (0), `aa` (2); time-dependent |
+
 
 Unit space: origin at the rect centre, v from -1 (top) to 1 (bottom), u scaled like v. Fractals map
 it to the complex plane as `centre + rotate(turn) * (u, -v) * half / (zoom * 2^depth)` (half = 1.3
@@ -400,7 +402,8 @@ ice mono`) into stops.
 
 Tracks `gen.<param>` (number) animate any parameter (`gen.zoom`, `gen.cx`, ...); values are clamped
 to the declared range. `time_offset` (s) is added to t for kinds that change with time itself
-(none of the fractals do). **Planner.** Bounds = `rect`; signature = the parameter values at t
+(`noise` does; the compiler sets it to minus the start of the layer's scene, so it
+runs on scene time). **Planner.** Bounds = `rect`; signature = the parameter values at t
 (plus t for time-dependent kinds); a generator without `gen.*` tracks is static and cached at rest.
 
 **Precision.** The CPU reference runs in f64 (Mandelbrot zooms to about 1e12). The GPU kernels

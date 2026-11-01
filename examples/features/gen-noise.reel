@@ -1,0 +1,10 @@
+// Generators: liquid neon. Domain-warped fBm (two-level warp) flowing with time, the warp breathing, the palette cycling.
+video "Liquid neon" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #000000
+
+scene oil dur=6s
+  gen #n kind=noise flow=0.25 palette=neon
+  anim #n warp 0s:2.2 3s:3.2 6s:2.2 ease=inout-sine
+  anim #n color-offset 0s:0 6s:0.5 ease=linear
+  anim #n turn 0s:0 6s:12 ease=inout-sine

@@ -527,6 +527,8 @@ the subtree as exact vectors (so the settle frame is crisp, and rest frames are 
 | `sweep` | `pos` 0..1, `angle` deg, `width` px, `color`, `strength` | pos, angle, width, strength |
 | `rays` | `light` [x, y], `length` 0..0.95, `color`, `strength` | lx, ly, length, strength |
 | `color` | `brightness` (x, default 1), `saturate` (default 1), `contrast` (default 1), `hue` (deg), `tint?` RGBA + `tint_amount` (default 1), `levels?` [in_black, in_white, gamma, out_black, out_white] 0..1, `lut?` (`.cube` 3D LUT path relative to the IR file) | brightness, saturate, contrast, hue, tint (= tint_amount) |
+| `glass` | alpha-derived lens: `strength` px, `blur`, `dispersion`, `thickness`, `highlight`, `rim`, `tint?` | all numeric fields |
+| `optics` | `streak`, `bokeh`, `distortion`, `aberration`, `vignette`, `halation`, `grain`, `seed` | all numeric fields except seed |
 
 `color` works in straight sRGB on the unpremultiplied pixel, in this order, each step
 clamped to 0..1 like a CSS filter chain: brightness, saturate, contrast, hue-rotate (the
@@ -539,6 +541,15 @@ an all-identity effect leaves the pixels bit-exact.
 Effects render the node's subtree offscreen, apply the list in order and composite
 the result with the node's clips/opacity/blend. A subtree that is static inside and
 only moves rigidly reuses its filtered raster (placed bilinearly at fractional offsets).
+
+`glass` obtains a screen-space normal from the subtree alpha, then samples the already-composited
+paint below the layer through that normal. Its normalized alpha is the lens coverage, so a
+translucent fill still creates a full lens while its own colors are never used as the sampled
+image. Optional frost, chromatic dispersion, tint, highlight and rim are applied after that
+backdrop lookup.
+`optics` is an ordered lens finish on the subtree: radial barrel or pincushion distortion and
+edge aberration, bright-area streak and bokeh sampling, red-orange halation, vignette and
+seeded film grain. Both effects are deterministic for a fixed IR and frame number.
 
 ### Looks and light (X8, X6)
 

@@ -28,6 +28,8 @@ pub enum Look {
     Vhs { amount: f64, seed: u64 },
     Dither { levels: f64, mode: String, size: u32, palette: Option<Vec<Rgba>> },
     Ascii { cell: f64, charset: String, color: String, bg: Rgba },
+    Glass { strength: f64, blur: f64, dispersion: f64, thickness: f64, highlight: f64, rim: f64, tint: Option<Rgba> },
+    Optics { streak: f64, bokeh: f64, distortion: f64, aberration: f64, vignette: f64, halation: f64, grain: f64, seed: u64 },
     Riso { inks: Vec<Rgba>, seed: u64, misreg: f64, drift: f64, speed: f64, grain: f64, density: f64, paper: Option<Rgba> },
     Halftone { cell: f64, angle: f64, cmyk: bool, ink: Rgba, paper: Option<Rgba> },
     Grain { amount: f64, seed: u64, live: bool, size: f64 },
@@ -63,6 +65,8 @@ impl Look {
             Look::Vhs { .. } => 11,
             Look::Dither { .. } => 12,
             Look::Ascii { .. } => 13,
+            Look::Glass { .. } => 14,
+            Look::Optics { .. } => 15,
         }
     }
 }
@@ -84,9 +88,11 @@ pub const LOOK_KEYS: &[&str] = &[
     "ascii", "ascii-charset", "ascii-color", "ascii-bg",
     "kaleido", "kaleido-angle", "kaleido-zoom", "kaleido-amount", "kaleido-center", "kaleido-mirror",
     "tunnel", "tunnel-depth", "tunnel-speed", "tunnel-twist", "tunnel-angle", "tunnel-radius", "tunnel-fog", "tunnel-fog-color", "tunnel-center", "tunnel-map",
+    "glass", "glass-blur", "glass-dispersion", "glass-thickness", "glass-highlight", "glass-rim", "glass-tint",
+    "optics", "streak", "bokeh", "distortion", "aberration", "vignette", "halation", "film-grain",
     "shadow", "rays", "rays-length", "rays-strength", "rays-color",
 ];
-const PREFIXES: &[&str] = &["riso-", "halftone-", "grain-", "paper-", "rays-", "light-", "rgbsplit-", "glitch-", "vhs-", "dither-", "ascii-", "kaleido-", "tunnel-"];
+const PREFIXES: &[&str] = &["riso-", "halftone-", "grain-", "paper-", "rays-", "light-", "rgbsplit-", "glitch-", "vhs-", "dither-", "ascii-", "kaleido-", "tunnel-", "glass-", "optics-"];
 const SHADOW_ARGS: &[&str] = &["light", "height", "opacity", "color"];
 
 fn rgba(r: f64, g: f64, b: f64, a: f64) -> Rgba {
@@ -323,6 +329,25 @@ impl<'a> Ctx<'a> {
                 self.set_base(i, Ch::TunnelRadius, TV::N(r));
             }
             looks.push(Look::Tunnel { amount, depth, speed, twist, angle, radius, fog, fog_color, center, map });
+        }
+        if n.props.contains_key("glass") {
+            let strength = self.look_range(n, "glass", 12.0, 0.0, 200.0);
+            let blur = self.look_range(n, "glass-blur", 0.0, 0.0, 100.0);
+            let dispersion = self.look_range(n, "glass-dispersion", 0.0, 0.0, 100.0);
+            let thickness = self.look_range(n, "glass-thickness", 1.0, 0.0, 10.0);
+            let highlight = self.look_range(n, "glass-highlight", 0.15, 0.0, 1.0);
+            let rim = self.look_range(n, "glass-rim", 0.2, 0.0, 1.0);
+            for (ch, value) in [(Ch::Glass, strength), (Ch::GlassBlur, blur), (Ch::GlassDispersion, dispersion), (Ch::GlassThickness, thickness), (Ch::GlassHighlight, highlight), (Ch::GlassRim, rim)] {
+                self.set_base(i, ch, TV::N(value));
+            }
+            looks.push(Look::Glass { strength, blur, dispersion, thickness, highlight, rim, tint: self.look_color(n, "glass-tint") });
+        }
+        if n.props.contains_key("optics") || ["streak", "bokeh", "distortion", "aberration", "vignette", "halation", "film-grain"].iter().any(|k| n.props.contains_key(*k)) {
+            let (streak, bokeh, distortion, aberration, vignette, halation, grain) = (self.look_range(n, "streak", 0.0, 0.0, 4.0), self.look_range(n, "bokeh", 0.0, 0.0, 40.0), self.look_range(n, "distortion", 0.0, -2.0, 2.0), self.look_range(n, "aberration", 0.0, 0.0, 4.0), self.look_range(n, "vignette", 0.0, 0.0, 1.0), self.look_range(n, "halation", 0.0, 0.0, 2.0), self.look_range(n, "film-grain", 0.0, 0.0, 1.0));
+            for (ch, value) in [(Ch::Streak, streak), (Ch::Bokeh, bokeh), (Ch::Distortion, distortion), (Ch::Aberration, aberration), (Ch::Vignette, vignette), (Ch::Halation, halation), (Ch::FilmGrain, grain)] {
+                self.set_base(i, ch, TV::N(value));
+            }
+            looks.push(Look::Optics { streak, bokeh, distortion, aberration, vignette, halation, grain, seed });
         }
         // soft shadow (the other `shadow=` forms are box/drop shadows, `common`)
         if let Some(raw) = n.props.get("shadow").map(|v| v.raw()) {

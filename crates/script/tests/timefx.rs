@@ -75,6 +75,19 @@ fn layer_map_is_hidden_and_resolved() {
 }
 
 #[test]
+fn temporal_glitch_lowers_and_is_seed_deterministic() {
+    let src = std::fs::read_to_string(Path::new(env!("AGENTFX_ROOT")).join("examples/features/temporal-glitch.reel")).unwrap();
+    let (ir, diags) = compile_src(&src);
+    assert!(diags.iter().all(|d| d.severity != Severity::Error), "{diags:#?}");
+    let a = agentfx_ir(&ir);
+    let b = agentfx_ir(&ir);
+    assert_eq!(serde_json::to_string(&a).unwrap(), serde_json::to_string(&b).unwrap());
+    let signal = a.nodes.iter().position(|n| n.name == "signal").unwrap();
+    assert!(matches!(a.nodes[signal].time, Some(TimeFx::TemporalGlitch { seed: 17, .. })));
+    assert!(agentfx_ir::validate::validate(&a, Path::new("/")).is_ok());
+}
+
+#[test]
 fn lint_explains_time_mistakes() {
     let src = "video \"m\" size=640x360 fps=30 captions=off\nscene s dur=2s\n  rect #r w=200 h=100 x=50% y=50% fill=#ff0000\n  @0s slitscan #r axis=z span=1s\n  @0s echo #r n=6 dt=50ms decy=0.5\n  @0s timedisplace #r map=radail\n";
     let (_, diags) = compile_src(src);

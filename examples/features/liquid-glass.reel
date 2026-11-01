@@ -1,0 +1,11 @@
+// Alpha-derived liquid glass, best used on a translucent shape or layer over visible detail.
+video "Liquid glass" size=1280x720 fps=30 captions=off
+scene glass dur=3s bg=#18203a
+  text #behind "REFRACT" x=50% y=50% anchor=center size=170 weight=900 color=#FFB86B
+    anim x 0s:38% 3s:62%~in-out-sine
+    when portrait
+      set #behind size=70
+  rect #lens x=320 y=180 w=640 h=360 radius=44 fill=#FFFFFF18 glass=18 glass-blur=1 glass-dispersion=3 glass-thickness=1.4 glass-highlight=0.18 glass-rim=0.22 glass-tint=#BDE8FF18
+    anim scale 0s:0.7 3s:0.9~in-out-sine
+    when portrait
+      set #lens x=50% y=50% w=320 h=360 anchor=center

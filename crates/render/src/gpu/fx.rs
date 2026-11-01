@@ -19,10 +19,11 @@ const COMP: &str = include_str!("comp.wgsl");
 const SHADOW: &str = include_str!("shadow.wgsl");
 const DIGITAL: &str = include_str!("digital.wgsl");
 const WARP: &str = include_str!("warp.wgsl");
+const LENS: &str = include_str!("lens.wgsl");
 
 /// Is this look/light effect ported (whatever the routing)?
 pub fn ported(e: &Effect) -> bool {
-    matches!(e, Effect::Riso { .. } | Effect::Halftone { .. } | Effect::Shadow { .. } | Effect::Rays { .. } | Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Grain { .. })
+    matches!(e, Effect::Riso { .. } | Effect::Halftone { .. } | Effect::Shadow { .. } | Effect::Rays { .. } | Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Grain { .. } | Effect::Glass { .. } | Effect::Optics { .. })
 }
 
 fn fx_name(e: &Effect) -> &'static str {
@@ -38,12 +39,14 @@ fn fx_name(e: &Effect) -> &'static str {
         Effect::Blur { .. } => "blur",
         Effect::DropShadow { .. } => "drop-shadow",
         Effect::Glow { .. } => "glow",
+        Effect::Glass { .. } => "glass",
+        Effect::Optics { .. } => "optics",
         _ => "",
     }
 }
 
 /// Every ported effect (the default of `AGENTFX_GPU_FX`).
-pub const ALL_FX: &str = "riso,halftone,rays,shadow,rgbsplit,glitch,vhs,grain,blur,drop-shadow,glow,kaleido,tunnel";
+pub const ALL_FX: &str = "riso,halftone,rays,shadow,rgbsplit,glitch,vhs,grain,glass,optics,blur,drop-shadow,glow,kaleido,tunnel";
 
 /// `AGENTFX_GPU_FX=riso,halftone,...` picks the effects that may start a chain (move the
 /// frame to the GPU); default: all ported effects (`ALL_FX`). A chain starts only for a
@@ -70,7 +73,7 @@ fn start_px(name: &str) -> usize {
 /// Effects that join an active chain even when not `enabled` (`AGENTFX_GPU_JOIN=0`: never).
 fn joins(name: &str) -> bool {
     static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_JOIN").map_or(true, |v| v != "0")) && matches!(name, "blur" | "drop-shadow" | "glow" | "rgbsplit" | "glitch" | "vhs" | "grain" | "kaleido" | "tunnel")
+    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_JOIN").map_or(true, |v| v != "0")) && matches!(name, "blur" | "drop-shadow" | "glow" | "rgbsplit" | "glitch" | "vhs" | "grain" | "glass" | "optics" | "kaleido" | "tunnel")
 }
 
 /// `AGENTFX_GPU_RESIDENT=0`: read the frame back after every GPU effect (no residency
@@ -84,6 +87,7 @@ fn resident() -> bool {
 #[derive(Clone)]
 enum Op {
     Look(Effect, [f64; NPARAM], FxCtx),
+    Glass(Effect, [f64; NPARAM], FxCtx, Vec<u8>, u8),
     Blur(f64),
     DropShadow([f64; 4], f64, i64, i64),
     Glow([f64; 4], f64, f64),
@@ -94,6 +98,7 @@ impl Op {
     fn name(&self) -> &'static str {
         match self {
             Op::Look(e, ..) => fx_name(e),
+            Op::Glass(..) => "glass",
             Op::Blur(..) => "blur",
             Op::DropShadow(..) => "drop-shadow",
             Op::Glow(..) => "glow",
@@ -104,6 +109,7 @@ impl Op {
     fn cpu(&self, buf: &mut [u8], w: usize, h: usize) {
         match self {
             Op::Look(e, p, cx) => crate::look::apply(e, p, buf, w, h, cx),
+            Op::Glass(e, p, cx, backdrop, _) => crate::look::apply_with_backdrop(e, p, buf, Some(backdrop), w, h, cx),
             Op::Blur(sigma) => crate::effects::blur(buf, w, h, *sigma),
             Op::DropShadow(c, sigma, dx, dy) => crate::effects::drop_shadow(buf, w, h, *c, *sigma, *dx, *dy),
             Op::Glow(c, k, sigma) => crate::effects::glow(buf, w, h, *c, *k, *sigma),
@@ -207,6 +213,13 @@ impl Chain {
             }
         }
         self.step(Op::Look(e.clone(), *p, *cx), buf, w, h)
+    }
+
+    /// A glass layer needs both its alpha-derived lens surface and the pixels already
+    /// composited below it. The backdrop is captured by vraster in the same screen rect.
+    pub fn glass(&mut self, e: &Effect, p: &[f64; NPARAM], buf: &mut [u8], backdrop: &[u8], w: usize, h: usize, cx: &FxCtx) -> bool {
+        let max_alpha = buf.chunks_exact(4).map(|v| v[3]).max().unwrap_or(0).max(1);
+        self.step(Op::Glass(e.clone(), *p, *cx, backdrop.to_vec(), max_alpha), buf, w, h)
     }
 
     /// effects::blur on the GPU; false: run it on the CPU (buffer current).
@@ -385,8 +398,12 @@ fn encode(a: &mut Active, op: &Op, _host: Option<&[u8]>) -> anyhow::Result<()> {
             Effect::Rays { color, .. } => rays(a, cx, p, *color),
             Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } => digital(a, e, p, cx),
             Effect::Grain { seed, live, size, .. } => grain(a, cx, p[0], *seed, *live, *size),
+            Effect::Glass { .. } => anyhow::bail!("glass requires a backdrop"),
+            Effect::Optics { seed, .. } => lens_optics(a, p, *seed, cx),
             _ => anyhow::bail!("not ported"),
         },
+        Op::Glass(Effect::Glass { tint, .. }, p, _, backdrop, max_alpha) => lens_glass(a, p, *tint, backdrop, *max_alpha),
+        Op::Glass(..) => anyhow::bail!("invalid glass operation"),
         Op::Blur(sigma) => {
             let px = a.px.clone();
             blur_any(a, &px, *sigma);
@@ -401,14 +418,62 @@ fn encode(a: &mut Active, op: &Op, _host: Option<&[u8]>) -> anyhow::Result<()> {
     }
 }
 
+fn lens_glass(a: &mut Active, p: &[f64; NPARAM], tint: Option<[f64; 4]>, backdrop: &[u8], max_alpha: u8) -> anyhow::Result<()> {
+    let mut q = Params::default();
+    q.u(0, a.w as u32).u(1, a.h as u32);
+    for (i, v) in p[..6].iter().enumerate() { q.f(i + 2, *v as f32); }
+    for (i, v) in tint.unwrap_or([0.0; 4]).iter().enumerate() { q.f(i + 8, *v as f32); }
+    q.f(12, max_alpha as f32);
+    let out = a.g.buffer((a.w * a.h * 4) as u64);
+    let px = a.px.clone();
+    let bg = a.upload(backdrop);
+    a.job.pass("lens", LENS, 3, "glass", &q, &[&px, &out, &bg], [a.w as u32, a.h as u32]);
+    a.temps.push(std::mem::replace(&mut a.px, out));
+    Ok(())
+}
+
+fn lens_optics(a: &mut Active, p: &[f64; NPARAM], seed: u64, cx: &FxCtx) -> anyhow::Result<()> {
+    let mut q = Params::default();
+    q.u(0, a.w as u32).u(1, a.h as u32);
+    for (i, v) in p[..7].iter().enumerate() { q.f(i + 2, *v as f32); }
+    q.u(9, seed as u32).i(10, cx.ox).i(11, cx.oy).u(12, cx.frame);
+    let out = a.g.buffer((a.w * a.h * 4) as u64);
+    let px = a.px.clone();
+    // The shared lens module declares a backdrop binding for glass. Optics does not use
+    // it, but give the validation layer a distinct read buffer rather than aliasing `px`.
+    let spare = a.temp((a.w * a.h * 4) as u64);
+    a.job.enc.copy_buffer_to_buffer(&px, 0, &spare, 0, (a.w * a.h * 4) as u64);
+    a.job.pass("lens", LENS, 3, "optics", &q, &[&px, &out, &spare], [a.w as u32, a.h as u32]);
+    a.temps.push(std::mem::replace(&mut a.px, out));
+    Ok(())
+}
+
 /// Run one effect on a given device regardless of mode/routing (tests, benchmarks).
 #[allow(dead_code)]
 pub fn apply_on(g: &'static Gpu, e: &Effect, p: &[f64; NPARAM], buf: &mut [u8], w: usize, h: usize, cx: &FxCtx) -> anyhow::Result<bool> {
     let mut c = Chain::on(g);
-    if !c.look(e, p, buf, w, h, cx) {
+    let ran = if matches!(e, Effect::Glass { .. }) {
+        let backdrop = buf.to_vec();
+        c.glass(e, p, buf, &backdrop, w, h, cx)
+    } else {
+        c.look(e, p, buf, w, h, cx)
+    };
+    if !ran {
         return Ok(false);
     }
     c.finish(buf)?;
+    Ok(true)
+}
+
+/// Run glass with an explicit already-composited backdrop (the renderer path and the
+/// conformance test both use this rather than treating the lens pixels as the backdrop).
+#[allow(dead_code)]
+pub fn apply_glass_on(g: &'static Gpu, e: &Effect, p: &[f64; NPARAM], lens: &mut [u8], backdrop: &[u8], w: usize, h: usize, cx: &FxCtx) -> anyhow::Result<bool> {
+    let mut c = Chain::on(g);
+    if !c.glass(e, p, lens, backdrop, w, h, cx) {
+        return Ok(false);
+    }
+    c.finish(lens)?;
     Ok(true)
 }
 
@@ -1084,6 +1149,12 @@ pub(crate) mod tests {
         let mut p = [0.0; NPARAM];
         p[..4].copy_from_slice(&[150.0, 60.0, 0.6, 0.9]);
         out.push(("rays", Effect::Rays { color: [1.0, 0.9, 0.7, 1.0], light: [150.0, 60.0], length: 0.6, strength: 0.9 }, p));
+        let mut p = [0.0; NPARAM];
+        p[..6].copy_from_slice(&[15.0, 1.0, 2.0, 1.3, 0.14, 0.2]);
+        out.push(("glass", Effect::Glass { strength: 15.0, blur: 1.0, dispersion: 2.0, thickness: 1.3, highlight: 0.14, rim: 0.2, tint: Some([0.72, 0.9, 1.0, 0.12]) }, p));
+        let mut p = [0.0; NPARAM];
+        p[..7].copy_from_slice(&[0.7, 1.5, 0.1, 0.6, 0.4, 0.25, 0.1]);
+        out.push(("optics", Effect::Optics { streak: 0.7, bokeh: 1.5, distortion: 0.1, aberration: 0.6, vignette: 0.4, halation: 0.25, grain: 0.1, seed: 7 }, p));
         out
     }
 
@@ -1234,6 +1305,27 @@ pub(crate) mod tests {
             // (a +-1 from one kernel can move a posterized glitch block across a level: the
             // chain's bound is on the share of channels, not the maximum)
             assert!(psnr >= 45.0 && over <= 1e-4, "digital chain: max {mx}, psnr {psnr:.1}, >1: {over}");
+        }
+    }
+
+    #[test]
+    fn gpu_lenses_match_cpu_within_one_lsb() {
+        let Some(g) = device() else { return };
+        let c = cx(37, -11);
+        for (name, e, p) in effects().into_iter().filter(|(_, e, _)| matches!(e, Effect::Glass { .. } | Effect::Optics { .. })) {
+            let img = poster(403, 297, false);
+            let mut cpu = img.clone();
+            let backdrop = poster(403, 297, true);
+            if matches!(e, Effect::Glass { .. }) {
+                crate::look::apply_with_backdrop(&e, &p, &mut cpu, Some(&backdrop), 403, 297, &c);
+            } else {
+                crate::look::apply(&e, &p, &mut cpu, 403, 297, &c);
+            }
+            let mut gpu = img;
+            let ran = if matches!(e, Effect::Glass { .. }) { apply_glass_on(g, &e, &p, &mut gpu, &backdrop, 403, 297, &c) } else { apply_on(g, &e, &p, &mut gpu, 403, 297, &c) };
+            assert!(ran.unwrap(), "{name}: not run on GPU");
+            let mx = cpu.iter().zip(&gpu).map(|(a, b)| a.abs_diff(*b)).max().unwrap_or(0);
+            assert!(mx <= 1, "{name}: CPU/GPU max channel difference {mx}");
         }
     }
 

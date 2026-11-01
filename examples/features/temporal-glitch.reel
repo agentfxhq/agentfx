@@ -1,0 +1,10 @@
+// Deterministic frame-history block reuse. The same seed produces the same frames.
+video "Temporal glitch" size=1280x720 fps=30 captions=off
+scene glitch dur=3s bg=#10121d
+  layer #signal x=0 y=0 w=100% h=100%
+    text #word "SIGNAL" x=50% y=50% anchor=center size=190 weight=900 color=#75F6D4
+      anim x 0s:25% 1.5s:75%~in-out-sine 3s:25%~in-out-sine
+      anim scale 0s:0.65 1.5s:1.35~in-out-sine 3s:0.65~in-out-sine
+      when portrait
+        set #word size=100
+  @0s temporalglitch #signal span=0.35s block=28 intensity=1 smear=0.75 stutter=0.12 rgb=0.5 scanline=0.3 seed=17

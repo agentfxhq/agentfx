@@ -1,0 +1,6 @@
+// Each optics field is optional. This combines the cinematic finishing controls.
+video "Cinematic optics" size=1280x720 fps=30 captions=off
+scene optics dur=3s bg=#0A0A12 optics streak=0.7 bokeh=1.5 distortion=0.12 aberration=0.7 vignette=0.55 halation=0.3 film-grain=0.12 seed=8
+  text #title "NIGHT DRIVE" x=50% y=50% anchor=center size=130 weight=900 color=#FFF2D2
+    anim y 0s:48% 3s:52%~in-out-sine
+  ellipse #sun x=50% y=28% w=180 h=180 fill=#FF7A45

@@ -5,6 +5,30 @@ use super::{Gpu, Job, Params};
 use std::collections::HashMap;
 
 const TIME: &str = include_str!("time.wgsl");
+const TEMPORAL: &str = include_str!("temporal.wgsl");
+
+/// Composite a bounded set of history rasters for `TemporalGlitch` on the GPU. History
+/// generation remains in the renderer so seekability and segment independence are unchanged.
+#[allow(clippy::too_many_arguments)]
+pub fn temporal_glitch(g: &'static Gpu, frames: &[&[u8]], w: usize, h: usize, ox: i32, oy: i32, block: i32, intensity: f64, smear: f64, stutter: f64, rgb: f64, scanline: f64, seed: u32, frame: u32) -> anyhow::Result<Vec<u8>> {
+    anyhow::ensure!(frames.len() >= 2 && frames.iter().all(|x| x.len() == w * h * 4), "invalid temporal history rasters");
+    let mut bytes = Vec::with_capacity(frames.len() * w * h * 4);
+    for px in frames { bytes.extend_from_slice(px); }
+    let mut p = Params::default();
+    p.u(0, w as u32).u(1, h as u32).u(2, frames.len() as u32).i(3, block.max(1));
+    p.f(4, intensity as f32).f(5, smear as f32).f(6, stutter as f32).f(7, rgb as f32).f(8, scanline as f32);
+    p.u(9, seed).i(10, ox).i(11, oy).u(12, frame);
+    let mut job = Job::new(g);
+    let input = job.upload(&bytes);
+    let out = g.buffer((w * h * 4) as u64);
+    job.pass("temporal", TEMPORAL, 2, "temporal_glitch", &p, &[&input, &out], [w as u32, h as u32]);
+    let mut result = vec![0u8; w * h * 4];
+    job.read(&out, result.len());
+    let r = job.finish(&mut [&mut result]);
+    g.give(input);
+    g.give(out);
+    r.map(|()| result)
+}
 
 /// How the gather finds a pixel's grid coordinate.
 pub enum Coord<'a> {
@@ -151,6 +175,34 @@ pub fn gather_cpu(coord: &Coord, jlo: i32, rasters: &[&[u8]], fw: usize, dx: usi
 mod tests {
     use super::*;
 
+    fn temporal_cpu(frames: &[Vec<u8>], w: usize, h: usize, ox: i32, oy: i32, block: i32, intensity: f64, smear: f64, stutter: f64, rgb: f64, scanline: f64, seed: u32, frame: u32) -> Vec<u8> {
+        let mut out = vec![0; w * h * 4];
+        let seed = seed ^ frame.wrapping_mul(0x9e37_79b9);
+        let pick = |a: i32, b: i32, salt: u32| 1 + (crate::look::hash(a, b, seed ^ salt) as usize % (frames.len() - 1));
+        for y in 0..h {
+            for x in 0..w {
+                let i = (y * w + x) * 4;
+                let bx = (ox + x as i32).div_euclid(block);
+                let by = (oy + y as i32).div_euclid(block);
+                let mut history = if crate::look::unit(crate::look::hash(bx, by, seed)) < smear as f32 { pick(bx, by, 0x6319) } else { 0 };
+                if crate::look::unit(crate::look::hash(0, oy + y as i32, seed ^ 0xa51c)) < scanline as f32 { history = pick(0, oy + y as i32, 0x7f4a); }
+                if crate::look::unit(crate::look::hash(0, 0, seed ^ 0x91e1)) < stutter as f32 { history = pick(frame as i32, 0, 0x8831); }
+                let base = &frames[0][i..i + 4];
+                let src = &frames[history][i..i + 4];
+                let mut value = [src[0], src[1], src[2], src[3]];
+                if history == 0 { value.copy_from_slice(base); }
+                if history != 0 && rgb > 0.0 {
+                    for ch in 0..3 {
+                        let other = pick(bx + ch as i32 * 17, by, 0x1459 + ch as u32);
+                        value[ch] = ((src[ch] as f64 * (1.0 - rgb) + frames[other][i + ch] as f64 * rgb) + 0.5) as u8;
+                    }
+                }
+                for ch in 0..4 { out[i + ch] = (base[ch] as f64 * (1.0 - intensity) + value[ch] as f64 * intensity + 0.5) as u8; }
+            }
+        }
+        out
+    }
+
     /// The GPU gather equals the CPU gather (both coordinate kinds, offsets, j ranges with
     /// negative spans).
     #[test]
@@ -181,5 +233,17 @@ mod tests {
             assert!(mx <= 1, "case {k}: max diff {mx}");
             eprintln!("ring gather case {k}: max diff {mx}");
         }
+    }
+
+    #[test]
+    fn gpu_temporal_glitch_matches_cpu_within_one_lsb() {
+        let Some(g) = crate::gpu::fx::tests::device() else { return };
+        let (w, h) = (97, 61);
+        let frames: Vec<Vec<u8>> = (0..8).map(|f| (0..w * h * 4).map(|i| ((i * 17 + f * 29) & 255) as u8).collect()).collect();
+        let refs: Vec<&[u8]> = frames.iter().map(|f| &f[..]).collect();
+        let cpu = temporal_cpu(&frames, w, h, -11, 7, 13, 0.83, 0.71, 0.19, 0.42, 0.31, 17, 5);
+        let gpu = temporal_glitch(g, &refs, w, h, -11, 7, 13, 0.83, 0.71, 0.19, 0.42, 0.31, 17, 5).unwrap();
+        let mx = cpu.iter().zip(&gpu).map(|(a, b)| a.abs_diff(*b)).max().unwrap_or(0);
+        assert!(mx <= 1, "temporal glitch CPU/GPU max channel difference {mx}");
     }
 }

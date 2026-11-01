@@ -338,7 +338,7 @@ impl<'a> Ctx<'a> {
             "anim" => self.anim(e),
             "rewind" | "timemap" => self.remap_verb(e),
             "drop" | "pile" | "push" | "swing" | "shatter" => self.physics_verb(e),
-            "slitscan" | "echo" | "timedisplace" | "freeze" => self.time_verb(e),
+            "slitscan" | "echo" | "timedisplace" | "temporalglitch" | "freeze" => self.time_verb(e),
             "animate" => self.animate_verb(e),
             "pour" | "stir" | "ink" | "reveal" => self.fluid_verb(e),
             "dolly" | "orbit" => {

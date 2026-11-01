@@ -43,11 +43,13 @@ impl<'a> Painter<'a> {
         let _p = crate::prof::scope_px(match tf {
             TimeFx::Echo { .. } => "time.echo",
             TimeFx::Slitscan { .. } => "time.slitscan",
+            TimeFx::TemporalGlitch { .. } => "time.temporal-glitch",
             _ => "time.levels",
         }, o[2] as u64 * o[3] as u64);
         self.time_depth += 1;
         let r = match tf {
             TimeFx::Echo { .. } => self.echo_pixmap(view, f, n, o, matte, tf, span),
+            TimeFx::TemporalGlitch { .. } => self.temporal_glitch_pixmap(view, f, n, o, matte, tf, span),
             _ => match self.ring_pixmap(view, f, n, o, matte, tf, span) {
                 Ok(Some(px)) => Ok(px),
                 Ok(None) => self.levels_pixmap(view, f, n, o, matte, tf, span),
@@ -56,6 +58,64 @@ impl<'a> Painter<'a> {
         };
         self.time_depth -= 1;
         r
+    }
+
+    /// Deterministic temporal block reuse.  Unlike an encoder-side datamosh this renders the
+    /// subtree at prior times, which makes frame seeking and parallel segments identical.
+    #[allow(clippy::too_many_arguments)]
+    fn temporal_glitch_pixmap(&mut self, view: &View, f: usize, n: NodeId, o: [i32; 4], matte: bool, tf: &TimeFx, span: f64) -> Result<Pixmap> {
+        let TimeFx::TemporalGlitch { block, intensity, smear, stutter, rgb, scanline, seed, .. } = tf else { unreachable!() };
+        let (w, h) = (o[2] as usize, o[3] as usize);
+        let count = timefx::levels(self.scene, tf);
+        let mut frames = Vec::with_capacity(count);
+        for level in 0..count {
+            let s = self.sample(n, timefx::level_time(tf, view.t, span, level, count))?;
+            frames.push(self.sample_raster(f, n, &s, o, matte)?);
+        }
+        let edge = (*block * view.states[n].chain.max_scale()).round().clamp(1.0, 1024.0) as i32;
+        let seed = (*seed as u32) ^ ((*seed >> 32) as u32);
+        if let Some(g) = crate::gpu::get() {
+            let history: Vec<&[u8]> = frames.iter().map(|p| p.data_as_u8_slice()).collect();
+            if let Ok(data) = crate::gpu::time::temporal_glitch(g, &history, w, h, o[0], o[1], edge, *intensity, *smear, *stutter, *rgb, *scanline, seed, f as u32) {
+                let mut out = Pixmap::new(w as u16, h as u16);
+                out.data_as_u8_slice_mut().copy_from_slice(&data);
+                return Ok(out);
+            }
+        }
+        let mut out = Pixmap::new(w as u16, h as u16);
+        let seed = seed ^ (f as u32).wrapping_mul(0x9e37_79b9);
+        let pick = |a: i32, b: i32, salt: u32| -> usize { 1 + (crate::look::hash(a, b, seed ^ salt) as usize % (count - 1)) };
+        for y in 0..h {
+            for x in 0..w {
+                let i = (y * w + x) * 4;
+                let bx = (o[0] + x as i32).div_euclid(edge);
+                let by = (o[1] + y as i32).div_euclid(edge);
+                let block_hash = crate::look::unit(crate::look::hash(bx, by, seed));
+                let line_hash = crate::look::unit(crate::look::hash(0, o[1] + y as i32, seed ^ 0xa51c));
+                let mut history = if block_hash < *smear as f32 { pick(bx, by, 0x6319) } else { 0 };
+                if line_hash < *scanline as f32 { history = pick(0, o[1] + y as i32, 0x7f4a); }
+                if crate::look::unit(crate::look::hash(0, 0, seed ^ 0x91e1)) < *stutter as f32 { history = pick(f as i32, 0, 0x8831); }
+                let base = &frames[0].data_as_u8_slice()[i..i + 4];
+                let src = &frames[history].data_as_u8_slice()[i..i + 4];
+                let mut v = [0u8; 4];
+                if history == 0 {
+                    v.copy_from_slice(base);
+                } else {
+                    v.copy_from_slice(src);
+                    if *rgb > 0.0 {
+                        for ch in 0..3 {
+                            let other = pick(bx + ch as i32 * 17, by, 0x1459 + ch as u32);
+                            let q = frames[other].data_as_u8_slice()[i + ch];
+                            v[ch] = ((src[ch] as f64 * (1.0 - rgb) + q as f64 * rgb) + 0.5) as u8;
+                        }
+                    }
+                }
+                for ch in 0..4 {
+                    out.data_as_u8_slice_mut()[i + ch] = (base[ch] as f64 * (1.0 - intensity) + v[ch] as f64 * intensity + 0.5) as u8;
+                }
+            }
+        }
+        Ok(out)
     }
 
     fn sample(&self, n: NodeId, ts: f64) -> Result<Sample> {
@@ -241,7 +301,7 @@ impl<'a> Painter<'a> {
                 }
                 self.time_tile
             }
-            TimeFx::Echo { .. } => unreachable!(),
+            TimeFx::Echo { .. } | TimeFx::TemporalGlitch { .. } => unreachable!(),
         };
         // levels in use, their samples and runs of identical states
         let (mut lo, mut hi) = (nlev - 1, 0usize);
@@ -450,7 +510,7 @@ impl<'a> Painter<'a> {
                 let (a, b) = (qlo as f32 * kq, qhi as f32 * kq);
                 (None, a.min(b), a.max(b))
             }
-            TimeFx::Echo { .. } => return Ok(None),
+            TimeFx::Echo { .. } | TimeFx::TemporalGlitch { .. } => return Ok(None),
         };
         let coord = match coord_kind {
             Some(xaxis) => crate::gpu::time::Coord::Line { xaxis, c: &line },

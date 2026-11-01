@@ -37,7 +37,7 @@ pub fn margin(e: &Effect, p: &[f64; NPARAM], s: f64, frame: [f64; 2]) -> f64 {
     match e {
         Effect::Riso { drift, .. } => (p[0] + drift.abs()) * s + 2.0,
         Effect::Halftone { .. } => p[0] * s + 1.0,
-        Effect::Grain { .. } | Effect::Sweep { .. } => 0.0,
+        Effect::Grain { .. } | Effect::Sweep { .. } | Effect::Glass { .. } | Effect::Optics { .. } => 0.0,
         Effect::Paper { .. } => (3.0 * p[1] + 2.0) * s,
         Effect::Shadow { .. } => crate::light::shadow_reach(p, frame),
         Effect::Rays { .. } => crate::light::rays_reach(p, frame),
@@ -48,6 +48,13 @@ pub fn margin(e: &Effect, p: &[f64; NPARAM], s: f64, frame: [f64; 2]) -> f64 {
 
 /// Apply a look/light effect in place.
 pub fn apply(e: &Effect, p: &[f64; NPARAM], buf: &mut [u8], w: usize, h: usize, cx: &FxCtx) {
+    apply_with_backdrop(e, p, buf, None, w, h, cx)
+}
+
+/// Apply a look effect, optionally with the already-composited pixels below this layer.
+/// Glass is the only backdrop effect today. Keeping this entry point separate makes the
+/// ordinary node-effect path and the CPU/GPU conformance reference share one algorithm.
+pub fn apply_with_backdrop(e: &Effect, p: &[f64; NPARAM], buf: &mut [u8], backdrop: Option<&[u8]>, w: usize, h: usize, cx: &FxCtx) {
     if w == 0 || h == 0 {
         return;
     }
@@ -63,9 +70,89 @@ pub fn apply(e: &Effect, p: &[f64; NPARAM], buf: &mut [u8], w: usize, h: usize, 
             let cfg = crate::color::ColorCfg { brightness: p[0].max(0.0), saturate: p[1].max(0.0), contrast: p[2].max(0.0), hue: p[3], tint: *tint, tint_amount: p[4], levels: *levels, lut: lut.as_deref() };
             crate::color::apply(buf, w, h, &cfg)
         }
+        Effect::Glass { tint, .. } => {
+            if let Some(backdrop) = backdrop {
+                glass(buf, backdrop, w, h, p, *tint);
+            } else {
+                let backdrop = buf.to_vec();
+                glass(buf, &backdrop, w, h, p, *tint);
+            }
+        }
+        Effect::Optics { seed, .. } => optics(buf, w, h, p, *seed, cx),
         Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Dither { .. } | Effect::Ascii { .. } => crate::digital::apply(e, p, buf, w, h, cx),
         _ => {}
     }
+}
+
+#[inline]
+fn sample_rgba(a: &[u8], w: usize, h: usize, x: f32, y: f32, ch: usize) -> u8 {
+    let x = x.round().clamp(0.0, w.saturating_sub(1) as f32) as usize;
+    let y = y.round().clamp(0.0, h.saturating_sub(1) as f32) as usize;
+    a[(y * w + x) * 4 + ch]
+}
+
+/// Alpha-derived normals make a layer read as a small beveled lens. `backdrop` is the
+/// composited scene below it, while `buf` supplies only the lens coverage and its edge normal.
+/// The result is a source-over layer which exactly replaces the backdrop within the lens mask.
+fn glass(buf: &mut [u8], backdrop: &[u8], w: usize, h: usize, p: &[f64; NPARAM], tint: Option<[f64; 4]>) {
+    let src = buf.to_vec();
+    let max_alpha = src.chunks_exact(4).map(|v| v[3]).max().unwrap_or(0).max(1) as f32;
+    let (strength, blur, dispersion, thickness, highlight, rim) = (p[0] as f32, p[1].max(0.0) as f32, p[2] as f32, p[3].max(0.0) as f32, p[4].max(0.0) as f32, p[5].max(0.0) as f32);
+    for y in 0..h { for x in 0..w {
+        let i = (y * w + x) * 4;
+        let alpha = src[i + 3] as f32 / max_alpha;
+        // A broad alpha gradient approximates the rounded shape's signed-distance bevel:
+        // it bends detail in a visible band at the rim instead of shifting one hard pixel.
+        let bevel = (thickness * 8.0).clamp(2.0, 32.0);
+        let ax = (sample_rgba(&src, w, h, x as f32 + bevel, y as f32, 3) as f32 - sample_rgba(&src, w, h, x as f32 - bevel, y as f32, 3) as f32) / (2.0 * max_alpha);
+        let ay = (sample_rgba(&src, w, h, x as f32, y as f32 + bevel, 3) as f32 - sample_rgba(&src, w, h, x as f32, y as f32 - bevel, 3) as f32) / (2.0 * max_alpha);
+        let d = strength * thickness * alpha;
+        let edge = (ax * ax + ay * ay).sqrt().min(1.0);
+        let specular = (-ax * 0.7 - ay * 0.7).max(0.0).min(1.0) * highlight;
+        for c in 0..3 {
+            let chroma = (c as f32 - 1.0) * dispersion;
+            let mut v = sample_rgba(backdrop, w, h, x as f32 - ax * d + chroma, y as f32 - ay * d, c) as f32;
+            if blur > 0.0 { v = (v + sample_rgba(backdrop, w, h, x as f32 - ax * d + blur, y as f32 - ay * d, c) as f32 + sample_rgba(backdrop, w, h, x as f32 - ax * d - blur, y as f32 - ay * d, c) as f32) / 3.0; }
+            if let Some(t) = tint { v = v * (1.0 - t[3] as f32) + 255.0 * t[c] as f32 * t[3] as f32; }
+            v += 255.0 * (specular + rim * edge);
+            buf[i + c] = (v * alpha).clamp(0.0, 255.0) as u8;
+        }
+        buf[i + 3] = (alpha * 255.0) as u8;
+    }}
+}
+
+fn optics(buf: &mut [u8], w: usize, h: usize, p: &[f64; NPARAM], seed: u64, cx: &FxCtx) {
+    let src = buf.to_vec();
+    let (streak, bokeh, distortion, aberration, vignette, halation, grain) = (p[0] as f32, p[1] as f32, p[2] as f32, p[3] as f32, p[4] as f32, p[5] as f32, p[6] as f32);
+    for y in 0..h { for x in 0..w {
+        let i = (y * w + x) * 4; let nx = (x as f32 / w.max(1) as f32 - 0.5) * 2.0; let ny = (y as f32 / h.max(1) as f32 - 0.5) * 2.0; let r2 = (nx * nx + ny * ny).min(2.0);
+        let sx = x as f32 + nx * r2 * distortion * 30.0; let sy = y as f32 + ny * r2 * distortion * 30.0;
+        for c in 0..3 { let ca = (c as f32 - 1.0) * aberration * r2 * 8.0; let mut v = sample_rgba(&src, w, h, sx + ca, sy, c) as f32;
+            if bokeh > 0.0 { v = (v + sample_rgba(&src,w,h,sx+bokeh*3.0,sy+bokeh*2.0,c) as f32 + sample_rgba(&src,w,h,sx-bokeh*3.0,sy-bokeh*2.0,c) as f32) / 3.0; }
+            let warm = |dx: f32, dy: f32| sample_bright(&src, w, h, sx + dx, sy + dy);
+            let halo = warm(0.0, 0.0) * 0.28 + (warm(-4.0, 0.0) + warm(4.0, 0.0) + warm(0.0, -4.0) + warm(0.0, 4.0)) * 0.11 + (warm(-10.0, 0.0) + warm(10.0, 0.0) + warm(0.0, -10.0) + warm(0.0, 10.0)) * 0.035;
+            let streak_light = (sample_rgba(&src, w, h, sx - 12.0, sy, c) as f32 + sample_rgba(&src, w, h, sx + 12.0, sy, c) as f32) * 0.26
+                + (sample_rgba(&src, w, h, sx - 32.0, sy, c) as f32 + sample_rgba(&src, w, h, sx + 32.0, sy, c) as f32) * 0.16
+                + (sample_rgba(&src, w, h, sx - 76.0, sy, c) as f32 + sample_rgba(&src, w, h, sx + 76.0, sy, c) as f32) * 0.08;
+            v += halo * 255.0 * halation * if c == 0 { 0.95 } else if c == 1 { 0.22 } else { 0.04 };
+            v += streak_light * streak;
+            let n = unit(hash(cx.ox + x as i32, cx.oy + y as i32, seed as u32 ^ cx.frame)) - 0.5;
+            buf[i+c] = (v * (1.0 - vignette * r2 * 0.55) + n * grain * 42.0).clamp(0.0,255.0) as u8;
+        }
+        buf[i+3] = src[i+3];
+    }}
+}
+
+#[inline]
+fn sample_x(w: usize, x: f32) -> usize { x.round().clamp(0.0, w.saturating_sub(1) as f32) as usize }
+
+#[inline]
+fn sample_y(h: usize, y: f32) -> usize { y.round().clamp(0.0, h.saturating_sub(1) as f32) as usize }
+
+#[inline]
+fn sample_bright(a: &[u8], w: usize, h: usize, x: f32, y: f32) -> f32 {
+    let i = (sample_y(h, y) * w + sample_x(w, x)) * 4;
+    a[i].max(a[i + 1]).max(a[i + 2]) as f32 / 255.0
 }
 
 // ------------------------------------------------------------------ noise

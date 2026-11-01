@@ -17,6 +17,12 @@ pub fn on() -> bool {
     *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_PROFILE").is_ok_and(|v| v != "0"))
 }
 
+/// `AGENTFX_PROFILE=2`: also trace every offscreen effect node (name, raster rect, ms) to stderr.
+pub fn trace() -> bool {
+    static ON: OnceLock<bool> = OnceLock::new();
+    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_PROFILE").is_ok_and(|v| v == "2"))
+}
+
 #[derive(Default, Clone, Copy, Debug)]
 pub struct Acc {
     /// exclusive / inclusive wall seconds

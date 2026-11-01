@@ -2129,6 +2129,8 @@ impl<'a> Painter<'a> {
         // moves rigidly (no matte / motion blur) reuses its filtered raster, placed at the
         // new offset (bilinear for fractional moves; blurred content hides it)
         let fx_cacheable = self.use_cache && !self.dynamic_subtree[n];
+        let t_trace = crate::prof::trace().then(std::time::Instant::now);
+        let hits0 = self.stats.cache_hits;
         let (px, ox, oy, smooth) = 'px: {
             if fx_cacheable {
                 let c = k(&st.chain).as_coeffs();
@@ -2178,6 +2180,11 @@ impl<'a> Painter<'a> {
             }
             (Arc::new(self.effect_pixmap(view, f, n, o, &params, s, matte)?), o[0] as f64, o[1] as f64, false)
         };
+        if let Some(t0) = t_trace {
+            let fx: Vec<&str> = node.effects.iter().map(fx_name).collect();
+            eprintln!("fxtrace f={f} node={:?} fx={fx:?} raster={}x{} at ({:.0},{:.0}) ink=[{:.0},{:.0},{:.0},{:.0}] region=[{:.0},{:.0},{:.0},{:.0}] cacheable={fx_cacheable} hit={} ms={:.1}",
+                node.name, px.width(), px.height(), ox, oy, ink[0], ink[1], ink[2], ink[3], region[0], region[1], region[2], region[3], self.stats.cache_hits > hits0, t0.elapsed().as_secs_f64() * 1e3);
+        }
         // composite with the node's clips / opacity / blend
         let pchain = self.sched.parents[n].map(|p| k(&view.states[p].chain)).unwrap_or(Affine::IDENTITY);
         let mut pushed = 0;

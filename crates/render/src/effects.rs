@@ -138,6 +138,7 @@ pub fn blur(buf: &mut [u8], w: usize, h: usize, sigma: f64) {
 /// reduction grid), the output is produced for one crop rectangle only. Bitwise the
 /// corresponding pixels of `blur` (same reduction sums, small blur and reconstruction), for
 /// huge, mostly invisible rasters (a glow on a layer scaled far beyond the frame).
+#[derive(Clone)]
 pub struct TiledBlur {
     w: usize,
     h: usize,
@@ -200,6 +201,15 @@ impl TiledBlur {
                 }
             }
         });
+    }
+
+    /// The reduced buffer (`sw x sh`, before its blur), the reduced buffer's size, the scale
+    /// and the reduced sigma: what `finish` blurs and reconstructs (the GPU version,
+    /// `gpu::fx::tiled_finish`).
+    pub fn reduced(&self) -> (Vec<u8>, usize, usize, usize, f64) {
+        let area = (self.scale * self.scale) as u64;
+        let small = self.sums.iter().map(|&v| ((v + area / 2) / area) as u8).collect();
+        (small, self.sw, self.sh, self.scale, ((self.sigma / self.scale as f64).powi(2) - 0.25).sqrt())
     }
 
     /// The blurred pixels of crop rect (`cx`, `cy`, `cw`, `ch`) into `out` (`cw x ch`).

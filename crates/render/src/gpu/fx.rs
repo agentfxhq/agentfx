@@ -41,21 +41,42 @@ fn fx_name(e: &Effect) -> &'static str {
     }
 }
 
-/// `AGENTFX_GPU_FX=riso,halftone,shadow,rays,blur,drop-shadow,glow` picks the effects that
-/// always use the GPU (a chain starts for them). Default: riso, halftone, rays, shadow
-/// (a shadow outside a chain sends only the alpha up and the occlusion back). The others
-/// are cheap on the CPU next to a frame upload + readback, so by default they run on the
-/// GPU only when the frame is already there (they join an active chain): see `light`.
+/// Every ported effect (the default of `AGENTFX_GPU_FX`).
+pub const ALL_FX: &str = "riso,halftone,rays,shadow,rgbsplit,glitch,vhs,grain,blur,drop-shadow,glow";
+
+/// `AGENTFX_GPU_FX=riso,halftone,...` picks the effects that may start a chain (move the
+/// frame to the GPU); default: all ported effects (`ALL_FX`). A chain starts only for a
+/// buffer of at least `start_px` pixels (a shadow outside a chain sends only the alpha up
+/// and the occlusion back). Effects that are not picked still join a chain that is already
+/// on the GPU (`joins`).
 fn enabled(name: &str) -> bool {
     static ON: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
-    let list = ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_FX").unwrap_or_else(|_| "riso,halftone,rays,shadow".into()).split(',').map(|s| s.trim().to_string()).collect());
+    let list = ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_FX").unwrap_or_else(|_| ALL_FX.into()).split(',').map(|s| s.trim().to_string()).collect());
     list.iter().any(|x| x == name)
+}
+
+/// Smallest buffer (px) for which `name` moves a frame to the GPU. Blur, drop shadow and
+/// glow are cheap per pixel on the CPU next to the frame's upload + readback:
+/// `AGENTFX_GPU_BLUR_MIN_PX` (default 512 K px); the others: `AGENTFX_GPU_MIN_PX`.
+fn start_px(name: &str) -> usize {
+    static BLUR: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+    match name {
+        "blur" | "drop-shadow" | "glow" => (*BLUR.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_BLUR_MIN_PX").ok().and_then(|v| v.parse().ok()).unwrap_or(1 << 19))).max(super::min_px()),
+        _ => super::min_px(),
+    }
 }
 
 /// Effects that join an active chain even when not `enabled` (`AGENTFX_GPU_JOIN=0`: never).
 fn joins(name: &str) -> bool {
     static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_JOIN").map_or(true, |v| v != "0")) && matches!(name, "blur" | "drop-shadow" | "glow")
+    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_JOIN").map_or(true, |v| v != "0")) && matches!(name, "blur" | "drop-shadow" | "glow" | "rgbsplit" | "glitch" | "vhs" | "grain")
+}
+
+/// `AGENTFX_GPU_RESIDENT=0`: read the frame back after every GPU effect (no residency
+/// across a node's effects; for measuring what the chain saves).
+fn resident() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_RESIDENT").map_or(true, |v| v != "0"))
 }
 
 /// One effect of a chain, kept for the CPU replay (fallback, `AGENTFX_GPU_CHECK`).
@@ -207,12 +228,15 @@ impl Chain {
         if w == 0 || h == 0 {
             return None;
         }
+        // a frame that is already on the GPU: every enabled or joining effect rides along
+        if let Some(a) = self.a.as_ref().filter(|a| a.w == w && a.h == h && (enabled(name) || joins(name))) {
+            return Some(a.g);
+        }
         if !enabled(name) {
-            // cheap effects ride along on a frame that is already on the GPU
-            return self.a.as_ref().filter(|a| joins(name) && a.w == w && a.h == h).map(|a| a.g);
+            return None;
         }
         let g = super::get()?;
-        if w * h < super::min_px() {
+        if w * h < start_px(name) {
             super::CPU_ROUTED.fetch_add(1, Ordering::Relaxed);
             return None;
         }
@@ -243,6 +267,9 @@ impl Chain {
         match encode(a, &op, host) {
             Ok(()) => {
                 a.ops.push(op);
+                if !resident() {
+                    self.flush(buf);
+                }
                 true
             }
             Err(err) => {
@@ -306,7 +333,7 @@ fn give_all(g: &Gpu, temps: Vec<wgpu::Buffer>, px: wgpu::Buffer) {
     g.give(px);
 }
 
-fn fail(err: &anyhow::Error) {
+pub(crate) fn fail(err: &anyhow::Error) {
     if super::FAILED.fetch_add(1, Ordering::Relaxed) < 3 {
         eprintln!("agentfx-render: GPU effect failed, CPU fallback: {err:#}");
     }
@@ -458,6 +485,60 @@ fn under_tinted(a: &mut Active, color: [f64; 4], strength: f64, sigma: f64, dx: 
     blur_any(a, &sh, sigma);
     a.job.pass("comp", COMP, 2, "over_shift", &p, &[&px, &sh], [w as u32, h as u32]);
     Ok(())
+}
+
+/// effects::TiledBlur::finish on the GPU, bitwise: the reduced buffer `small` (sw x sh, from
+/// `TiledBlur::reduced`) blurred with `rsigma` and reconstructed at `scale` for the crop
+/// (cx, cy, cw, ch) into `out`; with `sharp` (cw x ch), the sharp layer over it (a glow).
+/// None: not for the GPU (off, below the routing threshold, limits); Some(Err): GPU error
+/// (the caller falls back to the CPU).
+#[allow(clippy::too_many_arguments)]
+pub fn tiled_finish(name: &str, small: &[u8], sw: usize, sh: usize, scale: usize, rsigma: f64, out: &mut [u8], cx: usize, cy: usize, cw: usize, ch: usize, sharp: Option<&[u8]>) -> Option<anyhow::Result<()>> {
+    if !enabled(name) || cw * ch < start_px(name) || scale > 1024 || !blur_full_res(rsigma) {
+        return None;
+    }
+    let g = super::get()?;
+    if !g.fits((cw * ch * 4) as u64) || !g.fits((sw * sh * 4) as u64) {
+        return None;
+    }
+    let _p = crate::prof::scope("gpu.fx");
+    let t = Instant::now();
+    let r = tiled_finish_on(g, small, sw, sh, scale, rsigma, out, cx, cy, cw, ch, sharp);
+    if r.is_ok() {
+        super::account(1, cw * ch, t);
+    }
+    Some(r)
+}
+
+/// `tiled_finish` on device `g` (no routing).
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn tiled_finish_on(g: &Gpu, small: &[u8], sw: usize, sh: usize, scale: usize, rsigma: f64, out: &mut [u8], cx: usize, cy: usize, cw: usize, ch: usize, sharp: Option<&[u8]>) -> anyhow::Result<()> {
+    let mut job = Job::new(g);
+    let sm = job.upload(small);
+    let tmp = g.buffer((sw * sh * 4) as u64);
+    blur_passes(&mut job, &sm, &tmp, sw, sh, rsigma).expect("full-res reduced sigma");
+    let blurred = g.buffer((cw * ch * 4) as u64);
+    let mut p = Params::default();
+    p.u(0, cw as u32).u(1, ch as u32).u(8, scale as u32).u(9, sw as u32).u(10, sh as u32).u(11, cx as u32).u(12, cy as u32);
+    job.pass("comp", COMP, 2, "up", &p, &[&blurred, &sm], [cw as u32, ch as u32]);
+    let mut bufs = vec![sm, tmp];
+    let res = if let Some(sharp) = sharp {
+        let top = job.upload(sharp);
+        let mut q = Params::default();
+        q.u(0, cw as u32).u(1, ch as u32).i(6, 0).i(7, 0);
+        job.pass("comp", COMP, 2, "over_shift", &q, &[&top, &blurred], [cw as u32, ch as u32]);
+        bufs.push(blurred);
+        top
+    } else {
+        blurred
+    };
+    job.read(&res, cw * ch * 4);
+    let r = job.finish(&mut [out]);
+    bufs.push(res);
+    for b in bufs {
+        g.give(b);
+    }
+    r
 }
 
 // ---------------------------------------------------------------- riso
@@ -1164,6 +1245,44 @@ pub(crate) mod tests {
             assert!(c.glow(&mut gpu, w, h, col, 1.7, sigma));
             c.finish(&mut gpu).unwrap();
             assert!(cpu == gpu, "glow sigma {sigma}: max diff {}", diff(&cpu, &gpu).0);
+        }
+    }
+
+    /// The GPU reconstruction of a tiled blur / glow (`tiled_finish_on`) is bitwise
+    /// TiledBlur::finish (+ the sharp layer over it), also for crops at odd offsets.
+    #[test]
+    fn gpu_tiled_finish_is_bit_exact() {
+        let Some(g) = device() else { return };
+        let (w, h) = (1500, 1500);
+        // scales 4, 32 and 256 (above the old f32 upsample's limit of 128)
+        for sigma in [30.0, 300.0, 1500.0] {
+            // (at sigma 1500 the transparent poster blurs to nothing)
+            let img = poster(w, h, sigma > 1000.0);
+            let mut tb = crate::effects::TiledBlur::new(w, h, sigma).unwrap();
+            let sc = tb.scale();
+            let t = (256 / sc).max(1) * sc;
+            for ty in (0..h).step_by(t) {
+                for tx in (0..w).step_by(t) {
+                    let (tw, th) = (t.min(w - tx), t.min(h - ty));
+                    let tile: Vec<u8> = (ty..ty + th).flat_map(|y| img[(y * w + tx) * 4..(y * w + tx + tw) * 4].to_vec()).collect();
+                    tb.add(&tile, tx, ty, tw, th);
+                }
+            }
+            let (cx, cy, cw, ch) = (sc * 3 % w.min(97), sc % 61, 611, 333);
+            let sharp: Vec<u8> = (cy..cy + ch).flat_map(|y| img[(y * w + cx) * 4..(y * w + cx + cw) * 4].to_vec()).collect();
+            let (small, sw, sh, scale, rs) = tb.reduced();
+            for with_sharp in [false, true] {
+                let mut gpu = vec![0u8; cw * ch * 4];
+                tiled_finish_on(g, &small, sw, sh, scale, rs, &mut gpu, cx, cy, cw, ch, with_sharp.then_some(&sharp[..])).unwrap();
+                let mut cpu = vec![0u8; cw * ch * 4];
+                let tb2 = tb.clone();
+                tb2.finish(&mut cpu, cx, cy, cw, ch);
+                if with_sharp {
+                    crate::effects::over(&mut cpu, &sharp);
+                }
+                assert!(cpu == gpu, "sigma {sigma} sharp {with_sharp}: max diff {}", diff(&cpu, &gpu).0);
+                assert!(cpu.iter().any(|&v| v != 0), "bad fixture (sigma {sigma}, sharp {with_sharp}, scale {scale}, {sw}x{sh})");
+            }
         }
     }
 

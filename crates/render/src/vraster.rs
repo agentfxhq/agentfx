@@ -2080,9 +2080,21 @@ impl<'a> Painter<'a> {
             }
         }
         let mut px = Pixmap::new(cw as u16, ch as u16);
-        tb.finish(px.data_as_u8_slice_mut(), cx, cy, cw, ch);
-        if let Some(sh) = sharp {
-            effects::over(px.data_as_u8_slice_mut(), &sh);
+        // the reduced buffer's blur + reconstruction (+ the sharp layer) on the GPU when on
+        let (small, sw, sh, scale, rs) = tb.reduced();
+        let on_gpu = match crate::gpu::fx::tiled_finish(if glow { "glow" } else { "blur" }, &small, sw, sh, scale, rs, px.data_as_u8_slice_mut(), cx, cy, cw, ch, sharp.as_deref()) {
+            Some(Ok(())) => true,
+            Some(Err(e)) => {
+                crate::gpu::fx::fail(&e);
+                false
+            }
+            None => false,
+        };
+        if !on_gpu {
+            tb.finish(px.data_as_u8_slice_mut(), cx, cy, cw, ch);
+            if let Some(sh) = sharp {
+                effects::over(px.data_as_u8_slice_mut(), &sh);
+            }
         }
         Ok(Some((px, o[0] + cx as i32, o[1] + cy as i32)))
     }

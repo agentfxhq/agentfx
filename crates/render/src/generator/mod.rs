@@ -16,9 +16,11 @@
 //!
 //! Exactness: CPU and GPU agree within 1/255 per channel when the CPU runs in f32 mode
 //! (`Input::f32`, what the conformance tests use); normal renders run the CPU in f64.
+pub mod flow;
 pub mod julia;
 pub mod mandelbrot;
 pub mod noise;
+pub mod raster;
 
 use agentfx_ir::generator::Kind;
 use agentfx_ir::{GenContent, Scene};
@@ -52,6 +54,7 @@ pub fn lookup(kind: &str) -> Option<&'static dyn Generator> {
         "julia" => &julia::Julia,
         "mandelbrot" => &mandelbrot::Mandelbrot,
         "noise" => &noise::Noise,
+        "flow" => &flow::Flow,
         _ => return None,
     })
 }

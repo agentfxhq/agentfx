@@ -89,6 +89,25 @@ pub const KINDS: &[Kind] = &[
         gpu_zoom_max: None,
         time: true,
     },
+    Kind {
+        name: "flow",
+        doc: "Glowing particle streaks through an evolving curl-noise field (additive, bloom, transparent background); CPU",
+        params: &[
+            RE0, IM0,
+            p("zoom", 1.0, 1e-3, 1e3, "field magnification (larger = wider swirls)"),
+            TURN,
+            p("particles", 1500.0, 1.0, 20000.0, "number of particles"),
+            p("trail", 0.6, 0.0, 10.0, "trail length (unit space: 2 = the rect height)"),
+            p("flow", 0.08, -100.0, 100.0, "how fast the field itself evolves (per second)"),
+            p("speed", 0.5, 0.0, 100.0, "particle speed (unit space per second; keep constant, animate flow instead)"),
+            p("thickness", 0.006, 0.0005, 0.2, "line width (unit space)"),
+            p("color-speed", 1.0, -100.0, 100.0, "palette spread across the field (0 = one colour)"),
+            OFFSET,
+        ],
+        gpu: false,
+        gpu_zoom_max: None,
+        time: true,
+    },
 ];
 
 pub fn kind(name: &str) -> Option<&'static Kind> {

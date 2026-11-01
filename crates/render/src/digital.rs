@@ -10,70 +10,139 @@ fn luma(c: [f32; 3]) -> f32 { c[0]*0.2126 + c[1]*0.7152 + c[2]*0.0722 }
 fn put(p: &mut [u8], c: [f32; 3]) {
     for i in 0..3 { p[i] = (c[i].clamp(0.0,1.0)*p[3] as f32).round() as u8; }
 }
-/// `b`: the source as unpremultiplied colour per pixel (`rgb` of each, computed once)
-fn sample(b: &[[f32; 3]], w: usize, h: usize, x: f64, y: f64) -> [f32; 3] {
-    let x=x.round().clamp(0.0,(w-1) as f64) as usize;
-    let y=y.round().clamp(0.0,(h-1) as f64) as usize;
-    b[y*w+x]
+/// Sampling tables of rgbsplit / glitch / vhs, shared by the CPU loop below and the GPU
+/// kernel (`gpu/digital.wgsl`), so both sample exactly the same pixels: every f64 position
+/// (per row, per column or per glitch block) is computed here once. A position `x + d`
+/// rounds as `x + floor(d + 0.5)` (the same as `(x + d).round()` for integer x, also
+/// after clamping to the buffer, up to f64 rounding of `x + d` within ~1e-12 of a half).
+pub(crate) struct Tab {
+    /// 0 rgbsplit, 1 glitch, 2 vhs
+    pub mode: u32,
+    /// rgbsplit: absolute clamped sample columns / rows: red x [0, w), blue x [w, 2w),
+    /// red y [2w, 2w + h), blue y [2w + h, 2w + 2h).
+    /// glitch: block column per x [0, w), block row per y [w, w + h), the row's slice
+    /// offset [w + h, w + 2h), then per block (`gw` per row) 3 words: flags (1 active,
+    /// 2 posterize), offset, red offset.
+    /// vhs: 12 words per row: 9 tap offsets (k = -4..=4), the noise row, scan, noise
+    /// amplitude (f32 bits).
+    pub t: Vec<i32>,
+    pub gw: usize,
+    /// vhs: noise column origin and seed
+    pub x0: i32,
+    pub seed: u32,
+}
+
+fn half_up(d: f64) -> i32 {
+    (d + 0.5).floor().clamp(-1e9, 1e9) as i32
+}
+
+impl Tab {
+    /// None: not one of the three (or a no-op `amount`).
+    pub(crate) fn new(e: &Effect, p: &[f64; NPARAM], w: usize, h: usize, cx: &FxCtx) -> Option<Tab> {
+        if w == 0 || h == 0 || matches!(e, Effect::Rgbsplit{..}) && p[2]<=0.0 || matches!(e, Effect::Glitch{..}|Effect::Vhs{..}) && p[0]<=0.0 { return None; }
+        let amount=p[0].clamp(0.0,1.0);
+        let clampi=|v: f64, n: usize| v.round().clamp(0.0,(n-1) as f64) as i32;
+        match e {
+            Effect::Rgbsplit {mode,..} => {
+                let k=p[2].clamp(0.0,1.0)*cx.s;
+                let radial=mode=="radial";
+                let dx=|x: usize| p[0].clamp(-200.0,200.0)*k*if radial {2.0*x as f64/w as f64-1.0} else {1.0};
+                let dy=|y: usize| p[1].clamp(-200.0,200.0)*k*if radial {2.0*y as f64/h as f64-1.0} else {1.0};
+                let mut t=Vec::with_capacity(2*w+2*h);
+                t.extend((0..w).map(|x| clampi(x as f64-dx(x),w)));
+                t.extend((0..w).map(|x| clampi(x as f64+dx(x),w)));
+                t.extend((0..h).map(|y| clampi(y as f64-dy(y),h)));
+                t.extend((0..h).map(|y| clampi(y as f64+dy(y),h)));
+                Some(Tab {mode:0,t,gw:0,x0:0,seed:0})
+            }
+            Effect::Glitch {seed,..} => {
+                let event=(p[TIME]*p[1].clamp(0.0,120.0)).floor() as i32;
+                let sd=*seed as u32 ^ (*seed>>32) as u32 ^ hash(event,0,91);
+                let block=(p[2].clamp(1.0,1024.0)*cx.s).max(1.0);
+                let bx: Vec<i32>=(0..w).map(|x| ((x as i32+cx.ox-cx.ax) as f64/block).floor() as i32).collect();
+                let by: Vec<i32>=(0..h).map(|y| ((y as i32+cx.oy-cx.ay) as f64/block).floor() as i32).collect();
+                let (gw,gh)=((bx[w-1]-bx[0]+1) as usize,(by[h-1]-by[0]+1) as usize);
+                let mut t=Vec::with_capacity(w+2*h+3*gw*gh);
+                t.extend(bx.iter().map(|v| v-bx[0]));
+                t.extend(by.iter().map(|v| v-by[0]));
+                t.extend((0..h).map(|y| {
+                    let ly=y as i32+cx.oy-cx.ay;
+                    let slice=hash(0,(ly as f64/(block*0.3).max(1.0)).floor() as i32,sd);
+                    if unit(slice)<amount as f32*0.2 { half_up((unit(slice ^ 777) as f64-0.5)*block*6.0*amount) } else {0}
+                }));
+                // (one block per pixel at the smallest block size: rows of blocks in parallel)
+                use rayon::prelude::*;
+                let base=t.len();
+                t.resize(base+3*gw*gh,0);
+                t[base..].par_chunks_mut(3*gw).enumerate().for_each(|(j,row)| for (i,b) in row.chunks_exact_mut(3).enumerate() {
+                    let n=hash(bx[0]+i as i32,by[0]+j as i32,sd);
+                    if unit(n)<amount as f32*0.55 {
+                        let shift=(unit(n ^ 0x1234) as f64-0.5)*block*4.0*amount;
+                        b.copy_from_slice(&[1|if n%5==0 {2} else {0},half_up(shift),half_up(shift+8.0*amount*cx.s)]);
+                    }
+                });
+                Some(Tab {mode:1,t,gw,x0:0,seed:0})
+            }
+            Effect::Vhs {seed,..} => {
+                let sd=*seed as u32 ^ (*seed>>32) as u32;
+                let tm=p[TIME];
+                let mut t=Vec::with_capacity(12*h);
+                for y in 0..h {
+                    let ly=(y as i32+cx.oy-cx.ay) as f64/cx.s.max(0.001);
+                    let shift=((ly*0.075+tm*3.1+unit(hash(0,0,sd)) as f64*6.0).sin()*1.8+(ly*0.011-tm*1.7).sin()*2.0)*amount*cx.s;
+                    t.extend((-4..=4).map(|k| half_up(shift+k as f64*cx.s)));
+                    let band=((ly-tm*45.0).rem_euclid(240.0)-120.0).abs();
+                    let scan: f32=if ly.floor() as i32%2==0 {0.92} else {1.0};
+                    let amp: f32=if band<10.0 {0.42} else {0.035};
+                    t.extend([ly as i32,scan.to_bits() as i32,amp.to_bits() as i32]);
+                }
+                Some(Tab {mode:2,t,gw:0,x0:cx.ox-cx.ax,seed:sd ^ (tm*60.0).floor() as u32})
+            }
+            _ => None,
+        }
+    }
 }
 
 pub fn apply(e: &Effect, p: &[f64; NPARAM], b: &mut [u8], w: usize, h: usize, cx: &FxCtx) {
     if w==0 || h==0 { return; }
-    if matches!(e, Effect::Rgbsplit{..}) && p[2]<=0.0 || matches!(e, Effect::Glitch{..}|Effect::Vhs{..}) && p[0]<=0.0 { return; }
     if let Effect::Dither {mode,size,palette,..}=e { dither(b,w,h,p[0],mode,*size,palette.as_deref(),cx); return; }
     if let Effect::Ascii {charset,color,bg,..}=e { ascii(b,w,h,(p[0].clamp(6.0,24.0)*cx.s).round().max(1.0) as usize,charset,color,bg); return; }
+    let Some(tab)=Tab::new(e,p,w,h,cx) else { return };
     // rows in parallel: every output pixel reads only `src` (bitwise the serial result);
     // the source is unpremultiplied once, not per sample
     use rayon::prelude::*;
     let src: Vec<[f32; 3]>=b.par_chunks(4).map(rgb).collect();
-    let amount=p[0].clamp(0.0,1.0);
+    let amount=p[0].clamp(0.0,1.0) as f32;
+    let t=&tab.t;
     b.par_chunks_mut(w*4).enumerate().for_each(|(y,row)| {
+        let line=&src[y*w..(y+1)*w];
+        let at=|x: usize, d: i32| line[(x as i64+d as i64).clamp(0,w as i64-1) as usize];
         for x in 0..w {
-            let original=src[y*w+x];
-            let c=match e {
-                Effect::Rgbsplit {mode,..} => {
-                    let k=p[2].clamp(0.0,1.0)*cx.s;
-                    let (rx,ry)=if mode=="radial" { (2.0*x as f64/w as f64-1.0,2.0*y as f64/h as f64-1.0) } else { (1.0,1.0) };
-                    let dx=p[0].clamp(-200.0,200.0)*k*rx;
-                    let dy=p[1].clamp(-200.0,200.0)*k*ry;
-                    [sample(&src,w,h,x as f64-dx,y as f64-dy)[0],original[1],sample(&src,w,h,x as f64+dx,y as f64+dy)[2]]
+            let original=line[x];
+            let c=match tab.mode {
+                0 => [src[t[2*w+y] as usize*w+t[x] as usize][0],original[1],src[t[2*w+h+y] as usize*w+t[w+x] as usize][2]],
+                1 => {
+                    let k=w+2*h+3*(t[w+y] as usize*tab.gw+t[x] as usize);
+                    if t[k]&1!=0 {
+                        let mut c=at(x,t[k+1]);
+                        c[0]=at(x,t[k+2])[0];
+                        if t[k]&2!=0 { c=c.map(|v| (v*3.0).round()/3.0); }
+                        c
+                    } else { at(x,t[w+h+y]) }
                 }
-                Effect::Glitch {seed,..} => {
-                    let event=(p[TIME]*p[1].clamp(0.0,120.0)).floor() as i32;
-                    let sd=*seed as u32 ^ (*seed>>32) as u32 ^ hash(event,0,91);
-                    let block=(p[2].clamp(1.0,1024.0)*cx.s).max(1.0);
-                    let lx=x as i32+cx.ox-cx.ax;
-                    let ly=y as i32+cx.oy-cx.ay;
-                    let n=hash((lx as f64/block).floor() as i32,(ly as f64/block).floor() as i32,sd);
-                    let slice=hash(0,(ly as f64/(block*0.3).max(1.0)).floor() as i32,sd);
-                    let active=unit(n)<amount as f32*0.55;
-                    let shift=if active { (unit(n ^ 0x1234) as f64-0.5)*block*4.0*amount } else if unit(slice)<amount as f32*0.2 { (unit(slice ^ 777) as f64-0.5)*block*6.0*amount } else {0.0};
-                    let mut c=sample(&src,w,h,x as f64+shift,y as f64);
-                    if active {
-                        c[0]=sample(&src,w,h,x as f64+shift+8.0*amount*cx.s,y as f64)[0];
-                        if n%5==0 { c=c.map(|v| (v*3.0).round()/3.0); }
-                    }
-                    c
-                }
-                Effect::Vhs {seed,..} => {
-                    let sd=*seed as u32 ^ (*seed>>32) as u32;
-                    let ly=(y as i32+cx.oy-cx.ay) as f64/cx.s.max(0.001);
-                    let t=p[TIME];
-                    let shift=((ly*0.075+t*3.1+unit(hash(0,0,sd)) as f64*6.0).sin()*1.8+(ly*0.011-t*1.7).sin()*2.0)*amount*cx.s;
-                    let center=sample(&src,w,h,x as f64+shift,y as f64);
-                    let lum=luma(center);
+                _ => {
+                    let r=&t[12*y..12*y+12];
+                    let lum=luma(at(x,r[4]));
                     let mut chroma=[0.0;3];
-                    for k in -4..=4 {
-                        let q=sample(&src,w,h,x as f64+shift+k as f64*cx.s,y as f64);
+                    for &d in &r[..9] {
+                        let q=at(x,d);
                         let l=luma(q);
                         for ch in 0..3 { chroma[ch]+=(q[ch]-l)/9.0; }
                     }
-                    let band=((ly-t*45.0).rem_euclid(240.0)-120.0).abs();
-                    let noise=(unit(hash(x as i32+cx.ox-cx.ax,ly as i32,sd ^ (t*60.0).floor() as u32))-0.5)*if band<10.0 {0.42} else {0.035};
-                    let scan=if ly.floor() as i32%2==0 {0.92} else {1.0};
-                    std::array::from_fn(|ch| original[ch]+amount as f32*((lum+chroma[ch]*0.86)*scan+noise-original[ch]))
+                    let noise=(unit(hash(x as i32+tab.x0,r[9],tab.seed))-0.5)*f32::from_bits(r[11] as u32);
+                    let scan=f32::from_bits(r[10] as u32);
+                    std::array::from_fn(|ch| original[ch]+amount*((lum+chroma[ch]*0.86)*scan+noise-original[ch]))
                 }
-                _ => original,
             };
             put(&mut row[x*4..x*4+4],c);
         }
@@ -176,6 +245,82 @@ mod tests {
         let mut p=[0.0;NPARAM]; for (i,f) in e.look_fields().iter().enumerate() {p[i]=e.look_field(f);if zero && *f=="amount" {p[i]=0.0;}}
         p[TIME]=t; let mut b=b.to_vec();
         apply(e,&p,&mut b,w,h,&FxCtx{ox:3,oy:7,ax:0,ay:0,s:1.0,frame:(t*30.0) as u32}); b
+    }
+    /// The per-pixel evaluation before the sampling tables (`Tab`), for the comparison below.
+    fn reference(e:&Effect,p:&[f64;NPARAM],b:&mut [u8],w:usize,h:usize,cx:&FxCtx) {
+        fn sample(b:&[[f32;3]],w:usize,h:usize,x:f64,y:f64)->[f32;3] {
+            let x=x.round().clamp(0.0,(w-1) as f64) as usize;
+            let y=y.round().clamp(0.0,(h-1) as f64) as usize;
+            b[y*w+x]
+        }
+        if matches!(e, Effect::Rgbsplit{..}) && p[2]<=0.0 || matches!(e, Effect::Glitch{..}|Effect::Vhs{..}) && p[0]<=0.0 { return; }
+        let src: Vec<[f32; 3]>=b.chunks(4).map(rgb).collect();
+        let amount=p[0].clamp(0.0,1.0);
+        for y in 0..h { for x in 0..w {
+            let original=src[y*w+x];
+            let c=match e {
+                Effect::Rgbsplit {mode,..} => {
+                    let k=p[2].clamp(0.0,1.0)*cx.s;
+                    let (rx,ry)=if mode=="radial" { (2.0*x as f64/w as f64-1.0,2.0*y as f64/h as f64-1.0) } else { (1.0,1.0) };
+                    let dx=p[0].clamp(-200.0,200.0)*k*rx;
+                    let dy=p[1].clamp(-200.0,200.0)*k*ry;
+                    [sample(&src,w,h,x as f64-dx,y as f64-dy)[0],original[1],sample(&src,w,h,x as f64+dx,y as f64+dy)[2]]
+                }
+                Effect::Glitch {seed,..} => {
+                    let event=(p[TIME]*p[1].clamp(0.0,120.0)).floor() as i32;
+                    let sd=*seed as u32 ^ (*seed>>32) as u32 ^ hash(event,0,91);
+                    let block=(p[2].clamp(1.0,1024.0)*cx.s).max(1.0);
+                    let lx=x as i32+cx.ox-cx.ax;
+                    let ly=y as i32+cx.oy-cx.ay;
+                    let n=hash((lx as f64/block).floor() as i32,(ly as f64/block).floor() as i32,sd);
+                    let slice=hash(0,(ly as f64/(block*0.3).max(1.0)).floor() as i32,sd);
+                    let active=unit(n)<amount as f32*0.55;
+                    let shift=if active { (unit(n ^ 0x1234) as f64-0.5)*block*4.0*amount } else if unit(slice)<amount as f32*0.2 { (unit(slice ^ 777) as f64-0.5)*block*6.0*amount } else {0.0};
+                    let mut c=sample(&src,w,h,x as f64+shift,y as f64);
+                    if active {
+                        c[0]=sample(&src,w,h,x as f64+shift+8.0*amount*cx.s,y as f64)[0];
+                        if n%5==0 { c=c.map(|v| (v*3.0).round()/3.0); }
+                    }
+                    c
+                }
+                Effect::Vhs {seed,..} => {
+                    let sd=*seed as u32 ^ (*seed>>32) as u32;
+                    let ly=(y as i32+cx.oy-cx.ay) as f64/cx.s.max(0.001);
+                    let t=p[TIME];
+                    let shift=((ly*0.075+t*3.1+unit(hash(0,0,sd)) as f64*6.0).sin()*1.8+(ly*0.011-t*1.7).sin()*2.0)*amount*cx.s;
+                    let center=sample(&src,w,h,x as f64+shift,y as f64);
+                    let lum=luma(center);
+                    let mut chroma=[0.0;3];
+                    for k in -4..=4 {
+                        let q=sample(&src,w,h,x as f64+shift+k as f64*cx.s,y as f64);
+                        let l=luma(q);
+                        for ch in 0..3 { chroma[ch]+=(q[ch]-l)/9.0; }
+                    }
+                    let band=((ly-t*45.0).rem_euclid(240.0)-120.0).abs();
+                    let noise=(unit(hash(x as i32+cx.ox-cx.ax,ly as i32,sd ^ (t*60.0).floor() as u32))-0.5)*if band<10.0 {0.42} else {0.035};
+                    let scan=if ly.floor() as i32%2==0 {0.92} else {1.0};
+                    std::array::from_fn(|ch| original[ch]+amount as f32*((lum+chroma[ch]*0.86)*scan+noise-original[ch]))
+                }
+                _ => original,
+            };
+            put(&mut b[(y*w+x)*4..(y*w+x)*4+4],c);
+        }}
+    }
+    #[test]
+    fn sampling_tables_are_bitwise_the_direct_evaluation() {
+        let looks=[r#"{"type":"rgbsplit","dx":5,"dy":2,"amount":1}"#, r#"{"type":"rgbsplit","dx":-17.3,"dy":4.1,"amount":0.7,"mode":"radial"}"#,
+            r#"{"type":"glitch","amount":1,"seed":42,"rate":8,"block":12}"#, r#"{"type":"glitch","amount":0.6,"seed":13,"rate":14,"block":2.5}"#,
+            r#"{"type":"vhs","amount":1,"seed":42}"#, r#"{"type":"vhs","amount":0.05,"seed":3}"#];
+        let (w,h)=(97,61); let src=source(w,h);
+        for s in looks { let e:Effect=serde_json::from_str(s).unwrap();
+            for (sc,t,ox) in [(1.0,0.0,3),(1.37,2.5,-41),(0.5,13.1,700)] {
+                let mut p=[0.0;NPARAM]; for (i,f) in e.look_fields().iter().enumerate() {p[i]=e.look_field(f);} p[TIME]=t;
+                let cx=FxCtx{ox,oy:-19,ax:5,ay:11,s:sc,frame:3};
+                let (mut a,mut b)=(src.clone(),src.clone());
+                apply(&e,&p,&mut a,w,h,&cx); reference(&e,&p,&mut b,w,h,&cx);
+                assert!(a==b,"{s} s {sc} t {t}");
+            }
+        }
     }
     #[test]
     fn determinism_identity_bounds_and_static_time() {

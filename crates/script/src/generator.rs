@@ -41,8 +41,22 @@ impl<'a> Ctx<'a> {
         };
         let mut params = BTreeMap::new();
         let all = g::param_names();
+        // lsystem: `preset=dragon` (a preset name) for its index
+        let named_preset = kind.name == "lsystem" && matches!(n.props.get("preset"), Some(crate::ast::Value::Str(_)));
+        if named_preset {
+            let raw = praw(n, "preset").unwrap_or_default();
+            match g::LSYSTEM_PRESETS.iter().position(|p| *p == raw) {
+                Some(i) => {
+                    params.insert("preset".to_string(), i as f64);
+                }
+                None => {
+                    let hint = suggest(&raw, g::LSYSTEM_PRESETS).map(|s| format!("did you mean `preset={s}`?")).unwrap_or_else(|| format!("presets: {}", g::LSYSTEM_PRESETS.join(" ")));
+                    self.err("E_GEN", format!("gen lsystem: unknown preset `{raw}`"), hint, n.span);
+                }
+            }
+        }
         for k in n.props.keys() {
-            if matches!(k.as_str(), "seed" | "palette" | "kind") {
+            if (named_preset && k == "preset") || matches!(k.as_str(), "seed" | "palette" | "kind") {
                 continue;
             }
             match kind.param(k) {

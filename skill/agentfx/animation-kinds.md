@@ -62,6 +62,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Flow-field streaks | `gen #f kind=flow particles=1500 trail=0.6` (over `bg` or a dim noise) | implemented (CPU) | energy, wind, data streams |
 | Truchet weave | `gen #t kind=truchet mode=1` + `anim #t phase 0s:0 4s:4 ease=linear` | implemented | beat-synced twists, retro grids |
 | Voronoi cells | `gen #v kind=voronoi mode=0\|1\|2` | implemented | organic tech, crystals, cell biology |
+| Growing L-systems | `gen #l kind=lsystem preset=plant\|dragon\|koch\|hilbert grow=0` + `anim #l grow 0s:0 3s:1` | implemented (CPU) | growth, "building up", reveals |
 
 ## Time
 

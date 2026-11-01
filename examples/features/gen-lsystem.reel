@@ -1,0 +1,12 @@
+// Generators: L-systems drawing themselves (grow 0 -> 1): a dragon curve, then a plant growing from its root.
+video "L-systems" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #000000
+
+scene dragon dur=3s
+  gen #d kind=lsystem preset=dragon grow=0 palette=neon
+  anim #d grow 0s:0 2.5s:1 ease=inout-sine
+  anim #d turn 0s:0 3s:15 ease=inout-sine
+scene plant dur=3s
+  gen #p kind=lsystem preset=3 grow=0 palette=acid
+  anim #p grow 0s:0 2.6s:1 ease=out-cubic

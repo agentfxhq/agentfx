@@ -44,6 +44,7 @@ const AA: Param = p("aa", 2.0, 1.0, 4.0, "supersampling: samples per pixel axis 
 const RE0: Param = p("re", 0.0, -1e6, 1e6, "view centre, horizontal (pattern units; animate to pan)");
 const IM0: Param = p("im", 0.0, -1e6, 1e6, "view centre, vertical (pattern units; animate to pan)");
 const ZOOM1: Param = p("zoom", 1.0, 1e-3, 1e3, "magnification (larger = bigger features)");
+const GROW: Param = p("grow", 1.0, 0.0, 1.0, "draw-on progress 0..1 (animate 0 -> 1)");
 const FLOW: Param = p("flow", 0.25, -100.0, 100.0, "how fast the pattern evolves with time (per second)");
 
 /// Every kind the renderer implements.
@@ -143,7 +144,29 @@ pub const KINDS: &[Kind] = &[
         gpu_zoom_max: None,
         time: true,
     },
+    Kind {
+        name: "lsystem",
+        doc: "L-system curves and plants drawn as glowing polylines (presets koch dragon sierpinski plant hilbert gosper); animate grow to draw them on; CPU",
+        params: &[
+            p("preset", 1.0, 0.0, 5.0, "0 koch (snowflake), 1 dragon, 2 sierpinski (arrowhead), 3 plant, 4 hilbert, 5 gosper"),
+            p("iter", 0.0, 0.0, 16.0, "rewriting iterations (0 = the preset's own: koch 4, dragon 11, sierpinski 7, plant 6, hilbert 6, gosper 4)"),
+            GROW,
+            p("thickness", 0.008, 0.0005, 0.2, "line width (unit space; plant branches thin out with depth)"),
+            p("re", 0.0, -100.0, 100.0, "offset, horizontal (unit space)"),
+            p("im", 0.0, -100.0, 100.0, "offset, vertical (unit space)"),
+            p("zoom", 1.0, 1e-3, 1e3, "magnification (1 = fitted into the rect)"),
+            TURN,
+            p("color-speed", 1.0, -100.0, 100.0, "palette cycles along the path (root to tip)"),
+            OFFSET,
+        ],
+        gpu: false,
+        gpu_zoom_max: None,
+        time: false,
+    },
 ];
+
+/// `lsystem` presets in `preset=` order (Reel Script also takes the names: `preset=dragon`).
+pub const LSYSTEM_PRESETS: &[&str] = &["koch", "dragon", "sierpinski", "plant", "hilbert", "gosper"];
 
 pub fn kind(name: &str) -> Option<&'static Kind> {
     KINDS.iter().find(|k| k.name == name)

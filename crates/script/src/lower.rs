@@ -96,6 +96,8 @@ pub struct Ctx<'a> {
     /// world canvases (X9) and the camera director events (applied after all other events)
     pub worlds: Vec<crate::world::WorldL>,
     pub director: Vec<Ev>,
+    /// storyboard notes (scene `note=` and `@t note "..."`), kept as IR metadata
+    pub notes: Vec<crate::ir::ShotNote>,
 }
 
 /// Geometry of a first compile pass, laid out natively (`native.rs`): boxes of named
@@ -522,6 +524,7 @@ fn compile_pass(doc0: &Document, tl: &Timeline, fmt: Option<&str>, base: &Path, 
         time_parent: HashMap::new(),
         worlds: vec![],
         director: vec![],
+        notes: vec![],
     };
     let mut stage = Layer::new("stage", Kind::Group);
     stage.layout.pos = Pos::Flow;
@@ -533,6 +536,9 @@ fn compile_pass(doc0: &Document, tl: &Timeline, fmt: Option<&str>, base: &Path, 
     for (si, sn) in scenes.iter().enumerate() {
         c.cur_scene = si;
         c.build_scene(stage, si, sn);
+        if let Some(t) = praw(sn, "note") {
+            c.notes.push(crate::ir::ShotNote { scene: si, at: c.scenes[si].start, text: t, timed: false });
+        }
     }
     // video-level components
     for n in doc.nodes.iter() {
@@ -558,6 +564,17 @@ fn compile_pass(doc0: &Document, tl: &Timeline, fmt: Option<&str>, base: &Path, 
     c.caption_pack(&scenes);
     c.captions_all();
     let mut evs = std::mem::take(&mut c.events);
+    // storyboard notes are metadata: they never reach `apply` (no tracks, no diagnostics there)
+    evs.retain(|e| {
+        if e.node.kind != "note" {
+            return true;
+        }
+        match text_arg(&e.node) {
+            Some(t) => c.notes.push(crate::ir::ShotNote { scene: e.scene, at: e.t, text: t, timed: true }),
+            None => c.diags.push(Diag::error("E_NOTE", "`note` inside an @event needs its text: `@4s note \"title scales in\"`", "write the note as a quoted string", e.node.span)),
+        }
+        false
+    });
     evs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Equal).then(a.order.cmp(&b.order)));
     for e in &evs {
         c.cur_scene = e.scene;
@@ -600,7 +617,11 @@ fn compile_pass(doc0: &Document, tl: &Timeline, fmt: Option<&str>, base: &Path, 
     let mut fonts = vec![Font { family: c.th.font.clone(), src: "Inter".into(), file: None }];
     fonts.extend(crate::textv2::custom_fonts(&doc, base, &mut c.diags));
     (Compiled {
-        ir: Ir { version: "0", format: fmt, w, h, fps: tl.fps, duration: tl.total, bg, fonts, root, tracks, hooks: c.hooks, audio: c.audio, quant: Quant::default() },
+        ir: Ir { version: "0", format: fmt, w, h, fps: tl.fps, duration: tl.total, bg, fonts, root, tracks, hooks: c.hooks, audio: c.audio, quant: Quant::default(), notes: {
+            let mut n = std::mem::take(&mut c.notes);
+            n.sort_by(|a, b| a.at.partial_cmp(&b.at).unwrap_or(std::cmp::Ordering::Equal));
+            n
+        } },
         diags: c.diags,
     }, need, names, lines)
 }

@@ -9,7 +9,7 @@ fn ir_with(children: Vec<Layer>, tracks: Vec<Track>, dur: f64) -> Ir {
     root.children = children;
     Ir {
         version: "test", format: "16:9".into(), w: 1920, h: 1080, fps: 30.0, duration: dur,
-        bg: Rgba { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }, fonts: vec![], root, tracks, hooks: vec![], audio: vec![], quant: Quant::default(),
+        bg: Rgba { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }, fonts: vec![], root, tracks, hooks: vec![], audio: vec![], quant: Quant::default(), notes: vec![],
     }
 }
 

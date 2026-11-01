@@ -147,3 +147,38 @@ fn kaleido_lint() {
     has("  rect #r w=10 h=10 kaleido=6 kaleido-center=middle\n", "E_VALUE", "50%,40%");
     assert!(errors(&format!("{head}  layer #g w=100 h=100 kaleido=12 kaleido-center=40,60 kaleido-angle=15deg kaleido-mirror=off\n    rect w=10 h=10\n")).is_empty());
 }
+
+#[test]
+fn tunnel_example_emits_both_maps_with_tracks() {
+    let (s, dir) = scene_of("examples/features/tunnel.reel");
+    let tunnels: Vec<(usize, usize)> = s.nodes.iter().enumerate().flat_map(|(i, n)| n.effects.iter().enumerate().filter(|(_, e)| matches!(e, Effect::Tunnel { .. })).map(move |(k, _)| (i, k))).collect();
+    assert_eq!(tunnels.len(), 2);
+    let maps: Vec<String> = tunnels.iter().map(|(i, k)| match &s.nodes[*i].effects[*k] { Effect::Tunnel { map, .. } => map.clone(), _ => unreachable!() }).collect();
+    assert_eq!(maps, ["texture", "perspective"]);
+    let (i, k) = tunnels[0];
+    let Effect::Tunnel { speed, radius, center, .. } = &s.nodes[i].effects[k] else { unreachable!() };
+    assert!(*speed > 0.0 && *radius == 150.0 && *center == [320.0, 180.0]);
+    assert!(s.nodes[i].effects[k].time_dependent());
+    let (i2, k2) = tunnels[1];
+    let Effect::Tunnel { center, .. } = &s.nodes[i2].effects[k2] else { unreachable!() };
+    assert_eq!(*center, [320.0, 200.0], "px center");
+    for (n, k, field) in [(i, k, "amount"), (i, k, "twist"), (i, k, "angle"), (i2, k2, "amount"), (i2, k2, "fog")] {
+        assert!(s.tracks.iter().any(|t| t.node == n && t.property == format!("effects.{k}.{field}")), "{field} track");
+    }
+    assert!(agentfx_ir::validate::validate(&s, &dir).is_ok());
+}
+
+#[test]
+fn tunnel_lint() {
+    let head = "video \"x\" size=640x360 fps=30 captions=off\nscene a dur=1s\n";
+    let has = |src: &str, code: &str, hint: &str| {
+        let e = errors(&format!("{head}{src}"));
+        assert!(e.iter().any(|d| d.code == code && d.hint.contains(hint)), "{src}: want {code} with `{hint}`, got {e:#?}");
+    };
+    has("  rect #r w=10 h=10 tunnel=1 tunnel-sped=2\n", "E_LOOK", "tunnel-speed");
+    has("  rect #r w=10 h=10 tunnel=2\n", "E_VALUE", "0..1");
+    has("  rect #r w=10 h=10 tunnel=1 tunnel-map=sphere\n", "E_VALUE", "perspective");
+    has("  rect #r w=10 h=10 tunnel=1 tunnel-radius=0\n", "E_VALUE", "1..");
+    has("  rect #r w=10 h=10 tunnel=1 tunnel-center=1,2,3\n", "E_VALUE", "tunnel-center=");
+    assert!(errors(&format!("{head}  layer #g w=100 h=100 tunnel=0.5 tunnel-speed=1 tunnel-twist=10deg tunnel-fog-color=#2A0A4A tunnel-map=perspective tunnel-center=50,60\n    rect w=10 h=10\n")).is_empty());
+}

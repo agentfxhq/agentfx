@@ -1,0 +1,66 @@
+// Tunnel: a flat neon grid tile becomes the floor you fly over, then folds up into a tube
+// around the camera (tunnel 0 -> 1: a cut that is a fold), spirals, and rolls. The travel is
+// depth + speed x time, so any frame renders alone (scrub, segments). Second scene: the
+// same fold on a grid already drawn in perspective (tunnel-map=perspective): at tunnel=0
+// the drawing is untouched, then the real floor curls into the tube.
+//
+//   agentfx render examples/features/tunnel.reel -o tunnel.mp4
+video "Tunnel" size=640x360 fps=24 captions=off
+theme studio-dark
+  bg #07010F
+
+scene fold dur=6s bg=#07010F
+  ellipse #core x=300 y=160 w=40 h=40 fill=#FFD23D glow=24 glow-color=#FF7A1A
+  layer #tube x=0 y=0 w=640 h=360 tunnel=0 tunnel-speed=1.2 tunnel-radius=150 tunnel-fog=0.12 tunnel-center=50%,50%
+    rect x=0 y=0 w=640 h=360 fill=linear(90deg, #1B0533 0%, #3A0A5C 50%, #1B0533 100%)
+    layer #rows x=0 y=0 w=640 h=360 glow=6 glow-color=#FF2BD6
+      rect x=0 y=0 w=640 h=3 fill=#22E4FF
+      rect x=0 y=45 w=640 h=3 fill=#FF2BD6
+      rect x=0 y=90 w=640 h=3 fill=#22E4FF
+      rect x=0 y=135 w=640 h=3 fill=#FF2BD6
+      rect x=0 y=180 w=640 h=3 fill=#22E4FF
+      rect x=0 y=225 w=640 h=3 fill=#FF2BD6
+      rect x=0 y=270 w=640 h=3 fill=#22E4FF
+      rect x=0 y=315 w=640 h=3 fill=#FF2BD6
+    rect x=0 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=40 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=80 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=120 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=160 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=200 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=240 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=280 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=320 y=0 w=3 h=360 fill=#FFD23D
+    rect x=360 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=400 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=440 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=480 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=520 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=560 y=0 w=3 h=360 fill=#FF2BD6
+    rect x=600 y=0 w=3 h=360 fill=#FF2BD6
+  anim #tube tunnel 0s:0 1.6s:0 3.4s:1~inout-cubic
+  anim #tube tunnel-twist 0s:0 3.4s:0 6s:40~inout-sine
+  anim #tube tunnel-angle 0s:0 2s:0 6s:-90~inout-sine
+
+scene curl dur=5s bg=#07010F
+  rect #sky x=0 y=0 w=640 h=200 fill=linear(180deg, #07010F 0%, #3A0A5C 100%)
+  ellipse #sun x=250 y=70 w=140 h=140 fill=linear(180deg, #FFD23D 0%, #FF7A1A 45%, #FF2BD6 100%) glow=18 glow-color=#FF2BD6
+  layer #floor x=0 y=0 w=640 h=360 tunnel=0 tunnel-map=perspective tunnel-center=320,200 tunnel-radius=160 tunnel-fog=0
+    rect x=0 y=200 w=640 h=160 fill=linear(180deg, #1B0533 0%, #4A0F70 100%)
+    layer #lines x=0 y=0 w=640 h=360 glow=5 glow-color=#FF2BD6
+      path d="M320 200 L-380 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L-170 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L40 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L250 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L390 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L600 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L810 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L1020 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      rect x=0 y=210 w=640 h=2 fill=#22E4FF
+      rect x=0 y=226 w=640 h=2 fill=#22E4FF
+      rect x=0 y=250 w=640 h=3 fill=#22E4FF
+      rect x=0 y=286 w=640 h=3 fill=#22E4FF
+      rect x=0 y=330 w=640 h=4 fill=#22E4FF
+  anim #floor tunnel 0s:0 1s:0 3.5s:1~inout-cubic
+  anim #floor tunnel-fog 0s:0 1s:0 3.5s:0.05
+  anim #floor tunnel-angle 0s:0 3s:0 5s:60~inout-sine

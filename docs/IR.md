@@ -737,8 +737,8 @@ Unicode text rendering. Cell size scales with the node and rounds to output pixe
 
 ### Space warps
 
-`kaleido` resamples the node's composited subtree: each output pixel reads the
-subtree somewhere else (bilinear, premultiplied). It is a look effect (tracks
+`kaleido` and `tunnel` resample the node's composited subtree: each output pixel reads the
+subtree somewhere else (bilinear, premultiplied). They are look effects (tracks
 `effects.<index>.<field>`, numbers) whose output covers the whole frame, so the subtree is
 rendered over the frame and never comes from the static effect cache. Points are node px
 (scene px at rest, transformed with the node; the node's rotation turns them too).
@@ -746,11 +746,12 @@ rendered over the frame and never comes from the static effect cache. Points are
 The CPU reference (`render/src/warp.rs`) and the GPU kernel (`gpu/warp.wgsl`) evaluate the
 same f32 expressions (explicit fma, polynomial atan2 / sin / cos, per-frame constants
 from the host): they agree within 1/255 (`gpu_warps_match_cpu_within_one`). The GPU runs
-it when they join a frame already on the GPU, or always with `AGENTFX_GPU_FX=kaleido`.
+them when they join a frame already on the GPU, or always with `AGENTFX_GPU_FX=kaleido,tunnel`.
 
 | type | parameters | animatable fields |
 |---|---|---|
 | `kaleido` | `segments`: 2..64 (default 6); `mirror`: bool (default true); `center`: [x, y]; `angle`: degrees (wedge start, default 0); `zoom`: 0.05..20 (default 1); `amount`: 0..1 (default 1); `rect` | amount, angle, zoom, cx, cy |
+| `tunnel` | `amount`: 0..1 (default 1); `depth`: floor units (default 0); `speed`: units/s (default 0, static); `twist`: degrees per unit of depth; `angle`: camera roll, degrees; `radius`: focal length px (required, 1..1e5); `fog`: >= 0 (default 0); `fog_color`: RGBA (default none = fade to transparent); `center`: [x, y]; `map`: `texture` (default) or `perspective`; `rect`; `time_offset`: seconds added to the travel clock (default 0; `agentfx frame` / clip slicing sets it) | amount, depth, twist, angle, radius, fog |
 
 Kaleido: a pixel at polar (r, a) around `center` reads radius r / zoom at angle
 a' = angle + ((a - angle) mod w), w = 360 / segments; with `mirror` the angle folds into
@@ -758,3 +759,26 @@ the first half wedge (w/2 - |a' - w/2|), so neighbouring wedges are mirror image
 pattern has no seams. `amount` moves the sample linearly from the pixel itself (0: the
 subtree unchanged) to its folded position, so animating it is a fold that opens.
 Samples outside `rect` mirror back into it (texel-symmetric).
+
+Tunnel: a pinhole camera at `center` with focal length `radius` looks into the screen. The
+subtree is a floor one unit below the camera; `amount` curls it into a cylinder of radius
+1 / amount that touches the floor line (0: flat floor, 1: a tube of radius 1 around the
+camera axis). The floor is a strip 2 pi units wide, so it closes exactly at amount 1; in
+between rays through its open side miss it (the strip edges are antialiased). A hit gives
+(u, z): position across the strip and depth. Travel z' = z + depth + speed x time (a pure
+function of time: no accumulated state; animate `depth` to change speed), spiral
+u' = u + twist z', camera roll = `angle`, fog f = 1 / (1 + (fog z')^2), color =
+mix(fog_color, sample, f). `map`:
+
+- `texture`: the subtree is a flat tile. x = rect center + u' w / (2 pi) (the rect width
+  wraps once around the tube), y = rect bottom - z' w / (2 pi) (so the tile's top is far);
+  both wrap around the rect. Misses are transparent: at amount 0 the tile is a floor in
+  perspective under an empty sky.
+- `perspective`: the subtree already shows a floor in perspective with its vanishing point
+  at `center` (a vaporwave grid). The hit reprojects onto that drawing,
+  center + radius (u', 1) / z' (past the rect's bottom the point slides back toward the
+  vanishing point along its ray, so lines through it continue and the nearest row repeats;
+  past the sides the drawing mirrors); misses read the subtree at the pixel itself (the
+  sky). At
+  amount 0, depth 0, twist 0, angle 0, fog 0 it is the identity. Depth here looks further
+  into the drawing and does not repeat: animate the drawing itself to keep a floor rolling.

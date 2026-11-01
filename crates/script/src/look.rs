@@ -12,6 +12,7 @@
 //! rect #plate rays=#sun rays-length=0.6 rays-color=#FFE9C4
 //! @2s sweep #c dur=1.4s angle=20deg width=25% color=#FFF1D6 strength=0.35
 //! layer #bloom kaleido=8 kaleido-angle=0deg kaleido-zoom=1.2 kaleido-center=50%,40%
+//! layer #grid tunnel=1 tunnel-speed=0.8 tunnel-twist=12deg tunnel-fog=0.3 tunnel-map=texture
 //! ```
 use crate::ast::{Node, Span, Value};
 use crate::ir::*;
@@ -38,6 +39,8 @@ pub enum Look {
     Rays { light: String, length: f64, strength: f64, color: Rgba, span: Span },
     /// N-fold mirror (`kaleido=8`); center = (x, y) each (value, is %) of the layer box
     Kaleido { segments: u32, mirror: bool, angle: f64, zoom: f64, amount: f64, center: [(f64, bool); 2] },
+    /// fly down a tube made of the layer (`tunnel=1`); radius None = half the layer's short side
+    Tunnel { amount: f64, depth: f64, speed: f64, twist: f64, angle: f64, radius: Option<f64>, fog: f64, fog_color: Option<Rgba>, center: [(f64, bool); 2], map: String },
 }
 
 impl Look {
@@ -47,6 +50,7 @@ impl Look {
     pub fn order(&self) -> u8 {
         match self {
             Look::Kaleido { .. } => 0,
+            Look::Tunnel { .. } => 1,
             Look::Riso { .. } => 2,
             Look::Halftone { .. } => 3,
             Look::Paper { .. } => 4,
@@ -79,9 +83,10 @@ pub const LOOK_KEYS: &[&str] = &[
     "glitch", "glitch-rate", "glitch-block", "vhs", "dither", "dither-mode", "dither-size", "dither-palette",
     "ascii", "ascii-charset", "ascii-color", "ascii-bg",
     "kaleido", "kaleido-angle", "kaleido-zoom", "kaleido-amount", "kaleido-center", "kaleido-mirror",
+    "tunnel", "tunnel-depth", "tunnel-speed", "tunnel-twist", "tunnel-angle", "tunnel-radius", "tunnel-fog", "tunnel-fog-color", "tunnel-center", "tunnel-map",
     "shadow", "rays", "rays-length", "rays-strength", "rays-color",
 ];
-const PREFIXES: &[&str] = &["riso-", "halftone-", "grain-", "paper-", "rays-", "light-", "rgbsplit-", "glitch-", "vhs-", "dither-", "ascii-", "kaleido-"];
+const PREFIXES: &[&str] = &["riso-", "halftone-", "grain-", "paper-", "rays-", "light-", "rgbsplit-", "glitch-", "vhs-", "dither-", "ascii-", "kaleido-", "tunnel-"];
 const SHADOW_ARGS: &[&str] = &["light", "height", "opacity", "color"];
 
 fn rgba(r: f64, g: f64, b: f64, a: f64) -> Rgba {
@@ -301,6 +306,23 @@ impl<'a> Ctx<'a> {
             let center = self.look_center(n, "kaleido-center");
             for (ch, v) in [(Ch::KaleidoAmount, amount), (Ch::KaleidoAngle, angle), (Ch::KaleidoZoom, zoom)] { self.set_base(i, ch, TV::N(v)); }
             looks.push(Look::Kaleido { segments: segs.round() as u32, mirror, angle, zoom, amount, center });
+        }
+        if n.props.contains_key("tunnel") {
+            let amount = self.look_range(n, "tunnel", 1.0, 0.0, 1.0);
+            let depth = self.num(n, "tunnel-depth").unwrap_or(0.0);
+            let speed = self.look_range(n, "tunnel-speed", 0.0, -1e4, 1e4);
+            let twist = self.num(n, "tunnel-twist").unwrap_or(0.0);
+            let angle = self.num(n, "tunnel-angle").unwrap_or(0.0);
+            let radius = n.props.contains_key("tunnel-radius").then(|| self.look_range(n, "tunnel-radius", 180.0, 1.0, 1e5));
+            let fog = self.look_range(n, "tunnel-fog", 0.25, 0.0, 100.0);
+            let fog_color = self.look_color(n, "tunnel-fog-color");
+            let map = self.look_enum(n, "tunnel-map", &["texture", "perspective"]).unwrap_or("texture".into());
+            let center = self.look_center(n, "tunnel-center");
+            for (ch, v) in [(Ch::Tunnel, amount), (Ch::TunnelDepth, depth), (Ch::TunnelTwist, twist), (Ch::TunnelAngle, angle), (Ch::TunnelFog, fog)] { self.set_base(i, ch, TV::N(v)); }
+            if let Some(r) = radius {
+                self.set_base(i, Ch::TunnelRadius, TV::N(r));
+            }
+            looks.push(Look::Tunnel { amount, depth, speed, twist, angle, radius, fog, fog_color, center, map });
         }
         // soft shadow (the other `shadow=` forms are box/drop shadows, `common`)
         if let Some(raw) = n.props.get("shadow").map(|v| v.raw()) {

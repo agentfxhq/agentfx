@@ -1884,7 +1884,7 @@ impl<'a> Painter<'a> {
                         crate::look::apply(e, p, buf, w, h, &cx);
                     }
                 }
-                e @ Effect::Kaleido { .. } => {
+                e @ (Effect::Kaleido { .. } | Effect::Tunnel { .. }) => {
                     // the subtree's own ink (without the warps' frame-wide margins) is the
                     // default sampling domain
                     let dm: f64 = node.effects.iter().filter(|x| x.is_warp()).count() as f64 * crate::warp::margin([scene.width as f64, scene.height as f64]);
@@ -2251,6 +2251,7 @@ fn fx_name(e: &Effect) -> &'static str {
         Effect::Dither { .. } => "fx.dither",
         Effect::Ascii { .. } => "fx.ascii",
         Effect::Kaleido { .. } => "fx.kaleido",
+        Effect::Tunnel { .. } => "fx.tunnel",
     }
 }
 

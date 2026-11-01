@@ -18,7 +18,7 @@ Every generator has:
 | Julia set | breathing, liquid fractal; animate `c` | done (`kind=julia`) |
 | Mandelbrot | infinite zoom; f32 GPU limit about 2e4x, CPU f64 | done (`kind=mandelbrot`) |
 | Kaleidoscope (effect) | N-fold mirror symmetry of any layer | done (`kaleido=`, CPU + GPU) |
-| Tunnel warp (effect) | polar remap, fly down a tube | planned |
+| Tunnel warp (effect) | polar remap, fly down a tube | done (`tunnel=`, CPU + GPU) |
 | Mandelbulb, KIFS | raymarched 3D fractals | planned |
 | Fractal flames | glowing silk, IFS with variations | planned |
 | Strange attractors | Lorenz, Clifford, de Jong; 2D density and 3D point clouds | planned |

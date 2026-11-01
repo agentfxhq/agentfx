@@ -43,7 +43,7 @@ const OBJ_PROPS: &[&str] = &[
 ];
 /// A prop of the scene3d line that belongs to its 2D layer (placement, effects, looks).
 pub fn layer_prop(k: &str) -> bool {
-    LAYER_PROPS.contains(&k) || ["riso", "halftone", "grain", "paper", "rays", "rgbsplit", "glitch", "dither", "sweep", "vhs", "ascii", "kaleido", "mblur", "shutter"].iter().any(|p| k.starts_with(p))
+    LAYER_PROPS.contains(&k) || ["riso", "halftone", "grain", "paper", "rays", "rgbsplit", "glitch", "dither", "sweep", "vhs", "ascii", "kaleido", "tunnel", "mblur", "shutter"].iter().any(|p| k.starts_with(p))
 }
 
 fn shape_props(kind: &str) -> &'static [&'static str] {

@@ -69,6 +69,8 @@ pub fn cold_open(ir: &crate::ir::Ir) -> Option<Diag> {
         if let crate::ir::Kind::Gen(c) = &l.kind {
             moving |= agentfx_ir::generator::kind(&c.kind).is_some_and(|k| k.time) && c.start <= 2.0 / ir.fps;
         }
+        // a tunnel with tunnel-speed travels from frame 0 (speed x time)
+        moving |= l.style.looks.iter().any(|lk| matches!(lk, crate::look::Look::Tunnel { speed, .. } if *speed != 0.0));
     });
     if moving {
         return None;

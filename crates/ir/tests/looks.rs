@@ -45,3 +45,32 @@ fn warps_validate_roundtrip_and_tracks() {
     s.tracks = vec![serde_json::from_value(json!({"node":0,"property":"effects.0.angle","delay":0,"duration":1,"fill":"both","easing":"linear","keyframes":[{"offset":0,"value":{"number":0}},{"offset":1,"value":{"number":90}}]})).unwrap()];
     assert!(validate(&s, std::path::Path::new(".")).is_ok());
 }
+
+#[test]
+fn tunnel_validates_and_depends_on_time_only_with_speed() {
+    let ok = [
+        json!({"type":"tunnel","radius":120,"center":[32,32]}),
+        json!({"type":"tunnel","amount":0.3,"depth":2,"speed":1.5,"twist":20,"angle":10,"radius":90,"fog":0.2,"fog_color":[0.1,0,0.2,1],"center":[32,32],"map":"perspective","rect":[0,0,64,64]}),
+    ];
+    let bad = [
+        json!({"type":"tunnel","radius":0.5,"center":[32,32]}),
+        json!({"type":"tunnel","radius":100,"center":[32,32],"amount":1.5}),
+        json!({"type":"tunnel","radius":100,"center":[32,32],"fog":-1}),
+        json!({"type":"tunnel","radius":100,"center":[32,32],"map":"sphere"}),
+        json!({"type":"tunnel","radius":100,"center":[32,32],"fog_color":[2,0,0,1]}),
+    ];
+    for (valid, list) in [(true, &ok[..]), (false, &bad[..])] {
+        for v in list {
+            let s = scene(v.clone());
+            assert_eq!(validate(&s, std::path::Path::new(".")).is_ok(), valid, "{v}");
+            let e = &s.nodes[0].effects[0];
+            assert_eq!(*e, serde_json::from_str::<Effect>(&serde_json::to_string(e).unwrap()).unwrap());
+        }
+    }
+    let a = &scene(ok[0].clone()).nodes[0].effects[0];
+    let b = &scene(ok[1].clone()).nodes[0].effects[0];
+    assert!(!a.time_dependent() && b.time_dependent(), "speed x time");
+    assert_eq!(b.look_fields(), &["amount", "depth", "twist", "angle", "radius", "fog"]);
+    assert_eq!(b.look_field("radius"), 90.0);
+    assert!(serde_json::from_value::<Effect>(json!({"type":"tunnel","center":[0,0]})).is_err(), "radius is required");
+}

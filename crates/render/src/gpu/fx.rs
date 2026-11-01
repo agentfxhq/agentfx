@@ -51,7 +51,7 @@ fn enabled(name: &str) -> bool {
 /// Effects that join an active chain even when not `enabled` (`AGENTFX_GPU_JOIN=0`: never).
 fn joins(name: &str) -> bool {
     static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_JOIN").map_or(true, |v| v != "0")) && matches!(name, "blur" | "drop-shadow" | "glow" | "kaleido")
+    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_JOIN").map_or(true, |v| v != "0")) && matches!(name, "blur" | "drop-shadow" | "glow" | "kaleido" | "tunnel")
 }
 
 /// One effect of a chain, kept for the CPU replay (fallback, `AGENTFX_GPU_CHECK`).
@@ -71,7 +71,7 @@ impl Op {
             Op::Blur(..) => "blur",
             Op::DropShadow(..) => "drop-shadow",
             Op::Glow(..) => "glow",
-            Op::Warp(_) => "kaleido",
+            Op::Warp(c) => if c.kind == crate::warp::KALEIDO { "kaleido" } else { "tunnel" },
         }
     }
 
@@ -762,6 +762,8 @@ fn warp(a: &mut Active, c: &crate::warp::WarpCfg) {
     let mut q = Params::default();
     q.u(0, w as u32).u(1, h as u32).u(2, c.kind).i(3, c.dom[0]).i(4, c.dom[1]).i(5, c.dom[2]).i(6, c.dom[3]);
     q.f(7, c.c[0]).f(8, c.c[1]).f(9, c.amount).f(10, c.ang).f(11, c.seg).f(12, c.hseg).f(13, c.invseg).u(14, c.mirror as u32).f(15, c.invzoom);
+    q.f(16, c.rc).f(17, c.rs).f(18, c.f).f(19, c.invf).u(20, c.plane as u32).f(21, c.rho).f(22, c.yc).f(23, c.cc).f(24, c.gap);
+    q.f(25, c.twist).f(26, c.dz).f(27, c.fog).f(28, c.fogc[0]).f(29, c.fogc[1]).f(30, c.fogc[2]).f(31, c.fogc[3]).f(32, c.k).f(33, c.tcx).f(34, c.ty1);
     let len = (w * h * 4) as u64;
     let px = a.px.clone();
     let src = a.temp(len);
@@ -898,7 +900,7 @@ pub(crate) mod tests {
         }
     }
 
-    /// Warps (kaleido): GPU within 1/255 of the CPU reference on every channel.
+    /// Warps (kaleido, tunnel): GPU within 1/255 of the CPU reference on every channel.
     #[test]
     fn gpu_warps_match_cpu_within_one() {
         let Some(g) = device() else { return };

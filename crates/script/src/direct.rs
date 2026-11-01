@@ -278,6 +278,13 @@ pub fn range_ir(scene: &Value, f0: u32, f1: u32) -> Value {
                     o.insert("opacity".into(), json!(0.0));
                 }
             }
+            // tunnels travel with t itself: shift their clock like the tracks
+            if let Some(fx) = n.get_mut("effects").and_then(|e| e.as_array_mut()) {
+                for e in fx.iter_mut().filter(|e| e["type"] == json!("tunnel")) {
+                    let o = e["time_offset"].as_f64().unwrap_or(0.0);
+                    e["time_offset"] = json!(o + t);
+                }
+            }
             if let Some(c) = n.get_mut("content") {
                 if c["type"] == json!("cloud") || c["type"] == json!("fluid") || c["type"] == json!("gen") {
                     // clouds evaluate their own time: shift it, keep the motion

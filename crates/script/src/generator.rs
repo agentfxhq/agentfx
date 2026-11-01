@@ -27,6 +27,9 @@ fn praw(n: &Node, k: &str) -> Option<String> {
     n.props.get(k).map(|v| v.raw())
 }
 
+/// Props that size / place a `gen` layer (without any: it fills its parent).
+const LAYOUT_KEYS: [&str; 5] = ["w", "h", "x", "y", "place"];
+
 impl<'a> Ctx<'a> {
     pub fn gen_el(&mut self, parent: usize, si: usize, n: &Node, lid: String) -> usize {
         let names: Vec<&str> = g::KINDS.iter().map(|k| k.name).collect();
@@ -124,6 +127,8 @@ impl<'a> Ctx<'a> {
                         }
                     }
                 }
+                // layout keys place the layer like any other (`x` is no near miss of `cx`)
+                None if LAYOUT_KEYS.contains(&k.as_str()) => {}
                 // another kind's parameter or a near miss of this kind's
                 None => {
                     let own: Vec<&str> = kind.params.iter().map(|p| p.name).collect();
@@ -141,7 +146,7 @@ impl<'a> Ctx<'a> {
         let seed = self.num(n, "seed").unwrap_or(0.0).max(0.0) as u64;
         let mut l = Layer::new(lid, Kind::Gen(Box::new(GenCfg { kind: kind.name.to_string(), params, palette, seed, start: self.tl.scenes.get(si).map_or(0.0, |s| s.start) })));
         l.tags.push("gen".into());
-        let sized = ["w", "h", "x", "y", "place"].iter().any(|k| n.props.contains_key(*k));
+        let sized = LAYOUT_KEYS.iter().any(|k| n.props.contains_key(*k));
         if !sized {
             l.layout.pos = Pos::Fill;
         }

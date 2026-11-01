@@ -1594,7 +1594,9 @@ anim #m depth 0s:0 8s:13 ease=linear
 ```
 
 - **Element**: `gen #id kind=<kind> [w= h= x= y= place=] <param>=<number>... palette= seed=`.
-  Without `w/h/x/y/place` it fills its parent. Every numeric parameter is also an animation
+  `w/h/x/y/place` size and place it like any layer (they are layout, never generator
+  parameters: `x` is not a near miss of `cx`); without them it fills its parent. Every
+  numeric parameter is also an animation
   channel (`anim`, `set`), lowered to a `gen.<param>` track.
 - **Kinds** (parameters with defaults):
   - `julia`: Julia set z -> z^2 + c. `cx=-0.8 cy=0.156` (c: animate it to make the set breathe),

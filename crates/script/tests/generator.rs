@@ -111,3 +111,24 @@ fn named_attractor_systems_and_reaction_presets_lower_to_numbers() {
         assert!(codes(&d).contains(&"E_GEN"), "{bad}: {d:#?}");
     }
 }
+
+#[test]
+fn gen_is_placeable_with_x_y_w_h() {
+    // layout keys place a gen like any layer, without W_GEN_PROP (`x` used to read as a near
+    // miss of `cx`, `w` / `h` of other one-letter-ish parameters)
+    let src = "video \"g\" size=640x360 fps=30\nscene a dur=2s\n  gen #n kind=julia x=100 y=40 w=320 h=180 palette=vapor\n  gen #m kind=noise place=bottom-left w=200 h=100\n";
+    let (ir, diags) = compile_src(src);
+    assert!(diags.iter().all(|d| d.severity != Severity::Error && d.code != "W_GEN_PROP"), "{diags:#?}");
+    let s = scene(&ir);
+    let rects: Vec<[f64; 4]> = s.nodes.iter().filter_map(|n| match &n.content {
+        Some(Content::Gen(g)) => Some(g.rect),
+        _ => None,
+    }).collect();
+    assert_eq!(rects.len(), 2);
+    assert_eq!(rects[0], [100.0, 40.0, 320.0, 180.0]);
+    assert_eq!(rects[1][2..], [200.0, 100.0]);
+    assert!(rects[1][0] < 100.0 && rects[1][1] + rects[1][3] > 300.0, "bottom-left: {:?}", rects[1]);
+    // a real near miss still warns
+    let (_, d) = compile_src("video \"g\" size=640x360 fps=30\nscene a dur=2s\n  gen #n kind=julia cxx=0.3\n");
+    assert!(codes(&d).contains(&"W_GEN_PROP"), "{d:#?}");
+}

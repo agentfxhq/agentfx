@@ -111,7 +111,7 @@ WebP, PNG sequences; 16:9, 9:16, 1:1 and 4:5 from one script.
 
 AgentFX is early software (0.1.0). Expect the format and the CLI to change.
 
-- **Platforms:** tested on Linux (x86_64). macOS has a CI build and CPU-test job; its Metal GPU and VideoToolbox paths require macOS hardware CI coverage. Windows (x86_64, MSVC) has an experimental
+- **Platforms:** tested on Linux (x86_64). macOS has an on-demand CI build and CPU-test job; its Metal GPU and VideoToolbox paths require macOS hardware CI coverage. Windows (x86_64, MSVC) has an experimental
   on-demand CI build and CPU-test job; see [docs/BUILD.md#windows](docs/BUILD.md#windows).
 - **GPU:** GPU effects use Vulkan on Linux, Metal on macOS, and DX12 or Vulkan on Windows (via wgpu). Without a usable GPU (common in
   containers, CI, and WSL) everything renders on the CPU automatically. Set

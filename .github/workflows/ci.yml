@@ -26,8 +26,10 @@ jobs:
       - name: MCP server e2e
         run: python3 tools/mcp-e2e.py
 
+  # macOS runners are scarce and slow: run this by hand (Actions > CI > Run workflow).
   macos:
     name: macOS build and CPU test
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4

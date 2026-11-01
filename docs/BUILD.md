@@ -10,7 +10,7 @@
   [INSTALL-NOTES.md](INSTALL-NOTES.md)), Node.js
   with `playwright-core` only for the Chrome reference backend (`--backend chrome`).
 
-Linux (x86_64) is the tested platform. macOS is built and CPU-tested in CI on `macos-latest`; GPU effects select Metal and
+Linux (x86_64) is the tested platform. macOS is built and CPU-tested in CI on `macos-latest` on demand (Actions > CI > Run workflow); GPU effects select Metal and
 hardware encoding probes VideoToolbox there. Windows (x86_64, MSVC) builds and runs the CPU test
 suite in CI on demand; see [Windows](#windows) below. GPU effects select DX12 or Vulkan there.
 

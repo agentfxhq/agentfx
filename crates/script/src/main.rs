@@ -136,7 +136,7 @@ fn build(a: &Args) -> Built {
     let fps = a.get("--fps").and_then(|f| f.parse().ok());
     let base = file.parent().map(|p| p.to_path_buf()).unwrap_or_default();
     let base = if base.as_os_str().is_empty() { PathBuf::from(".") } else { base };
-    let base = std::fs::canonicalize(&base).unwrap_or(base);
+    let base = agentfx_ir::paths::canonicalize(&base).unwrap_or(base);
     // transcript sources (`captions src=`) resolve against the document while timing
     agentfx_script::design::set_doc_base(&base);
     let (tl, td) = timing::solve(&doc, &tts, fps);
@@ -287,7 +287,7 @@ fn main() {
             if a.get("--target").as_deref() == Some("reel-ir") {
                 // S1: native layout + paint, no Chrome
                 let c = lower::compile(&b.doc, &b.tl, a.get("--format").as_deref(), &b.base);
-                let o = std::fs::canonicalize(".").unwrap().join(out_path(&a, "out/video.ir.json"));
+                let o = agentfx_ir::paths::canonicalize(".").unwrap().join(out_path(&a, "out/video.ir.json"));
                 let dir = o.parent().unwrap().to_path_buf();
                 let t0 = Instant::now();
                 let r = agentfx_script::direct::compile(&c.ir, &dir, true).unwrap_or_else(|e| { eprintln!("{e:#}"); std::process::exit(1) });
@@ -462,7 +462,7 @@ fn main() {
                 // S1 default: direct mode (native layout -> reel-ir -> reel), no browser
                 let t0 = Instant::now();
                 let default_out = match a.cmd.as_str() { "frame" => "out/frame.png", "sheet" => "out/sheet.png", _ => "out/video.mp4" };
-                let o = std::fs::canonicalize(".").unwrap().join(out_path(&a, default_out));
+                let o = agentfx_ir::paths::canonicalize(".").unwrap().join(out_path(&a, default_out));
                 let dir = o.parent().unwrap().to_path_buf();
                 let _ = std::fs::create_dir_all(&dir);
                 let work = dir.join(format!(".reel-{}-{}", a.cmd, std::process::id()));
@@ -560,18 +560,18 @@ fn main() {
             let p = write_tmp_html(&h, &a.cmd);
             let res = match a.cmd.as_str() {
                 "frame" => {
-                    let o = std::fs::canonicalize(".").unwrap().join(out_path(&a, "out/frame.png"));
+                    let o = agentfx_ir::paths::canonicalize(".").unwrap().join(out_path(&a, "out/frame.png"));
                     run::node_tool(&serde_json::json!({"cmd": "frames", "html": p, "w": ir.w, "h": ir.h, "times": times, "out": [o]}))
                 }
                 "sheet" => {
-                    let o = std::fs::canonicalize(".").unwrap().join(out_path(&a, "out/sheet.png"));
-                    let refv = a.get("--ref").map(|r| std::fs::canonicalize(&r).unwrap_or(PathBuf::from(&r)));
+                    let o = agentfx_ir::paths::canonicalize(".").unwrap().join(out_path(&a, "out/sheet.png"));
+                    let refv = a.get("--ref").map(|r| agentfx_ir::paths::canonicalize(&r).unwrap_or(PathBuf::from(&r)));
                     run::node_tool(&serde_json::json!({"cmd": "sheet", "html": p, "w": ir.w, "h": ir.h, "times": times, "labels": labels,
                         "cols": a.get("--cols").and_then(|c| c.parse::<u32>().ok()).unwrap_or(4), "out": o, "ref": refv, "ffmpeg": run::ffmpeg()}))
                 }
                 _ => {
                     let t0 = Instant::now();
-                    let o = std::fs::canonicalize(".").unwrap().join(out_path(&a, "out/video.mp4"));
+                    let o = agentfx_ir::paths::canonicalize(".").unwrap().join(out_path(&a, "out/video.mp4"));
                     let wav = o.with_extension("wav");
                     let has_audio = run::mix_audio(&ir, &wav).unwrap_or_else(|e| {
                         eprintln!("audio: {e}");

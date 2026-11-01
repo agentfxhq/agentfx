@@ -20,7 +20,7 @@ pub fn renderer() -> PathBuf {
     if let Some(p) = agentfx_ir::env::var_os("AGENTFX_RENDERER").filter(|p| !p.is_empty()) {
         return PathBuf::from(p);
     }
-    if let Some(dir) = std::env::current_exe().ok().and_then(|e| e.canonicalize().ok()).and_then(|e| e.parent().map(Path::to_path_buf)) {
+    if let Some(dir) = std::env::current_exe().ok().and_then(|e| agentfx_ir::paths::canonicalize(e).ok()).and_then(|e| e.parent().map(Path::to_path_buf)) {
         let mut cands = vec![dir.join(NAME)];
         if dir.file_name().is_some_and(|n| n == "deps") {
             if let Some(up) = dir.parent() {
@@ -68,7 +68,7 @@ pub fn compile(ir: &Ir, out_dir: &Path, persist: bool) -> Result<Compiled> {
             if reader.format() == Some(image::ImageFormat::Jpeg) {
                 let png = out_dir.join(format!("jpeg-{i}.png"));
                 reader.decode().with_context(|| format!("decoding {}", path.display()))?.save(&png)?;
-                asset["path"] = json!(png.canonicalize()?);
+                asset["path"] = json!(agentfx_ir::paths::canonicalize(&png)?);
             }
         }
     }
@@ -86,7 +86,7 @@ pub fn compile(ir: &Ir, out_dir: &Path, persist: bool) -> Result<Compiled> {
             for a in arr.iter_mut() {
                 if let Some(p) = a["path"].as_str() {
                     if !Path::new(p).is_absolute() {
-                        let abs = out_dir.canonicalize().unwrap_or(out_dir.to_path_buf()).join(p);
+                        let abs = agentfx_ir::paths::canonicalize(out_dir).unwrap_or(out_dir.to_path_buf()).join(p);
                         a["path"] = json!(abs);
                     }
                 }

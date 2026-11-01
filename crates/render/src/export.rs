@@ -307,7 +307,7 @@ pub fn finish(ffmpeg: &Path, x: &ExportOpts, parts: &[PathBuf], out: &Path) -> R
         _ => {}
     }
     let list = sibling(out, "parts.txt");
-    let body: String = parts.iter().map(|p| format!("file '{}'\n", std::fs::canonicalize(p).unwrap().display().to_string().replace('\'', "'\\''"))).collect();
+    let body: String = parts.iter().map(|p| format!("file '{}'\n", agentfx_ir::paths::canonicalize(p).unwrap().display().to_string().replace('\'', "'\\''"))).collect();
     std::fs::write(&list, body)?;
     let input = |a: &mut Vec<String>| a.extend(s(&["-f", "concat", "-safe", "0", "-i"]).into_iter().chain([list.to_string_lossy().into_owned()]));
     let log = sibling(out, "ffmpeg.log");

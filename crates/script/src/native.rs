@@ -216,7 +216,7 @@ impl Native {
         let mut sources = HashMap::new();
         let fctx = font_ctx(fonts_dir, &mut sources, &ir.fonts);
         res.font_sources = sources;
-        let base = url::Url::from_directory_path(out_dir.canonicalize().unwrap_or(out_dir.to_path_buf())).map(|u| u.to_string()).unwrap_or("file:///".into());
+        let base = url::Url::from_directory_path(agentfx_ir::paths::canonicalize(out_dir).unwrap_or(out_dir.to_path_buf())).map(|u| u.to_string()).unwrap_or("file:///".into());
         let net = Arc::new(FileNet { failed: Mutex::new(vec![]) });
         let mut doc = HtmlDocument::from_html(
             &page,

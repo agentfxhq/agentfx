@@ -16,6 +16,7 @@ pub mod cube;
 pub mod env;
 pub mod eval;
 pub mod generator;
+pub mod paths;
 pub mod s3d;
 pub mod timing;
 pub mod validate;

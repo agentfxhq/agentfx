@@ -30,6 +30,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Zoom / pan onto an element | `zoom #el` / `pan #el` | implemented | UI focus |
 | 2.5D parallax | `camera persp=1200`, `layer z=-400`, `dolly`, `orbit` | partial (planes stay flat) | depth on stills |
 | Stylised 3D | `scene3d #w camera=(0, 2, 8)` + `box`, `extrude "L"`, `screen src=#ui`; `orbit #w`, `dolly #w`, `lookat`, `spin`, `drop`, `assemble`, `stack` | implemented (planar shadows, no glTF) | letter blocks, product stages, UI on a screen in 3D |
+| Kaleidoscope | `kaleido=8` + `anim #g kaleido-amount 0s:0 2s:1` / `kaleido-angle` | implemented (direct only) | psychedelic blooms of the real layer, music videos |
 | Depth of field | `camera dof=` | planned | |
 
 ## Transitions

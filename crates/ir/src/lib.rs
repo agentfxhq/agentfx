@@ -1118,6 +1118,27 @@ pub enum Effect {
     Dither { levels: f64, mode: String, #[serde(default = "bayer_size")] size: u32, #[serde(default)] palette: Option<Vec<[f64; 4]>> },
     /// Built-in 5x7 glyphs, charset ordered from dark to light.
     Ascii { cell: f64, charset: String, color: String, bg: [f64; 4] },
+    /// N-fold mirror symmetry of the subtree's pixels around `center` (node px): a pixel at
+    /// polar (r, a) shows the subtree at radius r / zoom and angle a folded into the wedge
+    /// [angle, angle + 360/segments) (with `mirror`: into its first half, every other
+    /// wedge mirrored, seamless). `amount` 0..1 moves each sample from the pixel itself to
+    /// its folded position (0 = the subtree unchanged). Samples outside `rect` (node px;
+    /// default the subtree's ink box) mirror back in. Output covers the frame.
+    Kaleido {
+        #[serde(default = "six")]
+        segments: u32,
+        #[serde(default = "yes")]
+        mirror: bool,
+        center: [f64; 2],
+        #[serde(default)]
+        angle: f64,
+        #[serde(default = "one")]
+        zoom: f64,
+        #[serde(default = "one")]
+        amount: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        rect: Option<[f64; 4]>,
+    },
     /// Color adjustment of the subtree, in straight sRGB, steps in this order (each clamped
     /// to 0..1 like a CSS filter chain): `brightness` (multiplier, CSS `brightness()`),
     /// `saturate` (CSS `saturate()`), `contrast` (CSS `contrast()`), `hue` (degrees, CSS
@@ -1173,6 +1194,9 @@ fn light_radius_default() -> f64 {
 fn shadow_color() -> [f64; 4] {
     [0.05, 0.04, 0.08, 0.5]
 }
+fn six() -> u32 {
+    6
+}
 
 impl Effect {
     /// Animatable fields of a look/light effect (`effects.<i>.<field>` tracks), in parameter
@@ -1192,6 +1216,7 @@ impl Effect {
             Effect::Sweep { .. } => &["pos", "angle", "width", "strength"],
             Effect::Rays { .. } => &["lx", "ly", "length", "strength"],
             Effect::Color { .. } => &["brightness", "saturate", "contrast", "hue", "tint"],
+            Effect::Kaleido { .. } => &["amount", "angle", "zoom", "cx", "cy"],
             _ => &[],
         }
     }
@@ -1229,6 +1254,11 @@ impl Effect {
             (Effect::Color { contrast, .. }, "contrast") => *contrast,
             (Effect::Color { hue, .. }, "hue") => *hue,
             (Effect::Color { tint_amount, .. }, "tint") => *tint_amount,
+            (Effect::Kaleido { amount, .. }, "amount") => *amount,
+            (Effect::Kaleido { angle, .. }, "angle") => *angle,
+            (Effect::Kaleido { zoom, .. }, "zoom") => *zoom,
+            (Effect::Kaleido { center, .. }, "cx") => center[0],
+            (Effect::Kaleido { center, .. }, "cy") => center[1],
             _ => 0.0,
         }
     }
@@ -1241,6 +1271,10 @@ impl Effect {
             Effect::Glitch { .. } | Effect::Vhs { .. } => true,
             _ => false,
         }
+    }
+    /// A space warp (kaleido): samples the subtree elsewhere, output covers the frame.
+    pub fn is_warp(&self) -> bool {
+        matches!(self, Effect::Kaleido { .. })
     }
     /// A look/light effect (X6/X8), handled by `compiler/src/look.rs` / `light.rs`.
     pub fn is_look(&self) -> bool {

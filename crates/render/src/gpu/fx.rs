@@ -18,6 +18,7 @@ const LIGHT: &str = include_str!("light.wgsl");
 const COMP: &str = include_str!("comp.wgsl");
 const SHADOW: &str = include_str!("shadow.wgsl");
 const DIGITAL: &str = include_str!("digital.wgsl");
+const WARP: &str = include_str!("warp.wgsl");
 
 /// Is this look/light effect ported (whatever the routing)?
 pub fn ported(e: &Effect) -> bool {
@@ -69,7 +70,7 @@ fn start_px(name: &str) -> usize {
 /// Effects that join an active chain even when not `enabled` (`AGENTFX_GPU_JOIN=0`: never).
 fn joins(name: &str) -> bool {
     static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_JOIN").map_or(true, |v| v != "0")) && matches!(name, "blur" | "drop-shadow" | "glow" | "rgbsplit" | "glitch" | "vhs" | "grain")
+    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_JOIN").map_or(true, |v| v != "0")) && matches!(name, "blur" | "drop-shadow" | "glow" | "rgbsplit" | "glitch" | "vhs" | "grain" | "kaleido")
 }
 
 /// `AGENTFX_GPU_RESIDENT=0`: read the frame back after every GPU effect (no residency
@@ -86,6 +87,7 @@ enum Op {
     Blur(f64),
     DropShadow([f64; 4], f64, i64, i64),
     Glow([f64; 4], f64, f64),
+    Warp(crate::warp::WarpCfg),
 }
 
 impl Op {
@@ -95,6 +97,7 @@ impl Op {
             Op::Blur(..) => "blur",
             Op::DropShadow(..) => "drop-shadow",
             Op::Glow(..) => "glow",
+            Op::Warp(_) => "kaleido",
         }
     }
 
@@ -104,6 +107,7 @@ impl Op {
             Op::Blur(sigma) => crate::effects::blur(buf, w, h, *sigma),
             Op::DropShadow(c, sigma, dx, dy) => crate::effects::drop_shadow(buf, w, h, *c, *sigma, *dx, *dy),
             Op::Glow(c, k, sigma) => crate::effects::glow(buf, w, h, *c, *k, *sigma),
+            Op::Warp(c) => crate::warp::apply(c, buf, w, h),
         }
     }
 
@@ -214,6 +218,14 @@ impl Chain {
     #[allow(clippy::too_many_arguments)]
     pub fn drop_shadow(&mut self, buf: &mut [u8], w: usize, h: usize, color: [f64; 4], sigma: f64, dx: i64, dy: i64) -> bool {
         self.step(Op::DropShadow(color, sigma, dx, dy), buf, w, h)
+    }
+
+    /// warp::apply on the GPU; false: run it on the CPU (buffer current).
+    pub fn warp(&mut self, c: &crate::warp::WarpCfg, buf: &mut [u8], w: usize, h: usize) -> bool {
+        if c.identity() {
+            return true;
+        }
+        self.step(Op::Warp(*c), buf, w, h)
     }
 
     /// effects::glow on the GPU; false: run it on the CPU (buffer current).
@@ -382,6 +394,10 @@ fn encode(a: &mut Active, op: &Op, _host: Option<&[u8]>) -> anyhow::Result<()> {
         }
         Op::DropShadow(c, sigma, dx, dy) => under_tinted(a, *c, 1.0, *sigma, *dx, *dy),
         Op::Glow(c, k, sigma) => under_tinted(a, *c, *k, *sigma, 0, 0),
+        Op::Warp(c) => {
+            warp(a, c);
+            Ok(())
+        }
     }
 }
 
@@ -927,6 +943,21 @@ pub fn self_test(g: &'static Gpu) -> anyhow::Result<()> {
     Ok(())
 }
 
+// ---------------------------------------------------------------- warps
+
+/// warp::apply: one pass over a copy of the frame (warp.wgsl, same f32 expressions).
+fn warp(a: &mut Active, c: &crate::warp::WarpCfg) {
+    let (w, h) = (a.w, a.h);
+    let mut q = Params::default();
+    q.u(0, w as u32).u(1, h as u32).u(2, c.kind).i(3, c.dom[0]).i(4, c.dom[1]).i(5, c.dom[2]).i(6, c.dom[3]);
+    q.f(7, c.c[0]).f(8, c.c[1]).f(9, c.amount).f(10, c.ang).f(11, c.seg).f(12, c.hseg).f(13, c.invseg).u(14, c.mirror as u32).f(15, c.invzoom);
+    let len = (w * h * 4) as u64;
+    let px = a.px.clone();
+    let src = a.temp(len);
+    a.job.enc.copy_buffer_to_buffer(&px, 0, &src, 0, len);
+    a.job.pass("warp", WARP, 2, "warp", &q, &[&px, &src], [w as u32, h as u32]);
+}
+
 // ---------------------------------------------------------------- tests
 
 #[cfg(test)]
@@ -1116,6 +1147,33 @@ pub(crate) mod tests {
                     assert!(mx <= 1, "{name} s {sc} {sn}: max {mx}");
                     assert!(cpu != *img, "{name}: effect did nothing (bad fixture)");
                 }
+            }
+        }
+    }
+
+    /// Warps (kaleido): GPU within 1/255 of the CPU reference on every channel.
+    #[test]
+    fn gpu_warps_match_cpu_within_one() {
+        let Some(g) = device() else { return };
+        let (w, h) = (403, 297);
+        for opaque in [false, true] {
+            let img = poster(w, h, opaque);
+            for (name, e, p) in crate::warp::tests::cases() {
+                let c = crate::warp::cfg(&e, &p, crate::warp::tests::M, [0.0, 0.0, w as f64, h as f64], [0, 0, w as i32, h as i32]).unwrap();
+                let mut cpu = img.clone();
+                crate::warp::apply(&c, &mut cpu, w, h);
+                let mut gpu = img.clone();
+                let mut chain = Chain::on(g);
+                assert!(chain.warp(&c, &mut gpu, w, h), "{name}: not run on GPU");
+                chain.finish(&mut gpu).unwrap();
+                let (mx, psnr, over) = diff(&cpu, &gpu);
+                if mx > 1 {
+                    let i = cpu.iter().zip(&gpu).position(|(a, b)| a.abs_diff(*b) == mx).unwrap() / 4;
+                    eprintln!("  worst px ({}, {}): cpu {:?} gpu {:?}", i % w, i / w, &cpu[i * 4..i * 4 + 4], &gpu[i * 4..i * 4 + 4]);
+                }
+                eprintln!("{name:28} opaque={opaque:5} max {mx} psnr {psnr:.1} dB, >1: {:.4} %", over * 100.0);
+                assert!(mx <= 1, "{name} (opaque {opaque}): max {mx}");
+                assert_ne!(cpu, img, "{name}: warp did nothing (bad fixture)");
             }
         }
     }

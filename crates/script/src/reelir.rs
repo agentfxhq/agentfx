@@ -1202,7 +1202,8 @@ impl<'a> Em<'a> {
         // unsupported channels
         for t in &tracks {
             if t.keys.len() > 1 && !t.is_static() {
-                let ok = matches!(t.ch, Ch::Rgbsplit | Ch::RgbsplitDx | Ch::RgbsplitDy | Ch::Glitch | Ch::GlitchRate | Ch::GlitchBlock | Ch::Vhs | Ch::Dither | Ch::Ascii | Ch::Halftone | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
+                let ok = matches!(t.ch, Ch::Rgbsplit | Ch::RgbsplitDx | Ch::RgbsplitDy | Ch::Glitch | Ch::GlitchRate | Ch::GlitchBlock | Ch::Vhs | Ch::Dither | Ch::Ascii | Ch::Halftone
+                    | Ch::KaleidoAmount | Ch::KaleidoAngle | Ch::KaleidoZoom | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
                     || (t.ch == Ch::PathOffset && l.style.text_path.is_some())
                     || (matches!(l.kind, Kind::Scene3d(_)) && s3d_emit::scene_ch(t.ch))
                     || (matches!(l.kind, Kind::Gen(_)) && t.ch.gen_param().is_some());
@@ -1820,9 +1821,15 @@ impl<'a> Em<'a> {
                 }
             }
         };
+        let at = |c: &[(f64, bool); 2]| [r4(r[0] + if c[0].1 { c[0].0 / 100.0 * r[2] } else { c[0].0 }), r4(r[1] + if c[1].1 { c[1].0 / 100.0 * r[3] } else { c[1].0 })];
+        let rect = [r4(r[0]), r4(r[1]), r4(r[2].max(1.0)), r4(r[3].max(1.0))];
         for lk in looks {
             let k = effects.len();
             match lk {
+                Look::Kaleido { segments, mirror, angle, zoom, amount, center } => {
+                    effects.push(json!({"type": "kaleido", "segments": segments, "mirror": mirror, "center": at(&center), "angle": angle, "zoom": zoom, "amount": amount, "rect": rect}));
+                    for (ch, field) in [(Ch::KaleidoAmount, "amount"), (Ch::KaleidoAngle, "angle"), (Ch::KaleidoZoom, "zoom")] { num_track(self, ch, k, field); }
+                }
                 Look::Rgbsplit { dx, dy, amount, mode } => {
                     effects.push(json!({"type": "rgbsplit", "dx": dx, "dy": dy, "amount": amount, "mode": mode}));
                     for (ch, field) in [(Ch::Rgbsplit, "amount"), (Ch::RgbsplitDx, "dx"), (Ch::RgbsplitDy, "dy")] { num_track(self, ch, k, field); }

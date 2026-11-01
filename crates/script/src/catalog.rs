@@ -137,6 +137,7 @@ pub const ITEMS: &[Item] = &[
     it("soft shadow (SDF)", "motion", "effects", "paint", "impl", "shadow=soft(#sun, height=40, opacity=0.5, color=#000)", "Shadow of the layer as a sheet `height` px above the page, penumbra from its signed distance field; a moving light sweeps it. Direct mode only."),
     it("light sweep", "motion", "effects", "paint", "impl", "sweep #card dur=1.4s angle=20deg width=25% color=#FFF1D6 strength=0.35", "A soft band of light crosses the layer once (channel sweep 0..1). Direct mode only."),
     it("god rays", "motion", "effects", "paint", "impl", "rays=#sun rays-length=0.6 rays-strength=1 rays-color=#FFE9C4 ; anim #plate rays 0s:0 1s:1.4", "Light behind the layer streams through its holes (knocked-out type), radial blur away from the light. Direct mode only."),
+    it("kaleidoscope", "motion", "space", "paint", "impl", "kaleido=8 kaleido-angle=0deg kaleido-zoom=1 kaleido-amount=1 kaleido-center=50%,50% kaleido-mirror=on|off ; anim #x kaleido-angle 0s:0 8s:90", "N-fold mirror symmetry of the layer's (or group's) own pixels around a center (% of the layer box or px). Angle, zoom and amount (0 = unchanged, a fold) are animatable; samples mirror at the layer box. Output covers the frame. Direct mode only."),
     it("chromatic aberration / displacement", "motion", "effects", "paint", "planned", "", "Planned."),
     it("depth of field", "motion", "space", "paint", "planned", "camera focus=0 dof=0.02", "Planned (static blur by z works via blur=)."),
     // ---- motion

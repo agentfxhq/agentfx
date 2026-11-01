@@ -51,6 +51,7 @@ mod text;
 mod textfx;
 mod timefx;
 mod vraster;
+mod warp;
 
 use anyhow::{Context, Result, bail};
 use std::path::{Path, PathBuf};

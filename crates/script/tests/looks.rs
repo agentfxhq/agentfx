@@ -117,3 +117,33 @@ fn digital_look_parameters_are_checked() {
         assert!(!errors(&format!("{head}  rect w=10 h=10 {props}\n")).is_empty(), "{props}");
     }
 }
+
+#[test]
+fn kaleido_example_emits_a_warp_of_the_group() {
+    let (s, dir) = scene_of("examples/features/kaleidoscope.reel");
+    let (node, k) = s.nodes.iter().enumerate().find_map(|(i, n)| n.effects.iter().position(|e| matches!(e, Effect::Kaleido { .. })).map(|k| (i, k))).expect("kaleido effect");
+    let Effect::Kaleido { segments, mirror, center, rect, .. } = &s.nodes[node].effects[k] else { unreachable!() };
+    assert_eq!((*segments, *mirror), (8, true));
+    assert_eq!(*center, [320.0, 180.0], "50%,50% of the layer box");
+    assert_eq!(*rect, Some([0.0, 0.0, 640.0, 360.0]));
+    assert!(!s.nodes[node].children.is_empty(), "on the group: it mirrors the subtree");
+    for field in ["amount", "angle", "zoom"] {
+        assert!(s.tracks.iter().any(|t| t.node == node && t.property == format!("effects.{k}.{field}")), "{field} track");
+    }
+    assert!(agentfx_ir::validate::validate(&s, &dir).is_ok());
+}
+
+#[test]
+fn kaleido_lint() {
+    let head = "video \"x\" size=640x360 fps=30 captions=off\nscene a dur=1s\n";
+    let has = |src: &str, code: &str, hint: &str| {
+        let e = errors(&format!("{head}{src}"));
+        assert!(e.iter().any(|d| d.code == code && d.hint.contains(hint)), "{src}: want {code} with `{hint}`, got {e:#?}");
+    };
+    has("  rect #r w=10 h=10 kaleido=6 kaleido-zom=2\n", "E_LOOK", "kaleido-zoom");
+    has("  rect #r w=10 h=10 kaleido=1\n", "E_VALUE", "2..64");
+    has("  rect #r w=10 h=10 kaleido=6.5\n", "E_LOOK", "kaleido=8");
+    has("  rect #r w=10 h=10 kaleido=6 kaleido-mirror=yes\n", "E_VALUE", "on");
+    has("  rect #r w=10 h=10 kaleido=6 kaleido-center=middle\n", "E_VALUE", "50%,40%");
+    assert!(errors(&format!("{head}  layer #g w=100 h=100 kaleido=12 kaleido-center=40,60 kaleido-angle=15deg kaleido-mirror=off\n    rect w=10 h=10\n")).is_empty());
+}

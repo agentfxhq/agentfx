@@ -734,3 +734,27 @@ time. Palettes replace channel quantization with nearest RGB palette matching. A
 an embedded 5x7 bitmap atlas, alpha-weighted cell color, and luminance to select a glyph;
 no font assets are required. It is a deliberately small punctuation atlas, not arbitrary
 Unicode text rendering. Cell size scales with the node and rounds to output pixels.
+
+### Space warps
+
+`kaleido` resamples the node's composited subtree: each output pixel reads the
+subtree somewhere else (bilinear, premultiplied). It is a look effect (tracks
+`effects.<index>.<field>`, numbers) whose output covers the whole frame, so the subtree is
+rendered over the frame and never comes from the static effect cache. Points are node px
+(scene px at rest, transformed with the node; the node's rotation turns them too).
+`rect` (node px, `[x, y, w, h]`) is the sampling domain; default: the subtree's ink box.
+The CPU reference (`render/src/warp.rs`) and the GPU kernel (`gpu/warp.wgsl`) evaluate the
+same f32 expressions (explicit fma, polynomial atan2 / sin / cos, per-frame constants
+from the host): they agree within 1/255 (`gpu_warps_match_cpu_within_one`). The GPU runs
+it when they join a frame already on the GPU, or always with `AGENTFX_GPU_FX=kaleido`.
+
+| type | parameters | animatable fields |
+|---|---|---|
+| `kaleido` | `segments`: 2..64 (default 6); `mirror`: bool (default true); `center`: [x, y]; `angle`: degrees (wedge start, default 0); `zoom`: 0.05..20 (default 1); `amount`: 0..1 (default 1); `rect` | amount, angle, zoom, cx, cy |
+
+Kaleido: a pixel at polar (r, a) around `center` reads radius r / zoom at angle
+a' = angle + ((a - angle) mod w), w = 360 / segments; with `mirror` the angle folds into
+the first half wedge (w/2 - |a' - w/2|), so neighbouring wedges are mirror images and the
+pattern has no seams. `amount` moves the sample linearly from the pixel itself (0: the
+subtree unchanged) to its folded position, so animating it is a fold that opens.
+Samples outside `rect` mirror back into it (texel-symmetric).

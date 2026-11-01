@@ -131,21 +131,127 @@ pub fn blur(buf: &mut [u8], w: usize, h: usize, sigma: f64) {
     // center-aligned bilinear reconstruction (2s²+1)/12 = s²/4.
     let reduced_sigma = ((sigma / scale as f64).powi(2) - 0.25).sqrt();
     blur_full(&mut small, sw, sh, reduced_sigma);
-    buf.par_chunks_mut(w * 4).enumerate().for_each(|(y, row)| {
+    upsample(&small, sw, sh, scale, buf, 0, 0, w, h);
+}
+
+/// `blur` of a `w x h` buffer that is never held in full: the input arrives in tiles (on the
+/// reduction grid), the output is produced for one crop rectangle only. Bitwise the
+/// corresponding pixels of `blur` (same reduction sums, small blur and reconstruction), for
+/// huge, mostly invisible rasters (a glow on a layer scaled far beyond the frame).
+pub struct TiledBlur {
+    w: usize,
+    h: usize,
+    scale: usize,
+    sw: usize,
+    sh: usize,
+    sigma: f64,
+    sums: Vec<u64>,
+}
+
+impl TiledBlur {
+    /// None when `blur` would not reduce (sigma below the downsampling limit).
+    pub fn new(w: usize, h: usize, sigma: f64) -> Option<Self> {
+        if !(sigma.is_finite() && sigma >= 0.2 && sigma <= 1_000_000.0) || w == 0 || h == 0 || w.max(h) > (u32::MAX / 255 - 1) as usize {
+            return None;
+        }
+        let scale = Self::scale_for(sigma);
+        if scale == 1 {
+            return None;
+        }
+        let (sw, sh) = (w.div_ceil(scale), h.div_ceil(scale));
+        Some(TiledBlur { w, h, scale, sw, sh, sigma, sums: vec![0; sw * sh * 4] })
+    }
+
+    /// The reduction factor `blur` uses for `sigma` (tiles must start on multiples of it).
+    pub fn scale_for(sigma: f64) -> usize {
+        let mut scale = 1usize;
+        while sigma / (scale * 2) as f64 >= (3.5_f64.powi(2) + 0.25).sqrt() {
+            scale *= 2;
+        }
+        scale
+    }
+
+    pub fn scale(&self) -> usize {
+        self.scale
+    }
+
+    /// Add the input tile `tile` (`tw x th`, RGBA8 premultiplied) at (`tx`, `ty`) of the
+    /// full buffer; `tx`, `ty` multiples of the scale, every pixel added once.
+    pub fn add(&mut self, tile: &[u8], tx: usize, ty: usize, tw: usize, th: usize) {
+        assert!(tx % self.scale == 0 && ty % self.scale == 0 && tx + tw <= self.w && ty + th <= self.h && tile.len() == tw * th * 4);
+        let (sc, sw) = (self.scale, self.sw);
+        let (bx0, by0) = (tx / sc, ty / sc);
+        let (bx1, by1) = ((tx + tw).div_ceil(sc), (ty + th).div_ceil(sc));
+        let rows = &mut self.sums[by0 * sw * 4..by1 * sw * 4];
+        rows.par_chunks_mut(sw * 4).enumerate().for_each(|(j, row)| {
+            let by = by0 + j;
+            for bx in bx0..bx1 {
+                let mut sum = [0u64; 4];
+                for y in (by * sc).max(ty)..((by + 1) * sc).min(ty + th) {
+                    let r = &tile[(y - ty) * tw * 4..][..tw * 4];
+                    for x in (bx * sc).max(tx)..((bx + 1) * sc).min(tx + tw) {
+                        for c in 0..4 {
+                            sum[c] += r[(x - tx) * 4 + c] as u64;
+                        }
+                    }
+                }
+                for c in 0..4 {
+                    row[bx * 4 + c] += sum[c];
+                }
+            }
+        });
+    }
+
+    /// The blurred pixels of crop rect (`cx`, `cy`, `cw`, `ch`) into `out` (`cw x ch`).
+    pub fn finish(self, out: &mut [u8], cx: usize, cy: usize, cw: usize, ch: usize) {
+        assert!(cx + cw <= self.w && cy + ch <= self.h && out.len() == cw * ch * 4);
+        let (scale, sw, sh) = (self.scale, self.sw, self.sh);
+        let area = (scale * scale) as u64;
+        // Partial blocks include transparent pixels, not replicated edges.
+        let mut small: Vec<u8> = self.sums.iter().map(|&v| ((v + area / 2) / area) as u8).collect();
+        let reduced_sigma = ((self.sigma / scale as f64).powi(2) - 0.25).sqrt();
+        blur_full(&mut small, sw, sh, reduced_sigma);
+        upsample(&small, sw, sh, scale, out, cx, cy, cw, ch);
+    }
+}
+
+/// Bilinear reconstruction of the reduced buffer for the rows/columns
+/// [cy, cy + ch) x [cx, cx + cw) of the full buffer (shared by `blur` and `TiledBlur`).
+#[allow(clippy::too_many_arguments)]
+fn upsample(small: &[u8], sw: usize, sh: usize, scale: usize, out: &mut [u8], cx: usize, cy: usize, cw: usize, ch: usize) {
+    debug_assert_eq!(out.len(), cw * ch * 4);
+    if cw == 0 || ch == 0 {
+        return;
+    }
+    // the column taps are the same for every row (computed once, the arithmetic per pixel
+    // is unchanged), and pixels whose four taps are all transparent stay 0 (as the
+    // weighted sum would)
+    let cols: Vec<(isize, f64)> = (cx..cx + cw).map(|x| {
+        let fx = (x as f64 + 0.5) / scale as f64 - 0.5;
+        let ix = fx.floor() as isize;
+        (ix, fx - ix as f64)
+    }).collect();
+    out.par_chunks_mut(cw * 4).enumerate().for_each(|(j, row)| {
+        let y = cy + j;
         let fy = (y as f64 + 0.5) / scale as f64 - 0.5;
         let iy = fy.floor() as isize;
         let ty = fy - iy as f64;
-        for x in 0..w {
-            let fx = (x as f64 + 0.5) / scale as f64 - 0.5;
-            let ix = fx.floor() as isize;
-            let tx = fx - ix as f64;
+        let tap = |sx: isize, sy: isize| -> Option<&[u8]> {
+            (sx >= 0 && sy >= 0 && (sx as usize) < sw && (sy as usize) < sh).then(|| &small[(sy as usize * sw + sx as usize) * 4..][..4])
+        };
+        let zero = |p: Option<&[u8]>| p.is_none_or(|p| p == [0, 0, 0, 0]);
+        for (x, &(ix, tx)) in cols.iter().enumerate() {
+            let taps = [tap(ix, iy), tap(ix + 1, iy), tap(ix, iy + 1), tap(ix + 1, iy + 1)];
+            if taps.iter().all(|&t| zero(t)) {
+                row[x * 4..x * 4 + 4].fill(0);
+                continue;
+            }
             let mut value = [0.0; 4];
-            for (sy, wy) in [(iy, 1.0 - ty), (iy + 1, ty)] {
-                for (sx, wx) in [(ix, 1.0 - tx), (ix + 1, tx)] {
-                    if sx >= 0 && sy >= 0 && (sx as usize) < sw && (sy as usize) < sh {
-                        let i = (sy as usize * sw + sx as usize) * 4;
+            for (k, wy) in [(0, 1.0 - ty), (2, ty)] {
+                for (i, wx) in [(0, 1.0 - tx), (1, tx)] {
+                    if let Some(p) = taps[k + i] {
                         for c in 0..4 {
-                            value[c] += small[i + c] as f64 * wx * wy;
+                            value[c] += p[c] as f64 * wx * wy;
                         }
                     }
                 }
@@ -393,6 +499,32 @@ mod tests {
                 assert_eq!(actual, reference, "{w}x{h}, sigma {sigma}");
             }
         }
+    }
+
+    #[test]
+    fn tiled_blur_matches_blur_crop() {
+        let (w, h) = (301, 233);
+        let src = synthetic(w, h, 9);
+        for sigma in [7.5, 15.0, 40.0, 130.0] {
+            let mut full = src.clone();
+            blur(&mut full, w, h, sigma);
+            let mut tb = TiledBlur::new(w, h, sigma).unwrap();
+            let t = tb.scale() * 3;
+            for ty in (0..h).step_by(t) {
+                for tx in (0..w).step_by(t) {
+                    let (tw, th) = (t.min(w - tx), t.min(h - ty));
+                    let tile: Vec<u8> = (ty..ty + th).flat_map(|y| src[(y * w + tx) * 4..(y * w + tx + tw) * 4].to_vec()).collect();
+                    tb.add(&tile, tx, ty, tw, th);
+                }
+            }
+            let (cx, cy, cw, ch) = (37, 50, 190, 101);
+            let mut out = vec![0u8; cw * ch * 4];
+            tb.finish(&mut out, cx, cy, cw, ch);
+            for y in 0..ch {
+                assert_eq!(&out[y * cw * 4..(y + 1) * cw * 4], &full[((cy + y) * w + cx) * 4..((cy + y) * w + cx + cw) * 4], "sigma {sigma}, row {y}");
+            }
+        }
+        assert!(TiledBlur::new(100, 100, 5.0).is_none());
     }
 
     #[test]

@@ -1120,8 +1120,9 @@ mod tests {
         Err(if errs.is_empty() { "no ffmpeg".into() } else { errs.join("; ") })
     }
 
-    // NVENC HEVC's minimum frame size is about 128x64
-    const WIDTH: usize = 128;
+    // NVENC HEVC's minimum frame size is about 128x64 (Pascal); RTX 50 drivers want a
+    // width of at least 145 for H.264 (128 fails with "Frame Dimension less than the minimum")
+    const WIDTH: usize = 160;
     const HEIGHT: usize = 64;
     const CHANGES: [(u64, [u8; 3]); 10] = [
         (0, [220, 30, 30]), (1, [30, 220, 30]), (2, [30, 30, 220]),

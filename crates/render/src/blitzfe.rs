@@ -52,15 +52,22 @@ impl NetProvider for FileNet {
 /// sans-serif -> Liberation Sans (Arial), serif -> Liberation Serif, monospace ->
 /// Liberation Mono, system-ui -> Nimbus Sans if present; `ui-*` and unknown families
 /// fall through to the next family in the list. No fontconfig lookup.
+/// On Windows the system set is the per-user font folder plus the core families from
+/// `%WINDIR%\Fonts` (Arial, Times New Roman, Courier New, Consolas, Segoe UI), the
+/// defaults Chrome uses there; generic families map to those when Liberation is absent.
 pub(crate) fn font_ctx(scene_dir: &Path) -> parley::FontContext {
     use parley::fontique::{Blob, Collection, CollectionOptions, GenericFamily, SourceCache};
     let mut collection = Collection::new(CollectionOptions { shared: false, system_fonts: false });
     let mut dirs = vec![scene_dir.join("fonts"), scene_dir.join("../_shared")];
-    if let Some(h) = std::env::var_os("HOME") {
-        dirs.push(PathBuf::from(h).join(".local/share/fonts"));
+    if let Some(h) = agentfx_ir::paths::home_dir() {
+        dirs.push(h.join(".local/share/fonts"));
     }
     dirs.push(PathBuf::from("/usr/share/fonts/truetype/liberation"));
     dirs.push(PathBuf::from("/usr/share/fonts/truetype/noto"));
+    #[cfg(windows)]
+    if let Some(l) = std::env::var_os("LOCALAPPDATA") {
+        dirs.push(PathBuf::from(l).join(r"Microsoft\Windows\Fonts"));
+    }
     for d in dirs {
         let Ok(rd) = std::fs::read_dir(&d) else { continue };
         let mut files: Vec<PathBuf> = rd.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|e| e == "ttf" || e == "otf")).collect();
@@ -71,6 +78,24 @@ pub(crate) fn font_ctx(scene_dir: &Path) -> parley::FontContext {
             }
         }
     }
+    #[cfg(windows)]
+    {
+        // the whole system folder is hundreds of MB (CJK collections): only the core families
+        let win = std::env::var_os("WINDIR").map(PathBuf::from).unwrap_or_else(|| PathBuf::from(r"C:\Windows")).join("Fonts");
+        if let Ok(rd) = std::fs::read_dir(&win) {
+            const CORE: &[&str] = &["arial", "times", "cour", "consola", "segoeui", "seguisym"];
+            let mut files: Vec<PathBuf> = rd.flatten().map(|e| e.path()).filter(|p| {
+                let stem = p.file_stem().map(|s| s.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
+                p.extension().is_some_and(|e| e.eq_ignore_ascii_case("ttf")) && CORE.iter().any(|c| stem.starts_with(c))
+            }).collect();
+            files.sort();
+            for f in files {
+                if let Ok(data) = std::fs::read(&f) {
+                    collection.register_fonts(Blob::new(Arc::new(data)), None);
+                }
+            }
+        }
+    }
     let nimbus = PathBuf::from("/usr/share/fonts/opentype/urw-base35/NimbusSans-Regular.otf");
     for f in ["NimbusSans-Regular.otf", "NimbusSans-Bold.otf"] {
         if let Ok(data) = std::fs::read(nimbus.with_file_name(f)) {
@@ -78,10 +103,20 @@ pub(crate) fn font_ctx(scene_dir: &Path) -> parley::FontContext {
         }
     }
     let pick = |c: &mut Collection, names: &[&str]| names.iter().find_map(|n| c.family_id(n));
-    let sans = pick(&mut collection, &["Liberation Sans", "Inter"]);
-    let serif = pick(&mut collection, &["Liberation Serif"]);
-    let mono = pick(&mut collection, &["Liberation Mono"]);
-    let sys = pick(&mut collection, &["Nimbus Sans", "Liberation Sans"]);
+    #[cfg(not(windows))]
+    let (sans, serif, mono, sys): (&[&str], &[&str], &[&str], &[&str]) =
+        (&["Liberation Sans", "Inter"], &["Liberation Serif"], &["Liberation Mono"], &["Nimbus Sans", "Liberation Sans"]);
+    #[cfg(windows)]
+    let (sans, serif, mono, sys): (&[&str], &[&str], &[&str], &[&str]) = (
+        &["Liberation Sans", "Arial", "Inter"],
+        &["Liberation Serif", "Times New Roman"],
+        &["Liberation Mono", "Consolas", "Courier New"],
+        &["Nimbus Sans", "Liberation Sans", "Segoe UI", "Arial"],
+    );
+    let sans = pick(&mut collection, sans);
+    let serif = pick(&mut collection, serif);
+    let mono = pick(&mut collection, mono);
+    let sys = pick(&mut collection, sys);
     for (g, id) in [(GenericFamily::SansSerif, sans), (GenericFamily::SystemUi, sys), (GenericFamily::Serif, serif), (GenericFamily::Monospace, mono)] {
         if let Some(id) = id {
             collection.set_generic_families(g, std::iter::once(id));
@@ -122,7 +157,7 @@ fn resolve(doc: &mut HtmlDocument) {
 impl BlitzScene {
     pub fn load(scene_dir: &Path, compiled: &Compiled) -> Result<BlitzScene> {
         let t0 = std::time::Instant::now();
-        let index = std::fs::canonicalize(scene_dir.join("index.html")).context("index.html")?;
+        let index = agentfx_ir::paths::canonicalize(scene_dir.join("index.html")).context("index.html")?;
         let mut html = std::fs::read_to_string(&index)?;
         // Chrome applies automatic optical sizing to web fonts only (blitz-dom patch)
         let mut web_fonts = html.contains("@font-face");

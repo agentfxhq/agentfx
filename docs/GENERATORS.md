@@ -19,7 +19,7 @@ Every generator has:
 | Mandelbrot | infinite zoom; f32 GPU limit about 2e4x, CPU f64 | done (`kind=mandelbrot`) |
 | Kaleidoscope (effect) | N-fold mirror symmetry of any layer | done (`kaleido=`, CPU + GPU) |
 | Tunnel warp (effect) | polar remap, fly down a tube | done (`tunnel=`, CPU + GPU) |
-| Mandelbulb, KIFS | raymarched 3D fractals | Mandelbulb done (`kind=mandelbulb`); KIFS planned |
+| Mandelbulb, KIFS | raymarched 3D fractals | done (`kind=mandelbulb`, `kind=kifs`) |
 | Fractal flames | glowing silk, IFS with variations | planned |
 | Strange attractors | Lorenz, Clifford, de Jong; 2D density and 3D point clouds | planned |
 | Reaction-diffusion | Gray-Scott coral, zebra, spots | planned |
@@ -74,7 +74,7 @@ into unit space through the layer transform, supersamples (`aa`), premultiplies 
    `gpu: false`, no `.wgsl`. `g.aspect` gives the rect's extent in unit space (u in
    +-aspect), so a kind can fit or cover the rect. Keep everything a pure function of the
    parameters, seed and t (simulations replay from step 0 each frame).
-6. **Raymarched (3D) kinds** (`mandelbulb`): implement `ray::Sdf` (a distance estimator
+6. **Raymarched (3D) kinds** (`mandelbulb`, `kifs`): implement `ray::Sdf` (a distance estimator
    returning the distance as two factors and an orbit trap) and reuse `generator/ray.rs` and
    `ray.wgsl` (orbit camera, march, shading); the kind's WGSL declares `const NP` (its
    parameter count) and `fn de`. Everything trigonometric (camera basis, light, rotation

@@ -1,0 +1,13 @@
+// Generators: a raymarched kaleidoscopic IFS; the camera flies into a Menger sponge's tunnel while the folds twist.
+video "KIFS" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #000000
+
+scene tunnel dur=8s
+  gen #k kind=kifs mode=menger iter=6 zoom=0.7 aa=2 palette=neon
+  anim #k distance 0s:2.4 8s:0.6 ease=inout-sine
+  anim #k twist 0s:0 8s:8 ease=inout-sine
+  anim #k yaw 0s:-14 8s:10 ease=inout-sine
+  anim #k pitch 0s:9 8s:0 ease=inout-sine
+  anim #k turn 0s:0 8s:40 ease=linear
+  anim #k color-offset 0s:0 8s:0.5 ease=linear

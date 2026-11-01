@@ -1,0 +1,3 @@
+# Check out text files with LF on every platform (Windows too): golden-file tests and
+# the Reel Script parser expect LF, and Git for Windows defaults to core.autocrlf=true.
+* text=auto eol=lf

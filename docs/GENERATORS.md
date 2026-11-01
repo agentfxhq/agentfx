@@ -26,7 +26,7 @@ Every generator has:
 | Domain-warped noise | marble, oil, liquid neon | done (`kind=noise`) |
 | Flow fields | particles streaking through a curl-noise field | done (`kind=flow`, CPU) |
 | Truchet, Voronoi | tiled arcs, cells | done (`kind=truchet`, `kind=voronoi`) |
-| L-systems | growing plants and curves as drawable paths | planned |
+| L-systems | growing plants and curves as drawable paths | done (`kind=lsystem`, CPU) |
 | Cellular automata | Life, elementary rules, Lenia-like | planned |
 | Penrose tilings | P2/P3 by deflation, as paths | planned |
 

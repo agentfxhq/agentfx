@@ -18,6 +18,7 @@
 //! (`Input::f32`, what the conformance tests use); normal renders run the CPU in f64.
 pub mod flow;
 pub mod julia;
+pub mod lsystem;
 pub mod mandelbrot;
 pub mod noise;
 pub mod raster;
@@ -59,6 +60,7 @@ pub fn lookup(kind: &str) -> Option<&'static dyn Generator> {
         "flow" => &flow::Flow,
         "truchet" => &truchet::Truchet,
         "voronoi" => &voronoi::Voronoi,
+        "lsystem" => &lsystem::LSystem,
         _ => return None,
     })
 }

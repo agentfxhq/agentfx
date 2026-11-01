@@ -966,7 +966,8 @@ fn grain(a: &mut Active, cx: &FxCtx, amount: f64, seed: u64, live: bool, size: f
 // ---------------------------------------------------------------- self-test
 
 /// `--gpu=auto`'s start-up check (a few ms): blur (both paths) and glow bit-exact, vhs,
-/// glitch, grain and the warps (kaleido, tunnel) within 1 of the CPU on a small fixture. An
+/// glitch, grain, the lenses (optics, glass) and the warps (kaleido, tunnel) within 1 of the
+/// CPU on a small fixture. An
 /// error means this adapter / driver does not compute what the CPU does: the render stays on
 /// the CPU.
 pub fn self_test(g: &'static Gpu) -> anyhow::Result<()> {
@@ -1004,6 +1005,29 @@ pub fn self_test(g: &'static Gpu) -> anyhow::Result<()> {
         crate::look::apply(&e, &p, &mut cpu, w, h, &cx);
         let mut gpu = img.clone();
         anyhow::ensure!(apply_on(g, &e, &p, &mut gpu, w, h, &cx)?, "{j}: not on the GPU");
+        check(j, &cpu, &gpu, 1)?;
+    }
+    // the lenses (optics; glass over an opaque backdrop) within 1
+    let lenses = [
+        r#"{"type":"optics","streak":0.7,"bokeh":1.5,"distortion":0.1,"aberration":0.6,"vignette":0.4,"halation":0.25,"grain":0.1,"seed":7}"#,
+        r#"{"type":"glass","strength":15,"blur":1,"dispersion":2,"thickness":1.3,"highlight":0.14,"rim":0.2,"tint":[0.72,0.9,1,0.12]}"#,
+    ];
+    let backdrop: Vec<u8> = img.chunks_exact(4).flat_map(|c| [c[1], c[2], c[0], 255]).collect();
+    for j in lenses {
+        let e: Effect = serde_json::from_str(j)?;
+        let mut p = [0.0; NPARAM];
+        for (i, f) in e.look_fields().iter().enumerate() {
+            p[i] = e.look_field(f);
+        }
+        let mut cpu = img.clone();
+        let mut gpu = img.clone();
+        if matches!(e, Effect::Glass { .. }) {
+            crate::look::apply_with_backdrop(&e, &p, &mut cpu, Some(&backdrop), w, h, &cx);
+            anyhow::ensure!(apply_glass_on(g, &e, &p, &mut gpu, &backdrop, w, h, &cx)?, "{j}: not on the GPU");
+        } else {
+            crate::look::apply(&e, &p, &mut cpu, w, h, &cx);
+            anyhow::ensure!(apply_on(g, &e, &p, &mut gpu, w, h, &cx)?, "{j}: not on the GPU");
+        }
         check(j, &cpu, &gpu, 1)?;
     }
     // the warps (kaleido, tunnel texture + perspective) within 1

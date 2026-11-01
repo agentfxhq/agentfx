@@ -751,8 +751,9 @@ rendered over the frame and never comes from the static effect cache. Points are
 `rect` (node px, `[x, y, w, h]`) is the sampling domain; default: the subtree's ink box.
 The CPU reference (`render/src/warp.rs`) and the GPU kernel (`gpu/warp.wgsl`) evaluate the
 same f32 expressions (explicit fma, polynomial atan2 / sin / cos, per-frame constants
-from the host): they agree within 1/255 (`gpu_warps_match_cpu_within_one`). The GPU runs
-them when they join a frame already on the GPU, or always with `AGENTFX_GPU_FX=kaleido,tunnel`.
+from the host): they agree within 1/255 (`gpu_warps_match_cpu_within_one`). With `--gpu`
+they run on the GPU like the other ported looks (from `AGENTFX_GPU_MIN_PX`, or on a frame
+already resident there), and are part of `--gpu=auto`'s start-up self-test.
 
 | type | parameters | animatable fields |
 |---|---|---|

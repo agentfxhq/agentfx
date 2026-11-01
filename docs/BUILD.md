@@ -72,7 +72,7 @@ still accepted as a fallback (`AGENTFX_FFMPEG` wins over `REEL_FFMPEG`).
 | `AGENTFX_VAAPI_DEVICE` | agentfx-render | `/dev/dri/renderD128` | DRM render node for VAAPI/QSV |
 | `AGENTFX_NVENC_SESSIONS` | agentfx-render | from the NVIDIA driver version (`/proc/driver/nvidia/version`, else `nvidia-smi`, e.g. on Windows), else 3 | concurrent NVENC sessions |
 | `AGENTFX_GPU` | agentfx-render | `0` | GPU effects: `0`, `1` or `auto` (same as `--gpu`); `auto`: discrete GPUs only, after a start-up self-test against the CPU |
-| `AGENTFX_GPU_FX` | agentfx-render | every ported effect | comma list of the effects that may move a frame to the GPU: `riso,halftone,rays,shadow,rgbsplit,glitch,vhs,grain,blur,drop-shadow,glow`; the others still run on the GPU when the frame is already there |
+| `AGENTFX_GPU_FX` | agentfx-render | every ported effect | comma list of the effects that may move a frame to the GPU: `riso,halftone,rays,shadow,rgbsplit,glitch,vhs,grain,blur,drop-shadow,glow,kaleido,tunnel`; the others still run on the GPU when the frame is already there |
 | `AGENTFX_GPU_MIN_PX` | agentfx-render | `65536` | smallest effect buffer (px) that goes to the GPU |
 | `AGENTFX_GPU_BLUR_MIN_PX` | agentfx-render | `524288` | the same for a blur, drop shadow or glow that would start a GPU chain (they are cheap on the CPU next to a frame transfer) |
 | `AGENTFX_GPU_RESIDENT` | agentfx-render | `1` | `0` reads the frame back after every GPU effect (measurement: what keeping a node's effects on the GPU saves) |

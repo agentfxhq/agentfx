@@ -126,9 +126,10 @@ frame was CPU work without a GPU port.
 | rgbsplit, glitch, vhs | gather through the host's sampling tables (`digital::Tab`, shared with the CPU loop), unpremultiply through a 64 K exact-division table | max 1 / 255 (rgbsplit, glitch: 0) |
 | grain (fine, coarse, live) | in place, integer hashes, value noise | max 1 / 255 |
 | riso, halftone, rays, shadow | (unchanged) | max 3, PSNR >= 45 dB |
+| kaleido, tunnel (warps, generator branch) | one gather pass over a copy of the frame (`warp.wgsl`), the same f32 expression trees as `warp.rs` with explicit fma, polynomial atan2 / sincos | max 1 / 255 |
 
 Routing with `--gpu` (`gpu/fx.rs`): every ported effect may move a frame to the GPU
-(`AGENTFX_GPU_FX`, default all). The digital looks and grain from `AGENTFX_GPU_MIN_PX` (65536 px),
+(`AGENTFX_GPU_FX`, default all). The digital looks, grain and the warps from `AGENTFX_GPU_MIN_PX` (65536 px),
 blur / drop shadow / glow from `AGENTFX_GPU_BLUR_MIN_PX` (512 K px: a lone glow there is about
 break-even with the CPU on Data, where 1080p is 24 ms CPU vs 17 ms GPU with the transfer; Soong's
 faster bus wins down to roughly 256 K px, 15 vs 6 ms at 1080p). A node's consecutive GPU effects run on one resident
@@ -147,8 +148,8 @@ output is bitwise unchanged by this work (frames at 12, 20, 30, 50 s compared).
 `h1.ir.json` is `agentfx ir horizon.reel` of the workshop reel (`hbench/horizon.reel`; 13 glow,
 1 blur, 4 grain, 3 rgbsplit, 3 vhs, 2 glitch, a swarm, echo, the fluid hidden). It is a lighter
 variant than the one profiled above (whose numbers are not comparable). HORIZON v2
-(`horizon-v2-t2.ir.json`) uses `kaleido` / `tunnel` from `feat/gen-warp` and does not load on
-main. Fastest frame after the first of each 3-frame range, minimum over 3 rounds (Data) or 2
+(`horizon-v2-t2.ir.json`) uses `kaleido` / `tunnel` (the generator branch) and did not load on
+main when these numbers were taken. Fastest frame after the first of each 3-frame range, minimum over 3 rounds (Data) or 2
 (Soong). Data: i7-2600K (4 cores, no FMA), GTX 1050 Ti, shared box (load 2 to 8). Soong:
 i7-8700 (6 cores), RTX 5060 Ti 16 GB, Windows, Flint paused.
 
@@ -299,7 +300,8 @@ Windows it falls back to `nvidia-smi --query-gpu=driver_version` (610.88 -> 8 se
 ## Further opportunities (not done)
 
 - GPU: `color`, `dither` (ordered / blue noise; Floyd is serial), `ascii` and `paper` are not
-  ported; matte, kaleido / tunnel-style warps and compositing children stay on the CPU, so a
+  ported; matte and compositing children stay on the CPU (the kaleido / tunnel warps are
+  ported and ride a node's resident chain), so a
   frame never stays on the GPU across nodes (see the vector investigation above).
 - Anisotropic effect scale: a glow on a layer scaled `sx=110 sy=0.4` uses the largest scale
   in both axes; Chrome blurs in layer space. Matching that would be both faster and closer.

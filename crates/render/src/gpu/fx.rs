@@ -43,7 +43,7 @@ fn fx_name(e: &Effect) -> &'static str {
 }
 
 /// Every ported effect (the default of `AGENTFX_GPU_FX`).
-pub const ALL_FX: &str = "riso,halftone,rays,shadow,rgbsplit,glitch,vhs,grain,blur,drop-shadow,glow";
+pub const ALL_FX: &str = "riso,halftone,rays,shadow,rgbsplit,glitch,vhs,grain,blur,drop-shadow,glow,kaleido,tunnel";
 
 /// `AGENTFX_GPU_FX=riso,halftone,...` picks the effects that may start a chain (move the
 /// frame to the GPU); default: all ported effects (`ALL_FX`). A chain starts only for a
@@ -901,8 +901,9 @@ fn grain(a: &mut Active, cx: &FxCtx, amount: f64, seed: u64, live: bool, size: f
 // ---------------------------------------------------------------- self-test
 
 /// `--gpu=auto`'s start-up check (a few ms): blur (both paths) and glow bit-exact, vhs,
-/// glitch and grain within 1 of the CPU on a small fixture. An error means this
-/// adapter / driver does not compute what the CPU does: the render stays on the CPU.
+/// glitch, grain and the warps (kaleido, tunnel) within 1 of the CPU on a small fixture. An
+/// error means this adapter / driver does not compute what the CPU does: the render stays on
+/// the CPU.
 pub fn self_test(g: &'static Gpu) -> anyhow::Result<()> {
     let (w, h) = (96, 64);
     let img: Vec<u8> = (0..w * h).flat_map(|i| {
@@ -938,6 +939,29 @@ pub fn self_test(g: &'static Gpu) -> anyhow::Result<()> {
         crate::look::apply(&e, &p, &mut cpu, w, h, &cx);
         let mut gpu = img.clone();
         anyhow::ensure!(apply_on(g, &e, &p, &mut gpu, w, h, &cx)?, "{j}: not on the GPU");
+        check(j, &cpu, &gpu, 1)?;
+    }
+    // the warps (kaleido, tunnel texture + perspective) within 1
+    let warps = [
+        r#"{"type":"kaleido","segments":6,"mirror":true,"center":[40,30],"angle":17,"zoom":1.25,"amount":1}"#,
+        r#"{"type":"tunnel","amount":0.8,"depth":0.4,"speed":1.5,"twist":20,"angle":8,"radius":40,"fog":0.2,"fog_color":[0.1,0,0.2,0.8],"center":[50,30],"map":"texture"}"#,
+        r#"{"type":"tunnel","amount":0.6,"depth":0.4,"speed":1.5,"twist":20,"angle":8,"radius":40,"fog":0.2,"center":[50,30],"map":"perspective"}"#,
+    ];
+    for j in warps {
+        let e: Effect = serde_json::from_str(j)?;
+        let mut p = [0.0; NPARAM];
+        for (i, f) in e.look_fields().iter().enumerate() {
+            p[i] = e.look_field(f);
+        }
+        p[TIME] = 0.6;
+        let id = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0];
+        let Some(c) = crate::warp::cfg(&e, &p, id, [0.0, 0.0, w as f64, h as f64], [0, 0, w as i32, h as i32]) else { anyhow::bail!("{j}: no warp") };
+        let mut cpu = img.clone();
+        crate::warp::apply(&c, &mut cpu, w, h);
+        let mut gpu = img.clone();
+        let mut ch = Chain::on(g);
+        anyhow::ensure!(ch.warp(&c, &mut gpu, w, h), "{j}: not on the GPU");
+        ch.finish(&mut gpu)?;
         check(j, &cpu, &gpu, 1)?;
     }
     Ok(())

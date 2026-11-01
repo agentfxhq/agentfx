@@ -20,7 +20,7 @@ Every generator has:
 | Kaleidoscope (effect) | N-fold mirror symmetry of any layer | planned |
 | Tunnel warp (effect) | polar remap, fly down a tube | planned |
 | Mandelbulb, KIFS | raymarched 3D fractals | planned |
-| Fractal flames | glowing silk, IFS with variations | planned |
+| Fractal flames | glowing silk, seeded IFS with classic variations | done (`kind=flame`, CPU) |
 | Strange attractors | Lorenz, Clifford, de Jong; 2D density and 3D point clouds | planned |
 | Reaction-diffusion | Gray-Scott coral, zebra, spots | planned |
 | Domain-warped noise | marble, oil, liquid neon | done (`kind=noise`) |

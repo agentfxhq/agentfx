@@ -200,6 +200,24 @@ pub const KINDS: &[Kind] = &[
         gpu_zoom_max: None,
         time: true,
     },
+    Kind {
+        name: "flame",
+        doc: "Fractal flame: seeded IFS of 3-5 affine maps with blended flam3 variations, chaos game into log-density glowing silk (transparent); animate morph 0 -> 1 for a seamless loop; CPU",
+        params: &[
+            p("samples", 12.0, 0.1, 500.0, "chaos-game samples per pixel of the rect (more = smoother silk, slower)"),
+            p("gamma", 1.7, 0.2, 8.0, "tone-mapping gamma (higher = brighter faint filaments)"),
+            p("morph", 0.0, -1e6, 1e6, "turns every map's linear part by this many whole turns, each map one way or the other (0 -> 1 is a seamless loop)"),
+            p("symmetry", 1.0, 1.0, 12.0, "n-fold rotational symmetry (1 = none)"),
+            RE0, IM0,
+            p("zoom", 1.0, 1e-3, 1e3, "magnification (1 = the flame fits the rect)"),
+            TURN,
+            p("color-speed", 1.0, -100.0, 100.0, "palette spread over the maps' colour coordinate"),
+            OFFSET,
+        ],
+        gpu: false,
+        gpu_zoom_max: None,
+        time: false,
+    },
 ];
 
 /// `lsystem` presets in `preset=` order (Reel Script also takes the names: `preset=dragon`).

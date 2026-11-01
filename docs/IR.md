@@ -392,9 +392,10 @@ validation errors). The kinds, their parameters, defaults and ranges are declare
 | `lsystem` | `preset` (1: 0 koch, 1 dragon, 2 sierpinski, 3 plant, 4 hilbert, 5 gosper), `iter` (0 = preset default), `grow` (1), `thickness` (0.008), `re`, `im` (offset), `zoom` (1 = fitted), `turn`, `color-speed` (1), `color-offset` (0); CPU, transparent ground |
 | `penrose` | `depth` (6 deflations), `grow` (1), `thickness` (0.004), `re`, `im` (offset), `zoom` (1 = covers the rect), `turn`, `color-speed` (1), `color-offset` (0); CPU |
 | `life` | `mode` (0 2D, 1 1D), `born` (8), `survive` (12): neighbour-count bitmasks (B3/S23), `rule` (30, 1D Wolfram number), `zoom` (1 = 72 cells per rect height), `density` (0.3), `speed` (12 steps/s), `trail` (8 steps), `color-speed` (1), `color-offset` (0); time-dependent, CPU, transparent ground |
+| `flame` | `samples` (12 per pixel of the rect), `gamma` (1.7), `morph` (0; whole turns of the maps, 0 -> 1 loops), `symmetry` (1 = none, n-fold), `re`, `im` (offset), `zoom` (1 = fitted), `turn`, `color-speed` (1), `color-offset` (0); seeded IFS chaos game, log-density tone map; CPU, transparent ground |
 
 Pixel kinds (`julia mandelbrot noise truchet voronoi`) have a GPU kernel; vector and grid kinds
-(`flow lsystem penrose life`) rasterize their geometry on the CPU (anti-aliased, through the same
+(`flow lsystem penrose life flame`) rasterize their geometry, density or grid on the CPU (through the same
 mapping, so they stay crisp under the node transform) and leave the ground transparent where
 nothing is drawn (`penrose` covers the rect). The pattern kinds map unit space to their plane as
 `centre + rotate(turn) * (u, -v) * half / zoom` (half = 0.7 for noise, 4 tiles or cells for

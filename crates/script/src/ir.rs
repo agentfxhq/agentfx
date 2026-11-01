@@ -48,6 +48,7 @@ pub enum Ch {
     Rays,                // god-ray strength (look)
     Misreg,              // riso misregistration px (look)
     Rgbsplit, RgbsplitDx, RgbsplitDy, Glitch, GlitchRate, GlitchBlock, Vhs, Dither, Ascii,
+    KaleidoAmount, KaleidoAngle, KaleidoZoom, // kaleido fold 0..1, wedge angle deg, zoom (look)
     FluidTime,           // simulation time a fluid shows, s (identity unless remapped)
     PathOffset,          // text on a path: start offset along the path, px
     // 3D (scene3d objects use X Y Z RotX RotY Rot(=rz) Scale Sx Sy Opacity Color too)
@@ -70,7 +71,8 @@ impl Ch {
         match self {
             X | Y | Z | Px | Py | Scale | Sx | Sy | Rot | RotX | RotY | Opacity | Magic => Stage::Composite,
             Blur | Glow | Brightness | Saturate | Contrast | Hue | Fill | Color | Stroke | TrimStart | TrimEnd | Reveal | MaskX
-            | GradAngle | Grad0 | Grad1 | Grad2 | Grad3 | TimeSpan | Halftone | Sweep | Rays | Misreg | FluidTime | PathOffset | Rgbsplit | RgbsplitDx | RgbsplitDy | Glitch | GlitchRate | GlitchBlock | Vhs | Dither | Ascii => Stage::Paint,
+            | GradAngle | Grad0 | Grad1 | Grad2 | Grad3 | TimeSpan | Halftone | Sweep | Rays | Misreg | FluidTime | PathOffset | Rgbsplit | RgbsplitDx | RgbsplitDy | Glitch | GlitchRate | GlitchBlock | Vhs | Dither | Ascii
+            | KaleidoAmount | KaleidoAngle | KaleidoZoom => Stage::Paint,
             Sz | CamX | CamY | CamZ | LookX | LookY | LookZ | Fov | Roll | Ambient | Emissive | Intensity => Stage::PerFrame,
             Gen0 | Gen1 | Gen2 | Gen3 | Gen4 | Gen5 | Gen6 | Gen7 | Gen8 | Gen9 | Gen10 | Gen11 | Gen12 | Gen13 | Gen14 | Gen15 | Gen16 | Gen17 | Gen18 | Gen19 | Gen20 | Gen21 | Gen22 | Gen23 | Gen24 | Gen25 | Gen26 | Gen27 | Gen28 | Gen29 | Gen30 | Gen31 => Stage::PerFrame,
             Wght | Wdth | Opsz | Slnt | Axis0 | Axis1 | Axis2 | Axis3 | Tracking | W | H | LineH | Count => Stage::Layout,
@@ -79,7 +81,7 @@ impl Ch {
     pub fn default_value(self) -> TV {
         use Ch::*;
         match self {
-            Scale | Sx | Sy | Sz | Intensity | Opacity | Brightness | Saturate | Contrast | TrimEnd | Reveal | LineH | Magic => TV::N(1.0),
+            Scale | Sx | Sy | Sz | Intensity | Opacity | Brightness | Saturate | Contrast | TrimEnd | Reveal | LineH | Magic | KaleidoAmount | KaleidoZoom => TV::N(1.0),
             Fov => TV::N(40.0),
             Fill | Color | Stroke | Grad0 | Grad1 | Grad2 | Grad3 => TV::C(Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0.0 }),
             Wght => TV::N(400.0),
@@ -121,6 +123,7 @@ impl Ch {
             "rgbsplit" => Ch::Rgbsplit, "rgbsplit-dx" => Ch::RgbsplitDx, "rgbsplit-dy" => Ch::RgbsplitDy,
             "glitch" => Ch::Glitch, "glitch-rate" => Ch::GlitchRate, "glitch-block" => Ch::GlitchBlock,
             "vhs" => Ch::Vhs, "dither" => Ch::Dither, "ascii" => Ch::Ascii,
+            "kaleido-amount" => Ch::KaleidoAmount, "kaleido-angle" => Ch::KaleidoAngle, "kaleido-zoom" => Ch::KaleidoZoom,
             _ => return gen_ch(&s),
         })
     }
@@ -146,11 +149,12 @@ impl Ch {
     pub fn is_axis(self) -> bool {
         matches!(self, Ch::Wght | Ch::Wdth | Ch::Opsz | Ch::Slnt | Ch::Axis0 | Ch::Axis1 | Ch::Axis2 | Ch::Axis3)
     }
-    pub const NAMES: [&'static str; 64] = [
+    pub const NAMES: [&'static str; 67] = [
         "x", "y", "z", "px", "py", "scale", "sx", "sy", "rot", "rotx", "roty", "opacity", "blur", "glow", "brightness",
         "saturate", "contrast", "hue", "fill", "color", "stroke", "trim-start", "trim", "reveal", "mask-x", "grad-angle", "grad0",
         "grad1", "grad2", "grad3", "wght", "tracking", "w", "h", "count", "halftone", "sweep", "rays", "misreg",
         "rgbsplit", "rgbsplit-dx", "rgbsplit-dy", "glitch", "glitch-rate", "glitch-block", "vhs", "dither", "ascii",
+        "kaleido-amount", "kaleido-angle", "kaleido-zoom",
         "wdth", "opsz", "slnt", "path-offset",
         "sz", "cam-x", "cam-y", "cam-z", "look-x", "look-y", "look-z", "fov", "roll", "ambient", "emissive", "intensity",
     ];

@@ -163,6 +163,9 @@ pub fn validate(scene: &Scene, base_dir: &Path) -> Result<Vec<String>, Vec<Strin
                 Effect::Ascii { cell, charset, color, bg } => {
                     if !cell.is_finite() || !(6.0..=24.0).contains(cell) || charset.is_empty() || charset.chars().any(|c| !" .:-=+*#%@".contains(c)) || !matches!(color.as_str(), "mono" | "source") || bg.iter().any(|v| !v.is_finite() || !(0.0..=1.0).contains(v)) { errors.push(format!("{ctx}: invalid ascii (charset from space .:-=+*#%@)")); }
                 }
+                Effect::Kaleido { segments, center, angle, zoom, amount, rect, .. } => {
+                    if !(2..=64).contains(segments) || !finite(center) || !finite(&[*angle, *zoom, *amount]) || !(0.05..=20.0).contains(zoom) || !(0.0..=1.0).contains(amount) || rect.is_some_and(|r| !finite(&r) || r[2] <= 0.0 || r[3] <= 0.0) { errors.push(format!("{ctx}: invalid kaleido (segments 2..64, zoom 0.05..20, amount 0..1, rect w/h > 0)")); }
+                }
                 Effect::Color { brightness, saturate, contrast, hue, tint, tint_amount, levels, lut } => {
                     if !finite(&[*brightness, *saturate, *contrast, *hue, *tint_amount]) || *brightness < 0.0 || *saturate < 0.0 || *contrast < 0.0 || !tint.map_or(true, |c| finite(&c)) { errors.push(format!("{ctx}: invalid color (brightness/saturate/contrast >= 0, finite values)")); }
                     if let Some(l) = levels {

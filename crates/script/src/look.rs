@@ -11,6 +11,7 @@
 //! card #c shadow=soft(#sun, height=40, opacity=0.5)
 //! rect #plate rays=#sun rays-length=0.6 rays-color=#FFE9C4
 //! @2s sweep #c dur=1.4s angle=20deg width=25% color=#FFF1D6 strength=0.35
+//! layer #bloom kaleido=8 kaleido-angle=0deg kaleido-zoom=1.2 kaleido-center=50%,40%
 //! ```
 use crate::ast::{Node, Span, Value};
 use crate::ir::*;
@@ -35,25 +36,29 @@ pub enum Look {
     /// light band (verb `sweep`); width px, or % of the layer width when `width_pct`
     Sweep { angle: f64, width: f64, width_pct: bool, color: Rgba, strength: f64 },
     Rays { light: String, length: f64, strength: f64, color: Rgba, span: Span },
+    /// N-fold mirror (`kaleido=8`); center = (x, y) each (value, is %) of the layer box
+    Kaleido { segments: u32, mirror: bool, angle: f64, zoom: f64, amount: f64, center: [(f64, bool); 2] },
 }
 
 impl Look {
     /// Effect order in the reel-ir list: print looks first (they shape the ink), then the
     /// light (shadows of the printed layer, rays over everything).
+    /// Space warps come first: they resample the layer, the looks then print on the result.
     pub fn order(&self) -> u8 {
         match self {
-            Look::Riso { .. } => 0,
-            Look::Halftone { .. } => 1,
-            Look::Paper { .. } => 2,
-            Look::Grain { .. } => 3,
-            Look::Sweep { .. } => 4,
-            Look::Shadow { .. } => 5,
-            Look::Rays { .. } => 6,
-            Look::Rgbsplit { .. } => 7,
-            Look::Glitch { .. } => 8,
-            Look::Vhs { .. } => 9,
-            Look::Dither { .. } => 10,
-            Look::Ascii { .. } => 11,
+            Look::Kaleido { .. } => 0,
+            Look::Riso { .. } => 2,
+            Look::Halftone { .. } => 3,
+            Look::Paper { .. } => 4,
+            Look::Grain { .. } => 5,
+            Look::Sweep { .. } => 6,
+            Look::Shadow { .. } => 7,
+            Look::Rays { .. } => 8,
+            Look::Rgbsplit { .. } => 9,
+            Look::Glitch { .. } => 10,
+            Look::Vhs { .. } => 11,
+            Look::Dither { .. } => 12,
+            Look::Ascii { .. } => 13,
         }
     }
 }
@@ -73,9 +78,10 @@ pub const LOOK_KEYS: &[&str] = &[
     "rgbsplit", "rgbsplit-dx", "rgbsplit-dy", "rgbsplit-mode",
     "glitch", "glitch-rate", "glitch-block", "vhs", "dither", "dither-mode", "dither-size", "dither-palette",
     "ascii", "ascii-charset", "ascii-color", "ascii-bg",
+    "kaleido", "kaleido-angle", "kaleido-zoom", "kaleido-amount", "kaleido-center", "kaleido-mirror",
     "shadow", "rays", "rays-length", "rays-strength", "rays-color",
 ];
-const PREFIXES: &[&str] = &["riso-", "halftone-", "grain-", "paper-", "rays-", "light-", "rgbsplit-", "glitch-", "vhs-", "dither-", "ascii-"];
+const PREFIXES: &[&str] = &["riso-", "halftone-", "grain-", "paper-", "rays-", "light-", "rgbsplit-", "glitch-", "vhs-", "dither-", "ascii-", "kaleido-"];
 const SHADOW_ARGS: &[&str] = &["light", "height", "opacity", "color"];
 
 fn rgba(r: f64, g: f64, b: f64, a: f64) -> Rgba {
@@ -126,6 +132,30 @@ impl<'a> Ctx<'a> {
         let hint = suggest(&v, opts).map(|s| format!("did you mean `{s}`?")).unwrap_or_else(|| format!("{key}= {}", opts.join("|")));
         self.err("E_VALUE", format!("`{key}={v}` is not a known value"), hint, n.span);
         None
+    }
+
+    /// `x,y` center of a warp: each `N%` of the layer box or px from its top-left.
+    fn look_center(&mut self, n: &Node, key: &str) -> [(f64, bool); 2] {
+        let dflt = [(50.0, true), (50.0, true)];
+        let Some(v) = n.props.get(key) else { return dflt };
+        let raw = match v {
+            Value::List(l) => l.iter().map(|x| x.raw()).collect::<Vec<_>>().join(","),
+            other => other.raw(),
+        };
+        let parts: Vec<&str> = raw.split([',', ' ']).map(str::trim).filter(|s| !s.is_empty()).collect();
+        let one = |s: &str| -> Option<(f64, bool)> {
+            match s.strip_suffix('%') {
+                Some(p) => parse_number(p).ok().map(|v| (v, true)),
+                None => parse_number(s.trim_end_matches("px")).ok().map(|v| (v, false)),
+            }
+        };
+        match (parts.len(), parts.first().and_then(|s| one(s)), parts.get(1).and_then(|s| one(s))) {
+            (2, Some(a), Some(b)) => [a, b],
+            _ => {
+                self.err("E_VALUE", format!("`{key}={raw}`: expected x,y"), format!("write `{key}=50%,40%` (of the layer box) or `{key}=640,400` (px from its top-left)"), n.span);
+                dflt
+            }
+        }
     }
 
     /// Theme/hex color of a prop (or `None` with a diagnostic).
@@ -257,6 +287,20 @@ impl<'a> Ctx<'a> {
             let bg = self.look_color(n, "ascii-bg").unwrap_or(rgba(0.0, 0.0, 0.0, 1.0));
             self.set_base(i, Ch::Ascii, TV::N(cell));
             looks.push(Look::Ascii { cell, charset, color, bg });
+        }
+        // space warps
+        if n.props.contains_key("kaleido") {
+            let segs = self.look_range(n, "kaleido", 6.0, 2.0, 64.0);
+            if segs.fract() != 0.0 {
+                self.err("E_LOOK", format!("`kaleido={segs}`: segments are a whole number"), "write e.g. `kaleido=8`", n.span);
+            }
+            let angle = self.num(n, "kaleido-angle").unwrap_or(0.0);
+            let zoom = self.look_range(n, "kaleido-zoom", 1.0, 0.05, 20.0);
+            let amount = self.look_range(n, "kaleido-amount", 1.0, 0.0, 1.0);
+            let mirror = self.look_enum(n, "kaleido-mirror", &["on", "off"]).as_deref() != Some("off");
+            let center = self.look_center(n, "kaleido-center");
+            for (ch, v) in [(Ch::KaleidoAmount, amount), (Ch::KaleidoAngle, angle), (Ch::KaleidoZoom, zoom)] { self.set_base(i, ch, TV::N(v)); }
+            looks.push(Look::Kaleido { segments: segs.round() as u32, mirror, angle, zoom, amount, center });
         }
         // soft shadow (the other `shadow=` forms are box/drop shadows, `common`)
         if let Some(raw) = n.props.get("shadow").map(|v| v.raw()) {

@@ -14,3 +14,34 @@ fn looks_validate_roundtrip_and_tracks() {
         assert!(validate(&s,std::path::Path::new(".")).is_err());
     }
 }
+
+#[test]
+fn warps_validate_roundtrip_and_tracks() {
+    let ok = [
+        json!({"type":"kaleido","center":[32,32]}),
+        json!({"type":"kaleido","segments":12,"mirror":false,"center":[10,20],"angle":30,"zoom":1.5,"amount":0.5,"rect":[0,0,64,64]}),
+    ];
+    let bad = [
+        json!({"type":"kaleido","segments":1,"center":[32,32]}),
+        json!({"type":"kaleido","center":[32,32],"zoom":0}),
+        json!({"type":"kaleido","center":[32,32],"amount":2}),
+        json!({"type":"kaleido","center":[32,32],"rect":[0,0,0,10]}),
+    ];
+    for (valid, list) in [(true, &ok[..]), (false, &bad[..])] {
+        for v in list {
+            let s = scene(v.clone());
+            assert_eq!(validate(&s, std::path::Path::new(".")).is_ok(), valid, "{v}");
+            let e = &s.nodes[0].effects[0];
+            assert_eq!(*e, serde_json::from_str::<Effect>(&serde_json::to_string(e).unwrap()).unwrap());
+            assert!(e.is_warp() && e.is_look());
+        }
+    }
+    let k = &scene(ok[1].clone()).nodes[0].effects[0];
+    assert_eq!(k.look_fields(), &["amount", "angle", "zoom", "cx", "cy"]);
+    assert_eq!([k.look_field("cx"), k.look_field("cy"), k.look_field("zoom")], [10.0, 20.0, 1.5]);
+    assert!(!k.time_dependent());
+    // effects.0.angle tracks validate
+    let mut s = scene(ok[0].clone());
+    s.tracks = vec![serde_json::from_value(json!({"node":0,"property":"effects.0.angle","delay":0,"duration":1,"fill":"both","easing":"linear","keyframes":[{"offset":0,"value":{"number":0}},{"offset":1,"value":{"number":90}}]})).unwrap()];
+    assert!(validate(&s, std::path::Path::new(".")).is_ok());
+}

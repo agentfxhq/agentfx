@@ -1884,6 +1884,19 @@ impl<'a> Painter<'a> {
                         crate::look::apply(e, p, buf, w, h, &cx);
                     }
                 }
+                e @ Effect::Kaleido { .. } => {
+                    // the subtree's own ink (without the warps' frame-wide margins) is the
+                    // default sampling domain
+                    let dm: f64 = node.effects.iter().filter(|x| x.is_warp()).count() as f64 * crate::warp::margin([scene.width as f64, scene.height as f64]);
+                    let full = [o[0] as f64, o[1] as f64, o[2] as f64, o[3] as f64];
+                    let ink = self.sub_ink(true, f, n).map(|r| [r[0] + dm, r[1] + dm, r[2] - 2.0 * dm, r[3] - 2.0 * dm]).filter(|r| r[2] > 0.0 && r[3] > 0.0).unwrap_or(full);
+                    let m = k(&view.states[n].chain).as_coeffs();
+                    if let Some(c) = crate::warp::cfg(e, p, m, ink, o) {
+                        if !gch.warp(&c, buf, w, h) {
+                            crate::warp::apply(&c, buf, w, h);
+                        }
+                    }
+                }
                 Effect::Matte { source, mode } => {
                     gch.flush(buf);
                     let src = *source;
@@ -2115,7 +2128,7 @@ impl<'a> Painter<'a> {
         let tracks = &self.sched.tracks[n];
         let params: Vec<[f64; crate::look::NPARAM]> = node.effects.iter().enumerate().map(|(i, e)| schedule::effect_params(scene, tracks, i, e, view.t)).collect();
         // sweep / rays look at the whole subtree (its ink box): render all of it
-        let whole = node.effects.iter().any(|e| matches!(e, Effect::Sweep { .. } | Effect::Rays { .. } | Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Dither { .. } | Effect::Ascii { .. }));
+        let whole = node.effects.iter().any(|e| matches!(e, Effect::Sweep { .. } | Effect::Rays { .. } | Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Dither { .. } | Effect::Ascii { .. }) || e.is_warp());
         let margin: f64 = if whole { 1e7 } else { node.effects.iter().zip(&params).map(|(e, p)| schedule::effect_margin(scene, e, p, s)).sum::<f64>() + 2.0 };
         let Some(ink) = self.sub_ink(true, f, n) else { return Ok(()) };
         // (raw = unclipped) ink already includes the effect margins; the inner content must be rendered with
@@ -2137,7 +2150,8 @@ impl<'a> Painter<'a> {
         // translation-invariant effect cache: a subtree that is static inside and only
         // moves rigidly (no matte / motion blur) reuses its filtered raster, placed at the
         // new offset (bilinear for fractional moves; blurred content hides it)
-        let fx_cacheable = self.use_cache && !self.dynamic_subtree[n];
+        // (warps: their output depends on where the frame cuts the subtree, never cached)
+        let fx_cacheable = self.use_cache && !self.dynamic_subtree[n] && !node.effects.iter().any(|e| e.is_warp());
         let (px, ox, oy, smooth) = 'px: {
             if fx_cacheable {
                 let c = k(&st.chain).as_coeffs();
@@ -2236,6 +2250,7 @@ fn fx_name(e: &Effect) -> &'static str {
         Effect::Vhs { .. } => "fx.vhs",
         Effect::Dither { .. } => "fx.dither",
         Effect::Ascii { .. } => "fx.ascii",
+        Effect::Kaleido { .. } => "fx.kaleido",
     }
 }
 

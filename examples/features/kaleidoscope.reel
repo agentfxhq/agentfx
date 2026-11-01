@@ -1,0 +1,39 @@
+// Kaleidoscope: a striped vaporwave sun over a neon grid and a liquid-neon sky, folded into
+// an 8-fold mirror bloom. Nothing is hand-placed petals: `kaleido=` mirrors the group's own
+// pixels. The fold opens (kaleido-amount 0 -> 1), the wedge turns across the sun (the
+// pattern morphs as other parts of the sun fall into it) and the zoom breathes.
+//
+//   agentfx render examples/features/kaleidoscope.reel -o kaleidoscope.mp4
+video "Kaleidoscope" size=640x360 fps=24 captions=off
+theme studio-dark
+  bg #07010F
+
+scene bloom dur=8s bg=#07010F
+  layer #k x=0 y=0 w=640 h=360 kaleido=8 kaleido-amount=0 kaleido-center=50%,50% kaleido-zoom=1
+    gen #sky kind=noise flow=0.3 palette=neon opacity=0.55
+    layer #grid x=0 y=0 w=640 h=360 glow=6 glow-color=#FF2BD6
+      path d="M320 200 L-380 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L-170 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L40 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L250 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L390 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L600 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L810 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      path d="M320 200 L1020 360" w=640 h=360 stroke=#FF2BD6 sw=1.6
+      rect x=0 y=210 w=640 h=2 fill=#22E4FF
+      rect x=0 y=226 w=640 h=2 fill=#22E4FF
+      rect x=0 y=250 w=640 h=3 fill=#22E4FF
+      rect x=0 y=286 w=640 h=3 fill=#22E4FF
+      rect x=0 y=340 w=640 h=4 fill=#22E4FF
+    layer #sun x=250 y=40 w=140 h=140 origin=center glow=18 glow-color=#FF2BD6
+      ellipse x=0 y=0 w=140 h=140 fill=linear(180deg, #FFD23D 0%, #FF7A1A 45%, #FF2BD6 100%)
+      rect #s0 x=0 y=72 w=140 h=3 fill=#2A0A4A
+      rect #s1 x=0 y=86 w=140 h=5 fill=#2A0A4A
+      rect #s2 x=0 y=101 w=140 h=7 fill=#2A0A4A
+      rect #s3 x=0 y=117 w=140 h=9 fill=#2A0A4A
+  anim #k kaleido-amount 0s:0 0.6s:0 2.4s:1~inout-cubic
+  anim #k kaleido-angle 0s:0 8s:-200~inout-sine
+  anim #k kaleido-zoom 0s:1 4s:0.8~inout-sine 8s:1.15~inout-sine
+  anim #sun y 0s:0 8s:36~inout-sine
+  anim #s0 y 0s:0 2s:-8~inout-sine yoyo repeat=4
+  anim #s2 y 0s:0 2s:-7~inout-sine yoyo repeat=4

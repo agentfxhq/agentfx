@@ -10,10 +10,11 @@ fn luma(c: [f32; 3]) -> f32 { c[0]*0.2126 + c[1]*0.7152 + c[2]*0.0722 }
 fn put(p: &mut [u8], c: [f32; 3]) {
     for i in 0..3 { p[i] = (c[i].clamp(0.0,1.0)*p[3] as f32).round() as u8; }
 }
-fn sample(b: &[u8], w: usize, h: usize, x: f64, y: f64) -> [f32; 3] {
+/// `b`: the source as unpremultiplied colour per pixel (`rgb` of each, computed once)
+fn sample(b: &[[f32; 3]], w: usize, h: usize, x: f64, y: f64) -> [f32; 3] {
     let x=x.round().clamp(0.0,(w-1) as f64) as usize;
     let y=y.round().clamp(0.0,(h-1) as f64) as usize;
-    rgb(&b[(y*w+x)*4..][..4])
+    b[y*w+x]
 }
 
 pub fn apply(e: &Effect, p: &[f64; NPARAM], b: &mut [u8], w: usize, h: usize, cx: &FxCtx) {
@@ -21,12 +22,14 @@ pub fn apply(e: &Effect, p: &[f64; NPARAM], b: &mut [u8], w: usize, h: usize, cx
     if matches!(e, Effect::Rgbsplit{..}) && p[2]<=0.0 || matches!(e, Effect::Glitch{..}|Effect::Vhs{..}) && p[0]<=0.0 { return; }
     if let Effect::Dither {mode,size,palette,..}=e { dither(b,w,h,p[0],mode,*size,palette.as_deref(),cx); return; }
     if let Effect::Ascii {charset,color,bg,..}=e { ascii(b,w,h,(p[0].clamp(6.0,24.0)*cx.s).round().max(1.0) as usize,charset,color,bg); return; }
-    let src=b.to_vec();
+    // rows in parallel: every output pixel reads only `src` (bitwise the serial result);
+    // the source is unpremultiplied once, not per sample
+    use rayon::prelude::*;
+    let src: Vec<[f32; 3]>=b.par_chunks(4).map(rgb).collect();
     let amount=p[0].clamp(0.0,1.0);
-    for y in 0..h {
+    b.par_chunks_mut(w*4).enumerate().for_each(|(y,row)| {
         for x in 0..w {
-            let i=(y*w+x)*4;
-            let original=rgb(&src[i..i+4]);
+            let original=src[y*w+x];
             let c=match e {
                 Effect::Rgbsplit {mode,..} => {
                     let k=p[2].clamp(0.0,1.0)*cx.s;
@@ -72,9 +75,9 @@ pub fn apply(e: &Effect, p: &[f64; NPARAM], b: &mut [u8], w: usize, h: usize, cx
                 }
                 _ => original,
             };
-            put(&mut b[i..i+4],c);
+            put(&mut row[x*4..x*4+4],c);
         }
-    }
+    });
 }
 
 fn bayer(x: i32,y: i32,size:u32)->f32 {

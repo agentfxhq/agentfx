@@ -390,6 +390,7 @@ validation errors). The kinds, their parameters, defaults and ranges are declare
 | `truchet` | `re`, `im`, `zoom` (1 = 8 tiles per rect height), `turn`, `thickness` (0.06 tile), `phase` (0), `mode` (0 arcs, 1 double arcs), `color-speed` (1), `color-offset` (0), `aa` (2) |
 | `voronoi` | `re`, `im`, `zoom` (1), `turn`, `jitter` (1), `flow` (0.15 /s), `mode` (0 cells, 1 edges, 2 crystal), `thickness` (0.04 cell), `color-speed` (1), `color-offset` (0), `aa` (2); time-dependent |
 | `lsystem` | `preset` (1: 0 koch, 1 dragon, 2 sierpinski, 3 plant, 4 hilbert, 5 gosper), `iter` (0 = preset default), `grow` (1), `thickness` (0.008), `re`, `im` (offset), `zoom` (1 = fitted), `turn`, `color-speed` (1), `color-offset` (0); CPU, transparent ground |
+| `penrose` | `depth` (6 deflations), `grow` (1), `thickness` (0.004), `re`, `im` (offset), `zoom` (1 = covers the rect), `turn`, `color-speed` (1), `color-offset` (0); CPU |
 
 
 Unit space: origin at the rect centre, v from -1 (top) to 1 (bottom), u scaled like v. Fractals map

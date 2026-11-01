@@ -108,6 +108,23 @@ pub const KINDS: &[Kind] = &[
         gpu_zoom_max: None,
         time: true,
     },
+    Kind {
+        name: "truchet",
+        doc: "Truchet tiling of glowing quarter-circle arcs; animate phase to twist the tiles (staggered quarter turns)",
+        params: &[
+            RE0, IM0,
+            p("zoom", 1.0, 1e-3, 1e3, "magnification (1 = 8 tiles over the rect height)"),
+            TURN,
+            p("thickness", 0.06, 0.002, 0.5, "line width (tile units)"),
+            p("phase", 0.0, -1e4, 1e4, "tile twist: every whole step turns each tile a quarter, staggered (animate 0 -> 1 -> 2 ...)"),
+            p("mode", 0.0, 0.0, 1.0, "0 = one arc pair per tile, 1 = double arcs (parallel lines, a woven look)"),
+            p("color-speed", 1.0, -100.0, 100.0, "palette cycles across the rect"),
+            OFFSET, AA,
+        ],
+        gpu: true,
+        gpu_zoom_max: None,
+        time: false,
+    },
 ];
 
 pub fn kind(name: &str) -> Option<&'static Kind> {

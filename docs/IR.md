@@ -387,6 +387,7 @@ validation errors). The kinds, their parameters, defaults and ranges are declare
 | `mandelbrot` | `re` (-0.6), `im` (0), `zoom`, `depth`, `turn`, `iter`, `bailout`, `color-speed`, `color-offset`, `aa` as above |
 | `noise` | `re`, `im` (0, 0): view centre; `zoom` (1), `turn` (0 deg), `warp` (2.5), `octaves` (4), `flow` (0.25 /s), `color-speed` (1), `color-offset` (0), `aa` (2); time-dependent |
 | `flow` | `re`, `im`, `zoom` (1), `turn`: the field view; `particles` (1500), `trail` (0.6), `flow` (0.08 /s, field evolution), `speed` (0.5 unit/s), `thickness` (0.006), `color-speed` (1), `color-offset` (0); time-dependent, CPU, transparent ground |
+| `truchet` | `re`, `im`, `zoom` (1 = 8 tiles per rect height), `turn`, `thickness` (0.06 tile), `phase` (0), `mode` (0 arcs, 1 double arcs), `color-speed` (1), `color-offset` (0), `aa` (2) |
 
 
 Unit space: origin at the rect centre, v from -1 (top) to 1 (bottom), u scaled like v. Fractals map

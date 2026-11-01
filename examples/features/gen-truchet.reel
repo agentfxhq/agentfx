@@ -1,0 +1,10 @@
+// Generators: a Truchet weave of glowing arcs; every beat each tile twists a quarter turn, staggered.
+video "Truchet weave" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #000000
+
+scene weave dur=6s
+  gen #t kind=truchet mode=1 zoom=1.6 thickness=0.04 color-speed=1.5 palette=vapor
+  anim #t phase 0s:0 6s:3 ease=linear
+  anim #t color-offset 0s:0 6s:1 ease=linear
+  anim #t turn 0s:-8 6s:8 ease=inout-sine

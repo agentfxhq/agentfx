@@ -21,6 +21,7 @@ pub mod julia;
 pub mod mandelbrot;
 pub mod noise;
 pub mod raster;
+pub mod truchet;
 
 use agentfx_ir::generator::Kind;
 use agentfx_ir::{GenContent, Scene};
@@ -55,6 +56,7 @@ pub fn lookup(kind: &str) -> Option<&'static dyn Generator> {
         "mandelbrot" => &mandelbrot::Mandelbrot,
         "noise" => &noise::Noise,
         "flow" => &flow::Flow,
+        "truchet" => &truchet::Truchet,
         _ => return None,
     })
 }
@@ -455,6 +457,9 @@ pub(crate) mod tests {
             ("noise", &[]),
             ("noise", &[("re", -3.5), ("im", 12.25), ("zoom", 0.4), ("turn", 37.0), ("warp", 9.0), ("octaves", 7.0), ("color-speed", 2.5), ("aa", 1.0)]),
             ("noise", &[("warp", 0.0), ("octaves", 1.0), ("flow", 3.0), ("color-offset", 0.6)]),
+            ("truchet", &[]),
+            ("truchet", &[("phase", 0.45), ("mode", 1.0), ("zoom", 0.6), ("turn", 15.0), ("thickness", 0.03), ("aa", 1.0)]),
+            ("truchet", &[("phase", -2.7), ("re", 3.3), ("im", -7.1), ("color-speed", 4.0), ("color-offset", 0.2)]),
         ];
         let (w, h) = (160, 90);
         for (name, over) in cases {

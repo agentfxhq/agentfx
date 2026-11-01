@@ -1,7 +1,9 @@
-// warp::apply (kaleido) on the GPU: the same f32 expressions as warp.rs, every
+// warp::apply (kaleido, tunnel) on the GPU: the same f32 expressions as warp.rs, every
 // multiply-add an explicit fma, constants as exact f32 decimals.
 // P: 0 w, 1 h, 2 kind, 3..6 dom x0 y0 x1 y1 (i32), 7 cx, 8 cy, 9 amount,
-//    10 ang, 11 seg, 12 hseg, 13 invseg, 14 mirror, 15 invzoom
+//    10 ang, 11 seg, 12 hseg, 13 invseg, 14 mirror, 15 invzoom,
+//    16 rc, 17 rs, 18 f, 19 invf, 20 plane, 21 rho, 22 yc, 23 cc, 24 gap,
+//    25 twist, 26 dz, 27 fog, 28..31 fog color (premultiplied 0..255), 32 k, 33 tcx, 34 ty1
 @group(0) @binding(1) var<storage, read_write> px: array<u32>;
 @group(0) @binding(2) var<storage, read_write> src: array<u32>;
 
@@ -91,6 +93,49 @@ fn sample(mode: u32, x: f32, y: f32) -> vec4<f32> {
     return fma(bot - top, vec4<f32>(ty), top);
 }
 
+// (u, z, coverage); coverage 0 = miss
+fn hit(ex: f32, ey: f32) -> vec3<f32> {
+    var u = 0.0;
+    var z = 0.0;
+    if (pu(20u) == 1u) {
+        if (ey <= 1.0000000116860974e-07) { return vec3<f32>(0.0); }
+        let t = 1.0 / ey;
+        u = t * ex;
+        z = t;
+    } else {
+        let yc = pf(22u);
+        let cc = pf(23u);
+        let b = ey * yc;
+        let d2 = fma(ex, ex, ey * ey);
+        let disc = fma(b, b, -(d2 * cc));
+        let sq = sqrt(disc);
+        var t = 0.0;
+        if (b >= 0.0) { t = (b + sq) / max(d2, 9.999999960041972e-13); } else { t = -cc / (sq - b); }
+        let vx = t * ex;
+        let vy = fma(t, ey, -yc);
+        u = pf(21u) * atan2p(vx, vy);
+        z = t;
+    }
+    let pxu = pf(18u) / z;
+    let e = WPI - abs(u);
+    let cov = max(clamp(fma(e, pxu, 0.5), 0.0, 1.0), fma(-pf(24u), pxu, 1.0));
+    if (cov <= 0.0) { return vec3<f32>(0.0); }
+    return vec3<f32>(u, z, cov);
+}
+
+fn ray_clamp(oy: f32, cy: f32) -> f32 {
+    let by = (f32(pi(6u)) - 0.5) - cy;
+    if (by > 0.0 && oy > by) { return by / oy; }
+    return 1.0;
+}
+
+fn fade(zz: f32, s: vec4<f32>) -> vec4<f32> {
+    let fz = pf(27u) * zz;
+    let f = 1.0 / fma(fz, fz, 1.0);
+    let fc = vec4<f32>(pf(28u), pf(29u), pf(30u), pf(31u));
+    return fma(s - fc, vec4<f32>(f), fc);
+}
+
 fn warp_px(x: u32, y: u32) -> vec4<f32> {
     let cx = pf(7u);
     let cy = pf(8u);
@@ -115,7 +160,33 @@ fn warp_px(x: u32, y: u32) -> vec4<f32> {
         let am = pf(9u);
         return sample(0u, fma(am, sx - fx, fx), fma(am, sy - fy, fy));
     }
-    return vec4<f32>(0.0);
+    let rc = pf(16u);
+    let rsn = pf(17u);
+    let dx = fma(rc, qx, rsn * qy);
+    let dy = fma(rc, qy, -(rsn * qx));
+    let invf = pf(19u);
+    let h = hit(dx * invf, dy * invf);
+    let twist = pf(25u);
+    let dz = pf(26u);
+    if (kind == 1u) {
+        if (h.z <= 0.0) { return vec4<f32>(0.0); }
+        let zz = h.y + dz;
+        let ur = fma(twist, zz, h.x);
+        let k = pf(32u);
+        let s = sample(1u, fma(ur, k, pf(33u)), fma(-zz, k, pf(34u)));
+        return fade(zz, s) * h.z;
+    }
+    let miss = sample(2u, cx + dx, cy + dy);
+    if (h.z <= 0.0) { return miss; }
+    let zz = max(h.y + dz, 0.0010000000474974513);
+    let ur = fma(twist, zz, h.x);
+    let iz = pf(18u) / zz;
+    let ox = ur * iz;
+    let oy = iz;
+    let k = ray_clamp(oy, cy);
+    let s = sample(0u, fma(ox, k, cx), fma(oy, k, cy));
+    let col = fade(zz, s);
+    return fma(col - miss, vec4<f32>(h.z), miss);
 }
 
 @compute @workgroup_size(16, 16)

@@ -1139,6 +1139,43 @@ pub enum Effect {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         rect: Option<[f64; 4]>,
     },
+    /// Fly down a tube made of the subtree. A camera at `center` looks into the screen; the
+    /// subtree is a floor one unit below it that `amount` curls up into a cylinder of
+    /// radius 1 / amount (0 = flat floor, 1 = a closed tube around the camera axis).
+    /// `radius` = focal length in node px (the wall at depth 1 sits that far from the
+    /// center), `depth` + `speed` x time = camera travel in floor units (a pure function of
+    /// time), `twist` = degrees of spiral per unit of depth, `angle` = camera roll in
+    /// degrees, `fog` fades the far wall (1 / (1 + (fog z)^2)) to `fog_color` (default
+    /// transparent). `map`: `texture` = the subtree is a flat tile (its `rect` width wraps
+    /// once around the tube, depth repeats its height); `perspective` = the subtree already
+    /// shows a floor in perspective with its vanishing point at `center` (amount 0 = the
+    /// subtree unchanged, rays that miss the floor see the subtree as it is).
+    Tunnel {
+        #[serde(default = "one")]
+        amount: f64,
+        #[serde(default)]
+        depth: f64,
+        #[serde(default)]
+        speed: f64,
+        #[serde(default)]
+        twist: f64,
+        #[serde(default)]
+        angle: f64,
+        radius: f64,
+        #[serde(default)]
+        fog: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        fog_color: Option<[f64; 4]>,
+        center: [f64; 2],
+        #[serde(default = "texture_map")]
+        map: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        rect: Option<[f64; 4]>,
+        /// added to the time of the travel (`speed` x (t + time_offset)): a clip cut out of
+        /// a longer timeline keeps its place
+        #[serde(default, skip_serializing_if = "is_zero")]
+        time_offset: f64,
+    },
     /// Color adjustment of the subtree, in straight sRGB, steps in this order (each clamped
     /// to 0..1 like a CSS filter chain): `brightness` (multiplier, CSS `brightness()`),
     /// `saturate` (CSS `saturate()`), `contrast` (CSS `contrast()`), `hue` (degrees, CSS
@@ -1197,6 +1234,9 @@ fn shadow_color() -> [f64; 4] {
 fn six() -> u32 {
     6
 }
+fn texture_map() -> String {
+    "texture".into()
+}
 
 impl Effect {
     /// Animatable fields of a look/light effect (`effects.<i>.<field>` tracks), in parameter
@@ -1217,6 +1257,7 @@ impl Effect {
             Effect::Rays { .. } => &["lx", "ly", "length", "strength"],
             Effect::Color { .. } => &["brightness", "saturate", "contrast", "hue", "tint"],
             Effect::Kaleido { .. } => &["amount", "angle", "zoom", "cx", "cy"],
+            Effect::Tunnel { .. } => &["amount", "depth", "twist", "angle", "radius", "fog"],
             _ => &[],
         }
     }
@@ -1254,11 +1295,15 @@ impl Effect {
             (Effect::Color { contrast, .. }, "contrast") => *contrast,
             (Effect::Color { hue, .. }, "hue") => *hue,
             (Effect::Color { tint_amount, .. }, "tint") => *tint_amount,
-            (Effect::Kaleido { amount, .. }, "amount") => *amount,
-            (Effect::Kaleido { angle, .. }, "angle") => *angle,
+            (Effect::Kaleido { amount, .. } | Effect::Tunnel { amount, .. }, "amount") => *amount,
+            (Effect::Kaleido { angle, .. } | Effect::Tunnel { angle, .. }, "angle") => *angle,
             (Effect::Kaleido { zoom, .. }, "zoom") => *zoom,
             (Effect::Kaleido { center, .. }, "cx") => center[0],
             (Effect::Kaleido { center, .. }, "cy") => center[1],
+            (Effect::Tunnel { depth, .. }, "depth") => *depth,
+            (Effect::Tunnel { twist, .. }, "twist") => *twist,
+            (Effect::Tunnel { radius, .. }, "radius") => *radius,
+            (Effect::Tunnel { fog, .. }, "fog") => *fog,
             _ => 0.0,
         }
     }
@@ -1269,12 +1314,13 @@ impl Effect {
             Effect::Riso { drift, .. } => *drift != 0.0,
             Effect::Grain { live, .. } => *live,
             Effect::Glitch { .. } | Effect::Vhs { .. } => true,
+            Effect::Tunnel { speed, .. } => *speed != 0.0,
             _ => false,
         }
     }
-    /// A space warp (kaleido): samples the subtree elsewhere, output covers the frame.
+    /// A space warp (kaleido, tunnel): samples the subtree elsewhere, output covers the frame.
     pub fn is_warp(&self) -> bool {
-        matches!(self, Effect::Kaleido { .. })
+        matches!(self, Effect::Kaleido { .. } | Effect::Tunnel { .. })
     }
     /// A look/light effect (X6/X8), handled by `compiler/src/look.rs` / `light.rs`.
     pub fn is_look(&self) -> bool {

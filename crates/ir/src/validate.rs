@@ -166,6 +166,10 @@ pub fn validate(scene: &Scene, base_dir: &Path) -> Result<Vec<String>, Vec<Strin
                 Effect::Kaleido { segments, center, angle, zoom, amount, rect, .. } => {
                     if !(2..=64).contains(segments) || !finite(center) || !finite(&[*angle, *zoom, *amount]) || !(0.05..=20.0).contains(zoom) || !(0.0..=1.0).contains(amount) || rect.is_some_and(|r| !finite(&r) || r[2] <= 0.0 || r[3] <= 0.0) { errors.push(format!("{ctx}: invalid kaleido (segments 2..64, zoom 0.05..20, amount 0..1, rect w/h > 0)")); }
                 }
+                Effect::Tunnel { amount, depth, speed, twist, angle, radius, fog, fog_color, center, map, rect, time_offset } => {
+                    if !finite(center) || !finite(&[*amount, *depth, *speed, *twist, *angle, *radius, *fog, *time_offset]) || !(0.0..=1.0).contains(amount) || *radius < 1.0 || *radius > 1e5 || *fog < 0.0 || depth.abs() > 1e6 || speed.abs() > 1e4 || fog_color.is_some_and(|c| c.iter().any(|v| !v.is_finite() || !(0.0..=1.0).contains(v))) || rect.is_some_and(|r| !finite(&r) || r[2] <= 0.0 || r[3] <= 0.0) { errors.push(format!("{ctx}: invalid tunnel (amount 0..1, radius 1..1e5 px, fog >= 0, fog_color 0..1, rect w/h > 0)")); }
+                    if !matches!(map.as_str(), "texture" | "perspective") { errors.push(format!("{ctx}: tunnel map {map:?} (texture | perspective)")); }
+                }
                 Effect::Color { brightness, saturate, contrast, hue, tint, tint_amount, levels, lut } => {
                     if !finite(&[*brightness, *saturate, *contrast, *hue, *tint_amount]) || *brightness < 0.0 || *saturate < 0.0 || *contrast < 0.0 || !tint.map_or(true, |c| finite(&c)) { errors.push(format!("{ctx}: invalid color (brightness/saturate/contrast >= 0, finite values)")); }
                     if let Some(l) = levels {

@@ -1203,7 +1203,7 @@ impl<'a> Em<'a> {
         for t in &tracks {
             if t.keys.len() > 1 && !t.is_static() {
                 let ok = matches!(t.ch, Ch::Rgbsplit | Ch::RgbsplitDx | Ch::RgbsplitDy | Ch::Glitch | Ch::GlitchRate | Ch::GlitchBlock | Ch::Vhs | Ch::Dither | Ch::Ascii | Ch::Halftone
-                    | Ch::KaleidoAmount | Ch::KaleidoAngle | Ch::KaleidoZoom | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
+                    | Ch::KaleidoAmount | Ch::KaleidoAngle | Ch::KaleidoZoom | Ch::Tunnel | Ch::TunnelDepth | Ch::TunnelTwist | Ch::TunnelAngle | Ch::TunnelRadius | Ch::TunnelFog | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
                     || (t.ch == Ch::PathOffset && l.style.text_path.is_some())
                     || (matches!(l.kind, Kind::Scene3d(_)) && s3d_emit::scene_ch(t.ch))
                     || (matches!(l.kind, Kind::Gen(_)) && t.ch.gen_param().is_some());
@@ -1829,6 +1829,15 @@ impl<'a> Em<'a> {
                 Look::Kaleido { segments, mirror, angle, zoom, amount, center } => {
                     effects.push(json!({"type": "kaleido", "segments": segments, "mirror": mirror, "center": at(&center), "angle": angle, "zoom": zoom, "amount": amount, "rect": rect}));
                     for (ch, field) in [(Ch::KaleidoAmount, "amount"), (Ch::KaleidoAngle, "angle"), (Ch::KaleidoZoom, "zoom")] { num_track(self, ch, k, field); }
+                }
+                Look::Tunnel { amount, depth, speed, twist, angle, radius, fog, fog_color, center, map } => {
+                    let radius = radius.unwrap_or(0.5 * r[2].min(r[3])).max(1.0);
+                    let mut e = json!({"type": "tunnel", "amount": amount, "depth": depth, "speed": speed, "twist": twist, "angle": angle, "radius": r4(radius), "fog": fog, "center": at(&center), "map": map, "rect": rect});
+                    if let Some(c) = fog_color {
+                        e["fog_color"] = rgba(&c);
+                    }
+                    effects.push(e);
+                    for (ch, field) in [(Ch::Tunnel, "amount"), (Ch::TunnelDepth, "depth"), (Ch::TunnelTwist, "twist"), (Ch::TunnelAngle, "angle"), (Ch::TunnelRadius, "radius"), (Ch::TunnelFog, "fog")] { num_track(self, ch, k, field); }
                 }
                 Look::Rgbsplit { dx, dy, amount, mode } => {
                     effects.push(json!({"type": "rgbsplit", "dx": dx, "dy": dy, "amount": amount, "mode": mode}));

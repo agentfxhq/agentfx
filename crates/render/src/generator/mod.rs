@@ -30,6 +30,7 @@ pub mod noise;
 pub mod penrose;
 pub mod raster;
 pub mod ray;
+pub mod reaction;
 pub mod truchet;
 pub mod voronoi;
 
@@ -81,6 +82,7 @@ pub fn lookup(kind: &str) -> Option<&'static dyn Generator> {
         "kifs" => &kifs::Kifs,
         "flame" => &flame::Flame,
         "attractor" => &attractor::Attractor,
+        "reaction" => &reaction::Reaction,
         _ => return None,
     })
 }

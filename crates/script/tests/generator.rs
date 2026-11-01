@@ -84,3 +84,30 @@ fn lint_explains_mistakes() {
     let (_, d) = compile_src("video \"g\" size=320x180 fps=30\nscene a dur=2s\n  gen #g kind=mandelbrot\n  anim #g depth 0s:0 2s:10 ease=linear\n");
     assert!(!codes(&d).contains(&"W_GEN_ZOOM"), "{d:#?}");
 }
+
+#[test]
+fn named_attractor_systems_and_reaction_presets_lower_to_numbers() {
+    let src = "video \"g\" size=320x180 fps=30\nscene a dur=2s\n  gen #a kind=attractor system=lorenz c=2\n  anim #a turn 0s:0 2s:90\n  gen #r kind=reaction preset=maze kill=0.058 seed=7\n  anim #r feed 0s:0.029 2s:0.03\n";
+    let (ir, diags) = compile_src(src);
+    assert!(diags.iter().all(|d| d.severity != Severity::Error), "{diags:#?}");
+    let s = scene(&ir);
+    let gen = |kind: &str| s.nodes.iter().find_map(|n| match &n.content {
+        Some(Content::Gen(g)) if g.kind == kind => Some(g),
+        _ => None,
+    }).expect(kind);
+    let a = gen("attractor");
+    assert_eq!(a.params.get("system"), Some(&2.0));
+    assert_eq!(a.params.get("a"), Some(&10.0), "the system's own coefficients");
+    assert_eq!(a.params.get("b"), Some(&28.0));
+    assert_eq!(a.params.get("c"), Some(&2.0), "an explicit coefficient wins");
+    let r = gen("reaction");
+    assert_eq!(r.params.get("preset"), None, "preset is compile-time only");
+    assert_eq!(r.params.get("feed"), Some(&0.029));
+    assert_eq!(r.params.get("kill"), Some(&0.058), "an explicit value wins");
+    assert!(s.tracks.iter().any(|t| t.property == "gen.turn"));
+    assert!(s.tracks.iter().any(|t| t.property == "gen.feed"));
+    for bad in ["kind=attractor system=lorenzz", "kind=reaction preset=corall"] {
+        let (_, d) = compile_src(&format!("video \"g\" size=320x180 fps=30\nscene a dur=2s\n  gen #g {bad}\n"));
+        assert!(codes(&d).contains(&"E_GEN"), "{bad}: {d:#?}");
+    }
+}

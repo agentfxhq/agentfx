@@ -396,11 +396,12 @@ validation errors). The kinds, their parameters, defaults and ranges are declare
 | `kifs` | `mode` (0 menger, 1 sierpinski, 2 octahedron), `fold-scale` (3), `twist` (0 deg), `tilt` (0 deg), `cx`, `cy`, `cz` (1, 1, 1: fold offset), `yaw`, `pitch`, `distance` (4.2), `zoom`, `turn`, `iter` (8), `steps` (140), `halo` (0.7), `fog` (0.4), `occlusion` (0.5), `rim` (0.9), `color-speed` (1), `color-offset` (0), `aa` (1); raymarched, kernel uniforms (camera basis, fold rotations) from the host |
 | `flame` | `samples` (12 per pixel of the rect), `gamma` (1.7), `morph` (0; whole turns of the maps, 0 -> 1 loops), `symmetry` (1 = none, n-fold), `re`, `im` (offset), `zoom` (1 = fitted), `turn`, `color-speed` (1), `color-offset` (0); seeded IFS chaos game, log-density tone map; CPU, transparent ground |
 | `attractor` | `system` (0 Clifford, 1 de Jong, 2 Lorenz), `a` (-1.4), `b` (1.6), `c` (1), `d` (0.7) (Lorenz: a b c = sigma rho beta, d = orbit length in 100 time units; Reel Script `system=lorenz` fills in 10 28 8/3 1.5, a numeric `system` does not), `samples` (24 per pixel), `gamma` (2), `re`, `im`, `zoom` (1 = the system's analytic bounds fit), `turn` (Lorenz: spin about its vertical axis), `color-speed` (1, over orbit speed), `color-offset` (0); CPU, transparent ground |
+| `reaction` | `feed` (0.0545), `kill` (0.062), `diff-u` (1), `diff-v` (0.5), `speed` (400 steps/s), `warmup` (600 steps at t = 0), `zoom` (1 = 180 grid rows over the rect), `color-speed` (1), `color-offset` (0); Gray-Scott, frame = step `warmup + floor(t * speed)` from the seeded start; time-dependent, CPU, opaque |
 
 Pixel kinds (`julia mandelbrot noise truchet voronoi`) have a GPU kernel; vector and grid kinds
-(`flow lsystem penrose life flame attractor`) rasterize their geometry, density or grid on the CPU (through the same
+(`flow lsystem penrose life flame attractor reaction`) rasterize their geometry, density or grid on the CPU (through the same
 mapping, so they stay crisp under the node transform) and leave the ground transparent where
-nothing is drawn (`penrose` covers the rect). The pattern kinds map unit space to their plane as
+nothing is drawn (`penrose` and `reaction` cover the rect). The pattern kinds map unit space to their plane as
 `centre + rotate(turn) * (u, -v) * half / zoom` (half = 0.7 for noise, 4 tiles or cells for
 truchet and voronoi); noise is a gradient-noise fBm on an integer-hash lattice (`seed`), so the
 GPU and CPU agree.
@@ -419,9 +420,10 @@ ice mono`) into stops.
 
 Tracks `gen.<param>` (number) animate any parameter (`gen.zoom`, `gen.cx`, ...); values are clamped
 to the declared range. `time_offset` (s) is added to t for kinds that change with time itself
-(`noise`, `flow`, `voronoi`, `life` do; the compiler sets it to minus the start of the layer's
+(`noise`, `flow`, `voronoi`, `life`, `reaction` do; the compiler sets it to minus the start of the layer's
 scene, so they run on scene time; `life` shows step `floor(t * speed)`, replayed from
-step 0 for each frame). **Planner.** Bounds = `rect`; signature = the parameter values at t
+step 0 for each frame; `reaction` shows step `warmup + floor(t * speed)`, bit-identical whether
+replayed or continued from a cached earlier step). **Planner.** Bounds = `rect`; signature = the parameter values at t
 (plus t for time-dependent kinds); a generator without `gen.*` tracks is static and cached at rest.
 
 **Precision.** The CPU reference runs in f64 (Mandelbrot zooms to about 1e12). The GPU kernels

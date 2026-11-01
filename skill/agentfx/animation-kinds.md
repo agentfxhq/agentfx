@@ -71,6 +71,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Writhing 3D sponge (KIFS) | `gen #k kind=kifs mode=menger\|sierpinski\|octahedron palette=vapor` + `anim #k twist 0s:0 8s:9` + `anim #k yaw 0s:25 8s:85 ease=linear` | implemented (GPU kernel, use `--gpu`) | sacred geometry, "infinite complexity", techno visuals |
 | Fractal flame silk | `gen #f kind=flame symmetry=1 palette=vapor seed=12` + `anim #f morph 0s:0 8s:1 ease=linear` (seamless loop) | implemented (CPU) | glowing psychedelic backgrounds, dream sequences, music videos |
 | Strange attractor dust | `gen #a kind=attractor system=clifford\|dejong\|lorenz` + `anim #a a 0s:-1.4 6s:-1.7` (morph) / `anim #a turn 0s:0 8s:360` (Lorenz spin) | implemented (CPU) | abstract science, chaos, hypnotic morphs |
+| Reaction-diffusion | `gen #r kind=reaction preset=coral\|zebra\|spots\|maze speed=400 palette=vapor` (grows over time, scrubbable) | implemented (CPU) | organic growth, living textures, cellular transitions |
 
 ## Time
 

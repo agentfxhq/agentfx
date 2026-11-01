@@ -50,33 +50,39 @@ fn down(@builtin(global_invocation_id) id: vec3<u32>) {
     sh[id.y * sw + id.x] = pack(sum.x, sum.y, sum.z, sum.w);
 }
 
-// px = bilinear (centre-aligned) upsample of sh; f32 is exact here for scale <= 128
-// (dyadic weights), so this rounds like the CPU's f64 path
+// px = bilinear (centre-aligned) upsample of sh, for the output rect at (P[11], P[12]) of
+// the full w x h buffer (0, 0 for the whole buffer; px is then P[0] x P[1] = the rect).
+// Integer-exact: with fx = (2X + 1 - s) / 2s every weight is n / 2s, so the CPU's f64 sum is
+// exactly total / 4s^2 and rounds like (total + 2s^2) / 4s^2 (u32: s <= 1024).
 @compute @workgroup_size(16, 16)
 fn up(@builtin(global_invocation_id) id: vec3<u32>) {
     let w = pu(0u);
     if (id.x >= w || id.y >= pu(1u)) { return; }
-    let s = f32(pu(8u));
+    let s = i32(pu(8u));
     let sw = i32(pu(9u));
     let shh = i32(pu(10u));
-    let fy = (f32(id.y) + 0.5) / s - 0.5;
-    let fx = (f32(id.x) + 0.5) / s - 0.5;
-    let iy = i32(floor(fy));
-    let ix = i32(floor(fx));
-    let ty = fy - f32(iy);
-    let tx = fx - f32(ix);
-    var v = vec4<f32>(0.0);
+    let s2 = 2 * s;
+    let ny0 = 2 * (i32(id.y) + pi(12u)) + 1 - s;
+    let nx0 = 2 * (i32(id.x) + pi(11u)) + 1 - s;
+    // floor division by 2s (ny0 >= 1 - s > -2s)
+    let iy = select(0, -1, ny0 < 0) + select(ny0 / s2, 0, ny0 < 0);
+    let ix = select(0, -1, nx0 < 0) + select(nx0 / s2, 0, nx0 < 0);
+    let ty = u32(ny0 - iy * s2);
+    let tx = u32(nx0 - ix * s2);
+    var v = vec4<u32>(0u);
     for (var j = 0; j < 2; j++) {
         let sy = iy + j;
-        let wy = select(1.0 - ty, ty, j == 1);
+        let wy = select(u32(s2) - ty, ty, j == 1);
         for (var k = 0; k < 2; k++) {
             let sx = ix + k;
-            let wx = select(1.0 - tx, tx, k == 1);
+            let wx = select(u32(s2) - tx, tx, k == 1);
             if (sx >= 0 && sy >= 0 && sx < sw && sy < shh) {
                 let p = sh[u32(sy * sw + sx)];
-                v += vec4<f32>(f32(p & 255u), f32((p >> 8u) & 255u), f32((p >> 16u) & 255u), f32(p >> 24u)) * wx * wy;
+                v += vec4<u32>(p & 255u, (p >> 8u) & 255u, (p >> 16u) & 255u, p >> 24u) * (wx * wy);
             }
         }
     }
-    px[id.y * w + id.x] = pack(to_u8(round_away(v.x)), to_u8(round_away(v.y)), to_u8(round_away(v.z)), to_u8(round_away(v.w)));
+    let d = u32(s2 * s2);
+    v = (v + vec4<u32>(d / 2u)) / d;
+    px[id.y * w + id.x] = pack(min(v.x, 255u), min(v.y, 255u), min(v.z, 255u), min(v.w, 255u));
 }

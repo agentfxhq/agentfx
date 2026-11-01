@@ -79,6 +79,8 @@ pub struct Gpu {
     readback: Mutex<Vec<wgpu::Buffer>>,
     /// mapped upload staging buffers (MAP_WRITE | COPY_SRC), reused across jobs
     staging: Mutex<Vec<wgpu::Buffer>>,
+    /// constant tables uploaded once (`constant`)
+    consts: Mutex<HashMap<&'static str, wgpu::Buffer>>,
 }
 
 struct Module {
@@ -146,8 +148,22 @@ impl Gpu {
             pool: Default::default(),
             readback: Default::default(),
             staging: Default::default(),
+            consts: Default::default(),
         })
     }
+
+    /// A read-only table made by `make` and uploaded on first use, kept for the device's
+    /// lifetime (never pooled).
+    pub(crate) fn constant(&self, name: &'static str, make: impl FnOnce() -> Vec<u8>) -> wgpu::Buffer {
+        let mut c = self.consts.lock().unwrap();
+        c.entry(name)
+            .or_insert_with(|| {
+                let data = make();
+                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor { label: Some(name), contents: &data, usage: wgpu::BufferUsages::STORAGE })
+            })
+            .clone()
+    }
+
 
     fn module(&self, name: &'static str, src: &'static str, nbuf: u32) -> Arc<Module> {
         let mut m = self.modules.lock().unwrap();

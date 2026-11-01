@@ -17,10 +17,11 @@ const HALFTONE: &str = include_str!("halftone.wgsl");
 const LIGHT: &str = include_str!("light.wgsl");
 const COMP: &str = include_str!("comp.wgsl");
 const SHADOW: &str = include_str!("shadow.wgsl");
+const DIGITAL: &str = include_str!("digital.wgsl");
 
 /// Is this look/light effect ported (whatever the routing)?
 pub fn ported(e: &Effect) -> bool {
-    matches!(e, Effect::Riso { .. } | Effect::Halftone { .. } | Effect::Shadow { .. } | Effect::Rays { .. })
+    matches!(e, Effect::Riso { .. } | Effect::Halftone { .. } | Effect::Shadow { .. } | Effect::Rays { .. } | Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Grain { .. })
 }
 
 fn fx_name(e: &Effect) -> &'static str {
@@ -29,6 +30,10 @@ fn fx_name(e: &Effect) -> &'static str {
         Effect::Halftone { .. } => "halftone",
         Effect::Shadow { .. } => "shadow",
         Effect::Rays { .. } => "rays",
+        Effect::Rgbsplit { .. } => "rgbsplit",
+        Effect::Glitch { .. } => "glitch",
+        Effect::Vhs { .. } => "vhs",
+        Effect::Grain { .. } => "grain",
         Effect::Blur { .. } => "blur",
         Effect::DropShadow { .. } => "drop-shadow",
         Effect::Glow { .. } => "glow",
@@ -99,6 +104,8 @@ impl Op {
     fn max_binding(&self, w: usize, h: usize) -> u64 {
         match self {
             Op::Look(Effect::Riso { .. } | Effect::Halftone { .. }, ..) => (w * h * 16) as u64,
+            // sampling table: per glitch block (at most one per pixel) 3 words
+            Op::Look(Effect::Glitch { .. }, ..) => (w * h * 12 + (w + 2 * h) * 4) as u64,
             _ => (w * h * 4) as u64,
         }
     }
@@ -337,6 +344,8 @@ fn encode(a: &mut Active, op: &Op, _host: Option<&[u8]>) -> anyhow::Result<()> {
             Effect::Halftone { mode, ink, paper, .. } => halftone(a, cx, p[0], p[1], mode == "cmyk", *ink, *paper),
             Effect::Shadow { color, .. } => shadow(a, cx, p, *color),
             Effect::Rays { color, .. } => rays(a, cx, p, *color),
+            Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } => digital(a, e, p, cx),
+            Effect::Grain { seed, live, size, .. } => grain(a, cx, p[0], *seed, *live, *size),
             _ => anyhow::bail!("not ported"),
         },
         Op::Blur(sigma) => {
@@ -375,9 +384,10 @@ fn blur_scale(sigma: f64) -> usize {
     scale
 }
 
-/// The GPU blur matches effects::blur exactly up to this reduction (f32 upsample).
+/// The GPU blur matches effects::blur exactly up to this reduction (the integer upsample's
+/// u32 sums, comp.wgsl `up`).
 fn blur_gpu_ok(sigma: f64) -> bool {
-    sigma.is_finite() && blur_scale(sigma) <= 128
+    sigma.is_finite() && blur_scale(sigma) <= 1024
 }
 
 /// effects::blur's full-resolution box path applies (sigma below the downsampling limit).
@@ -428,7 +438,7 @@ fn blur_any(a: &mut Active, b: &wgpu::Buffer, sigma: f64) {
     let small = a.temp((sw * sh * 4) as u64);
     let tmp = a.temp((sw * sh * 4) as u64);
     let mut p = Params::default();
-    p.u(0, w as u32).u(1, h as u32).u(8, scale as u32).u(9, sw as u32).u(10, sh as u32);
+    p.u(0, w as u32).u(1, h as u32).u(8, scale as u32).u(9, sw as u32).u(10, sh as u32).u(11, 0).u(12, 0);
     a.job.pass("comp", COMP, 2, "down", &p, &[b, &small], [sw as u32, sh as u32]);
     let reduced = ((sigma / scale as f64).powi(2) - 0.25).sqrt();
     blur_passes(&mut a.job, &small, &tmp, sw, sh, reduced).expect("reduced sigma is full-res");
@@ -738,6 +748,59 @@ fn rays(a: &mut Active, cx: &FxCtx, p: &[f64; NPARAM], color: [f64; 4]) -> anyho
     Ok(())
 }
 
+// ---------------------------------------------------------------- digital looks
+
+/// digital::rgb's division as a table (a * 256 + c -> c / a, 0 for a = 0): the GPU's f32
+/// division is not correctly rounded, the glitch posterize step needs the exact quotient.
+fn unpremul_table(g: &Gpu) -> wgpu::Buffer {
+    g.constant("unpremul", || {
+        let mut t = vec![0f32; 65536];
+        for a in 1..256 {
+            for c in 0..256 {
+                t[a * 256 + c] = c as f32 / a as f32;
+            }
+        }
+        bytemuck::cast_slice(&t).to_vec()
+    })
+}
+
+/// rgbsplit / glitch / vhs: a gather through the host's sampling tables (digital::Tab).
+fn digital(a: &mut Active, e: &Effect, p: &[f64; NPARAM], cx: &FxCtx) -> anyhow::Result<()> {
+    let (w, h) = (a.w, a.h);
+    let Some(tab) = crate::digital::Tab::new(e, p, w, h, cx) else { return Ok(()) };
+    let mut q = Params::default();
+    q.u(0, w as u32).u(1, h as u32).u(2, tab.mode).f(3, p[0].clamp(0.0, 1.0) as f32).u(4, tab.gw as u32).i(5, tab.x0).u(6, tab.seed);
+    let len = (w * h * 4) as u64;
+    let lut = unpremul_table(a.g);
+    let t = a.upload(bytemuck::cast_slice(&tab.t));
+    let out = a.temp(len);
+    let px = a.px.clone();
+    a.job.pass("digital", DIGITAL, 4, "digital", &q, &[&px, &out, &lut, &t], [w as u32, h as u32]);
+    a.job.enc.copy_buffer_to_buffer(&out, 0, &px, 0, len);
+    Ok(())
+}
+
+/// look::grain on the resident frame.
+fn grain(a: &mut Active, cx: &FxCtx, amount: f64, seed: u64, live: bool, size: f64) -> anyhow::Result<()> {
+    if amount <= 0.0 {
+        return Ok(());
+    }
+    let (w, h) = (a.w, a.h);
+    // (identical to look::grain)
+    let mut sd = seed as u32 ^ (seed >> 32) as u32;
+    if live {
+        sd = sd.wrapping_add(cx.frame.wrapping_mul(0x9E37_79B1));
+    }
+    let amt = (amount * 255.0) as f32;
+    let size = (size * cx.s).max(0.25) as f32;
+    let mut q = Params::default();
+    q.u(0, w as u32).u(1, h as u32).i(7, cx.ox - cx.ax).i(8, cx.oy - cx.ay).u(9, sd).f(10, amt).f(11, size).u(12, (size <= 1.0) as u32);
+    let dummy = a.temp(16);
+    let px = a.px.clone();
+    a.job.pass("digital", DIGITAL, 4, "grain", &q, &[&px, &dummy, &dummy, &dummy], [w as u32, h as u32]);
+    Ok(())
+}
+
 // ---------------------------------------------------------------- tests
 
 #[cfg(test)]
@@ -867,6 +930,103 @@ pub(crate) mod tests {
         }
     }
 
+    /// Premultiplied noise with random alpha (every alpha, every channel <= alpha).
+    pub fn noisy(w: usize, h: usize) -> Vec<u8> {
+        (0..w * h).flat_map(|i| {
+            let v = crate::look::hash(i as i32, 0, 7);
+            let a = (v & 255) as u8;
+            [(v >> 8) as u8, (v >> 16) as u8, (v >> 24) as u8, a].map(|c| c.min(a))
+        }).collect()
+    }
+
+    pub fn digital_looks() -> Vec<(&'static str, Effect, [f64; NPARAM])> {
+        let looks = [
+            ("rgbsplit", r#"{"type":"rgbsplit","dx":6,"dy":0,"amount":0.35}"#, 0.0),
+            ("rgbsplit-radial", r#"{"type":"rgbsplit","dx":18,"dy":-5,"amount":1,"mode":"radial"}"#, 0.0),
+            ("glitch", r#"{"type":"glitch","amount":0.6,"seed":13,"rate":14,"block":9}"#, 1.3),
+            ("glitch-fine", r#"{"type":"glitch","amount":1,"seed":42,"rate":8,"block":1.5}"#, 0.4),
+            ("vhs", r#"{"type":"vhs","amount":1,"seed":13}"#, 2.7),
+            ("vhs-light", r#"{"type":"vhs","amount":0.05,"seed":3}"#, 40.1),
+            ("grain", r#"{"type":"grain","amount":0.06,"seed":1,"live":false,"size":1}"#, 0.0),
+            ("grain-live", r#"{"type":"grain","amount":0.5,"seed":13,"live":true,"size":0.5}"#, 0.0),
+            ("grain-coarse", r#"{"type":"grain","amount":0.07,"seed":3,"live":false,"size":3}"#, 0.0),
+            ("grain-big", r#"{"type":"grain","amount":0.5,"seed":13,"live":true,"size":4.5}"#, 0.0),
+        ];
+        looks.iter().map(|(n, j, t)| {
+            let e: Effect = serde_json::from_str(j).unwrap();
+            let mut p = [0.0; NPARAM];
+            for (i, f) in e.look_fields().iter().enumerate() {
+                p[i] = e.look_field(f);
+            }
+            if e.time_dependent() {
+                p[TIME] = *t;
+            }
+            (*n, e, p)
+        }).collect()
+    }
+
+    /// GPU digital looks (rgbsplit, glitch, vhs) and grain vs the CPU: at most 1/255 per
+    /// channel, on smooth and on noisy sources, at node scales 1 and 1.37.
+    #[test]
+    fn gpu_digital_looks_match_cpu() {
+        let Some(g) = device() else { return };
+        let (w, h) = (403, 297);
+        let srcs = [("poster", poster(w, h, false)), ("poster-opaque", poster(w, h, true)), ("noisy", noisy(w, h))];
+        for (name, e, p) in digital_looks() {
+            for sc in [1.0, 1.37] {
+                for (sn, img) in &srcs {
+                    let c = FxCtx { ox: 37, oy: -11, ax: 13, ay: -7, s: sc, frame: 5 };
+                    let mut cpu = img.clone();
+                    crate::look::apply(&e, &p, &mut cpu, w, h, &c);
+                    let mut gpu = img.clone();
+                    assert!(apply_on(g, &e, &p, &mut gpu, w, h, &c).unwrap(), "{name}: not run on GPU");
+                    let (mx, psnr, _) = diff(&cpu, &gpu);
+                    let off = cpu.iter().zip(&gpu).filter(|(a, b)| a != b).count();
+                    if mx > 1 {
+                        let i = cpu.iter().zip(&gpu).position(|(a, b)| a.abs_diff(*b) == mx).unwrap() / 4;
+                        eprintln!("  worst px ({}, {}): cpu {:?} gpu {:?} src {:?}", i % w, i / w, &cpu[i * 4..i * 4 + 4], &gpu[i * 4..i * 4 + 4], &img[i * 4..i * 4 + 4]);
+                    }
+                    eprintln!("{name:16} s {sc} {sn:14} max {mx} psnr {psnr:.1} dB, {off} channels differ");
+                    assert!(mx <= 1, "{name} s {sc} {sn}: max {mx}");
+                    assert!(cpu != *img, "{name}: effect did nothing (bad fixture)");
+                }
+            }
+        }
+    }
+
+    /// The `#fx` / `#tape` chains of HORIZON (grain, rgbsplit, glitch, vhs on one resident
+    /// frame, then a glow) vs the CPU sequence: PSNR >= 45 dB, at most 1e-4 of the channels
+    /// off by more than 1.
+    #[test]
+    fn gpu_digital_chain_matches_cpu_sequence() {
+        let Some(g) = device() else { return };
+        let (w, h) = (403, 297);
+        let fx = digital_looks();
+        let pick = |n: &str| fx.iter().find(|x| x.0 == n).unwrap().clone();
+        let c = FxCtx { ox: 0, oy: 0, ax: 0, ay: 0, s: 1.0, frame: 9 };
+        for img in [poster(w, h, true), noisy(w, h)] {
+            let seq = [pick("grain-coarse"), pick("rgbsplit"), pick("glitch"), pick("vhs")];
+            let mut cpu = img.clone();
+            for (_, e, p) in &seq {
+                crate::look::apply(e, p, &mut cpu, w, h, &c);
+            }
+            crate::effects::glow(&mut cpu, w, h, [1.0, 0.3, 0.8, 1.0], 0.9, 12.0);
+            let mut gpu = img.clone();
+            let mut ch = Chain::on(g);
+            for (n, e, p) in &seq {
+                assert!(ch.look(e, p, &mut gpu, w, h, &c), "{n}");
+            }
+            assert!(ch.glow(&mut gpu, w, h, [1.0, 0.3, 0.8, 1.0], 0.9, 12.0));
+            assert!(gpu == img, "the host buffer is untouched until the flush");
+            ch.finish(&mut gpu).unwrap();
+            let (mx, psnr, over) = diff(&cpu, &gpu);
+            eprintln!("digital chain: max {mx} psnr {psnr:.1} dB, >1: {:.4} %", over * 100.0);
+            // (a +-1 from one kernel can move a posterized glitch block across a level: the
+            // chain's bound is on the share of channels, not the maximum)
+            assert!(psnr >= 45.0 && over <= 1e-4, "digital chain: max {mx}, psnr {psnr:.1}, >1: {over}");
+        }
+    }
+
     /// Per-effect cost at 1080p, CPU vs GPU (incl. upload + readback), a chain of two
     /// effects vs two single calls, and the bare transfer cost.
     /// `cargo test --release gpu_bench -- --ignored --nocapture`
@@ -924,6 +1084,10 @@ pub(crate) mod tests {
             let (e2, p2) = (e.clone(), p);
             cases.push((name.to_string(), Box::new(move |b: &mut [u8]| crate::look::apply(&e, &p, b, w, h, &c)), Box::new(move |ch: &mut Chain, b: &mut [u8]| ch.look(&e2, &p2, b, w, h, &c))));
         }
+        for (name, e, p) in digital_looks() {
+            let (e2, p2) = (e.clone(), p);
+            cases.push((name.to_string(), Box::new(move |b: &mut [u8]| crate::look::apply(&e, &p, b, w, h, &c)), Box::new(move |ch: &mut Chain, b: &mut [u8]| ch.look(&e2, &p2, b, w, h, &c))));
+        }
         for sigma in [3.0, 25.0] {
             cases.push((format!("blur {sigma}"), Box::new(move |b: &mut [u8]| crate::effects::blur(b, w, h, sigma)), Box::new(move |ch: &mut Chain, b: &mut [u8]| ch.blur(b, w, h, sigma))));
         }
@@ -975,7 +1139,7 @@ pub(crate) mod tests {
         let Some(g) = device() else { return };
         let (w, h) = (211, 157);
         let img = poster(w, h, false);
-        for sigma in [0.3, 1.2, 2.5, 4.0, 6.9, 7.2, 12.0, 30.0, 95.0] {
+        for sigma in [0.3, 1.2, 2.5, 4.0, 6.9, 7.2, 12.0, 30.0, 95.0, 400.0, 2000.0] {
             let mut cpu = img.clone();
             crate::effects::blur(&mut cpu, w, h, sigma);
             let mut gpu = img.clone();

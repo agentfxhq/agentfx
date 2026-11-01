@@ -18,6 +18,7 @@
 //! (`Input::f32`, what the conformance tests use); normal renders run the CPU in f64.
 pub mod flow;
 pub mod julia;
+pub mod kifs;
 pub mod life;
 pub mod lsystem;
 pub mod mandelbrot;
@@ -74,6 +75,7 @@ pub fn lookup(kind: &str) -> Option<&'static dyn Generator> {
         "penrose" => &penrose::Penrose,
         "life" => &life::Life,
         "mandelbulb" => &mandelbulb::Mandelbulb,
+        "kifs" => &kifs::Kifs,
         _ => return None,
     })
 }
@@ -484,6 +486,10 @@ pub(crate) mod tests {
             ("mandelbulb", &[]),
             ("mandelbulb", &[("power", 5.5), ("yaw", 120.0), ("pitch", -35.0), ("distance", 2.2), ("halo", 2.0), ("rim", 2.0)]),
             ("mandelbulb", &[("power", 3.0), ("zoom", 2.5), ("turn", 20.0), ("iter", 6.0), ("steps", 60.0), ("fog", 2.0), ("color-speed", 3.0), ("aa", 2.0)]),
+            ("kifs", &[]),
+            ("kifs", &[("mode", 1.0), ("fold-scale", 2.0), ("twist", 25.0), ("tilt", -10.0), ("yaw", 75.0), ("pitch", 40.0), ("distance", 3.5)]),
+            ("kifs", &[("mode", 2.0), ("fold-scale", 2.2), ("twist", -40.0), ("tilt", 15.0), ("cx", 1.2), ("cy", 0.6), ("cz", 0.9), ("zoom", 1.8), ("turn", 30.0), ("halo", 2.0), ("aa", 2.0)]),
+            ("kifs", &[("twist", 12.0), ("distance", 1.1), ("pitch", 5.0), ("iter", 6.0), ("steps", 90.0), ("fog", 1.5)]),
         ];
         let (w, h) = (160, 90);
         for (name, over) in cases {

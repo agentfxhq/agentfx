@@ -53,22 +53,23 @@ impl<'a> Ctx<'a> {
                 None => self.err("E_GEN", format!("gen life: rule=\"{raw}\" is not a B/S rule"), "e.g. rule=\"B3/S23\" (Conway), \"B36/S23\" (HighLife), or mode=1 rule=30 (1D)", n.span),
             }
         }
-        // lsystem: `preset=dragon` (a preset name) for its index
-        let named_preset = kind.name == "lsystem" && matches!(n.props.get("preset"), Some(crate::ast::Value::Str(_)));
-        if named_preset {
-            let raw = praw(n, "preset").unwrap_or_default();
-            match g::LSYSTEM_PRESETS.iter().position(|p| *p == raw) {
+        // named values for their index: lsystem `preset=dragon`, kifs `mode=sierpinski`
+        let named: &[(&str, &str, &[&str])] = &[("lsystem", "preset", g::LSYSTEM_PRESETS), ("kifs", "mode", g::KIFS_MODES)];
+        let named = named.iter().find(|(kn, p, _)| *kn == kind.name && matches!(n.props.get(*p), Some(crate::ast::Value::Str(_))));
+        if let Some((_, pn, names)) = named {
+            let raw = praw(n, pn).unwrap_or_default();
+            match names.iter().position(|p| *p == raw) {
                 Some(i) => {
-                    params.insert("preset".to_string(), i as f64);
+                    params.insert(pn.to_string(), i as f64);
                 }
                 None => {
-                    let hint = suggest(&raw, g::LSYSTEM_PRESETS).map(|s| format!("did you mean `preset={s}`?")).unwrap_or_else(|| format!("presets: {}", g::LSYSTEM_PRESETS.join(" ")));
-                    self.err("E_GEN", format!("gen lsystem: unknown preset `{raw}`"), hint, n.span);
+                    let hint = suggest(&raw, names).map(|s| format!("did you mean `{pn}={s}`?")).unwrap_or_else(|| format!("{pn}: {}", names.join(" ")));
+                    self.err("E_GEN", format!("gen {}: unknown {pn} `{raw}`", kind.name), hint, n.span);
                 }
             }
         }
         for k in n.props.keys() {
-            if (bs_rule && k == "rule") || (named_preset && k == "preset") || matches!(k.as_str(), "seed" | "palette" | "kind") {
+            if (bs_rule && k == "rule") || named.is_some_and(|(_, pn, _)| k == pn) || matches!(k.as_str(), "seed" | "palette" | "kind") {
                 continue;
             }
             match kind.param(k) {

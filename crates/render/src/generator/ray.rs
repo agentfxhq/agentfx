@@ -1,4 +1,4 @@
-//! Raymarched 3D kinds (`mandelbulb`): the shared orbit camera, the sphere-traced march
+//! Raymarched 3D kinds (`mandelbulb`, `kifs`): the shared orbit camera, the sphere-traced march
 //! through a distance estimator and the shading (orbit-trap palette, step-count ambient
 //! occlusion, rim light, fog, neon halo). A kind supplies only its distance estimator (`Sdf`).
 //!
@@ -140,6 +140,11 @@ pub fn dot3<T: Real>(a: V3<T>, b: V3<T>) -> T {
     a[0].fma(b[0], a[1].fma(b[1], a[2] * b[2]))
 }
 
+/// The 3x3 matrix `m` (row major) times v (`mul3` in ray.wgsl).
+pub fn mul3<T: Real>(m: &[T], v: V3<T>) -> V3<T> {
+    [0, 1, 2].map(|r| m[3 * r].fma(v[0], m[3 * r + 1].fma(v[1], m[3 * r + 2] * v[2])))
+}
+
 /// A kind's distance estimator at p: (a, b, orbit trap), the distance being `a * b` (two factors,
 /// so the march can step with one explicit `fma(a, b, t)`). `u`: the uniforms (`UK` on are the
 /// kind's own).
@@ -251,7 +256,7 @@ pub fn march<T: M, S: Sdf + ?Sized>(s: &S, u: &[T], pal: &[[f32; 4]], su: T, sv:
         let fa = (-(fog * (t - t0))).ex2();
         if hit {
             let p = [0, 1, 2].map(|k| rd[k].fma(t, eye[k]));
-            let e = epsk.fma(t, T::of(1e-5)) * T::of(0.5);
+            let e = epsk.fma(t, T::of(1e-5)) * T::of(1.5);
             // tetrahedral gradient of the distance
             let ks = [[one, -one, -one], [-one, -one, one], [-one, one, -one], [one, one, one]];
             let mut n = [zero; 3];

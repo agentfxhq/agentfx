@@ -227,10 +227,36 @@ pub const KINDS: &[Kind] = &[
         gpu_zoom_max: None,
         time: false,
     },
+    Kind {
+        name: "kifs",
+        doc: "Kaleidoscopic IFS (fold, rotate, scale), raymarched: Menger, Sierpinski and octahedral sponges with rotation between the folds; animate twist to make it writhe, yaw to orbit",
+        params: &[
+            p("mode", 0.0, 0.0, 2.0, "fold set: 0 menger (box folds), 1 sierpinski (tetrahedral), 2 octahedron. Script: mode=menger|sierpinski|octahedron"),
+            p("fold-scale", 3.0, 1.2, 4.0, "scale per iteration (menger 3, sierpinski 2, octahedron 2)"),
+            p("twist", 0.0, -1e6, 1e6, "rotation between the folds about the vertical axis, degrees (animate to make it writhe)"),
+            p("tilt", 0.0, -1e6, 1e6, "rotation between the folds about the horizontal axis, degrees"),
+            p("cx", 1.0, -4.0, 4.0, "fold offset vector, x (the corner the copies scale towards)"),
+            p("cy", 1.0, -4.0, 4.0, "fold offset vector, y"),
+            p("cz", 1.0, -4.0, 4.0, "fold offset vector, z"),
+            YAW, PITCH,
+            p("distance", 4.2, 0.05, 50.0, "camera distance from the centre (the default sponge has radius about 1.7; go inside to fly through)"),
+            ZOOM3, TURN3,
+            p("iter", 8.0, 1.0, 30.0, "fold iterations (detail)"),
+            STEPS, HALO, FOG,
+            p("occlusion", 0.5, 0.0, 4.0, "ambient occlusion from the march step count (0 = flat; sponges march long, so less than the bulb)"),
+            RIM, SPEED3, OFFSET, AA1,
+        ],
+        gpu: true,
+        gpu_zoom_max: None,
+        time: false,
+    },
 ];
 
 /// `lsystem` presets in `preset=` order (Reel Script also takes the names: `preset=dragon`).
 pub const LSYSTEM_PRESETS: &[&str] = &["koch", "dragon", "sierpinski", "plant", "hilbert", "gosper"];
+
+/// `kifs` fold sets in `mode=` order (Reel Script also takes the names: `mode=sierpinski`).
+pub const KIFS_MODES: &[&str] = &["menger", "sierpinski", "octahedron"];
 
 pub fn kind(name: &str) -> Option<&'static Kind> {
     KINDS.iter().find(|k| k.name == name)

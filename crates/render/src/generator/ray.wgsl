@@ -87,6 +87,14 @@ fn sincost(a: f32, n: f32) -> vec2<f32> {
 
 fn dot3(a: vec3<f32>, b: vec3<f32>) -> f32 { return fma(a.x, b.x, fma(a.y, b.y, a.z * b.z)); }
 
+// 3x3 row-major matrix at uniform i times v (ray::mul3)
+fn mul3(i: u32, v: vec3<f32>) -> vec3<f32> {
+    return vec3<f32>(
+        fma(gu(i), v.x, fma(gu(i + 1u), v.y, gu(i + 2u) * v.z)),
+        fma(gu(i + 3u), v.x, fma(gu(i + 4u), v.y, gu(i + 5u) * v.z)),
+        fma(gu(i + 6u), v.x, fma(gu(i + 7u), v.y, gu(i + 8u) * v.z)));
+}
+
 // ray::march
 fn sample(su: f32, sv: f32) -> vec4<f32> {
     let eye = gu3(0u);
@@ -139,7 +147,7 @@ fn sample(su: f32, sv: f32) -> vec4<f32> {
         let fa = ex2(-(fog * (t - t0)));
         if (hit) {
             let p = fma(rd, vec3<f32>(t), eye);
-            let e = fma(epsk, t, 1e-5) * 0.5;
+            let e = fma(epsk, t, 1e-5) * 1.5;
             var n = vec3<f32>(0.0);
             for (var k = 0; k < 4; k++) {
                 var kv = vec3<f32>(1.0, 1.0, 1.0);

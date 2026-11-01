@@ -68,6 +68,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Penrose tiling | `gen #p kind=penrose grow=0` + `anim #p grow 0s:0 3s:1` | implemented (CPU) | sacred-geometry intros, order out of chaos |
 | Game of Life, rule 30 | `gen #c kind=life rule="B3/S23"` / `kind=life mode=1 rule=30` | implemented (CPU) | emergence, computation, pixel aesthetics |
 | Raymarched Mandelbulb | `gen #m kind=mandelbulb palette=vapor` + `anim #m yaw 0s:20 8s:85 ease=linear` + `anim #m power 0s:6 8s:9` | implemented (GPU kernel, use `--gpu`; CPU about 0.7 s per 360p frame) | psychedelic music videos, alien worlds, "inside the machine" |
+| Writhing 3D sponge (KIFS) | `gen #k kind=kifs mode=menger\|sierpinski\|octahedron palette=vapor` + `anim #k twist 0s:0 8s:9` + `anim #k yaw 0s:25 8s:85 ease=linear` | implemented (GPU kernel, use `--gpu`) | sacred geometry, "infinite complexity", techno visuals |
 
 ## Time
 

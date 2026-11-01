@@ -70,6 +70,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Raymarched Mandelbulb | `gen #m kind=mandelbulb palette=vapor` + `anim #m yaw 0s:20 8s:85 ease=linear` + `anim #m power 0s:6 8s:9` | implemented (GPU kernel, use `--gpu`; CPU about 0.7 s per 360p frame) | psychedelic music videos, alien worlds, "inside the machine" |
 | Writhing 3D sponge (KIFS) | `gen #k kind=kifs mode=menger\|sierpinski\|octahedron palette=vapor` + `anim #k twist 0s:0 8s:9` + `anim #k yaw 0s:25 8s:85 ease=linear` | implemented (GPU kernel, use `--gpu`) | sacred geometry, "infinite complexity", techno visuals |
 | Fractal flame silk | `gen #f kind=flame symmetry=1 palette=vapor seed=12` + `anim #f morph 0s:0 8s:1 ease=linear` (seamless loop) | implemented (CPU) | glowing psychedelic backgrounds, dream sequences, music videos |
+| Strange attractor dust | `gen #a kind=attractor system=clifford\|dejong\|lorenz` + `anim #a a 0s:-1.4 6s:-1.7` (morph) / `anim #a turn 0s:0 8s:360` (Lorenz spin) | implemented (CPU) | abstract science, chaos, hypnotic morphs |
 
 ## Time
 

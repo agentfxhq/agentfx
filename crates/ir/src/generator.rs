@@ -268,6 +268,27 @@ pub const KINDS: &[Kind] = &[
         gpu_zoom_max: None,
         time: false,
     },
+    Kind {
+        name: "attractor",
+        doc: "Strange attractor as luminous density: Clifford, de Jong or the Lorenz flow projected from 3D (system=clifford|dejong|lorenz); animate a b c d to morph, turn to spin Lorenz; CPU",
+        params: &[
+            p("system", 0.0, 0.0, 2.0, "0 clifford, 1 dejong, 2 lorenz (Reel Script: system=clifford|dejong|lorenz, which also sets that system's a b c d unless given)"),
+            p("a", -1.4, -50.0, 50.0, "coefficient a (Lorenz: sigma, 10)"),
+            p("b", 1.6, -50.0, 50.0, "coefficient b (Lorenz: rho, 28)"),
+            p("c", 1.0, -50.0, 50.0, "coefficient c (Lorenz: beta, 2.667)"),
+            p("d", 0.7, -50.0, 50.0, "coefficient d (Lorenz: orbit length, 1 = 100 time units; longer fills the strands into a sheet)"),
+            p("samples", 24.0, 0.1, 500.0, "orbit samples per pixel of the rect (more = finer dust, slower)"),
+            p("gamma", 2.0, 0.2, 8.0, "tone-mapping gamma (higher = brighter faint dust)"),
+            RE0, IM0,
+            p("zoom", 1.0, 1e-3, 1e3, "magnification (1 = the system's bounds fit the rect)"),
+            p("turn", 0.0, -1e6, 1e6, "rotation, degrees (Lorenz: spin about its vertical axis)"),
+            p("color-speed", 1.0, -100.0, 100.0, "palette spread over the orbit's speed (slow to fast)"),
+            OFFSET,
+        ],
+        gpu: false,
+        gpu_zoom_max: None,
+        time: false,
+    },
 ];
 
 /// `lsystem` presets in `preset=` order (Reel Script also takes the names: `preset=dragon`).
@@ -275,6 +296,14 @@ pub const LSYSTEM_PRESETS: &[&str] = &["koch", "dragon", "sierpinski", "plant", 
 
 /// `kifs` fold sets in `mode=` order (Reel Script also takes the names: `mode=sierpinski`).
 pub const KIFS_MODES: &[&str] = &["menger", "sierpinski", "octahedron"];
+
+/// `attractor` systems in `system=` order with the a b c d that Reel Script fills in for a named
+/// system (unless given): `system=lorenz` is sigma 10, rho 28, beta 8/3, orbit length 1.5.
+pub const ATTRACTOR_SYSTEMS: &[(&str, [f64; 4])] = &[
+    ("clifford", [-1.4, 1.6, 1.0, 0.7]),
+    ("dejong", [1.4, -2.3, 2.4, -2.1]),
+    ("lorenz", [10.0, 28.0, 8.0 / 3.0, 1.5]),
+];
 
 pub fn kind(name: &str) -> Option<&'static Kind> {
     KINDS.iter().find(|k| k.name == name)

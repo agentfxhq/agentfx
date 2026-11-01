@@ -395,9 +395,10 @@ validation errors). The kinds, their parameters, defaults and ranges are declare
 | `mandelbulb` | `power` (8), `yaw` (30 deg), `pitch` (20 deg), `distance` (2.2), `zoom` (1), `turn` (0 deg roll), `iter` (10), `steps` (140), `halo` (0.7), `fog` (0.4), `occlusion` (1), `rim` (0.9), `color-speed` (1), `color-offset` (0), `aa` (1); raymarched, kernel uniforms (camera basis) from the host |
 | `kifs` | `mode` (0 menger, 1 sierpinski, 2 octahedron), `fold-scale` (3), `twist` (0 deg), `tilt` (0 deg), `cx`, `cy`, `cz` (1, 1, 1: fold offset), `yaw`, `pitch`, `distance` (4.2), `zoom`, `turn`, `iter` (8), `steps` (140), `halo` (0.7), `fog` (0.4), `occlusion` (0.5), `rim` (0.9), `color-speed` (1), `color-offset` (0), `aa` (1); raymarched, kernel uniforms (camera basis, fold rotations) from the host |
 | `flame` | `samples` (12 per pixel of the rect), `gamma` (1.7), `morph` (0; whole turns of the maps, 0 -> 1 loops), `symmetry` (1 = none, n-fold), `re`, `im` (offset), `zoom` (1 = fitted), `turn`, `color-speed` (1), `color-offset` (0); seeded IFS chaos game, log-density tone map; CPU, transparent ground |
+| `attractor` | `system` (0 Clifford, 1 de Jong, 2 Lorenz), `a` (-1.4), `b` (1.6), `c` (1), `d` (0.7) (Lorenz: a b c = sigma rho beta, d = orbit length in 100 time units; Reel Script `system=lorenz` fills in 10 28 8/3 1.5, a numeric `system` does not), `samples` (24 per pixel), `gamma` (2), `re`, `im`, `zoom` (1 = the system's analytic bounds fit), `turn` (Lorenz: spin about its vertical axis), `color-speed` (1, over orbit speed), `color-offset` (0); CPU, transparent ground |
 
 Pixel kinds (`julia mandelbrot noise truchet voronoi`) have a GPU kernel; vector and grid kinds
-(`flow lsystem penrose life flame`) rasterize their geometry, density or grid on the CPU (through the same
+(`flow lsystem penrose life flame attractor`) rasterize their geometry, density or grid on the CPU (through the same
 mapping, so they stay crisp under the node transform) and leave the ground transparent where
 nothing is drawn (`penrose` covers the rect). The pattern kinds map unit space to their plane as
 `centre + rotate(turn) * (u, -v) * half / zoom` (half = 0.7 for noise, 4 tiles or cells for

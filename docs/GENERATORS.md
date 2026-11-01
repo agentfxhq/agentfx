@@ -21,7 +21,7 @@ Every generator has:
 | Tunnel warp (effect) | polar remap, fly down a tube | done (`tunnel=`, CPU + GPU) |
 | Mandelbulb, KIFS | raymarched 3D fractals | done (`kind=mandelbulb`, `kind=kifs`) |
 | Fractal flames | glowing silk, seeded IFS with classic variations | done (`kind=flame`, CPU) |
-| Strange attractors | Lorenz, Clifford, de Jong; 2D density and 3D point clouds | planned |
+| Strange attractors | Lorenz, Clifford, de Jong 2D density | done (`kind=attractor`, CPU) |
 | Reaction-diffusion | Gray-Scott coral, zebra, spots | planned |
 | Domain-warped noise | marble, oil, liquid neon | done (`kind=noise`) |
 | Flow fields | particles streaking through a curl-noise field | done (`kind=flow`, CPU) |
@@ -42,7 +42,7 @@ into unit space through the layer transform, supersamples (`aa`), premultiplies 
    names must not collide with existing channels (`x y rot scale angle offset hue count trim
    ...`, see `Ch::parse` in `crates/script/src/ir.rs`): a colliding name parses as that channel
    instead. A name may be shared between kinds with different ranges (`zoom`, `thickness`); each
-   distinct name takes one of the `GEN_CHS` slots (48; add more there). Parameters are numbers
+   distinct name takes one of the `GEN_CHS` slots (60; add more there). Parameters are numbers
    only: for strings add a small compile-time translation in `crates/script/src/generator.rs`
    (as `rule="B3/S23"` -> `born`/`survive` and `preset=dragon` -> `preset=1` do).
    Set `time: true` when the image moves with t itself (noise flow, simulations): the planner

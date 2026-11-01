@@ -19,7 +19,7 @@ Every generator has:
 | Mandelbrot | infinite zoom; f32 GPU limit about 2e4x, CPU f64 | done (`kind=mandelbrot`) |
 | Kaleidoscope (effect) | N-fold mirror symmetry of any layer | done (`kaleido=`, CPU + GPU) |
 | Tunnel warp (effect) | polar remap, fly down a tube | done (`tunnel=`, CPU + GPU) |
-| Mandelbulb, KIFS | raymarched 3D fractals | planned |
+| Mandelbulb, KIFS | raymarched 3D fractals | Mandelbulb done (`kind=mandelbulb`); KIFS planned |
 | Fractal flames | glowing silk, IFS with variations | planned |
 | Strange attractors | Lorenz, Clifford, de Jong; 2D density and 3D point clouds | planned |
 | Reaction-diffusion | Gray-Scott coral, zebra, spots | planned |
@@ -42,7 +42,7 @@ into unit space through the layer transform, supersamples (`aa`), premultiplies 
    names must not collide with existing channels (`x y rot scale angle offset hue count trim
    ...`, see `Ch::parse` in `crates/script/src/ir.rs`): a colliding name parses as that channel
    instead. A name may be shared between kinds with different ranges (`zoom`, `thickness`); each
-   distinct name takes one of the `GEN_CHS` slots (32; add more there). Parameters are numbers
+   distinct name takes one of the `GEN_CHS` slots (48; add more there). Parameters are numbers
    only: for strings add a small compile-time translation in `crates/script/src/generator.rs`
    (as `rule="B3/S23"` -> `born`/`survive` and `preset=dragon` -> `preset=1` do).
    Set `time: true` when the image moves with t itself (noise flow, simulations): the planner
@@ -74,11 +74,22 @@ into unit space through the layer transform, supersamples (`aa`), premultiplies 
    `gpu: false`, no `.wgsl`. `g.aspect` gives the rect's extent in unit space (u in
    +-aspect), so a kind can fit or cover the rect. Keep everything a pure function of the
    parameters, seed and t (simulations replay from step 0 each frame).
-6. **Tests**: `registry_matches_declarations`, `deterministic` and `gpu_matches_cpu` in
+6. **Raymarched (3D) kinds** (`mandelbulb`): implement `ray::Sdf` (a distance estimator
+   returning the distance as two factors and an orbit trap) and reuse `generator/ray.rs` and
+   `ray.wgsl` (orbit camera, march, shading); the kind's WGSL declares `const NP` (its
+   parameter count) and `fn de`. Everything trigonometric (camera basis, light, rotation
+   matrices) is computed on the host in f64 and passed through `Generator::uniforms` (written
+   after the parameters, read as `gu(i)` in the kernel). In the kernel use only `ray::M`'s
+   functions (`rcp rsqrt root lg2 ex2 atan2t sincost`, built from add / mul / fma / bit casts,
+   mirrored in `ray.wgsl`), never the WGSL builtins `sqrt / log2 / exp2 / atan2 / sin / cos /
+   dot / length / normalize` or `/`, and never let a product flow straight into an add: a
+   driver may fuse it, so write the fma yourself on both sides. With that a raymarched kind
+   meets the same 1/255 bound as the 2D kinds (measured: max diff 0-1 on NVIDIA Vulkan).
+7. **Tests**: `registry_matches_declarations`, `deterministic` and `gpu_matches_cpu` in
    `generator/mod.rs` cover every kind once it is declared and registered; add a few
    parameter cases of yours to the `cases` table in `gpu_matches_cpu` (they must stay within
    1/255). Run `cargo test --release -p agentfx-render generator`.
-7. **Docs and example**: a row in the kinds list of `SPEC.md` "Generators" and of `IR.md`
+8. **Docs and example**: a row in the kinds list of `SPEC.md` "Generators" and of `IR.md`
    "Generator", a catalog item (`crates/script/src/catalog.rs`, then regenerate the SPEC table
    with `agentfx catalog --md`), a row in `skill/agentfx/animation-kinds.md`, an example in
    `examples/features/`, and mark it done above.

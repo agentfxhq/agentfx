@@ -1,0 +1,12 @@
+// Generators: a raymarched Mandelbulb, neon on black; the camera orbits in while the power morphs.
+video "Mandelbulb" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #000000
+
+scene bulb dur=8s
+  gen #m kind=mandelbulb power=7 aa=2 palette=neon
+  anim #m power 0s:7 8s:9 ease=inout-sine
+  anim #m yaw 0s:15 8s:95 ease=linear
+  anim #m pitch 0s:35 8s:10 ease=inout-sine
+  anim #m distance 0s:2.7 8s:1.85 ease=inout-sine
+  anim #m color-offset 0s:0 8s:0.3 ease=linear

@@ -809,6 +809,19 @@ fn irect(r: [f64; 4]) -> Option<[i32; 4]> {
     (x1 > x0 && y1 > y0).then_some([x0, y0, x1 - x0, y1 - y0])
 }
 
+/// Offscreen rasters of at least this many pixels use `offscreen_threads()` vello workers.
+const OFFSCREEN_MT_PX: usize = 512 * 1024;
+
+/// Vello worker threads for large offscreen rasters: AGENTFX_OFFSCREEN_THREADS (0 = off),
+/// else the available cores (at most 8).
+fn offscreen_threads() -> u16 {
+    static V: OnceLock<u16> = OnceLock::new();
+    *V.get_or_init(|| {
+        agentfx_ir::env::var("AGENTFX_OFFSCREEN_THREADS").ok().and_then(|v| v.parse().ok())
+            .unwrap_or_else(|| std::thread::available_parallelism().map_or(1, |n| n.get().min(8)) as u16)
+    })
+}
+
 /// Largest power-of-two reduction `effects::blur` uses for `sigma` (1 = full resolution).
 fn blur_scale(sigma: f64) -> usize {
     let mut scale = 1usize;
@@ -1002,6 +1015,9 @@ impl<'a> Painter<'a> {
     /// into a fresh context covering screen rect `r`. `matte`: draw hidden nodes too.
     fn render_view(&mut self, view: &View, f: usize, r: [i32; 4], inner: Option<NodeId>, threads: u16, matte: bool) -> Result<Pixmap> {
         let (w, h) = (r[2] as u16, r[3] as u16);
+        // large offscreen subtrees (effect inputs) rasterize on worker threads too
+        // (vello_cpu's multithreaded output equals its single-threaded output)
+        let threads = if threads == 0 && r[2] as usize * r[3] as usize >= OFFSCREEN_MT_PX { offscreen_threads() } else { threads };
         let mut ctx = self.take_ctx(w, h, threads);
         let base = Affine::translate((-r[0] as f64, -r[1] as f64));
         let region = [r[0] as f64, r[1] as f64, r[2] as f64, r[3] as f64];

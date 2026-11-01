@@ -144,10 +144,11 @@ fn image_impl<const ORIGINAL: bool>(g: &Gradient, inv: Affine, r: [i32; 4], alph
         }
         _ => None,
     };
-    for y in 0..h {
+    // rows in parallel (each row is a pure function of y; bitwise the serial result)
+    use rayon::prelude::*;
+    let rows = |(y, row): (usize, &mut [u8])| {
         let dy = (r[1] as i64 + y as i64) as f64 + 0.5;
         let sy = origin.1 + r[1] as i64 + y as i64;
-        let row = &mut out[y * w * 4..(y + 1) * w * 4];
         let dx0 = r[0] as f64 + 0.5;
         // linear: t is affine along the row
         let (t0, dt) = match linear {
@@ -183,6 +184,14 @@ fn image_impl<const ORIGINAL: bool>(g: &Gradient, inv: Affine, r: [i32; 4], alph
             row[o + 2] = quantize(s[2] + d).min(a8 as u8);
             row[o + 3] = a8 as u8;
         }
+    };
+    if w == 0 {
+        return out;
+    }
+    if w * h >= 16384 {
+        out.par_chunks_mut(w * 4).enumerate().for_each(rows);
+    } else {
+        out.chunks_mut(w * 4).enumerate().for_each(rows);
     }
     out
 }

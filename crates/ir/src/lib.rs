@@ -1096,6 +1096,30 @@ pub enum Effect {
     Dither { levels: f64, mode: String, #[serde(default = "bayer_size")] size: u32, #[serde(default)] palette: Option<Vec<[f64; 4]>> },
     /// Built-in 5x7 glyphs, charset ordered from dark to light.
     Ascii { cell: f64, charset: String, color: String, bg: [f64; 4] },
+    /// Liquid glass, using the composited layer alpha as a height field. `strength` is the
+    /// refractive offset in scene px; `blur` frosts the sampled image; `dispersion` separates
+    /// the red and blue samples. The remaining fields shade the alpha edge.
+    Glass {
+        #[serde(default = "one")] strength: f64,
+        #[serde(default)] blur: f64,
+        #[serde(default)] dispersion: f64,
+        #[serde(default = "one")] thickness: f64,
+        #[serde(default)] highlight: f64,
+        #[serde(default)] rim: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")] tint: Option<[f64; 4]>,
+    },
+    /// Cinematic lens finishing. Every field is independently useful: `streak`, `bokeh`,
+    /// `distortion`, `vignette`, `halation`, `grain` and `aberration` are all strengths.
+    Optics {
+        #[serde(default)] streak: f64,
+        #[serde(default)] bokeh: f64,
+        #[serde(default)] distortion: f64,
+        #[serde(default)] aberration: f64,
+        #[serde(default)] vignette: f64,
+        #[serde(default)] halation: f64,
+        #[serde(default)] grain: f64,
+        #[serde(default)] seed: u64,
+    },
     /// Color adjustment of the subtree, in straight sRGB, steps in this order (each clamped
     /// to 0..1 like a CSS filter chain): `brightness` (multiplier, CSS `brightness()`),
     /// `saturate` (CSS `saturate()`), `contrast` (CSS `contrast()`), `hue` (degrees, CSS
@@ -1162,6 +1186,8 @@ impl Effect {
             Effect::Vhs { .. } => &["amount"],
             Effect::Dither { .. } => &["levels"],
             Effect::Ascii { .. } => &["cell"],
+            Effect::Glass { .. } => &["strength", "blur", "dispersion", "thickness", "highlight", "rim"],
+            Effect::Optics { .. } => &["streak", "bokeh", "distortion", "aberration", "vignette", "halation", "grain"],
             Effect::Riso { .. } => &["misreg"],
             Effect::Halftone { .. } => &["cell", "angle"],
             Effect::Grain { .. } => &["amount"],
@@ -1183,6 +1209,19 @@ impl Effect {
             (Effect::Glitch { block, .. }, "block") => *block,
             (Effect::Dither { levels, .. }, "levels") => *levels,
             (Effect::Ascii { cell, .. }, "cell") => *cell,
+            (Effect::Glass { strength, .. }, "strength") => *strength,
+            (Effect::Glass { blur, .. }, "blur") => *blur,
+            (Effect::Glass { dispersion, .. }, "dispersion") => *dispersion,
+            (Effect::Glass { thickness, .. }, "thickness") => *thickness,
+            (Effect::Glass { highlight, .. }, "highlight") => *highlight,
+            (Effect::Glass { rim, .. }, "rim") => *rim,
+            (Effect::Optics { streak, .. }, "streak") => *streak,
+            (Effect::Optics { bokeh, .. }, "bokeh") => *bokeh,
+            (Effect::Optics { distortion, .. }, "distortion") => *distortion,
+            (Effect::Optics { aberration, .. }, "aberration") => *aberration,
+            (Effect::Optics { vignette, .. }, "vignette") => *vignette,
+            (Effect::Optics { halation, .. }, "halation") => *halation,
+            (Effect::Optics { grain, .. }, "grain") => *grain,
             (Effect::Riso { misreg, .. }, "misreg") => *misreg,
             (Effect::Halftone { cell, .. }, "cell") => *cell,
             (Effect::Halftone { angle, .. }, "angle") => *angle,
@@ -1217,6 +1256,7 @@ impl Effect {
             Effect::Riso { drift, .. } => *drift != 0.0,
             Effect::Grain { live, .. } => *live,
             Effect::Glitch { .. } | Effect::Vhs { .. } => true,
+            Effect::Optics { grain, .. } => *grain != 0.0,
             _ => false,
         }
     }
@@ -1282,6 +1322,33 @@ pub enum TimeFx {
         #[serde(default = "levels_default")]
         levels: u32,
     },
+    /// Temporal glitch: deterministic block reuse from earlier subtree frames, with optional
+    /// frame hold, RGB frame separation and scanline time offsets.  The renderer evaluates the
+    /// subtree at the required earlier times, so this remains seekable and segment-safe.
+    TemporalGlitch {
+        /// Furthest sampled history in seconds.
+        span: f64,
+        /// Square block edge in scene pixels.
+        #[serde(default = "glitch_block_default")]
+        block: f64,
+        /// 0..1 mix between the current frame and the temporal treatment.
+        #[serde(default = "one")]
+        intensity: f64,
+        /// 0..1 probability of a block reusing one past frame.
+        #[serde(default)]
+        smear: f64,
+        /// 0..1 probability of holding a whole frame from history.
+        #[serde(default)]
+        stutter: f64,
+        /// 0..1 RGB channel separation across history frames.
+        #[serde(default)]
+        rgb: f64,
+        /// 0..1 scanline time offset amount.
+        #[serde(default)]
+        scanline: f64,
+        #[serde(default)]
+        seed: u64,
+    },
 }
 
 /// Per-pixel time offset map (0..1) of a displace effect, screen coordinates.
@@ -1310,11 +1377,14 @@ fn levels_default() -> u32 {
 fn octaves_default() -> u32 {
     3
 }
+fn glitch_block_default() -> f64 {
+    24.0
+}
 
 impl TimeFx {
     pub fn span(&self) -> f64 {
         match self {
-            TimeFx::Slitscan { span, .. } | TimeFx::Echo { span, .. } | TimeFx::Displace { span, .. } => *span,
+            TimeFx::Slitscan { span, .. } | TimeFx::Echo { span, .. } | TimeFx::Displace { span, .. } | TimeFx::TemporalGlitch { span, .. } => *span,
         }
     }
 }

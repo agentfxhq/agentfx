@@ -162,6 +162,12 @@ pub fn validate(scene: &Scene, base_dir: &Path) -> Result<Vec<String>, Vec<Strin
                 Effect::Ascii { cell, charset, color, bg } => {
                     if !cell.is_finite() || !(6.0..=24.0).contains(cell) || charset.is_empty() || charset.chars().any(|c| !" .:-=+*#%@".contains(c)) || !matches!(color.as_str(), "mono" | "source") || bg.iter().any(|v| !v.is_finite() || !(0.0..=1.0).contains(v)) { errors.push(format!("{ctx}: invalid ascii (charset from space .:-=+*#%@)")); }
                 }
+                Effect::Glass { strength, blur, dispersion, thickness, highlight, rim, tint } => {
+                    if !finite(&[*strength, *blur, *dispersion, *thickness, *highlight, *rim]) || *blur < 0.0 || *thickness < 0.0 || tint.is_some_and(|c| !finite(&c)) { errors.push(format!("{ctx}: invalid glass")); }
+                }
+                Effect::Optics { streak, bokeh, distortion, aberration, vignette, halation, grain, .. } => {
+                    if !finite(&[*streak, *bokeh, *distortion, *aberration, *vignette, *halation, *grain]) { errors.push(format!("{ctx}: invalid optics")); }
+                }
                 Effect::Color { brightness, saturate, contrast, hue, tint, tint_amount, levels, lut } => {
                     if !finite(&[*brightness, *saturate, *contrast, *hue, *tint_amount]) || *brightness < 0.0 || *saturate < 0.0 || *contrast < 0.0 || !tint.map_or(true, |c| finite(&c)) { errors.push(format!("{ctx}: invalid color (brightness/saturate/contrast >= 0, finite values)")); }
                     if let Some(l) = levels {
@@ -357,6 +363,12 @@ fn check_time(scene: &Scene, i: usize, node: &Node, tf: &crate::TimeFx, ctx: &st
                     if *m >= scene.nodes.len() || *m == i { errors.push(format!("{ctx}: layer map node {m} invalid")); }
                     else if !scene.nodes[*m].hidden { warnings.push(format!("{ctx}: layer map node {m} is not hidden (it is also drawn normally)")); }
                 }
+            }
+        }
+        TimeFx::TemporalGlitch { block, intensity, smear, stutter, rgb, scanline, .. } => {
+            if !block.is_finite() || *block < 1.0 || *block > 1024.0 { errors.push(format!("{ctx}: temporal glitch block must be 1..=1024 px")); }
+            for (name, value) in [("intensity", intensity), ("smear", smear), ("stutter", stutter), ("rgb", rgb), ("scanline", scanline)] {
+                if !value.is_finite() || !(0.0..=1.0).contains(value) { errors.push(format!("{ctx}: temporal glitch {name} must be in [0, 1]")); }
             }
         }
     }

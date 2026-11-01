@@ -1196,7 +1196,7 @@ impl<'a> Em<'a> {
         // unsupported channels
         for t in &tracks {
             if t.keys.len() > 1 && !t.is_static() {
-                let ok = matches!(t.ch, Ch::Rgbsplit | Ch::RgbsplitDx | Ch::RgbsplitDy | Ch::Glitch | Ch::GlitchRate | Ch::GlitchBlock | Ch::Vhs | Ch::Dither | Ch::Ascii | Ch::Halftone | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
+                let ok = matches!(t.ch, Ch::Rgbsplit | Ch::RgbsplitDx | Ch::RgbsplitDy | Ch::Glitch | Ch::GlitchRate | Ch::GlitchBlock | Ch::Vhs | Ch::Dither | Ch::Ascii | Ch::Glass | Ch::GlassBlur | Ch::GlassDispersion | Ch::GlassThickness | Ch::GlassHighlight | Ch::GlassRim | Ch::Streak | Ch::Bokeh | Ch::Distortion | Ch::Aberration | Ch::Vignette | Ch::Halation | Ch::FilmGrain | Ch::Halftone | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
                     || (t.ch == Ch::PathOffset && l.style.text_path.is_some())
                     || (matches!(l.kind, Kind::Scene3d(_)) && s3d_emit::scene_ch(t.ch));
                 if !ok {
@@ -1826,6 +1826,16 @@ impl<'a> Em<'a> {
                 Look::Ascii { cell, charset, color, bg } => {
                     effects.push(json!({"type": "ascii", "cell": cell, "charset": charset, "color": color, "bg": rgba(&bg)}));
                     num_track(self, Ch::Ascii, k, "cell");
+                }
+                Look::Glass { strength, blur, dispersion, thickness, highlight, rim, tint } => {
+                    let mut e = json!({"type":"glass", "strength":strength, "blur":blur, "dispersion":dispersion, "thickness":thickness, "highlight":highlight, "rim":rim});
+                    if let Some(t) = tint { e["tint"] = rgba(&t); }
+                    effects.push(e);
+                    for (ch, field) in [(Ch::Glass, "strength"), (Ch::GlassBlur, "blur"), (Ch::GlassDispersion, "dispersion"), (Ch::GlassThickness, "thickness"), (Ch::GlassHighlight, "highlight"), (Ch::GlassRim, "rim")] { num_track(self, ch, k, field); }
+                }
+                Look::Optics { streak, bokeh, distortion, aberration, vignette, halation, grain, seed } => {
+                    effects.push(json!({"type":"optics", "streak":streak, "bokeh":bokeh, "distortion":distortion, "aberration":aberration, "vignette":vignette, "halation":halation, "grain":grain, "seed":seed}));
+                    for (ch, field) in [(Ch::Streak, "streak"), (Ch::Bokeh, "bokeh"), (Ch::Distortion, "distortion"), (Ch::Aberration, "aberration"), (Ch::Vignette, "vignette"), (Ch::Halation, "halation"), (Ch::FilmGrain, "grain")] { num_track(self, ch, k, field); }
                 }
                 Look::Riso { inks, seed, misreg, drift, speed, grain, density, paper } => {
                     let mut e = json!({"type": "riso", "inks": inks.iter().map(rgba).collect::<Vec<_>>(), "seed": seed, "misreg": misreg, "drift": drift, "drift_speed": speed, "grain": grain, "density": density});

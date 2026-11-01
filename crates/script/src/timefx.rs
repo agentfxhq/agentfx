@@ -17,6 +17,7 @@ pub enum TimeFxSpec {
     Slitscan { axis: String, band: f64, reverse: bool },
     Echo { count: u32, decay: f64, blend: String, tint: Vec<Rgba> },
     Displace { map: MapSpec, levels: u32 },
+    TemporalGlitch { block: f64, intensity: f64, smear: f64, stutter: f64, rgb: f64, scanline: f64, seed: u64 },
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -34,6 +35,7 @@ pub enum MapSpec {
 const SLIT_PROPS: &[&str] = &["axis", "span", "band", "dir", "dur", "ease"];
 const ECHO_PROPS: &[&str] = &["n", "dt", "decay", "blend", "colors", "color", "dur", "ease"];
 const DISP_PROPS: &[&str] = &["map", "span", "levels", "center", "radius", "angle", "scale", "seed", "dur", "ease"];
+const TEMPORAL_GLITCH_PROPS: &[&str] = &["span", "block", "intensity", "smear", "stutter", "rgb", "scanline", "seed", "dur", "ease"];
 const FREEZE_PROPS: &[&str] = &["for"];
 /// Above this many subtree renders per frame the effect is slow (lint W_TIME_COST).
 const RENDERS_WARN: f64 = 400.0;
@@ -51,6 +53,7 @@ impl<'a> Ctx<'a> {
     /// `slitscan #g axis=y span=1.2s band=4 [dir=down|up] [dur= ease=]`,
     /// `echo #g n=6 dt=60ms decay=0.6 blend=normal|add|multiply|screen colors=#f00,#00f`,
     /// `timedisplace #g map=radial|linear|noise|#layer span=0.8s levels=24 ...`,
+    /// `temporalglitch #g span=0.3s block=24 intensity=1 smear=0.7`,
     /// `freeze #g [for=1s]`.
     pub fn time_verb(&mut self, e: &Ev) {
         let n = e.node.clone();
@@ -138,6 +141,27 @@ impl<'a> Ctx<'a> {
                 }
                 (TimeFxSpec::Echo { count: count as u32, decay, blend: blend.into(), tint }, "dt", ECHO_PROPS)
             }
+            "temporalglitch" => {
+                let fraction = |ctx: &mut Ctx, key: &str, default: f64| {
+                    let value = ctx.num(&n, key).unwrap_or(default);
+                    if !(0.0..=1.0).contains(&value) {
+                        ctx.err("E_VALUE", format!("temporalglitch {key}={value}: use 0..1"), format!("write `{key}=0.5`"), n.span);
+                        default
+                    } else { value }
+                };
+                let block = self.num(&n, "block").unwrap_or(24.0);
+                if !(1.0..=1024.0).contains(&block) {
+                    self.err("E_VALUE", format!("temporalglitch block={block}: px, 1..1024"), "write `block=24`", n.span);
+                    return;
+                }
+                let intensity = fraction(self, "intensity", 1.0);
+                let smear = fraction(self, "smear", 0.7);
+                let stutter = fraction(self, "stutter", 0.15);
+                let rgb = fraction(self, "rgb", 0.45);
+                let scanline = fraction(self, "scanline", 0.25);
+                let seed = self.num(&n, "seed").unwrap_or(1.0).max(0.0) as u64;
+                (TimeFxSpec::TemporalGlitch { block, intensity, smear, stutter, rgb, scanline, seed }, "span", TEMPORAL_GLITCH_PROPS)
+            }
             _ => {
                 let levels = self.num(&n, "levels").unwrap_or(24.0);
                 if !(2.0..=64.0).contains(&levels) {
@@ -198,6 +222,7 @@ impl<'a> Ctx<'a> {
                     TimeFxSpec::Slitscan { axis, band, .. } => (if axis == "x" { self.w } else { self.h }) / band + 1.0,
                     TimeFxSpec::Echo { count, .. } => *count as f64 + 1.0,
                     TimeFxSpec::Displace { levels, .. } => *levels as f64 * 2.0,
+                    TimeFxSpec::TemporalGlitch { .. } => 8.0,
                 };
                 if renders > RENDERS_WARN {
                     self.warn("W_TIME_COST", format!("`{k}` renders the subtree up to {renders:.0} times per frame"), "raise band= / lower n= or levels=, or apply it to a smaller group", n.span);
@@ -210,7 +235,7 @@ impl<'a> Ctx<'a> {
             Some(v) => v,
             None => match self.num(&n, span_key) {
                 Some(v) => v,
-                None => if k == "echo" { 0.06 } else { 1.0 },
+                None => if k == "echo" { 0.06 } else if k == "temporalglitch" { 0.3 } else { 1.0 },
             },
         };
         if !span.is_finite() || span.abs() > 30.0 {
@@ -269,5 +294,9 @@ pub fn ir_time(spec: &TimeFxSpec, r: [f64; 4], w: f64, h: f64, map_node: Option<
             };
             json!({"type": "displace", "map": m, "span": 0.0, "levels": levels})
         }
+        TimeFxSpec::TemporalGlitch { block, intensity, smear, stutter, rgb, scanline, seed } => json!({
+            "type": "temporal-glitch", "span": 0.0, "block": block, "intensity": intensity,
+            "smear": smear, "stutter": stutter, "rgb": rgb, "scanline": scanline, "seed": seed
+        }),
     }
 }

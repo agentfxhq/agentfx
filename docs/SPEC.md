@@ -1227,7 +1227,7 @@ unknown targets/colliders and empty bodies report `E_PHYSICS` with a repair hint
 
 The direct backend supports these subtree effects alongside `riso=`, `halftone=`
 and `grain=`. See `examples/features/looks.reel`. Effects use a fixed order:
-riso, halftone, grain, paper, sweep, shadow, rays, rgbsplit, glitch, vhs, dither, ascii.
+riso, halftone, grain, paper, sweep, shadow, rays, rgbsplit, glitch, vhs, dither, ascii, glass, optics.
 Unknown effect-prefixed parameters are lint errors.
 
 | Property | Parameters and ranges | Animation channels |
@@ -1237,6 +1237,8 @@ Unknown effect-prefixed parameters are lint errors.
 | `vhs=0.5` | amount 0..1; shared `seed=1` | `vhs` |
 | `dither=3` | levels 2..256; `dither-mode=bayer\|bluenoise\|floyd`, `dither-size=2\|4\|8` (default 4); optional `dither-palette=[#000, #fff]` of 2..16 opaque colors | `dither` |
 | `ascii=8` | cell 6..24 px; `ascii-charset=" .:-=+*#%@"` (nonempty subset in darkness order), `ascii-color=source\|mono`, `ascii-bg=#000` | `ascii` |
+| `glass=12` | liquid glass backdrop lens: refracts the already-painted layers below it by strength px; `glass-blur=`, `glass-dispersion=`, `glass-thickness=`, `glass-highlight=`, `glass-rim=`, `glass-tint=` | direct IR fields are animatable |
+| `optics` | cinematic finishing: `streak=`, `bokeh=`, `distortion=` (barrel positive), `aberration=`, `vignette=`, `halation=`, `film-grain=`, shared `seed=` | direct IR fields are animatable |
 
 For example, `anim #title rgbsplit 0s:0 1s:1` emits an effect-field track.
 RGB split, glitch and VHS are identity at zero amount. Glitch and VHS vary with

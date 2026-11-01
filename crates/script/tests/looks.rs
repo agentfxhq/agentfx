@@ -117,3 +117,16 @@ fn digital_look_parameters_are_checked() {
         assert!(!errors(&format!("{head}  rect w=10 h=10 {props}\n")).is_empty(), "{props}");
     }
 }
+
+#[test]
+fn lenses_accept_animatable_channels() {
+    let src = "video \"x\" size=640x360 fps=30 captions=off\nscene a dur=1s\n  rect #lens x=100 y=100 w=300 h=160 radius=20 fill=#ffffff22 glass=12 optics streak=0.2\n  @0s anim #lens glass 0s:0 1s:18 ; anim #lens halation 0s:0 1s:0.4\n";
+    let (ir, diags) = compile_src(src, Path::new(env!("AGENTFX_ROOT")));
+    assert!(diags.iter().all(|d| d.severity != Severity::Error), "{diags:#?}");
+    let dir = std::env::temp_dir().join(format!("reel-lenses-{}", std::process::id()));
+    let c = agentfx_script::direct::compile(&ir.unwrap(), &dir, false).unwrap();
+    let s: Scene = serde_json::from_value(c.scene).unwrap();
+    assert!(s.tracks.iter().any(|t| t.property.ends_with(".strength")));
+    assert!(s.tracks.iter().any(|t| t.property.ends_with(".halation")));
+    assert!(agentfx_ir::validate::validate(&s, &dir).is_ok());
+}

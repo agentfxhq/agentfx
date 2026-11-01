@@ -424,7 +424,7 @@ pub const VERBS: &[&str] = &[
     "enter", "exit", "show", "hide", "emph", "pulse", "shake", "glow", "highlight", "spotlight", "callout", "zoom", "pan",
     "cursor", "click", "dblclick", "drag", "type", "swap", "count", "draw", "diff", "burst", "move", "set", "anim", "sfx",
     "gesture", "mood", "dolly", "orbit", "focus", "play", "activate", "deactivate", "done", "undone", "advance", "page", "rewind", "timemap", "drop", "pile", "push", "swing", "shatter",
-    "slitscan", "echo", "timedisplace", "freeze", "sweep", "pour", "stir", "ink", "reveal", "animate", "spin", "tumble", "assemble", "explode", "truck", "pedestal", "lookat", "camera3d",
+    "slitscan", "echo", "timedisplace", "temporalglitch", "freeze", "sweep", "pour", "stir", "ink", "reveal", "animate", "spin", "tumble", "assemble", "explode", "truck", "pedestal", "lookat", "camera3d",
 ];
 pub fn is_verb(k: &str) -> bool {
     VERBS.contains(&k)

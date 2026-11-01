@@ -951,6 +951,101 @@ impl<'a> Painter<'a> {
         Ok(px)
     }
 
+    /// Does `needle` occur in `n`'s subtree? The scene graph is a tree, so this small
+    /// walk is also the paint-order test used by a backdrop effect.
+    fn contains_node(&self, n: NodeId, needle: NodeId) -> bool {
+        n == needle || self.scene.nodes[n].children.iter().any(|&c| self.contains_node(c, needle))
+    }
+
+    /// Raster the part of the tree which has painted before `target`, into the same screen
+    /// rect as its effect raster. This is the backdrop for glass: it deliberately excludes
+    /// the target's subtree and every later sibling, rather than sampling the lens itself.
+    fn backdrop_pixmap(&mut self, view: &View, f: usize, target: NodeId, r: [i32; 4], matte: bool) -> Result<Pixmap> {
+        let (w, h) = (r[2] as u16, r[3] as u16);
+        let mut ctx = self.take_ctx(w, h, 0);
+        let base = Affine::translate((-r[0] as f64, -r[1] as f64));
+        let region = [r[0] as f64, r[1] as f64, r[2] as f64, r[3] as f64];
+        let saved = std::mem::replace(&mut self.origin, (r[0] as i64, r[1] as i64));
+        self.iso += 1;
+        let res = self.draw_before_node(&mut ctx, view, f, 0, target, base, region, 1.0, matte);
+        self.iso -= 1;
+        self.origin = saved;
+        res?;
+        ctx.flush();
+        let mut px = Pixmap::new(w, h);
+        ctx.render(&mut px, &mut self.res);
+        self.give_ctx(ctx);
+        self.stats.offscreen += 1;
+        self.stats.offscreen_px += w as u64 * h as u64;
+        Ok(px)
+    }
+
+    /// Draw the prefix of `n`'s subtree ending immediately before `target`. Fully earlier
+    /// siblings use the regular path, so their effects and groups stay identical to the
+    /// ordinary compositor. Ancestor groups retain clips and opacity; their post-composite
+    /// effects cannot be applied to a partial group and are therefore intentionally omitted.
+    #[allow(clippy::too_many_arguments)]
+    fn draw_before_node(&mut self, ctx: &mut RenderContext, view: &View, f: usize, n: NodeId, target: NodeId, base: Affine, region: [f64; 4], alpha: f64, matte: bool) -> Result<bool> {
+        if n == target {
+            return Ok(true);
+        }
+        if !self.contains_node(n, target) {
+            self.draw_node(ctx, view, f, n, base, region, alpha, matte)?;
+            return Ok(false);
+        }
+        let node = &self.scene.nodes[n];
+        if node.hidden && !matte {
+            return Ok(false);
+        }
+        let st = view.states[n];
+        if st.opacity <= 0.0 {
+            return Ok(false);
+        }
+        let pchain = self.sched.parents[n].map(|p| k(&view.states[p].chain)).unwrap_or(Affine::IDENTITY);
+        let mut pushed = 0;
+        let mut clips_pushed = 0;
+        for c in &node.clips {
+            let rr = c.rect;
+            let p = kurbo::RoundedRect::from_rect(Rect::new(rr[0], rr[1], rr[0] + rr[2], rr[1] + rr[3]), kurbo::RoundedRectRadii::new(c.radius[0], c.radius[1], c.radius[2], c.radius[3])).to_path(0.1);
+            ctx.set_transform(base * pchain);
+            ctx.set_fill_rule(Fill::NonZero);
+            ctx.push_clip_path(&p);
+            clips_pushed += 1;
+        }
+        let op = st.opacity * alpha;
+        let isolate = node.isolate || node.blend != agentfx_ir::BlendMode::Normal;
+        let op = if op >= OPAQUE { 1.0 } else { op };
+        let (group_alpha, child_alpha) = if isolate { (op, 1.0) } else { (1.0, op) };
+        if group_alpha < 1.0 || node.blend != agentfx_ir::BlendMode::Normal {
+            ctx.set_transform(Affine::IDENTITY);
+            ctx.push_layer(None, Some(blend(node.blend)), Some(group_alpha as f32), None, None);
+            pushed += 1;
+            self.iso += 1;
+        }
+        let chain = base * k(&st.chain);
+        if node.content.is_some() && self.sched.ink[f][n][2] > 0.0 && intersect(self.sched.ink[f][n], region)[2] > 0.0 {
+            self.draw_content_cached(ctx, view, n, base, chain, child_alpha, region)?;
+        }
+        for &c in &node.children {
+            if c == target {
+                break;
+            }
+            if self.contains_node(c, target) {
+                self.draw_before_node(ctx, view, f, c, target, base, region, child_alpha, matte)?;
+                break;
+            }
+            self.draw_node(ctx, view, f, c, base, region, child_alpha, matte)?;
+        }
+        for _ in 0..pushed {
+            ctx.pop_layer();
+            self.iso -= 1;
+        }
+        for _ in 0..clips_pushed {
+            ctx.pop_clip();
+        }
+        Ok(true)
+    }
+
     fn sub_ink(&self, raw: bool, f: usize, n: NodeId) -> Option<[f64; 4]> {
         // subtree ink of the frame (schedule); motion-blur samples use the frame's too.
         // raw: before ancestor clips (the input extent an effect needs)
@@ -1770,6 +1865,9 @@ impl<'a> Painter<'a> {
         let scene = self.scene;
         let node = &scene.nodes[n];
         let (w, h) = (o[2] as usize, o[3] as usize);
+        // Glass samples the scene prefix, aligned with its own effect raster. It must be
+        // captured before the lens is composited, never from its isolated subtree.
+        let backdrop = node.effects.iter().any(|e| matches!(e, Effect::Glass { .. })).then(|| self.backdrop_pixmap(view, f, n, o, matte)).transpose()?;
         // content (motion blur: average of sub-frame samples)
         let leaf_cloud = match self.prep.contents[n].as_ref() {
             Some(PContent::Cloud(c)) if node.children.is_empty() => Some(c),
@@ -1868,7 +1966,15 @@ impl<'a> Painter<'a> {
                         effects::glow(buf, w, h, *color, p[3], p[0] * s);
                     }
                 }
-                e @ (Effect::Riso { .. } | Effect::Halftone { .. } | Effect::Grain { .. } | Effect::Paper { .. } | Effect::Shadow { .. } | Effect::Sweep { .. } | Effect::Rays { .. } | Effect::Color { .. } | Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Dither { .. } | Effect::Ascii { .. }) => {
+                e @ Effect::Glass { .. } => {
+                    let backdrop = backdrop.as_ref().expect("glass backdrop").data_as_u8_slice();
+                    let ch = k(&view.states[n].chain).as_coeffs();
+                    let cx = crate::look::FxCtx { ox: o[0], oy: o[1], ax: ch[4].round() as i32, ay: ch[5].round() as i32, s, frame: f as u32 };
+                    if !gch.glass(e, p, buf, backdrop, w, h, &cx) {
+                        crate::look::apply_with_backdrop(e, p, buf, Some(backdrop), w, h, &cx);
+                    }
+                }
+                e @ (Effect::Riso { .. } | Effect::Halftone { .. } | Effect::Grain { .. } | Effect::Paper { .. } | Effect::Shadow { .. } | Effect::Sweep { .. } | Effect::Rays { .. } | Effect::Color { .. } | Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Dither { .. } | Effect::Ascii { .. } | Effect::Optics { .. }) => {
                     let ch = k(&view.states[n].chain).as_coeffs();
                     let cx = crate::look::FxCtx { ox: o[0], oy: o[1], ax: ch[4].round() as i32, ay: ch[5].round() as i32, s, frame: f as u32 };
                     if !gch.look(e, p, buf, w, h, &cx) {
@@ -2106,7 +2212,7 @@ impl<'a> Painter<'a> {
         let tracks = &self.sched.tracks[n];
         let params: Vec<[f64; crate::look::NPARAM]> = node.effects.iter().enumerate().map(|(i, e)| schedule::effect_params(scene, tracks, i, e, view.t)).collect();
         // sweep / rays look at the whole subtree (its ink box): render all of it
-        let whole = node.effects.iter().any(|e| matches!(e, Effect::Sweep { .. } | Effect::Rays { .. } | Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Dither { .. } | Effect::Ascii { .. }));
+        let whole = node.effects.iter().any(|e| matches!(e, Effect::Sweep { .. } | Effect::Rays { .. } | Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Dither { .. } | Effect::Ascii { .. } | Effect::Glass { .. } | Effect::Optics { .. }));
         let margin: f64 = if whole { 1e7 } else { node.effects.iter().zip(&params).map(|(e, p)| schedule::effect_margin(scene, e, p, s)).sum::<f64>() + 2.0 };
         let Some(ink) = self.sub_ink(true, f, n) else { return Ok(()) };
         // (raw = unclipped) ink already includes the effect margins; the inner content must be rendered with
@@ -2115,7 +2221,7 @@ impl<'a> Painter<'a> {
         // margins can be far larger than the frame: rays stream across it)
         // Digital looks use cell/global neighborhoods. Match the full-raster cache
         // extent even on the first draw so clipping cannot change the pattern.
-        let digital = node.effects.iter().any(|e| matches!(e, Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Dither { .. } | Effect::Ascii { .. }));
+        let digital = node.effects.iter().any(|e| matches!(e, Effect::Rgbsplit { .. } | Effect::Glitch { .. } | Effect::Vhs { .. } | Effect::Dither { .. } | Effect::Ascii { .. } | Effect::Glass { .. } | Effect::Optics { .. }));
         let o = if digital && ink[2] <= 4096.0 && ink[3] <= 4096.0 {
             ink
         } else if whole {
@@ -2128,7 +2234,7 @@ impl<'a> Painter<'a> {
         // translation-invariant effect cache: a subtree that is static inside and only
         // moves rigidly (no matte / motion blur) reuses its filtered raster, placed at the
         // new offset (bilinear for fractional moves; blurred content hides it)
-        let fx_cacheable = self.use_cache && !self.dynamic_subtree[n];
+        let fx_cacheable = self.use_cache && !self.dynamic_subtree[n] && !node.effects.iter().any(|e| matches!(e, Effect::Glass { .. }));
         let (px, ox, oy, smooth) = 'px: {
             if fx_cacheable {
                 let c = k(&st.chain).as_coeffs();
@@ -2227,6 +2333,8 @@ fn fx_name(e: &Effect) -> &'static str {
         Effect::Vhs { .. } => "fx.vhs",
         Effect::Dither { .. } => "fx.dither",
         Effect::Ascii { .. } => "fx.ascii",
+        Effect::Glass { .. } => "fx.glass",
+        Effect::Optics { .. } => "fx.optics",
     }
 }
 

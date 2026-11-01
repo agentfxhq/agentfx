@@ -5,7 +5,8 @@
 //!   px, cross-faded between neighbouring time samples);
 //! - echo: trailing copies at `t - k * span`, decaying opacity, optional tint and blend;
 //! - time displacement: per-pixel `u` from a map (radial, linear, noise, a layer's luma),
-//!   quantized to `levels` time samples and cross-faded.
+//!   quantized to `levels` time samples and cross-faded;
+//! - temporal glitch: seeded block, hold, RGB and scanline reuse from prior subtree frames.
 //!
 //! This module holds the pure parts (sample times, maps, pixel compositing); the painter
 //! side lives in `timefx_paint.rs` (a child of `vraster`). The schedule hashes the subtree at
@@ -29,6 +30,9 @@ pub fn levels(scene: &Scene, tf: &TimeFx) -> usize {
         }
         TimeFx::Echo { count, .. } => *count as usize + 1,
         TimeFx::Displace { levels, .. } => (*levels).max(2) as usize,
+        // Current frame plus seven evenly spaced history samples keeps direct rendering
+        // bounded while allowing visibly different past-frame choices.
+        TimeFx::TemporalGlitch { .. } => 8,
     }
 }
 
@@ -63,6 +67,7 @@ pub fn sig_times(scene: &Scene, tracks: &[usize], tf: &TimeFx, t: f64) -> Vec<f6
             let m = nlev.min((span.abs() * scene.fps as f64 * 2.0).ceil() as usize + 2).max(2);
             (1..m).map(|j| t - span * j as f64 / (m - 1) as f64).collect()
         }
+        TimeFx::TemporalGlitch { .. } => (1..nlev).map(|l| level_time(tf, t, span, l, nlev)).collect(),
         _ => (1..nlev).map(|l| level_time(tf, t, span, l, nlev)).collect(),
     }
 }

@@ -48,6 +48,8 @@ pub enum Ch {
     Rays,                // god-ray strength (look)
     Misreg,              // riso misregistration px (look)
     Rgbsplit, RgbsplitDx, RgbsplitDy, Glitch, GlitchRate, GlitchBlock, Vhs, Dither, Ascii,
+    Glass, GlassBlur, GlassDispersion, GlassThickness, GlassHighlight, GlassRim,
+    Streak, Bokeh, Distortion, Aberration, Vignette, Halation, FilmGrain,
     FluidTime,           // simulation time a fluid shows, s (identity unless remapped)
     PathOffset,          // text on a path: start offset along the path, px
     // 3D (scene3d objects use X Y Z RotX RotY Rot(=rz) Scale Sx Sy Opacity Color too)
@@ -66,7 +68,9 @@ impl Ch {
         match self {
             X | Y | Z | Px | Py | Scale | Sx | Sy | Rot | RotX | RotY | Opacity | Magic => Stage::Composite,
             Blur | Glow | Brightness | Saturate | Contrast | Hue | Fill | Color | Stroke | TrimStart | TrimEnd | Reveal | MaskX
-            | GradAngle | Grad0 | Grad1 | Grad2 | Grad3 | TimeSpan | Halftone | Sweep | Rays | Misreg | FluidTime | PathOffset | Rgbsplit | RgbsplitDx | RgbsplitDy | Glitch | GlitchRate | GlitchBlock | Vhs | Dither | Ascii => Stage::Paint,
+            | GradAngle | Grad0 | Grad1 | Grad2 | Grad3 | TimeSpan | Halftone | Sweep | Rays | Misreg | FluidTime | PathOffset | Rgbsplit | RgbsplitDx | RgbsplitDy | Glitch | GlitchRate | GlitchBlock | Vhs | Dither | Ascii
+            | Glass | GlassBlur | GlassDispersion | GlassThickness | GlassHighlight | GlassRim
+            | Streak | Bokeh | Distortion | Aberration | Vignette | Halation | FilmGrain => Stage::Paint,
             Sz | CamX | CamY | CamZ | LookX | LookY | LookZ | Fov | Roll | Ambient | Emissive | Intensity => Stage::PerFrame,
             Wght | Wdth | Opsz | Slnt | Axis0 | Axis1 | Axis2 | Axis3 | Tracking | W | H | LineH | Count => Stage::Layout,
         }
@@ -113,6 +117,11 @@ impl Ch {
             "rgbsplit" => Ch::Rgbsplit, "rgbsplit-dx" => Ch::RgbsplitDx, "rgbsplit-dy" => Ch::RgbsplitDy,
             "glitch" => Ch::Glitch, "glitch-rate" => Ch::GlitchRate, "glitch-block" => Ch::GlitchBlock,
             "vhs" => Ch::Vhs, "dither" => Ch::Dither, "ascii" => Ch::Ascii,
+            "glass" => Ch::Glass, "glass-blur" => Ch::GlassBlur, "glass-dispersion" => Ch::GlassDispersion,
+            "glass-thickness" => Ch::GlassThickness, "glass-highlight" => Ch::GlassHighlight, "glass-rim" => Ch::GlassRim,
+            "streak" => Ch::Streak, "bokeh" => Ch::Bokeh, "distortion" => Ch::Distortion,
+            "aberration" => Ch::Aberration, "vignette" => Ch::Vignette, "halation" => Ch::Halation,
+            "film-grain" => Ch::FilmGrain,
             _ => return None,
         })
     }
@@ -133,11 +142,13 @@ impl Ch {
     pub fn is_axis(self) -> bool {
         matches!(self, Ch::Wght | Ch::Wdth | Ch::Opsz | Ch::Slnt | Ch::Axis0 | Ch::Axis1 | Ch::Axis2 | Ch::Axis3)
     }
-    pub const NAMES: [&'static str; 64] = [
+    pub const NAMES: [&'static str; 77] = [
         "x", "y", "z", "px", "py", "scale", "sx", "sy", "rot", "rotx", "roty", "opacity", "blur", "glow", "brightness",
         "saturate", "contrast", "hue", "fill", "color", "stroke", "trim-start", "trim", "reveal", "mask-x", "grad-angle", "grad0",
         "grad1", "grad2", "grad3", "wght", "tracking", "w", "h", "count", "halftone", "sweep", "rays", "misreg",
         "rgbsplit", "rgbsplit-dx", "rgbsplit-dy", "glitch", "glitch-rate", "glitch-block", "vhs", "dither", "ascii",
+        "glass", "glass-blur", "glass-dispersion", "glass-thickness", "glass-highlight", "glass-rim",
+        "streak", "bokeh", "distortion", "aberration", "vignette", "halation", "film-grain",
         "wdth", "opsz", "slnt", "path-offset",
         "sz", "cam-x", "cam-y", "cam-z", "look-x", "look-y", "look-z", "fov", "roll", "ambient", "emissive", "intensity",
     ];

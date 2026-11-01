@@ -85,6 +85,8 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Risograph, halftone, paper, grain | `riso=[..]` / `halftone=10` / `paper=0.6` / `grain=0.06` | implemented | editorial, print, warmth |
 | Glitch, RGB split, VHS | `glitch=0.5` / `rgbsplit=1` / `vhs=0.4` | implemented | hits, tech, retro |
 | Dither, ASCII | `dither=3` / `ascii=8` | implemented | retro, data |
+| Liquid glass | `glass=12 glass-dispersion=2 glass-rim=0.2` | implemented | translucent cards, lens moments |
+| Cinematic optics | `optics streak=0.5 halation=0.3 vignette=0.4` | implemented | premium product and title finishing |
 | Color adjust, tint, levels, LUT | `saturate=0`, `tint=`, `levels=`, `lut=grade.cube` | implemented | grading, "colour comes up" |
 | Mesh gradient | `fill=mesh(2x2, ...)` | implemented (static) | soft backgrounds |
 | Blend modes | `blend=screen\|multiply\|...` | implemented | glows, overlays |

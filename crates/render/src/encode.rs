@@ -100,19 +100,20 @@ pub fn nvenc_session_cap() -> usize {
     if let Some(n) = agentfx_ir::env::var("AGENTFX_NVENC_SESSIONS").ok().and_then(|v| v.parse::<usize>().ok()).filter(|&n| n > 0) {
         return n;
     }
-    #[cfg(target_os = "linux")]
-    {
-        let ver = std::fs::read_to_string("/proc/driver/nvidia/version").unwrap_or_default();
-        driver_session_cap(&ver)
-    }
-    #[cfg(not(target_os = "linux"))]
-    {
-        3
-    }
+    // Linux: the kernel module's version file; elsewhere (Windows) or without it:
+    // `nvidia-smi` (installed with the driver), whose version has the same numbering
+    let ver = std::fs::read_to_string("/proc/driver/nvidia/version").ok().filter(|v| !v.trim().is_empty()).or_else(nvidia_smi_driver_version).unwrap_or_default();
+    driver_session_cap(&ver)
 }
 
-/// Session cap from the text of `/proc/driver/nvidia/version` (3 when unknown).
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+/// The driver version as `nvidia-smi` reports it (e.g. "581.57"), None without nvidia-smi.
+fn nvidia_smi_driver_version() -> Option<String> {
+    let out = Command::new("nvidia-smi").args(["--query-gpu=driver_version", "--format=csv,noheader"]).stdin(Stdio::null()).stderr(Stdio::null()).output().ok()?;
+    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).lines().next().unwrap_or("").trim().to_string()).filter(|v| !v.is_empty())
+}
+
+/// Session cap from the text of `/proc/driver/nvidia/version` or an `nvidia-smi` driver
+/// version (3 when unknown).
 fn driver_session_cap(version_text: &str) -> usize {
     let major = version_text.lines().next().unwrap_or("").split_whitespace()
         .find_map(|w| w.split('.').next().filter(|_| w.contains('.')).and_then(|m| m.parse::<u32>().ok()));
@@ -226,13 +227,19 @@ fn hw_upload(codec: Codec) -> &'static str {
     match codec { Codec::Qsv => "format=nv12,hwupload=extra_hw_frames=64,format=qsv", _ => "format=nv12,hwupload" }
 }
 
+/// Side of the square probe frame (see `probe`).
+const PROBE_SIZE: u32 = 256;
+
 fn probe(ffmpeg: &std::path::Path, codec: Codec, access: Access) -> Result<(), String> {
     let enc = match codec { Codec::Qsv => "h264_qsv", Codec::Nvenc => "h264_nvenc", Codec::NvencHevc => "hevc_nvenc", _ => "h264_vaapi" };
     let mut args = vec!["-hide_banner".to_string(), "-v".into(), "error".into()];
     args.extend(hw_input_args(codec));
-    // NVENC HEVC rejects frames below ~128x64; B-frames off (Pascal HEVC has none)
+    // 256x256: NVENC HEVC rejects frames below ~128x64 on Pascal, and RTX 50 (Blackwell)
+    // drivers reject 128x128 too ("InitializeEncoder failed: invalid param (8): Frame
+    // Dimension less than the minimum supported value"); B-frames off (Pascal HEVC has none)
     let vf = if codec.is_nvenc() { "format=nv12" } else { hw_upload(codec) };
-    args.extend(["-f", "lavfi", "-i", "color=c=gray:s=128x128:d=0.2", "-vf", vf, "-c:v", enc].map(String::from));
+    let src = format!("color=c=gray:s={PROBE_SIZE}x{PROBE_SIZE}:d=0.2");
+    args.extend(["-f", "lavfi", "-i", src.as_str(), "-vf", vf, "-c:v", enc].map(String::from));
     if codec.is_nvenc() { args.extend(["-bf", "0"].map(String::from)); }
     args.extend(["-f", "null", "-"].map(String::from));
     let out = ffmpeg_command(ffmpeg, access, &args)
@@ -1392,6 +1399,9 @@ mod tests {
         assert_eq!(v("535.309.01"), 5);
         assert_eq!(v("470.256.02"), 3);
         assert_eq!(v("550.54.14"), 8);
+        // nvidia-smi's driver_version (Windows numbering is the same)
+        assert_eq!(driver_session_cap("581.57"), 8);
+        assert_eq!(driver_session_cap("528.49"), 3);
         assert_eq!(driver_session_cap(""), 3);
     }
 

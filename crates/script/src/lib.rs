@@ -45,3 +45,4 @@ pub mod mesh;
 pub mod audio;
 pub mod fonts;
 pub mod textv2;
+pub mod storyboard;

@@ -48,6 +48,7 @@ Then lint, look, render:
 agentfx lint hello.reel --measure --all-formats   # JSON diagnostics, checked in 16:9 and 9:16
 agentfx frame hello.reel --at 2.2s -o frame.png   # one frame, to look at
 agentfx sheet hello.reel -o sheet.png             # a contact sheet of the whole video
+agentfx storyboard hello.reel -o board.png        # a hand-drawn storyboard: a sketch per shot, arrows, notes
 agentfx render hello.reel -o hello.mp4            # the video (.gif, .webp, .mov, .webm by extension)
 agentfx render hello.reel --format 9:16 -o hello-vertical.mp4
 ```

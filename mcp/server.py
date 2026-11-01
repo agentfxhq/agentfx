@@ -10,6 +10,7 @@ through unchanged.
   agentfx_timing        resolved timeline (scenes, sentences, word anchors)
   agentfx_frame         one frame PNG at an anchor or time, returned as an image
   agentfx_sheet         contact sheet PNG, returned as an image
+  agentfx_storyboard    hand-drawn storyboard PNG (one sketch panel per shot, arrows, notes) + shot list
   agentfx_render        render the video (MP4, or GIF/WebP/alpha by extension) to a file
   agentfx_design_guide  the design layer guide and the list of lenses
   agentfx_lens          one lens: essay (LENS.md) and tokens (design.reel)
@@ -66,6 +67,8 @@ TOOLS = [
      "inputSchema": {"type": "object", "properties": {**SRC, "at": {"type": "string"}, "format": FMT}, "required": ["at"]}},
     {"name": "agentfx_sheet", "description": "Contact sheet PNG of the video (n evenly spaced frames, or one per event).",
      "inputSchema": {"type": "object", "properties": {**SRC, "n": {"type": "integer", "default": 12}, "events": {"type": "boolean"}, "format": FMT, "cols": {"type": "integer"}}}},
+    {"name": "agentfx_storyboard", "description": "Director's storyboard PNG: one hand-drawn sketch panel per shot (layers as outlines, motion arrows from the tracks, camera moves), time range, transition and a note per shot (`note=` / `@t note \"...\"`, else automatic). Also returns the shot list as JSON.",
+     "inputSchema": {"type": "object", "properties": {**SRC, "format": FMT, "cols": {"type": "integer"}, "seed": {"type": "integer"}}}},
     {"name": "agentfx_render", "description": "Render the video to `out` (.mp4; .gif, .webp, .mov or .webm by extension). Returns the output path and the renderer's summary.",
      "inputSchema": {"type": "object", "properties": {**SRC, "out": {"type": "string", "description": "output file path"}, "format": FMT,
                                                       "no_tts": {"type": "boolean"}, "alpha": {"type": "boolean"}}, "required": ["out"]}},
@@ -235,6 +238,21 @@ def call(name, args):
             if code != 0 or not os.path.exists(out_path):
                 return _tool_error(f"render failed (exit {code}, work: {cwd}, tmp: {_tmpdir()}):\n{err[-4000:]}")
             return [{"type": "text", "text": f"rendered {out_path} ({os.path.getsize(out_path)} bytes)\n" + (out or err)[-2000:]}]
+
+        if name == "agentfx_storyboard":
+            fd, png = tempfile.mkstemp(suffix=".png")
+            os.close(fd)
+            cmd = ["storyboard", path, "-o", png] + (["--format", args["format"]] if args.get("format") else []) \
+                + (["--cols", str(args["cols"])] if args.get("cols") else []) + (["--seed", str(args["seed"])] if args.get("seed") is not None else [])
+            code, out, err = run(cmd, cwd)
+            try:
+                if code != 0 or os.path.getsize(png) == 0:
+                    return _tool_error(f"storyboard failed (exit {code}, work: {cwd}, tmp: {_tmpdir()}):\n{err[-4000:]}")
+                with open(png, "rb") as f:
+                    data = base64.b64encode(f.read()).decode()
+            finally:
+                os.remove(png)
+            return [{"type": "image", "data": data, "mimeType": "image/png"}, {"type": "text", "text": out[-4000:] + err[-1000:]}]
 
         if name in ("agentfx_sheet", "agentfx_frame"):
             fd, png = tempfile.mkstemp(suffix=".png")

@@ -1318,7 +1318,9 @@ vanishing point at `tunnel-center` (the vaporwave grid): at `tunnel=0` it is unc
 then the drawing itself curls up. Travel is `tunnel-depth + tunnel-speed x time`, a pure
 function of time (any frame renders alone, scrubbing and segments agree): to change speed,
 animate `tunnel-depth`. In perspective mode depth looks further into the drawing and does
-not repeat. `tunnel-fog` fades the far wall (and hides aliasing near the vanishing point).
+not repeat. `tunnel-fog` fades the far wall by its distance z from the camera,
+1 / (1 + (fog z)^2), never by the travel, so a long flight keeps its near walls (fog also
+hides aliasing near the vanishing point).
 
 ```reel
 layer #k kaleido=8 kaleido-amount=0

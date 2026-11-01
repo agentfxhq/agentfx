@@ -757,7 +757,7 @@ them when they join a frame already on the GPU, or always with `AGENTFX_GPU_FX=k
 | type | parameters | animatable fields |
 |---|---|---|
 | `kaleido` | `segments`: 2..64 (default 6); `mirror`: bool (default true); `center`: [x, y]; `angle`: degrees (wedge start, default 0); `zoom`: 0.05..20 (default 1); `amount`: 0..1 (default 1); `rect` | amount, angle, zoom, cx, cy |
-| `tunnel` | `amount`: 0..1 (default 1); `depth`: floor units (default 0); `speed`: units/s (default 0, static); `twist`: degrees per unit of depth; `angle`: camera roll, degrees; `radius`: focal length px (required, 1..1e5); `fog`: >= 0 (default 0); `fog_color`: RGBA (default none = fade to transparent); `center`: [x, y]; `map`: `texture` (default) or `perspective`; `rect`; `time_offset`: seconds added to the travel clock (default 0; `agentfx frame` / clip slicing sets it) | amount, depth, twist, angle, radius, fog |
+| `tunnel` | `amount`: 0..1 (default 1); `depth`: floor units (default 0); `speed`: units/s (default 0, static); `twist`: degrees per unit of depth; `angle`: camera roll, degrees; `radius`: focal length px (required, 1..1e5); `fog`: >= 0 (default 0; fades by the distance from the camera, independent of the travel); `fog_color`: RGBA (default none = fade to transparent); `center`: [x, y]; `map`: `texture` (default) or `perspective`; `rect`; `time_offset`: seconds added to the travel clock (default 0; `agentfx frame` / clip slicing sets it) | amount, depth, twist, angle, radius, fog |
 
 Kaleido: a pixel at polar (r, a) around `center` reads radius r / zoom at angle
 a' = angle + ((a - angle) mod w), w = 360 / segments; with `mirror` the angle folds into

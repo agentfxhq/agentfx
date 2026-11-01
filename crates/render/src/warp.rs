@@ -306,8 +306,10 @@ fn ray_clamp(c: &WarpCfg, oy: f32) -> f32 {
 }
 
 #[inline]
-fn fade(c: &WarpCfg, zz: f32, s: [f32; 4]) -> [f32; 4] {
-    let fz = c.fog * zz;
+/// Fog by `z`, the hit's distance along the tube from the camera (independent of the travel
+/// `dz`, so a long flight does not fog the whole tube).
+fn fade(c: &WarpCfg, z: f32, s: [f32; 4]) -> [f32; 4] {
+    let fz = c.fog * z;
     let f = 1.0 / fma(fz, fz, 1.0);
     std::array::from_fn(|k| fma(s[k] - c.fogc[k], f, c.fogc[k]))
 }
@@ -340,7 +342,8 @@ pub fn pixel(c: &WarpCfg, src: &[u8], w: usize, x: usize, y: usize) -> [f32; 4] 
                 let zz = z + c.dz;
                 let ur = fma(c.twist, zz, u);
                 let s = sample(src, w, c.dom, WRAP, fma(ur, c.k, c.tcx), fma(-zz, c.k, c.ty1));
-                let col = fade(c, zz, s);
+                // fog by the distance from the camera, not by the travelled texture depth
+                let col = fade(c, z, s);
                 col.map(|v| v * cov)
             } else {
                 let miss = sample(src, w, c.dom, CLEAR, c.c[0] + dx, c.c[1] + dy);
@@ -351,7 +354,7 @@ pub fn pixel(c: &WarpCfg, src: &[u8], w: usize, x: usize, y: usize) -> [f32; 4] 
                 let (ox, oy) = (ur * iz, iz);
                 let k = ray_clamp(c, oy);
                 let s = sample(src, w, c.dom, MIRROR, fma(ox, k, c.c[0]), fma(oy, k, c.c[1]));
-                let col = fade(c, zz, s);
+                let col = fade(c, z, s);
                 std::array::from_fn(|k| fma(col[k] - miss[k], cov, miss[k]))
             }
         }
@@ -510,6 +513,29 @@ pub(crate) mod tests {
         let b = run(&still, &q, &src, w, h);
         let d = a.iter().zip(&b).map(|(x, y)| x.abs_diff(*y)).max().unwrap();
         assert!(d <= 1, "travel = depth + speed t ({d})");
+    }
+
+    #[test]
+    fn tunnel_fog_depends_on_depth_not_travel() {
+        // an opaque layer with a transparent fog: the output alpha is coverage x fog, the same
+        // after a long flight (speed x t) as at the start; it used to fade with the travel
+        let (w, h) = (160, 120);
+        let src = crate::gpu::fx::tests::poster(w, h, true);
+        for map in ["texture", "perspective"] {
+            let (e, p0) = tunnel(map, 1.0, 0.0);
+            let e = match e { Effect::Tunnel { amount, depth, speed, twist, angle, radius, center, map, rect, time_offset, .. } => Effect::Tunnel { amount, depth, speed, twist, angle, radius, fog: 0.6, fog_color: None, center, map, rect, time_offset }, _ => unreachable!() };
+            let mut p0 = p0;
+            for (i, f) in e.look_fields().iter().enumerate() {
+                p0[i] = e.look_field(f);
+            }
+            let mut p1 = p0;
+            p1[TIME] = 400.0;
+            let (a, b) = (run(&e, &p0, &src, w, h), run(&e, &p1, &src, w, h));
+            let alpha = |v: &[u8]| v.chunks_exact(4).map(|q| q[3] as u64).sum::<u64>();
+            assert!(alpha(&a) > 0, "{map}: fixture shows nothing");
+            let d = a.chunks_exact(4).zip(b.chunks_exact(4)).map(|(x, y)| x[3].abs_diff(y[3])).max().unwrap();
+            assert!(d <= 1, "{map}: alpha after a long flight differs by {d} (sum {} vs {})", alpha(&a), alpha(&b));
+        }
     }
 
     #[test]

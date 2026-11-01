@@ -129,8 +129,9 @@ fn ray_clamp(oy: f32, cy: f32) -> f32 {
     return 1.0;
 }
 
-fn fade(zz: f32, s: vec4<f32>) -> vec4<f32> {
-    let fz = pf(27u) * zz;
+// fog by z, the distance along the tube from the camera (not the travel dz)
+fn fade(z: f32, s: vec4<f32>) -> vec4<f32> {
+    let fz = pf(27u) * z;
     let f = 1.0 / fma(fz, fz, 1.0);
     let fc = vec4<f32>(pf(28u), pf(29u), pf(30u), pf(31u));
     return fma(s - fc, vec4<f32>(f), fc);
@@ -174,7 +175,7 @@ fn warp_px(x: u32, y: u32) -> vec4<f32> {
         let ur = fma(twist, zz, h.x);
         let k = pf(32u);
         let s = sample(1u, fma(ur, k, pf(33u)), fma(-zz, k, pf(34u)));
-        return fade(zz, s) * h.z;
+        return fade(h.y, s) * h.z;
     }
     let miss = sample(2u, cx + dx, cy + dy);
     if (h.z <= 0.0) { return miss; }
@@ -185,7 +186,7 @@ fn warp_px(x: u32, y: u32) -> vec4<f32> {
     let oy = iz;
     let k = ray_clamp(oy, cy);
     let s = sample(0u, fma(ox, k, cx), fma(oy, k, cy));
-    let col = fade(zz, s);
+    let col = fade(h.y, s);
     return fma(col - miss, vec4<f32>(h.z), miss);
 }
 

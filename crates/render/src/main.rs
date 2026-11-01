@@ -344,6 +344,23 @@ fn main() -> Result<()> {
     // job status file for the render dashboard (no-op unless a render started one)
     let err = r.as_ref().err().map(|e| format!("{e:#}"));
     jobstatus::finish(err.as_deref().map_or(Ok(()), Err));
+    // With a Vulkan device open, the NVIDIA driver's exit-time teardown (atexit, unmapping its
+    // memory) races its own worker threads and intermittently ends a finished render with
+    // SIGSEGV and no message (`agentfx frame` / `sheet` with AGENTFX_GPU=1 reported "failed").
+    // The work is done and flushed here: leave without running the exit handlers.
+    #[cfg(unix)]
+    if gpu::opened() {
+        use std::io::Write;
+        if let Err(e) = &r {
+            eprintln!("Error: {e:?}");
+        }
+        let _ = std::io::stdout().flush();
+        let _ = std::io::stderr().flush();
+        unsafe extern "C" {
+            fn _exit(code: i32) -> !;
+        }
+        unsafe { _exit(r.is_err() as i32) }
+    }
     r
 }
 

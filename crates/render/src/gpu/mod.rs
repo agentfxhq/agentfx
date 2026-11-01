@@ -99,6 +99,12 @@ static GPU: OnceLock<Option<Gpu>> = OnceLock::new();
 
 static SELF_TEST: OnceLock<bool> = OnceLock::new();
 
+/// A device was opened in this process (see `main`: such a process skips the exit-time
+/// teardown).
+pub fn opened() -> bool {
+    GPU.get().is_some_and(|g| g.is_some())
+}
+
 /// The shared device, when the mode allows it and an adapter exists (created once; `auto`:
 /// a discrete adapter that passed the self-test).
 pub fn get() -> Option<&'static Gpu> {

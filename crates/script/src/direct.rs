@@ -117,7 +117,7 @@ fn run_reel(ir_path: &Path, args: &[&str]) -> Result<Value> {
     let out = Command::new(&bin).arg("render").arg(ir_path).args(args).output().with_context(|| format!("running {}", bin.display()))?;
     if !out.status.success() {
         let stderr = String::from_utf8_lossy(&out.stderr);
-        bail!("agentfx-render failed (work dir: {}): {}", work_dir.display(), stderr);
+        bail!("agentfx-render failed ({}, work dir: {}): {}", out.status, work_dir.display(), stderr);
     }
     let s = String::from_utf8_lossy(&out.stdout);
     let last = s.lines().rev().find(|l| l.trim_start().starts_with('{')).unwrap_or("{}");

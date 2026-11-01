@@ -11,8 +11,8 @@
   with `playwright-core` only for the Chrome reference backend (`--backend chrome`).
 
 Linux (x86_64) is the tested platform. macOS is built and CPU-tested in CI on `macos-latest`; GPU effects select Metal and
-hardware encoding probes VideoToolbox there. Windows selects DX12 or Vulkan but remains
-experimental and untested.
+hardware encoding probes VideoToolbox there. Windows (x86_64, MSVC) builds and runs the CPU test
+suite in CI on demand; see [Windows](#windows) below. GPU effects select DX12 or Vulkan there.
 
 ## Build and test
 
@@ -108,6 +108,7 @@ Set `AGENTFX_GPU=0` to skip the probe entirely (the Dockerfile does this).
 |---|---|---|
 | Bare-metal Linux with a discrete GPU | Yes | install the vendor Vulkan ICD (`mesa-vulkan-drivers`, `nvidia-driver`, etc.) |
 | Docker / OCI container | Rarely | requires `--device /dev/dri` plus the host ICD; most CI images lack both |
+| Native Windows with an NVIDIA/AMD/Intel GPU | Yes | DX12 is selected first, the vendor driver also ships the Vulkan ICD; see [Windows](#windows) |
 | WSL 2 (Windows) | Sometimes | needs a recent Windows GPU driver with WSL Vulkan support; older setups fall back to CPU |
 | macOS (Apple Silicon or Intel) | Yes | Metal is selected automatically; `WGPU_BACKEND` can override it for debugging |
 | Headless cloud VM (no GPU) | No | CPU fallback is automatic |
@@ -115,3 +116,94 @@ Set `AGENTFX_GPU=0` to skip the probe entirely (the Dockerfile does this).
 **In practice, containers and CI always run CPU-only.** This is fine for correctness;
 GPU mainly accelerates fluid simulation and large blur passes. The Dockerfile sets
 `AGENTFX_GPU=0` so the probe is never attempted.
+
+## Windows
+
+Windows 10/11 on x86_64 builds natively with the MSVC toolchain. A CI job builds it and runs the
+CPU test suite on `windows-latest` when the workflow is started by hand (Actions > CI > Run
+workflow). Rendering on a real GPU box is not covered by CI yet.
+
+### Prerequisites
+
+- **Rust** via [rustup](https://rustup.rs) (`rustup-init.exe`), default host
+  `x86_64-pc-windows-msvc`, stable 1.85 or newer.
+- **Visual Studio Build Tools** (2019 or newer) with the *Desktop development with C++*
+  workload (MSVC linker and the Windows SDK). rustup-init offers to install it.
+- **Git for Windows**. The repository's `.gitattributes` checks text files out with LF, which
+  the golden-file tests expect.
+- **ffmpeg and ffprobe** on `PATH` (or `AGENTFX_FFMPEG` / `AGENTFX_FFPROBE` pointing at the
+  `.exe`), a build with libx264, and NVENC for hardware encoding, for example the gyan.dev
+  "full" build or the BtbN GPL build: unpack it and add its `bin` folder to `PATH`, or
+  `winget install Gyan.FFmpeg`.
+- **GPU driver**: the current NVIDIA (or AMD/Intel) driver, which provides the DX12 and
+  Vulkan runtimes that `--gpu` uses. RTX 50-series (Blackwell) cards need driver 570 or newer and
+  an ffmpeg built against NVENC SDK 12.2 or newer for `--encoder nvenc`.
+- Optional: Python 3 from python.org (helper tools, TTS: `pip install piper-tts`); the CLI
+  calls `python` on Windows, or `AGENTFX_PYTHON`, or `<data dir>\.venv\Scripts\python.exe`.
+
+### Build
+
+From a "Developer PowerShell for VS" or any shell where `cargo` is on `PATH`:
+
+```powershell
+git clone https://github.com/agentfxhq/agentfx; cd agentfx
+cargo build --release              # target\release\agentfx.exe and agentfx-render.exe
+$env:AGENTFX_GPU = "0"; cargo test --release   # CPU suite; encode tests skip without ffmpeg
+```
+
+`tools/install.sh` is a POSIX shell script and does not run on Windows. Use the binaries
+from `target\release` in place: `agentfx.exe` finds `agentfx-render.exe` next to itself and
+the fonts, design data and tools in the source tree it was built from. To move the binaries
+elsewhere, copy them together and set `AGENTFX_HOME` to a checkout (or a copy of `assets`,
+`design`, `tools`, `docs`), and optionally `AGENTFX_CACHE` (default
+`%LOCALAPPDATA%\agentfx` for an installed layout; the source tree itself in a build tree).
+
+### Render
+
+```powershell
+.\target\release\agentfx.exe lint examples\quickstart.reel
+.\target\release\agentfx.exe render examples\quickstart.reel --no-tts -o hello.mp4
+# GPU effects (DX12 or Vulkan) and NVENC; `auto` probes and falls back to CPU / x264 with a notice
+$env:AGENTFX_GPU = "auto"; $env:AGENTFX_NVENC_SESSIONS = "8"
+.\target\release\agentfx.exe render examples\quickstart.reel --no-tts -o hello.mp4
+```
+
+`agentfx-render.exe render <scene.ir.json> --out x.mp4 --encoder nvenc --gpu` drives the
+renderer directly with the same flags as on Linux.
+
+### Known limits on Windows
+
+- **Encoders:** x264 and NVENC (`nvenc`, `nvenc-hevc`). VAAPI and QSV look for a Linux DRM
+  render node and report themselves unavailable; `--encoder auto` then uses x264.
+- **NVENC sessions:** without `/proc` the driver version comes from `nvidia-smi`; when that
+  is missing the concurrent session cap defaults to 3. Current GeForce drivers allow 8: set
+  `AGENTFX_NVENC_SESSIONS=8` to be sure.
+- **GPU backend:** wgpu picks DX12 or Vulkan (`WGPU_BACKEND=vulkan` or `dx12` forces one).
+  NVIDIA, AMD and Intel drivers ship both; without either the renderer falls back to the CPU.
+- **Fonts:** Reel Script uses the bundled fonts in `assets/fonts`. HTML scenes resolve the
+  generic families to Liberation when installed, else to Arial, Times New Roman, Consolas
+  and Segoe UI from `%WINDIR%\Fonts`, so text metrics can differ from Linux renders by a
+  few pixels. Install the Liberation fonts in the per-user font folder for Linux parity.
+- **Job status:** `--jobs-dir` records have no peak RSS, CPU time or caller chain (those
+  read `/proc`); the host name comes from `COMPUTERNAME`.
+- **Helper tools:** `tools/*.sh` (`install.sh`, `transcribe.sh`, `encode-loop.sh`) need a
+  POSIX shell (Git Bash or WSL). The Python tools and the MCP server use only portable
+  Python but are untested on Windows.
+- Paths with non-ASCII characters and paths longer than 260 characters are untested.
+
+### Alternative: WSL 2
+
+Running the Linux build inside WSL 2 (Ubuntu 24.04) follows the Linux instructions
+unchanged and is the closest match to the tested platform:
+
+```sh
+sudo apt-get install -y build-essential ffmpeg mesa-vulkan-drivers vulkan-tools
+cargo build --release
+```
+
+GPU passthrough comes from the Windows driver through WSLg (`/dev/dxg`, D3D12). Vulkan in
+WSL runs on Mesa's `dzn` driver (Vulkan on D3D12), which is new and may be missing or slow
+in older Mesa; check with `vulkaninfo --summary`. When no Vulkan device is found the
+renderer uses the CPU. NVENC inside WSL depends on the driver and the ffmpeg build;
+`--encoder auto` probes it and falls back to x264. Keep projects on the Linux file system
+(`~/...`), not under `/mnt/c`, which is much slower for the many small files a render writes.

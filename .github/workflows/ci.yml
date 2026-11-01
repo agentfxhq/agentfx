@@ -39,3 +39,21 @@ jobs:
         env:
           AGENTFX_GPU: "0"
         run: cargo test --release --locked
+
+  # Windows is untested on real hardware and its runners are slow: run this by hand
+  # (Actions > CI > Run workflow). CPU only; encode tests skip themselves without ffmpeg.
+  windows:
+    name: Windows build and CPU test (experimental)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release --locked
+      - name: CPU test
+        env:
+          AGENTFX_GPU: "0"
+        run: cargo test --release --locked --no-fail-fast

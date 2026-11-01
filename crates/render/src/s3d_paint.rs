@@ -201,7 +201,7 @@ impl<'a> Painter<'a> {
                         let b2 = Affine::scale_non_uniform(sx, sy) * Affine::translate((-rect[0], -rect[1]));
                         self.iso += 1;
                         let saved = std::mem::replace(&mut self.origin, (0, 0));
-                        let res = self.draw_node(&mut c2, view, f, src, b2, *rect, 1.0, true);
+                        let res = self.without_vis(|p| p.draw_node(&mut c2, view, f, src, b2, *rect, 1.0, true));
                         self.origin = saved;
                         self.iso -= 1;
                         res?;

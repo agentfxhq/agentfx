@@ -17,7 +17,7 @@ impl<'a> Painter<'a> {
         if x1 <= x0 || y1 <= y0 {
             return Ok(());
         }
-        let cov = fl.coverage(p, &mut |_, src, tau| self.fluid_mask(n, fl, src, tau))?;
+        let cov = fl.coverage(p, &mut |_, src, tau| self.without_vis(|q| q.fluid_mask(n, fl, src, tau)))?;
         let (w, h) = ((x1 - x0) as usize, (y1 - y0) as usize);
         let mut px = Pixmap::new(w as u16, h as u16);
         let inv = chain.inverse().as_coeffs();

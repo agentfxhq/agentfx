@@ -699,6 +699,15 @@ pub struct Painter<'a> {
     dynamic_subtree: Vec<bool>,
     /// allow subpixel (bilinear) placement of cached blurred subtrees
     pub fx_smooth: bool,
+    /// Screen-space area (absolute px) whose pixels can still reach the output, set while
+    /// a digital-look node renders its whole ink (vhs / rgbsplit / glitch read only a bounded
+    /// neighbourhood): nodes entirely outside are skipped and blur-type effect rasters are
+    /// cropped to it (`fx_cull`). None = everything in `region` matters. Cleared for every
+    /// render that is cached, resampled or read non-locally (effect / fade / time caches,
+    /// 3D screens, fluid masks, world tiles).
+    vis: Option<[f64; 4]>,
+    /// AGENTFX_FX_CULL=0 disables `vis` (A/B checks)
+    pub fx_cull: bool,
     fx_seen: std::collections::HashMap<u64, u32>,
     /// Chrome parity (M4b): a layer that fades (opacity < 1) while its own transform
     /// animates is composited from a raster taken at its rest transform (grayscale text),
@@ -800,7 +809,73 @@ fn irect(r: [f64; 4]) -> Option<[i32; 4]> {
     (x1 > x0 && y1 > y0).then_some([x0, y0, x1 - x0, y1 - y0])
 }
 
+/// Largest power-of-two reduction `effects::blur` uses for `sigma` (1 = full resolution).
+fn blur_scale(sigma: f64) -> usize {
+    let mut scale = 1usize;
+    while sigma / (scale * 2) as f64 >= (3.5_f64.powi(2) + 0.25).sqrt() {
+        scale *= 2;
+    }
+    scale
+}
+
+/// How far (px) a node's effect chain reads its input from an output pixel, when that is
+/// bounded and the effects are translation-invariant at whole-pixel offsets aligned to
+/// `align` px (the coarsest blur reduction): (reach, align, croppable). `None`: unknown or
+/// non-local (warps, light, floyd dither, ...), so nothing below may be culled.
+/// `croppable`: the raster itself may be cropped (blur-type, grain and colour effects only;
+/// digital looks keep their full raster, whose extent sets their edge clamping).
+fn fx_reach(effects: &[Effect], params: &[[f64; crate::look::NPARAM]], s: f64) -> Option<(f64, usize, bool)> {
+    let mut reach = 2.0;
+    let mut align = 1usize;
+    let mut crop = true;
+    for (e, p) in effects.iter().zip(params) {
+        match e {
+            Effect::Blur { .. } | Effect::Glow { .. } | Effect::DropShadow { .. } => {
+                let sg = (p[0] * s).max(0.0);
+                let sc = blur_scale(sg);
+                align = align.max(sc);
+                // three box passes reach <= 3 (sigma + 1) (reduced px), plus the reduction
+                // block and the bilinear reconstruction
+                reach += 3.0 * sg + 4.0 * sc as f64 + 4.0;
+                if matches!(e, Effect::DropShadow { .. }) {
+                    reach += (p[1] * s).abs().max((p[2] * s).abs()) + 1.0;
+                }
+            }
+            Effect::Grain { .. } | Effect::Color { .. } => {}
+            Effect::Rgbsplit { .. } => {
+                crop = false;
+                reach += (p[0].abs().min(200.0) + p[1].abs().min(200.0)) * p[2].clamp(0.0, 1.0) * s + 2.0;
+            }
+            Effect::Vhs { .. } => {
+                crop = false;
+                reach += 8.0 * s + 2.0;
+            }
+            Effect::Glitch { .. } => {
+                crop = false;
+                let block = (p[2].clamp(1.0, 1024.0) * s).max(1.0);
+                reach += 6.0 * block + 8.0 * s + 2.0;
+            }
+            _ => return None,
+        }
+    }
+    (align <= 64).then_some((reach, align, crop))
+}
+
 impl<'a> Painter<'a> {
+    /// Run `f` with `vis` cleared (a render that must not depend on the current crop).
+    fn without_vis<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+        let v = self.vis.take();
+        let r = f(self);
+        self.vis = v;
+        r
+    }
+
+    /// Is screen rect `r` outside the area that can reach the output (`vis`)?
+    #[inline]
+    fn culled(&self, r: [f64; 4]) -> bool {
+        self.vis.is_some_and(|v| intersect(r, v)[2] <= 0.0)
+    }
+
     pub fn new(scene: &'a Scene, prep: &'a Prepared, sched: &'a Schedule, info: &'a Info<'a>, threads: u16) -> Self {
         let cacheable = (0..scene.nodes.len())
             .map(|n| match prep.contents[n].as_ref() {
@@ -835,6 +910,8 @@ impl<'a> Painter<'a> {
             time_tile: agentfx_ir::env::var("AGENTFX_TIME_TILE").ok().and_then(|v| v.parse().ok()).unwrap_or(256usize).clamp(16, 4096),
             glyph_snap: agentfx_ir::env::var("AGENTFX_NO_GLYPH_SNAP").is_err(),
             fx_smooth: true,
+            vis: None,
+            fx_cull: agentfx_ir::env::var("AGENTFX_FX_CULL").map_or(true, |v| v != "0"),
             dynamic_subtree: {
                 let mut d = vec![false; scene.nodes.len()];
                 for &x in sched.preorder.iter().rev() {
@@ -975,7 +1052,7 @@ impl<'a> Painter<'a> {
             return Ok(());
         }
         if let Some(rest) = self.fade_rest(view, f, n, matte) {
-            return self.draw_fade_raster(ctx, view, f, n, base, region, alpha, matte, rest);
+            return self.without_vis(|p| p.draw_fade_raster(ctx, view, f, n, base, region, alpha, matte, rest));
         }
         self.draw_node_vector(ctx, view, f, n, base, region, alpha, matte)
     }
@@ -1015,7 +1092,7 @@ impl<'a> Painter<'a> {
             self.iso += 1;
         }
         let chain = base * k(&st.chain);
-        if node.world.is_some() && self.world_tiles_at(n, f) && self.draw_world_tiles(ctx, view, f, n, base, region, child_alpha, matte)? {
+        if node.world.is_some() && self.world_tiles_at(n, f) && self.without_vis(|p| p.draw_world_tiles(ctx, view, f, n, base, region, child_alpha, matte))? {
             for _ in 0..pushed {
                 ctx.pop_layer();
                 self.iso -= 1;
@@ -1025,12 +1102,12 @@ impl<'a> Painter<'a> {
             }
             return Ok(());
         }
-        if node.content.is_some() && self.sched.ink[f][n][2] > 0.0 && intersect(self.sched.ink[f][n], region)[2] > 0.0 {
+        if node.content.is_some() && self.sched.ink[f][n][2] > 0.0 && intersect(self.sched.ink[f][n], region)[2] > 0.0 && !self.culled(self.sched.ink[f][n]) {
             self.draw_content_cached(ctx, view, n, base, chain, child_alpha, region)?;
         }
         for &c in &node.children {
             if let Some(ink) = self.sub_ink(false, f, c) {
-                if intersect(ink, region)[2] <= 0.0 && node.children.len() > 0 && self.scene.nodes[c].motion_blur.is_none() {
+                if (intersect(ink, region)[2] <= 0.0 || self.culled(ink)) && node.children.len() > 0 && self.scene.nodes[c].motion_blur.is_none() {
                     continue;
                 }
             } else {
@@ -1816,7 +1893,7 @@ impl<'a> Painter<'a> {
             self.cloud_bufs = bufs;
             p
         } else if let (Some(mb), false) = (&node.motion_blur, self.mblur_v1) {
-            self.mblur_pixmap(view, f, n, o, mb, matte)?
+            self.without_vis(|p| p.mblur_pixmap(view, f, n, o, mb, matte))?
         } else if let Some(mb) = &node.motion_blur {
             let times = schedule::mb_times(scene.fps as f64, f, mb.samples, mb.shutter);
             let base_m: Vec<agentfx_ir::Affine> = scene.nodes.iter().map(|x| agentfx_ir::eval::transform_matrix(&x.transform)).collect();
@@ -1829,7 +1906,7 @@ impl<'a> Painter<'a> {
                     schedule::chains(&self.sched.preorder, &self.sched.parents, &locals)
                 };
                 let v = View { t: *ts, states: &states, content: view.content };
-                let p = self.render_view(&v, f, o, Some(n), 0, matte)?;
+                let p = self.without_vis(|p| p.render_view(&v, f, o, Some(n), 0, matte))?;
                 let _p = crate::prof::scope("mblur.accum");
                 effects::accumulate(&mut acc, p.data_as_u8_slice());
             }
@@ -1839,7 +1916,7 @@ impl<'a> Painter<'a> {
             p.data_as_u8_slice_mut().copy_from_slice(&avg);
             p
         } else if node.time.is_some() && self.time_on {
-            self.time_pixmap(view, f, n, o, matte)?
+            self.without_vis(|p| p.time_pixmap(view, f, n, o, matte))?
         } else {
             let _p = crate::prof::scope("fx.subtree");
             self.render_view(view, f, o, Some(n), 0, matte)?
@@ -1902,6 +1979,94 @@ impl<'a> Painter<'a> {
         }
         gch.flush(px.data_as_u8_slice_mut());
         Ok(px)
+    }
+
+    /// A single large blur / glow on a raster `o` far bigger than what can reach the output
+    /// (a glow on a layer scaled far past the frame): the subtree is rendered in tiles that
+    /// feed the blur's reduction (`effects::TiledBlur`) and the result is made only for the
+    /// crop near the visible area. Bitwise the matching pixels of `effect_pixmap`. None:
+    /// not applicable (nested effects, small rasters, sigma below the reduction limit).
+    #[allow(clippy::too_many_arguments)]
+    fn tiled_blur_pixmap(&mut self, view: &View, f: usize, n: NodeId, o: [i32; 4], params: &[[f64; crate::look::NPARAM]], s: f64, region: [f64; 4], matte: bool) -> Result<Option<(Pixmap, i32, i32)>> {
+        let scene = self.scene;
+        let node = &scene.nodes[n];
+        if !self.fx_cull || node.effects.len() != 1 || node.time.is_some() || node.motion_blur.is_some() {
+            return Ok(None);
+        }
+        let (glow, sigma) = match &node.effects[0] {
+            Effect::Glow { .. } => (true, params[0][0] * s),
+            Effect::Blur { .. } => (false, params[0][0] * s),
+            _ => return Ok(None),
+        };
+        let (w, h) = (o[2] as usize, o[3] as usize);
+        if w * h < 4_000_000 {
+            return Ok(None);
+        }
+        // plain content below (no nested effects / time / motion blur): its extent is known
+        let mut sub = vec![];
+        let mut st = vec![n];
+        while let Some(x) = st.pop() {
+            let nx = &scene.nodes[x];
+            if x != n && (!nx.effects.is_empty() || nx.time.is_some() || nx.motion_blur.is_some()) {
+                return Ok(None);
+            }
+            sub.push(x);
+            st.extend(nx.children.iter().copied());
+        }
+        let Some(mut tb) = effects::TiledBlur::new(w, h, sigma) else { return Ok(None) };
+        let sc = tb.scale() as i32;
+        let out = self.vis.map_or(region, |v| intersect(v, region));
+        let need = intersect([o[0] as f64, o[1] as f64, w as f64, h as f64], schedule::inflate(out, 2.0 * sc as f64 + 2.0));
+        let Some(c) = irect(need) else { return Ok(None) };
+        let (cx, cy) = ((c[0] - o[0]).div_euclid(sc) * sc, (c[1] - o[1]).div_euclid(sc) * sc);
+        let (cw, ch) = ((c[0] + c[2] - o[0] - cx) as usize, (c[1] + c[3] - o[1] - cy) as usize);
+        if w * h < 4 * cw * ch {
+            return Ok(None);
+        }
+        let _p = crate::prof::scope_px(fx_name(&node.effects[0]), (cw * ch) as u64);
+        let mut ext = [0.0; 4];
+        for &x in &sub {
+            if let Some(b) = self.info.bounds(scene, x, view.t) {
+                ext = union(ext, transform_bbox(&view.states[x].chain, b));
+            }
+        }
+        let ext = schedule::inflate(ext, 2.0);
+        let (cx, cy) = (cx as usize, cy as usize);
+        let mut sharp = glow.then(|| vec![0u8; cw * ch * 4]);
+        let t = (1024 / sc as usize).max(1) * sc as usize;
+        for ty in (0..h).step_by(t) {
+            for tx in (0..w).step_by(t) {
+                let (tw, th) = (t.min(w - tx), t.min(h - ty));
+                let tile = [o[0] + tx as i32, o[1] + ty as i32, tw as i32, th as i32];
+                if intersect([tile[0] as f64, tile[1] as f64, tw as f64, th as f64], ext)[2] <= 0.0 {
+                    continue;
+                }
+                // every tile in full: the blur reads all of them (no visibility culling)
+                let px = self.without_vis(|p| p.render_view(view, f, tile, Some(n), 0, matte))?;
+                self.stats.offscreen += 1;
+                self.stats.offscreen_px += (tw * th) as u64;
+                let data = px.data_as_u8_slice();
+                match (&node.effects[0], sharp.as_mut()) {
+                    (Effect::Glow { color, .. }, Some(sh)) => {
+                        // the sharp subtree where the tile meets the crop
+                        let (x0, x1) = (tx.max(cx), (tx + tw).min(cx + cw));
+                        for y in ty.max(cy)..(ty + th).min(cy + ch) {
+                            if x1 > x0 {
+                                sh[((y - cy) * cw + x0 - cx) * 4..((y - cy) * cw + x1 - cx) * 4].copy_from_slice(&data[((y - ty) * tw + x0 - tx) * 4..((y - ty) * tw + x1 - tx) * 4]);
+                            }
+                        }
+                        tb.add(&effects::tint_alpha(data, *color, params[0][3]), tx, ty, tw, th);
+                    }
+                    _ => tb.add(data, tx, ty, tw, th),
+                }
+            }
+        }
+        let mut px = Pixmap::new(cw as u16, ch as u16);
+        tb.finish(px.data_as_u8_slice_mut(), cx, cy, cw, ch);
+        if let Some(sh) = sharp {
+            effects::over(px.data_as_u8_slice_mut(), &sh);
+        }
+        Ok(Some((px, o[0] + cx as i32, o[1] + cy as i32)))
     }
 
     /// Hash of everything inside `n`'s subtree relative to `n` (rigid moves of `n` keep it).
@@ -2125,6 +2290,28 @@ impl<'a> Painter<'a> {
             intersect(ink, schedule::inflate(region, margin))
         };
         let Some(o) = irect(o) else { return Ok(()) };
+        // Visibility culling (`vis`): below a digital look that renders its whole ink, only
+        // the part of this node's output near the frame can reach it. Blur-type rasters are
+        // cropped to that (origin kept on the blur's reduction grid), and the subtree is
+        // culled to what the effects read.
+        let reach = if self.fx_cull { fx_reach(&node.effects, &params, s) } else { None };
+        let plain = node.time.is_none() && node.motion_blur.is_none();
+        let (o, sub_vis) = match (self.vis, reach) {
+            (Some(v), Some((m, al, true))) if plain => {
+                let need = intersect([o[0] as f64, o[1] as f64, o[2] as f64, o[3] as f64], schedule::inflate(v, m));
+                let Some(c) = irect(need) else { return Ok(()) };
+                let al = al as i32;
+                let x0 = o[0] + (c[0] - o[0]).div_euclid(al) * al;
+                let y0 = o[1] + (c[1] - o[1]).div_euclid(al) * al;
+                let (x1, y1) = (c[0] + c[2], c[1] + c[3]);
+                ([x0, y0, x1 - x0, y1 - y0], Some(schedule::inflate(v, m)))
+            }
+            (_, Some((m, _, false))) if digital && plain => {
+                let out = self.vis.map_or(region, |v| intersect(v, region));
+                (o, (out[2] > 0.0).then(|| schedule::inflate(out, m)))
+            }
+            _ => (o, None),
+        };
         // translation-invariant effect cache: a subtree that is static inside and only
         // moves rigidly (no matte / motion blur) reuses its filtered raster, placed at the
         // new offset (bilinear for fractional moves; blurred content hides it)
@@ -2164,7 +2351,7 @@ impl<'a> Painter<'a> {
                 *cnt += 1;
                 if *cnt >= 2 {
                     if let Some(full) = irect(ink).filter(|r| r[2] <= 4096 && r[3] <= 4096) {
-                        let px = Arc::new(self.effect_pixmap(view, f, n, full, &params, s, matte)?);
+                        let px = Arc::new(self.without_vis(|p| p.effect_pixmap(view, f, n, full, &params, s, matte))?);
                         let bytes = full[2] as usize * full[3] as usize * 4;
                         if self.cache_bytes + bytes > CACHE_LIMIT {
                             self.cache.clear();
@@ -2178,7 +2365,13 @@ impl<'a> Painter<'a> {
                     }
                 }
             }
-            (Arc::new(self.effect_pixmap(view, f, n, o, &params, s, matte)?), o[0] as f64, o[1] as f64, false)
+            if let Some((px, x0, y0)) = self.tiled_blur_pixmap(view, f, n, o, &params, s, region, matte)? {
+                break 'px (Arc::new(px), x0 as f64, y0 as f64, false);
+            }
+            let saved = std::mem::replace(&mut self.vis, sub_vis);
+            let px = self.effect_pixmap(view, f, n, o, &params, s, matte);
+            self.vis = saved;
+            (Arc::new(px?), o[0] as f64, o[1] as f64, false)
         };
         if let Some(t0) = t_trace {
             let fx: Vec<&str> = node.effects.iter().map(fx_name).collect();

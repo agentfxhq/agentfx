@@ -109,31 +109,170 @@ machine, `AGENTFX_OFFSCREEN_THREADS=0` turns them off.
 
 ## GPU
 
-With the default routing `--gpu` changes nothing on HORIZON. Routing blur and glow too:
+### Before (the profile pass)
 
-```sh
-AGENTFX_GPU_FX=riso,halftone,rays,shadow,blur,glow,drop-shadow agentfx-render render ... --gpu
-```
+With the default routing `--gpu` changed nothing on HORIZON (`"gpu": null`): only riso,
+halftone, rays and shadow started a GPU chain, blur and glow merely joined one. Routing blur
+and glow by hand (`AGENTFX_GPU_FX=riso,halftone,rays,shadow,blur,glow,drop-shadow`) took about
+40 % off the glow time on the 1050 Ti, within the noise of the frame total: about 75 % of a
+frame was CPU work without a GPU port.
 
-| 1080p, ms per frame (after the changes, back to back, load about 14) | CPU | `--gpu` + blur/glow routed |
-|---|---:|---:|
-| t = 12 s | 990 | 930 |
-| t = 30 s | 2200 | 2570 |
-| t = 50 s | 1270 | 1350 |
-| fx.glow, sum of the 3 frames | 850 | 500 |
+### What is on the GPU now (branch `feat/gpu-looks`)
 
-The 1050 Ti takes about 40 % off the glow time (upload and readback included), but at
-this scale that is within the run-to-run noise of the CPU looks; the frame total does not
-move. Before the changes the glow rasters were too large for the GPU anyway (they fell
-back to the CPU), so `--gpu` was never going to fix HORIZON.
+| effect | kernel | vs the CPU |
+|---|---|---|
+| blur, drop shadow, glow | box passes, block reduction, integer bilinear reconstruction (`comp.wgsl` `up`, now up to scale 1024 = sigma ~7000) | bit-exact |
+| tiled large blur / glow (layer scaled past the frame) | reduced buffer up, blur + reconstruction of the crop + sharp layer over it on the GPU (`fx::tiled_finish`) | bit-exact |
+| rgbsplit, glitch, vhs | gather through the host's sampling tables (`digital::Tab`, shared with the CPU loop), unpremultiply through a 64 K exact-division table | max 1 / 255 (rgbsplit, glitch: 0) |
+| grain (fine, coarse, live) | in place, integer hashes, value noise | max 1 / 255 |
+| riso, halftone, rays, shadow | (unchanged) | max 3, PSNR >= 45 dB |
 
-Would a faster GPU (an RTX 5060 Ti) help much? Not with the current split: after the
-changes about 75 % of a frame is CPU work that has no GPU port (vhs / rgbsplit / glitch /
-grain looks, dithered gradients, vello rasterization, the swarm splat, the fluid
-simulation), and the ported part (glow, blur) already costs only a few hundred ms per frame
-on the 1050 Ti, upload and readback included. A faster CPU with more cores (the box has 4 cores
-from 2011 and was shared with compile jobs) moves the total more. A new GPU starts to
-matter once the digital looks are ported to WGSL and frames stay resident across effects.
+Routing with `--gpu` (`gpu/fx.rs`): every ported effect may move a frame to the GPU
+(`AGENTFX_GPU_FX`, default all). The digital looks and grain from `AGENTFX_GPU_MIN_PX` (65536 px),
+blur / drop shadow / glow from `AGENTFX_GPU_BLUR_MIN_PX` (512 K px: a lone glow there is about
+break-even with the CPU on Data, where 1080p is 24 ms CPU vs 17 ms GPU with the transfer; Soong's
+faster bus wins down to roughly 256 K px, 15 vs 6 ms at 1080p). A node's consecutive GPU effects run on one resident
+frame (one upload, one readback); an effect that is not ported, or a matte, flushes. Frames do
+not stay on the GPU across nodes: the parent composites its children with vello_cpu.
+
+Conformance (`gpu::fx::tests`, `--test-threads 1`): on the GTX 1050 Ti and the RTX 5060 Ti the
+digital looks are max 0 (rgbsplit, glitch) or 1 (vhs, grain: at most 62 of the 479 K channels of
+a 403 x 297 fixture) on smooth, opaque and random-alpha sources at node scales 1 and 1.37; a HORIZON chain
+(grain, rgbsplit, glitch, vhs, glow) PSNR 89.6 dB, max 2. Whole HORIZON frames at 12, 30 and 50 s,
+`--gpu` vs CPU: max 1 (one channel 2), 0.015 % of channels differ, PSNR 86 to 87 dB. The CPU
+output is bitwise unchanged by this work (frames at 12, 20, 30, 50 s compared).
+
+### Results (HORIZON v1 1080p reel, `--hide swirl`, ms per frame)
+
+`h1.ir.json` is `agentfx ir horizon.reel` of the workshop reel (`hbench/horizon.reel`; 13 glow,
+1 blur, 4 grain, 3 rgbsplit, 3 vhs, 2 glitch, a swarm, echo, the fluid hidden). It is a lighter
+variant than the one profiled above (whose numbers are not comparable). HORIZON v2
+(`horizon-v2-t2.ir.json`) uses `kaleido` / `tunnel` from `feat/gen-warp` and does not load on
+main. Fastest frame after the first of each 3-frame range, minimum over 3 rounds (Data) or 2
+(Soong). Data: i7-2600K (4 cores, no FMA), GTX 1050 Ti, shared box (load 2 to 8). Soong:
+i7-8700 (6 cores), RTX 5060 Ti 16 GB, Windows, Flint paused.
+
+| t | Data CPU before | Data CPU after | Data `--gpu` before | Data `--gpu` after | Soong CPU before | Soong CPU after | Soong `--gpu` before | Soong `--gpu` after |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 12 s | 318 | 168 | 319 | **82** | 139 | 71 | 136 | **37** |
+| 30 s | 691 | 544 | 726 | **468** | 312 | 242 | 304 | **203** |
+| 40 s | 183 | 156 | 174 | **122** | 85 | 76 | 83 | **55** |
+| 50 s | 487 | 341 | 754 | **135** | 139 | 105 | 142 | **57** |
+| mean | 420 | 302 | 493 | **202** | 169 | 123 | 166 | **88** |
+
+"before" = `416d59a` (main after the profile pass), "after" = this branch. "`--gpu` before"
+with blur/glow routed by hand: Data 412, Soong 160. The CPU-only gain comes from the vhs
+sampling tables (no `sin` per pixel) and the smaller crop of the tiled glow (`#px`: 148 -> 38 ms).
+
+Stages, mean of the four frames (ms per frame; `gpu.*` = upload into the staging buffer, wait
+for the GPU, readback; under `--gpu` the effect stages keep only their CPU parts):
+
+| stage | Data CPU before | Data CPU after | Data `--gpu` | Soong CPU before | Soong CPU after | Soong `--gpu` |
+|---|---:|---:|---:|---:|---:|---:|
+| fx.vhs | 105 | 48 | 0 | 34 | 14 | 0 |
+| fx.glow | 73 | 43 | 16 | 39 | 24 | 9 |
+| fx.rgbsplit | 39 | 20 | 0 | 15 | 9 | 0 |
+| fx.grain | 24 | 24 | 0 | 8 | 8 | 0 |
+| fx.glitch + fx.blur | 17 | 10 | 0 | 7 | 4 | 0 |
+| draw.paint (dithered gradients) | 53 | 54 | 54 | 21 | 20 | 21 |
+| vello.rasterize | 33 | 34 | 35 | 19 | 18 | 19 |
+| time.echo | 20 | 19 | 22 | 13 | 12 | 12 |
+| mblur.cloud (swarm) | 46 | 43 | 16 | 7 | 8 | 7 |
+| gpu.upload / wait / readback | - | - | 19 / 28 / 4 | - | - | 5 / 6 / 2 |
+
+What is left under `--gpu` is the vector side: dithered gradients, vello rasterization, the
+echo's five extra subtree renders, the swarm splat; t = 30 s is dominated by `#kal` (a glow over
+the kaleidoscope: echo + conic petals). On Data `mblur.cloud` also dropped (46 -> 16) although the
+swarm has no GPU port; it was not reproduced in isolation (the shared box's load varies
+between rounds), treat it as noise.
+
+### Residency (one upload / readback per node)
+
+`AGENTFX_GPU_RESIDENT=0` reads the frame back after every GPU effect. HORIZON's `#fx` (grain,
+rgbsplit, vhs on 2048 x 1208) and `#tape` are the chains that profit:
+
+| per frame | Data resident | Data not | Soong resident | Soong not |
+|---|---:|---:|---:|---:|
+| upload + readback MB | 18 to 32 each way | 42 to 51 | (same) | (same) |
+| gpu.upload / wait / readback ms | 19 / 28 / 4 | 33 / 41 / 6 | 5 / 6 / 2 | 8 / 10 / 4 |
+| frame mean ms | 202 | 226 | 88 | 98 |
+
+A 1080p frame up + down costs 13 ms on Data (PCIe 2, the staging copy into write-combined
+memory is the slow half) and 5 ms on Soong; per effect the GPU kernels are 1 to 3 ms. Standalone
+(`gpu_bench`, upload + readback included) vhs is 3x the CPU on both machines, rgbsplit / glitch
+1.1x (Data) to 1.9x (Soong), grain alone is slower than the CPU (it is 3 to 7 ms of hashing on the
+CPU): its win is in a chain.
+
+### Full 60 s at 1080p30 (1800 frames, x264)
+
+Measured (`h1.ir.json` with the fluid, whole video, one process):
+
+| machine | build | mode | wall | notes |
+|---|---|---|---:|---|
+| Data | after | CPU, 1 segment, NVENC | 1179 s (19.7 min) | box load 9 to 11 during the run |
+| Data | after | `--gpu`, 1 segment, NVENC | 589 s (9.8 min) | load 0.4 to 9; 0 GPU fallbacks, 55 GB up / 55 GB down |
+| Soong | before | CPU, `--segments 4`, x264 | 296 s | |
+| Soong | after | `--gpu`, 1 segment, x264 | 201 s | |
+| Soong | after | `--gpu`, `--segments 4`, x264 | 140 s | 2.1x the old CPU run |
+
+From the frame means above (x 1800, plus the fluid's 26 s on Data, encode overlapped): Data
+before about 13 min, after CPU about 9.5 min, after `--gpu` about 6.5 min on an idle box (the
+measured runs are slower because the box was shared); Soong before about 5 min, after `--gpu`
+about 2.6 min in one segment, and `--segments 4` overlaps the remaining CPU stages (vector
+rasterization, gradients) of four frames.
+
+### `--gpu=auto`
+
+`auto` now uses only a discrete adapter (not llvmpipe, not an integrated or virtual GPU) and
+runs a start-up self-test (`fx::self_test`, a few ms: glow on both blur paths bit-exact; vhs,
+glitch, grain within 1 on a 96 x 64 fixture). A failed test prints one line and renders on the
+CPU; no adapter at all stays quiet. Any GPU error during a render already replays the chain's
+effects on the CPU (`failed_fell_back` in the stats).
+
+Proposal: make `auto` the default of `agentfx-render` (and so of `agentfx render`). It is
+faster on both machines measured (Data 1.5x, Soong 1.4x per frame on HORIZON over the new CPU
+path), the output differs from the CPU by at most 1 / 255 in rare channels (blur / glow exactly
+equal), and the guards make it safe on CPU-only, CI and container hosts (no adapter: quiet CPU
+path; `AGENTFX_GPU=0` keeps the old behaviour and skips the probe). Not done in this branch
+because it changes the default output bits of every GPU machine (regression baselines are CPU
+renders) and adds the Vulkan device, pipelines and self-test (about 150 to 200 ms on Data) to every
+`agentfx frame` preview. Until then:
+`AGENTFX_GPU=auto` or `--gpu=auto`.
+
+### NVENC on RTX 50
+
+The NVENC probe encoded a 128 x 128 frame; on the RTX 5060 Ti (driver 610.88) both h264_nvenc
+and hevc_nvenc refuse it ("Frame Dimension less than the minimum supported value"; h264 needs a
+width of at least 145, 160 x 96 and 256 x 64 pass). The probe now uses 256 x 256, the encode
+tests 160 x 64. The NVENC session cap was read from `/proc/driver/nvidia/version` only; on
+Windows it falls back to `nvidia-smi --query-gpu=driver_version` (610.88 -> 8 sessions).
+
+### Vector paths and dithered gradients on the GPU (investigation, not done)
+
+- **vello_hybrid** (CPU path flattening + sparse-strip generation, GPU fine rasterization) is the
+  natural successor of vello_cpu here: its `Scene` API mirrors `RenderContext` (fill_path,
+  push_layer / clip / blend, set_paint, glyph_run), and it shares `vello_common`'s strip
+  generation, so coverage should be close to vello_cpu's. Blocker today: the current
+  `vello_hybrid` 0.2.0 depends on `vello_common` 0.2 and `wgpu` 29, the tree is on
+  `vello_cpu` / `vello_common` 0.3 and `wgpu` 30; two wgpu versions cannot share buffers, so
+  it needs the next vello_hybrid release (or the whole stack pinned back). Then the frame would
+  stay on the GPU for nodes whose content and effects are all GPU (no readback between a
+  layer's raster and its effects, the bigger win than the rasterization itself: `vello.rasterize`
+  is 19 to 35 ms per frame here). Images (`draw_pixmap` of effect results, dithered gradient
+  images, glyph masks) would have to become GPU textures; output equality with vello_cpu is
+  unverified (u8 vs f32 fine pipelines) and every regression baseline would need a check.
+- **vello** (the GPU compute renderer, 0.11, already on wgpu 30) renders a whole `vello::Scene`
+  into a texture, but its rasterization (analytic area coverage, its own blend pipeline) is not
+  vello_cpu's: not bitwise, and the API is different (scene encoding with peniko brushes).
+  More work for a less exact result.
+- **Dithered gradients** (`dither.rs`, `draw.paint`: 54 ms per frame on Data, 21 on Soong) are
+  a good GPU kernel: per pixel a piecewise-linear premultiplied ramp in f32 plus Skia's 8 x 8
+  ordered offset, rounded. Stops and the gradient transform go up as parameters, the image
+  comes back (or stays on the GPU with vello_hybrid). The CPU f32 ramp and the conic `atan2`
+  differ by ulps on the GPU; the +-0.49 LSB offset then rounds the other way in rare pixels:
+  within 1 / 255, like the digital looks. Worth it for large rotating conic / radial gradients
+  (they miss the gradient cache every frame); with vello_cpu still compositing, it costs a
+  readback per gradient image.
 
 ## Recommendations for scene authors
 
@@ -152,15 +291,16 @@ matter once the digital looks are ported to WGSL and frames stay resident across
   static or merely moving ones are cached.
 - A fluid simulates every step from the start of the video to the frame: previews
   (`agentfx frame`) late in a scene with a fluid pay the whole simulation.
-- Scenes dominated by large glows / blurs (and few digital looks) can try `--gpu` with
-  `AGENTFX_GPU_FX=riso,halftone,rays,shadow,blur,glow,drop-shadow`.
+- With a discrete GPU, render with `--gpu` (or `--gpu=auto`): glows, blurs, the digital looks
+  and grain run there, a node's effects on one resident frame. Put the digital looks of a
+  layer next to each other (a matte or an unported effect such as `color` or `dither` between
+  them costs a readback + upload).
 
 ## Further opportunities (not done)
 
-- Port vhs / rgbsplit / glitch / grain to the GPU chain (they sit on the full-frame top
-  layer, after the glows: one upload, one readback per frame).
-- Route blur / glow to the GPU by default when `--gpu` is on and the buffer is large
-  (about 40 % of the glow time on the 1050 Ti; needs a pass over the routing tests).
+- GPU: `color`, `dither` (ordered / blue noise; Floyd is serial), `ascii` and `paper` are not
+  ported; matte, kaleido / tunnel-style warps and compositing children stay on the CPU, so a
+  frame never stays on the GPU across nodes (see the vector investigation above).
 - Anisotropic effect scale: a glow on a layer scaled `sx=110 sy=0.4` uses the largest scale
   in both axes; Chrome blurs in layer space. Matching that would be both faster and closer.
 - Frame-level parallelism: one painter renders frames in order; `--segments N` splits the

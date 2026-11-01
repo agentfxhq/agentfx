@@ -70,8 +70,12 @@ still accepted as a fallback (`AGENTFX_FFMPEG` wins over `REEL_FFMPEG`).
 | `AGENTFX_FFPROBE` | both | `ffprobe` on `PATH` | ffprobe (TTS durations, tests) |
 | `AGENTFX_FFMPEG_HW` | agentfx-render | `AGENTFX_FFMPEG`, then each `ffmpeg` on `PATH` | ffmpeg for VAAPI/QSV/NVENC; the first that passes a probe encode is used |
 | `AGENTFX_VAAPI_DEVICE` | agentfx-render | `/dev/dri/renderD128` | DRM render node for VAAPI/QSV |
-| `AGENTFX_NVENC_SESSIONS` | agentfx-render | from the NVIDIA driver version, else 3 | concurrent NVENC sessions |
-| `AGENTFX_GPU` | agentfx-render | `0` | GPU effects: `0`, `1` or `auto` (same as `--gpu`) |
+| `AGENTFX_NVENC_SESSIONS` | agentfx-render | from the NVIDIA driver version (`/proc/driver/nvidia/version`, else `nvidia-smi`, e.g. on Windows), else 3 | concurrent NVENC sessions |
+| `AGENTFX_GPU` | agentfx-render | `0` | GPU effects: `0`, `1` or `auto` (same as `--gpu`); `auto`: discrete GPUs only, after a start-up self-test against the CPU |
+| `AGENTFX_GPU_FX` | agentfx-render | every ported effect | comma list of the effects that may move a frame to the GPU: `riso,halftone,rays,shadow,rgbsplit,glitch,vhs,grain,blur,drop-shadow,glow`; the others still run on the GPU when the frame is already there |
+| `AGENTFX_GPU_MIN_PX` | agentfx-render | `65536` | smallest effect buffer (px) that goes to the GPU |
+| `AGENTFX_GPU_BLUR_MIN_PX` | agentfx-render | `524288` | the same for a blur, drop shadow or glow that would start a GPU chain (they are cheap on the CPU next to a frame transfer) |
+| `AGENTFX_GPU_RESIDENT` | agentfx-render | `1` | `0` reads the frame back after every GPU effect (measurement: what keeping a node's effects on the GPU saves) |
 | `AGENTFX_JOBS_DIR` | agentfx-render | unset (off) | write job status JSON files there (same as `--jobs-dir`) |
 | `AGENTFX_TTS` | agentfx | `piper` | TTS engine: `piper`, `edge` (opt-in), `none` |
 | `AGENTFX_PIPER` | tools/tts.py | `piper` next to the tools' Python, else on `PATH` | piper binary |

@@ -239,6 +239,24 @@ pub const KINDS: &[Kind] = &[
         gpu_zoom_max: None,
         time: false,
     },
+    Kind {
+        name: "reaction",
+        doc: "Gray-Scott reaction-diffusion growing from seeded colonies (preset=coral|zebra|spots|maze sets feed and kill); frame t = warmup + floor(t * speed) steps, scrubbable; CPU",
+        params: &[
+            p("feed", 0.0545, 0.0, 0.12, "feed rate of U (Reel Script: preset= sets feed and kill)"),
+            p("kill", 0.062, 0.0, 0.12, "kill rate of V"),
+            p("diff-u", 1.0, 0.0, 1.0, "diffusion rate of U"),
+            p("diff-v", 0.5, 0.0, 1.0, "diffusion rate of V (about half of diff-u makes patterns)"),
+            p("speed", 400.0, 0.0, 5000.0, "simulation steps per second"),
+            p("warmup", 600.0, 0.0, 100000.0, "steps already run at t = 0 (0 = start from the bare colonies)"),
+            p("zoom", 1.0, 0.1, 20.0, "pattern scale (1 = a 180-row grid over the rect; larger = bigger cells)"),
+            p("color-speed", 1.0, -100.0, 100.0, "palette spread over the chemistry and across the rect"),
+            OFFSET,
+        ],
+        gpu: false,
+        gpu_zoom_max: None,
+        time: true,
+    },
 ];
 
 /// `lsystem` presets in `preset=` order (Reel Script also takes the names: `preset=dragon`).
@@ -250,6 +268,14 @@ pub const ATTRACTOR_SYSTEMS: &[(&str, [f64; 4])] = &[
     ("clifford", [-1.4, 1.6, 1.0, 0.7]),
     ("dejong", [1.4, -2.3, 2.4, -2.1]),
     ("lorenz", [10.0, 28.0, 8.0 / 3.0, 1.5]),
+];
+
+/// `reaction` presets: feed and kill (Karl Sims' Gray-Scott parameterisation, diff-u 1, diff-v 0.5).
+pub const REACTION_PRESETS: &[(&str, [f64; 2])] = &[
+    ("coral", [0.0545, 0.062]),
+    ("zebra", [0.026, 0.055]),
+    ("spots", [0.03, 0.062]),
+    ("maze", [0.029, 0.057]),
 ];
 
 pub fn kind(name: &str) -> Option<&'static Kind> {

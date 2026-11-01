@@ -22,7 +22,7 @@ Every generator has:
 | Mandelbulb, KIFS | raymarched 3D fractals | planned |
 | Fractal flames | glowing silk, seeded IFS with classic variations | done (`kind=flame`, CPU) |
 | Strange attractors | Lorenz, Clifford, de Jong 2D density | done (`kind=attractor`, CPU) |
-| Reaction-diffusion | Gray-Scott coral, zebra, spots | planned |
+| Reaction-diffusion | Gray-Scott coral, zebra, spots, maze | done (`kind=reaction`, CPU) |
 | Domain-warped noise | marble, oil, liquid neon | done (`kind=noise`) |
 | Flow fields | particles streaking through a curl-noise field | done (`kind=flow`, CPU) |
 | Truchet, Voronoi | tiled arcs, cells | done (`kind=truchet`, `kind=voronoi`) |
@@ -73,7 +73,10 @@ into unit space through the layer transform, supersamples (`aa`), premultiplies 
    dependency; `generator/raster.rs` has the helpers: `unit_to_px`, `layer`, `neon` bloom).
    `gpu: false`, no `.wgsl`. `g.aspect` gives the rect's extent in unit space (u in
    +-aspect), so a kind can fit or cover the rect. Keep everything a pure function of the
-   parameters, seed and t (simulations replay from step 0 each frame).
+   parameters, seed and t (simulations replay from step 0 each frame, or continue a cached
+   earlier state when that is bit-identical, as `reaction.rs` does). Orbit kinds (chaos games,
+   attractors) plot into `generator/density.rs`: seeded chains, an integer histogram (identical
+   for any thread count) and a log-density tone map with glow.
 6. **Tests**: `registry_matches_declarations`, `deterministic` and `gpu_matches_cpu` in
    `generator/mod.rs` cover every kind once it is declared and registered; add a few
    parameter cases of yours to the `cases` table in `gpu_matches_cpu` (they must stay within

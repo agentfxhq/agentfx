@@ -86,8 +86,26 @@ impl<'a> Ctx<'a> {
                 }
             }
         }
+        // reaction: `preset=coral` sets feed and kill (explicit values below still win); the
+        // preset itself is not a parameter
+        let reaction_preset = kind.name == "reaction" && n.props.contains_key("preset");
+        if reaction_preset {
+            let raw = praw(n, "preset").unwrap_or_default();
+            let names: Vec<&str> = g::REACTION_PRESETS.iter().map(|(s, _)| *s).collect();
+            match names.iter().position(|s| *s == raw) {
+                Some(i) => {
+                    let [feed, kill] = g::REACTION_PRESETS[i].1;
+                    params.insert("feed".to_string(), feed);
+                    params.insert("kill".to_string(), kill);
+                }
+                None => {
+                    let hint = suggest(&raw, &names).map(|s| format!("did you mean `preset={s}`?")).unwrap_or_else(|| format!("presets: {}", names.join(" ")));
+                    self.err("E_GEN", format!("gen reaction: unknown preset `{raw}`"), hint, n.span);
+                }
+            }
+        }
         for k in n.props.keys() {
-            if (bs_rule && k == "rule") || (named_preset && k == "preset") || (named_system && k == "system") || matches!(k.as_str(), "seed" | "palette" | "kind") {
+            if (bs_rule && k == "rule") || (named_preset && k == "preset") || (named_system && k == "system") || (reaction_preset && k == "preset") || matches!(k.as_str(), "seed" | "palette" | "kind") {
                 continue;
             }
             match kind.param(k) {

@@ -40,6 +40,11 @@ const BAILOUT: Param = p("bailout", 64.0, 2.0, 1e6, "escape radius (large values
 const SPEED: Param = p("color-speed", 1.0, -100.0, 100.0, "palette cycles per unit of log2 escape count");
 const OFFSET: Param = p("color-offset", 0.0, -1e6, 1e6, "palette phase (animate to cycle the colours)");
 const AA: Param = p("aa", 2.0, 1.0, 4.0, "supersampling: samples per pixel axis (1..4)");
+/// The view of the pattern kinds (noise, tilings): centre and magnification.
+const RE0: Param = p("re", 0.0, -1e6, 1e6, "view centre, horizontal (pattern units; animate to pan)");
+const IM0: Param = p("im", 0.0, -1e6, 1e6, "view centre, vertical (pattern units; animate to pan)");
+const ZOOM1: Param = p("zoom", 1.0, 1e-3, 1e3, "magnification (larger = bigger features)");
+const FLOW: Param = p("flow", 0.25, -100.0, 100.0, "how fast the pattern evolves with time (per second)");
 
 /// Every kind the renderer implements.
 pub const KINDS: &[Kind] = &[
@@ -68,6 +73,21 @@ pub const KINDS: &[Kind] = &[
         gpu: true,
         gpu_zoom_max: Some(2e4),
         time: false,
+    },
+    Kind {
+        name: "noise",
+        doc: "Domain-warped fBm (two-level warp, Inigo Quilez): marble, oil, liquid neon; evolves with time",
+        params: &[
+            RE0, IM0, ZOOM1, TURN,
+            p("warp", 2.5, 0.0, 20.0, "strength of the domain warp (0 = plain fBm, 1-4 liquid, 8+ turbulent)"),
+            p("octaves", 4.0, 1.0, 8.0, "fBm octaves (detail)"),
+            FLOW,
+            p("color-speed", 1.0, -100.0, 100.0, "palette cycles across the value range (higher = more colour bands)"),
+            OFFSET, AA,
+        ],
+        gpu: true,
+        gpu_zoom_max: None,
+        time: true,
     },
 ];
 

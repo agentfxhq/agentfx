@@ -61,6 +61,7 @@ pub enum Ch {
     // generator parameters: slot k = `agentfx_ir::generator::param_names()[k]` (`gen_param`)
     Gen0, Gen1, Gen2, Gen3, Gen4, Gen5, Gen6, Gen7, Gen8, Gen9, Gen10, Gen11,
     Gen12, Gen13, Gen14, Gen15, Gen16, Gen17, Gen18, Gen19, Gen20, Gen21, Gen22, Gen23,
+    Gen24, Gen25, Gen26, Gen27, Gen28, Gen29, Gen30, Gen31,
 }
 
 impl Ch {
@@ -71,7 +72,7 @@ impl Ch {
             Blur | Glow | Brightness | Saturate | Contrast | Hue | Fill | Color | Stroke | TrimStart | TrimEnd | Reveal | MaskX
             | GradAngle | Grad0 | Grad1 | Grad2 | Grad3 | TimeSpan | Halftone | Sweep | Rays | Misreg | FluidTime | PathOffset | Rgbsplit | RgbsplitDx | RgbsplitDy | Glitch | GlitchRate | GlitchBlock | Vhs | Dither | Ascii => Stage::Paint,
             Sz | CamX | CamY | CamZ | LookX | LookY | LookZ | Fov | Roll | Ambient | Emissive | Intensity => Stage::PerFrame,
-            Gen0 | Gen1 | Gen2 | Gen3 | Gen4 | Gen5 | Gen6 | Gen7 | Gen8 | Gen9 | Gen10 | Gen11 | Gen12 | Gen13 | Gen14 | Gen15 | Gen16 | Gen17 | Gen18 | Gen19 | Gen20 | Gen21 | Gen22 | Gen23 => Stage::PerFrame,
+            Gen0 | Gen1 | Gen2 | Gen3 | Gen4 | Gen5 | Gen6 | Gen7 | Gen8 | Gen9 | Gen10 | Gen11 | Gen12 | Gen13 | Gen14 | Gen15 | Gen16 | Gen17 | Gen18 | Gen19 | Gen20 | Gen21 | Gen22 | Gen23 | Gen24 | Gen25 | Gen26 | Gen27 | Gen28 | Gen29 | Gen30 | Gen31 => Stage::PerFrame,
             Wght | Wdth | Opsz | Slnt | Axis0 | Axis1 | Axis2 | Axis3 | Tracking | W | H | LineH | Count => Stage::Layout,
         }
     }
@@ -160,9 +161,10 @@ thread_local! {
     static AXIS_TAGS: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
 }
 
-pub const GEN_CHS: [Ch; 24] = [
+pub const GEN_CHS: [Ch; 32] = [
     Ch::Gen0, Ch::Gen1, Ch::Gen2, Ch::Gen3, Ch::Gen4, Ch::Gen5, Ch::Gen6, Ch::Gen7, Ch::Gen8, Ch::Gen9, Ch::Gen10, Ch::Gen11,
     Ch::Gen12, Ch::Gen13, Ch::Gen14, Ch::Gen15, Ch::Gen16, Ch::Gen17, Ch::Gen18, Ch::Gen19, Ch::Gen20, Ch::Gen21, Ch::Gen22, Ch::Gen23,
+    Ch::Gen24, Ch::Gen25, Ch::Gen26, Ch::Gen27, Ch::Gen28, Ch::Gen29, Ch::Gen30, Ch::Gen31,
 ];
 
 /// Channel of a generator parameter name (any kind's). More distinct parameter names than

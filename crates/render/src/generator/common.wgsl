@@ -42,6 +42,49 @@ fn fractal_color(e: f32, speed: f32, offset: f32) -> vec4<f32> {
     return palette(offset + speed * log2(1.0 + max(e, 0.0)) * 0.5);
 }
 
+// generator::gnoise: 2D gradient noise, about [-1, 1], lattice spacing 1.
+fn gn_corner(ix: i32, iy: i32, seed: u32, dx: f32, dy: f32) -> f32 {
+    let h = hash(ix, iy, seed);
+    let gx = fma(f32(h & 0xffffu), 1.0 / 32768.0, -1.0);
+    let gy = fma(f32(h >> 16u), 1.0 / 32768.0, -1.0);
+    return fma(gx, dx, gy * dy);
+}
+fn gn_fade(t: f32) -> f32 { return t * t * t * fma(t, fma(t, 6.0, -15.0), 10.0); }
+fn gnoise(x: f32, y: f32, seed: u32) -> f32 {
+    let xf = floor(x);
+    let yf = floor(y);
+    let ix = i32(xf);
+    let iy = i32(yf);
+    let tx = x - xf;
+    let ty = y - yf;
+    let sx = gn_fade(tx);
+    let sy = gn_fade(ty);
+    let a = gn_corner(ix, iy, seed, tx, ty);
+    let b = gn_corner(ix + 1, iy, seed, tx - 1.0, ty);
+    let c = gn_corner(ix, iy + 1, seed, tx, ty - 1.0);
+    let d = gn_corner(ix + 1, iy + 1, seed, tx - 1.0, ty - 1.0);
+    let ab = fma(b - a, sx, a);
+    let cd = fma(d - c, sx, c);
+    return fma(cd - ab, sy, ab);
+}
+
+// generator::fbm
+fn fbm(p0: vec2<f32>, oct: u32, seed: u32) -> f32 {
+    var x = p0.x;
+    var y = p0.y;
+    var sum = 0.0;
+    var amp = 0.5;
+    for (var o = 0u; o < oct; o++) {
+        sum = fma(amp, gnoise(x, y, seed + o * 7919u), sum);
+        let nx = fma(1.6, x, 1.2 * y);
+        let ny = fma(-1.2, x, 1.6 * y);
+        x = nx;
+        y = ny;
+        amp = amp * 0.5;
+    }
+    return sum * 1.6;
+}
+
 @compute @workgroup_size(16, 16)
 fn gen_main(@builtin(global_invocation_id) id: vec3<u32>) {
     let w = pu(0u);

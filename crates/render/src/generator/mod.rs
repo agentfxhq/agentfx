@@ -18,6 +18,7 @@
 //! (`Input::f32`, what the conformance tests use); normal renders run the CPU in f64.
 pub mod julia;
 pub mod mandelbrot;
+pub mod noise;
 
 use agentfx_ir::generator::Kind;
 use agentfx_ir::{GenContent, Scene};
@@ -50,6 +51,7 @@ pub fn lookup(kind: &str) -> Option<&'static dyn Generator> {
     Some(match kind {
         "julia" => &julia::Julia,
         "mandelbrot" => &mandelbrot::Mandelbrot,
+        "noise" => &noise::Noise,
         _ => return None,
     })
 }
@@ -73,6 +75,8 @@ pub struct Input<'a> {
     pub t: f64,
     /// f32 math (GPU conformance); else f64
     pub f32: bool,
+    /// rect width / height: unit space spans u in +-aspect, v in +-1
+    pub aspect: f64,
 }
 
 /// The default CPU image: `aa x aa` samples per pixel, averaged premultiplied, dithered to u8.
@@ -130,18 +134,77 @@ pub trait Real: Copy + PartialOrd + Add<Output = Self> + Sub<Output = Self> + Mu
     /// GPU bit for bit), plain in f64 (no FMA hardware on every CPU; the f64 path is the
     /// reference, not a GPU mirror).
     fn fma(self, b: Self, c: Self) -> Self;
+    fn floor(self) -> Self;
+    /// `floor` as a lattice index (WGSL `i32(floor(x))`).
+    fn cell(self) -> i32;
+    fn sqrt(self) -> Self;
+    fn abs(self) -> Self;
+    fn clamp01(self) -> Self {
+        if self < Self::of(0.0) { Self::of(0.0) } else if self > Self::of(1.0) { Self::of(1.0) } else { self }
+    }
+    fn fract(self) -> Self {
+        self - self.floor()
+    }
 }
 impl Real for f32 {
     fn of(v: f64) -> Self { v as f32 }
     fn f64(self) -> f64 { self as f64 }
     fn log2(self) -> Self { f32::log2(self) }
     fn fma(self, b: Self, c: Self) -> Self { self.mul_add(b, c) }
+    fn floor(self) -> Self { f32::floor(self) }
+    fn cell(self) -> i32 { f32::floor(self) as i32 }
+    fn sqrt(self) -> Self { f32::sqrt(self) }
+    fn abs(self) -> Self { f32::abs(self) }
 }
 impl Real for f64 {
     fn of(v: f64) -> Self { v }
     fn f64(self) -> f64 { self }
     fn log2(self) -> Self { f64::log2(self) }
     fn fma(self, b: Self, c: Self) -> Self { self * b + c }
+    fn floor(self) -> Self { f64::floor(self) }
+    fn cell(self) -> i32 { f64::floor(self) as i32 }
+    fn sqrt(self) -> Self { f64::sqrt(self) }
+    fn abs(self) -> Self { f64::abs(self) }
+}
+
+/// Smooth 2D gradient noise in about [-1, 1] at lattice spacing 1 (quintic fade, gradients
+/// from the integer `look::hash`, so f32 CPU and GPU see the same lattice). `gnoise` in
+/// common.wgsl.
+pub fn gnoise<T: Real>(x: T, y: T, seed: u32) -> T {
+    let (xf, yf) = (x.floor(), y.floor());
+    let (ix, iy) = (x.cell(), y.cell());
+    let (tx, ty) = (x - xf, y - yf);
+    let one = T::of(1.0);
+    let corner = |cx: i32, cy: i32, dx: T, dy: T| {
+        let h = crate::look::hash(ix + cx, iy + cy, seed);
+        let gx = T::of((h & 0xffff) as f64).fma(T::of(1.0 / 32768.0), -one);
+        let gy = T::of((h >> 16) as f64).fma(T::of(1.0 / 32768.0), -one);
+        gx.fma(dx, gy * dy)
+    };
+    let fade = |t: T| t * t * t * t.fma(t.fma(T::of(6.0), T::of(-15.0)), T::of(10.0));
+    let (sx, sy) = (fade(tx), fade(ty));
+    let a = corner(0, 0, tx, ty);
+    let b = corner(1, 0, tx - one, ty);
+    let c = corner(0, 1, tx, ty - one);
+    let d = corner(1, 1, tx - one, ty - one);
+    let ab = (b - a).fma(sx, a);
+    let cd = (d - c).fma(sx, c);
+    (cd - ab).fma(sy, ab)
+}
+
+/// Fractal sum of `gnoise`: `oct` octaves, each rotated and scaled by 2 (gain 0.5), about
+/// [-1, 1]. `fbm` in common.wgsl.
+pub fn fbm<T: Real>(mut x: T, mut y: T, oct: u32, seed: u32) -> T {
+    let (mut sum, mut amp) = (T::of(0.0), T::of(0.5));
+    for o in 0..oct {
+        sum = amp.fma(gnoise(x, y, seed.wrapping_add(o.wrapping_mul(7919))), sum);
+        let nx = T::of(1.6).fma(x, T::of(1.2) * y);
+        let ny = T::of(-1.2).fma(x, T::of(1.6) * y);
+        x = nx;
+        y = ny;
+        amp = amp * T::of(0.5);
+    }
+    sum * T::of(1.6)
 }
 
 /// Escape-time iteration of z -> z^2 + c: the smooth (continuous) escape count
@@ -237,7 +300,7 @@ impl Prep {
     #[allow(clippy::too_many_arguments)]
     pub fn render(&self, p: &[f64], t: f64, w: usize, h: usize, org: (i32, i32), m: [f64; 6], out: &mut [u8]) {
         let aa = self.kind.index("aa").map_or(1, |i| p[i].round() as u32).clamp(1, 4);
-        let g = Input { w, h, org, m: compose(self.imp.view(p), m), p, pal: &self.pal, aa, seed: self.c.seed, t: t + self.c.time_offset, f32: false };
+        let g = Input { w, h, org, m: compose(self.imp.view(p), m), p, pal: &self.pal, aa, seed: self.c.seed, t: t + self.c.time_offset, f32: false, aspect: self.c.rect[2] / self.c.rect[3].max(1e-9) };
         if let (Some(src), Some(gpu)) = (self.imp.wgsl().filter(|_| self.kind.gpu), crate::gpu::get()) {
             if w * h >= crate::gpu::min_px() {
                 let t0 = std::time::Instant::now();
@@ -298,7 +361,7 @@ pub(crate) mod tests {
         let s = 2.0 / h as f64;
         let aa = kind.index("aa").map_or(1, |i| p[i] as u32);
         let m = compose(lookup(kind.name).unwrap().view(p), [s, 0.0, 0.0, s, -(w as f64) / h as f64, -1.0]);
-        Input { w, h, org: (0, 0), m, p, pal, aa, seed: 7, t: 0.0, f32: false }
+        Input { w, h, org: (0, 0), m, p, pal, aa, seed: 7, t: 0.0, f32: false, aspect: w as f64 / h as f64 }
     }
 
     fn pal() -> Vec<[f32; 4]> {
@@ -386,6 +449,9 @@ pub(crate) mod tests {
             ("mandelbrot", &[]),
             ("mandelbrot", &[("re", -0.7436), ("im", 0.1318), ("zoom", 40.0), ("iter", 400.0), ("aa", 1.0)]),
             ("mandelbrot", &[("re", -0.16), ("im", 1.035), ("zoom", 6.0), ("depth", 1.5), ("turn", -20.0), ("color-speed", 0.5)]),
+            ("noise", &[]),
+            ("noise", &[("re", -3.5), ("im", 12.25), ("zoom", 0.4), ("turn", 37.0), ("warp", 9.0), ("octaves", 7.0), ("color-speed", 2.5), ("aa", 1.0)]),
+            ("noise", &[("warp", 0.0), ("octaves", 1.0), ("flow", 3.0), ("color-offset", 0.6)]),
         ];
         let (w, h) = (160, 90);
         for (name, over) in cases {
@@ -394,6 +460,7 @@ pub(crate) mod tests {
             let mut p = vec![];
             let mut g = input(k, &mut p, &pal, over, w, h);
             g.f32 = true;
+            g.t = 1.75; // time-dependent kinds move; the others ignore it
             let mut gp = vec![0u8; w * h * 4];
             run_gpu(gpu, k.name, imp.wgsl().unwrap(), &g, &mut gp).unwrap();
             let mut cpu = vec![0u8; w * h * 4];

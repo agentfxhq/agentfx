@@ -23,7 +23,7 @@ Every generator has:
 | Fractal flames | glowing silk, IFS with variations | planned |
 | Strange attractors | Lorenz, Clifford, de Jong; 2D density and 3D point clouds | planned |
 | Reaction-diffusion | Gray-Scott coral, zebra, spots | planned |
-| Domain-warped noise | marble, oil, liquid neon | planned |
+| Domain-warped noise | marble, oil, liquid neon | done (`kind=noise`) |
 | Flow fields | particles streaking through a curl-noise field | planned |
 | Truchet, Voronoi | tiled arcs, cells | planned |
 | L-systems | growing plants and curves as drawable paths | planned |

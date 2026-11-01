@@ -394,9 +394,10 @@ validation errors). The kinds, their parameters, defaults and ranges are declare
 | `life` | `mode` (0 2D, 1 1D), `born` (8), `survive` (12): neighbour-count bitmasks (B3/S23), `rule` (30, 1D Wolfram number), `zoom` (1 = 72 cells per rect height), `density` (0.3), `speed` (12 steps/s), `trail` (8 steps), `color-speed` (1), `color-offset` (0); time-dependent, CPU, transparent ground |
 | `mandelbulb` | `power` (8), `yaw` (30 deg), `pitch` (20 deg), `distance` (2.2), `zoom` (1), `turn` (0 deg roll), `iter` (10), `steps` (140), `halo` (0.7), `fog` (0.4), `occlusion` (1), `rim` (0.9), `color-speed` (1), `color-offset` (0), `aa` (1); raymarched, kernel uniforms (camera basis) from the host |
 | `kifs` | `mode` (0 menger, 1 sierpinski, 2 octahedron), `fold-scale` (3), `twist` (0 deg), `tilt` (0 deg), `cx`, `cy`, `cz` (1, 1, 1: fold offset), `yaw`, `pitch`, `distance` (4.2), `zoom`, `turn`, `iter` (8), `steps` (140), `halo` (0.7), `fog` (0.4), `occlusion` (0.5), `rim` (0.9), `color-speed` (1), `color-offset` (0), `aa` (1); raymarched, kernel uniforms (camera basis, fold rotations) from the host |
+| `flame` | `samples` (12 per pixel of the rect), `gamma` (1.7), `morph` (0; whole turns of the maps, 0 -> 1 loops), `symmetry` (1 = none, n-fold), `re`, `im` (offset), `zoom` (1 = fitted), `turn`, `color-speed` (1), `color-offset` (0); seeded IFS chaos game, log-density tone map; CPU, transparent ground |
 
 Pixel kinds (`julia mandelbrot noise truchet voronoi`) have a GPU kernel; vector and grid kinds
-(`flow lsystem penrose life`) rasterize their geometry on the CPU (anti-aliased, through the same
+(`flow lsystem penrose life flame`) rasterize their geometry, density or grid on the CPU (through the same
 mapping, so they stay crisp under the node transform) and leave the ground transparent where
 nothing is drawn (`penrose` covers the rect). The pattern kinds map unit space to their plane as
 `centre + rotate(turn) * (u, -v) * half / zoom` (half = 0.7 for noise, 4 tiles or cells for

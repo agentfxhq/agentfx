@@ -1,0 +1,14 @@
+// Generators: strange attractors as luminous dust. A Clifford attractor morphs as its
+// coefficients drift; the Lorenz butterfly spins about its vertical axis.
+video "Strange attractor" size=1280x720 fps=30 captions=off
+theme studio-dark
+  bg #05010f
+
+scene clifford dur=6s
+  gen #a kind=attractor system=clifford a=1.5 b=-1.8 c=1.6 d=0.9 palette=neon
+  anim #a a 0s:1.5 6s:1.7 ease=inout-sine
+  anim #a b 0s:-1.8 6s:-1.6 ease=inout-sine
+
+scene lorenz dur=6s
+  gen #l kind=attractor system=lorenz palette=vapor
+  anim #l turn 0s:0 6s:180 ease=linear

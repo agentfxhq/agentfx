@@ -67,8 +67,27 @@ impl<'a> Ctx<'a> {
                 }
             }
         }
+        // attractor: `system=lorenz` (a system name) for its index, plus that system's a b c d
+        // (explicit coefficients below still win)
+        let named_system = kind.name == "attractor" && matches!(n.props.get("system"), Some(crate::ast::Value::Str(_)));
+        if named_system {
+            let raw = praw(n, "system").unwrap_or_default();
+            let names: Vec<&str> = g::ATTRACTOR_SYSTEMS.iter().map(|(s, _)| *s).collect();
+            match names.iter().position(|s| *s == raw) {
+                Some(i) => {
+                    params.insert("system".to_string(), i as f64);
+                    for (k, v) in ["a", "b", "c", "d"].into_iter().zip(g::ATTRACTOR_SYSTEMS[i].1) {
+                        params.insert(k.to_string(), v);
+                    }
+                }
+                None => {
+                    let hint = suggest(&raw, &names).map(|s| format!("did you mean `system={s}`?")).unwrap_or_else(|| format!("systems: {}", names.join(" ")));
+                    self.err("E_GEN", format!("gen attractor: unknown system `{raw}`"), hint, n.span);
+                }
+            }
+        }
         for k in n.props.keys() {
-            if (bs_rule && k == "rule") || (named_preset && k == "preset") || matches!(k.as_str(), "seed" | "palette" | "kind") {
+            if (bs_rule && k == "rule") || (named_preset && k == "preset") || (named_system && k == "system") || matches!(k.as_str(), "seed" | "palette" | "kind") {
                 continue;
             }
             match kind.param(k) {

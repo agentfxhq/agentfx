@@ -16,6 +16,7 @@
 //!
 //! Exactness: CPU and GPU agree within 1/255 per channel when the CPU runs in f32 mode
 //! (`Input::f32`, what the conformance tests use); normal renders run the CPU in f64.
+pub mod attractor;
 pub mod density;
 pub mod flame;
 pub mod flow;
@@ -68,6 +69,7 @@ pub fn lookup(kind: &str) -> Option<&'static dyn Generator> {
         "penrose" => &penrose::Penrose,
         "life" => &life::Life,
         "flame" => &flame::Flame,
+        "attractor" => &attractor::Attractor,
         _ => return None,
     })
 }

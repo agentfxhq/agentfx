@@ -66,6 +66,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Penrose tiling | `gen #p kind=penrose grow=0` + `anim #p grow 0s:0 3s:1` | implemented (CPU) | sacred-geometry intros, order out of chaos |
 | Game of Life, rule 30 | `gen #c kind=life rule="B3/S23"` / `kind=life mode=1 rule=30` | implemented (CPU) | emergence, computation, pixel aesthetics |
 | Fractal flame silk | `gen #f kind=flame symmetry=1 palette=vapor seed=12` + `anim #f morph 0s:0 8s:1 ease=linear` (seamless loop) | implemented (CPU) | glowing psychedelic backgrounds, dream sequences, music videos |
+| Strange attractor dust | `gen #a kind=attractor system=clifford\|dejong\|lorenz` + `anim #a a 0s:-1.4 6s:-1.7` (morph) / `anim #a turn 0s:0 8s:360` (Lorenz spin) | implemented (CPU) | abstract science, chaos, hypnotic morphs |
 
 ## Time
 

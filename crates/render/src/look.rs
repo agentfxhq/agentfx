@@ -41,7 +41,7 @@ pub fn margin(e: &Effect, p: &[f64; NPARAM], s: f64, frame: [f64; 2]) -> f64 {
         Effect::Paper { .. } => (3.0 * p[1] + 2.0) * s,
         Effect::Shadow { .. } => crate::light::shadow_reach(p, frame),
         Effect::Rays { .. } => crate::light::rays_reach(p, frame),
-        Effect::Kaleido { .. } | Effect::Tunnel { .. } => crate::warp::margin(frame),
+        e if e.is_warp() => crate::warp::margin(frame),
         _ => 0.0,
     }
 }

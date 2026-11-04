@@ -35,7 +35,7 @@ use crate::schedule::{
 };
 use anyhow::{Result, bail};
 use agentfx_ir::eval::{eval_track, transform_matrix};
-use agentfx_ir::{Affine, AssetId, Content, Effect, NodeId, Sampled, Scene};
+use agentfx_ir::{Affine, AssetId, Content, NodeId, Sampled, Scene};
 use rstar::primitives::{GeomWithData, Rectangle};
 use rstar::{RTree, RTreeObject};
 use std::collections::BTreeSet;
@@ -178,8 +178,8 @@ pub fn build(scene: &Scene, info: &dyn ContentInfo) -> Result<Schedule> {
     for &n in &preorder {
         let mut v = parents[n].map(|p| matte_srcs[p].clone()).unwrap_or_default();
         for e in &scene.nodes[n].effects {
-            if let Effect::Matte { source, .. } = e {
-                v.push(*source);
+            if let Some(source) = e.source_node() {
+                v.push(source);
             }
         }
         if let Some(Content::Scene3d(c)) = &scene.nodes[n].content {

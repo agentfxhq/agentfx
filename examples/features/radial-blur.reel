@@ -1,0 +1,28 @@
+// Radial blur: a zoom burst punches a starburst title toward the viewer (rblur-mode=zoom,
+// rblur = fraction of the distance to the center), then a spin blur turns a dial into a
+// motion-blurred wheel (rblur-mode=spin, rblur = degrees of arc). The center is a % of the
+// layer box or px.
+//
+//   agentfx render examples/features/radial-blur.reel -o radial-blur.mp4
+video "Radial blur" size=640x360 fps=30 captions=off
+theme studio-dark
+  bg #08060F
+
+scene burst dur=2.5s bg=#08060F
+  layer #z x=0 y=0 w=640 h=360 rblur=0 rblur-mode=zoom rblur-center=50%,50%
+    path d="M320 180 L-40 40 L-40 70 Z M320 180 L680 40 L680 70 Z M320 180 L-40 290 L-40 320 Z M320 180 L680 290 L680 320 Z M320 180 L200 -20 L240 -20 Z M320 180 L400 -20 L440 -20 Z M320 180 L200 380 L240 380 Z M320 180 L400 380 L440 380 Z" w=640 h=360 fill=#3A1C6E
+    ellipse x=230 y=90 w=180 h=180 fill=radial(#FF7A1A 0%, #E0305A 65%, #8A1C8C 100%)
+    text "BOOM" x=50% y=50% anchor=center size=52 weight=900 color=#FFF6E0
+  anim #z rblur 0s:0.85 1.1s:0~out-cubic 1.8s:0 2.5s:0.6~in-cubic
+  anim #z scale 0s:2.2 1.1s:1~out-cubic 1.8s:1 2.5s:1.3~in-cubic
+
+scene spin dur=2.5s bg=#08060F
+  layer #w x=170 y=30 w=300 h=300 rblur=0 rblur-mode=spin rblur-center=50%,50%
+    ellipse x=0 y=0 w=300 h=300 fill=#151A26 stroke=#2E3648 sw=4
+    rect x=146 y=10 w=8 h=60 fill=#FF5A36
+    rect x=146 y=230 w=8 h=60 fill=#22E4FF
+    rect x=10 y=146 w=60 h=8 fill=#F4F1EA
+    rect x=230 y=146 w=60 h=8 fill=#F4F1EA
+    ellipse x=120 y=120 w=60 h=60 fill=#F4F1EA
+  anim #w rot 0s:0 2.5s:900~inout-cubic
+  anim #w rblur 0s:0 1.25s:70~inout-cubic 2.5s:0~inout-cubic

@@ -74,8 +74,8 @@ impl<'a> Painter<'a> {
                 drawn[x] = true;
                 in_set[x] = true;
                 for e in &scene.nodes[x].effects {
-                    if let Effect::Matte { source, .. } = e {
-                        roots.push(*source);
+                    if let Some(source) = e.source_node() {
+                        roots.push(source);
                     }
                 }
                 st.extend(scene.nodes[x].children.iter().copied());

@@ -74,3 +74,49 @@ fn tunnel_validates_and_depends_on_time_only_with_speed() {
     assert_eq!(b.look_field("radius"), 90.0);
     assert!(serde_json::from_value::<Effect>(json!({"type":"tunnel","center":[0,0]})).is_err(), "radius is required");
 }
+
+#[test]
+fn distort_pack_validates_roundtrips_and_has_tracks() {
+    let ok = [
+        json!({"type":"dir-blur","length":24}),
+        json!({"type":"dir-blur","length":0,"angle":-30}),
+        json!({"type":"radial-blur","amount":0.4,"center":[32,32]}),
+        json!({"type":"radial-blur","amount":45,"mode":"spin","center":[0,10]}),
+        json!({"type":"chromatic","amount":-6,"center":[32,32]}),
+        json!({"type":"displace","amount":12}),
+        json!({"type":"displace","amount":-20,"scale":200,"octaves":8,"speed":0.5,"seed":4}),
+    ];
+    let bad = [
+        json!({"type":"dir-blur","length":-1}),
+        json!({"type":"radial-blur","amount":2,"center":[32,32]}),
+        json!({"type":"radial-blur","amount":400,"mode":"spin","center":[32,32]}),
+        json!({"type":"radial-blur","amount":0.2,"mode":"swirl","center":[32,32]}),
+        json!({"type":"chromatic","amount":900,"center":[32,32]}),
+        json!({"type":"displace","amount":12,"octaves":0}),
+        json!({"type":"displace","amount":12,"scale":0}),
+        json!({"type":"displace","amount":12,"source":0}),
+        json!({"type":"displace","amount":12,"source":7}),
+    ];
+    for (valid, list) in [(true, &ok[..]), (false, &bad[..])] {
+        for v in list {
+            let s = scene(v.clone());
+            assert_eq!(validate(&s, std::path::Path::new(".")).is_ok(), valid, "{v}");
+            let e = &s.nodes[0].effects[0];
+            assert_eq!(*e, serde_json::from_str::<Effect>(&serde_json::to_string(e).unwrap()).unwrap());
+            assert!(e.is_warp() && e.is_look(), "{v}");
+        }
+    }
+    let r = &scene(ok[3].clone()).nodes[0].effects[0];
+    assert_eq!(r.look_fields(), &["amount", "cx", "cy"]);
+    assert_eq!([r.look_field("amount"), r.look_field("cy")], [45.0, 10.0]);
+    assert!(scene(ok[6].clone()).nodes[0].effects[0].time_dependent());
+    assert!(!scene(ok[5].clone()).nodes[0].effects[0].time_dependent());
+    // a displace by a hidden map node: valid, and the map is the effect's source node
+    let mut s: Scene = serde_json::from_value(json!({"version":1,"width":64,"height":64,"fps":30,"frames":2,"nodes":[
+        {"name":"root","children":[1],"effects":[{"type":"displace","amount":8,"source":1}]},
+        {"name":"map","hidden":true}]})).unwrap();
+    assert!(validate(&s, std::path::Path::new(".")).is_ok());
+    assert_eq!(s.nodes[0].effects[0].source_node(), Some(1));
+    s.tracks = vec![serde_json::from_value(json!({"node":0,"property":"effects.0.amount","delay":0,"duration":1,"fill":"both","easing":"linear","keyframes":[{"offset":0,"value":{"number":0}},{"offset":1,"value":{"number":30}}]})).unwrap()];
+    assert!(validate(&s, std::path::Path::new(".")).is_ok());
+}

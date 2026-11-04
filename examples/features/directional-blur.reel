@@ -1,0 +1,17 @@
+// Directional blur: a title whips in from the left as a long horizontal streak that
+// tightens to sharp type as it lands, then a diagonal smear wipes it out. `dblur=` is the
+// streak length in px, `dblur-angle=` its direction; both are animatable channels.
+//
+//   agentfx render examples/features/directional-blur.reel -o directional-blur.mp4
+video "Directional blur" size=640x360 fps=30 captions=off
+theme studio-dark
+  bg #0B0D12
+
+scene whip dur=3s bg=#0B0D12
+  rect x=0 y=172 w=640 h=2 fill=#1E2430
+  layer #t x=0 y=0 w=640 h=360 dblur=0 dblur-angle=0deg
+    text "VELOCITY" x=50% y=46% anchor=center size=92 weight=900 color=#F4F1EA
+    text "dblur=  dblur-angle=" x=50% y=66% anchor=center size=20 weight=500 color=#FF5A36
+  anim #t x 0s:-700 0.55s:0~out-expo 2.2s:0 2.8s:760~in-expo
+  anim #t dblur 0s:220 0.55s:0~out-cubic 2.2s:0 2.8s:260~in-cubic
+  anim #t dblur-angle 0s:0 2.2s:0 2.8s:-14

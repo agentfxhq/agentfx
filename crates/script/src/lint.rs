@@ -170,7 +170,15 @@ pub fn static_rules(doc: &Document, tl: &Timeline, ir: &Ir) -> Vec<Diag> {
                 d.push(Diag::error("E_OUT_OF_FRAME", format!("`{}` is placed outside the frame", l.name.clone().unwrap_or(l.id.clone())), "use place=... or x/y within 0..100%", Span::default()).with_id(l.name.clone().unwrap_or(l.id.clone())));
             }
         }
+        // a displacement map (`displace=#map`) is drawn only as the map, never seen: no checks
+        let maps: Vec<&str> = l.style.looks.iter().filter_map(|x| match x {
+            crate::look::Look::Displace { source: Some(s), .. } => Some(s.as_str()),
+            _ => None,
+        }).collect();
         for c in &l.children {
+            if c.name.as_deref().is_some_and(|n| maps.contains(&n)) {
+                continue;
+            }
             rec(c, fills, ib, th, ir, scale, d);
         }
         if pushed {

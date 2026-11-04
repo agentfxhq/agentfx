@@ -1,0 +1,30 @@
+// Displacement: heat haze from seeded fractal noise (displace=noise, the field drifts with
+// displace-speed), then a ripple driven by a map layer (displace=#map: a child drawn only
+// as the map; its red moves pixels in x, green in y, 50% grey stays). The map here ramps
+// green up and down across x, so columns bob up and down; sliding the map makes the wave
+// travel.
+//
+//   agentfx render examples/features/displace.reel -o displace.mp4
+video "Displace" size=640x360 fps=30 captions=off
+theme studio-dark
+  bg #0A0710
+
+scene haze dur=2.5s bg=#0A0710
+  layer #h x=0 y=0 w=640 h=360 displace=noise displace-amount=0 displace-scale=36 displace-octaves=3 displace-speed=0.8 seed=7
+    ellipse x=230 y=60 w=180 h=180 fill=radial(#FFE08A 0%, #FF8A2A 55%, #C2185B 100%)
+    rect x=0 y=250 w=640 h=110 fill=#1A0F1E
+    text "MIRAGE" x=50% y=78% anchor=center size=64 weight=900 color=#FFB45A
+  anim #h displace-amount 0s:0 1s:9~inout-sine 2.5s:6~inout-sine
+
+scene wave dur=2.5s bg=#0A0710
+  layer #wv x=0 y=0 w=640 h=360 displace=#map displace-amount=18
+    text "RIPPLE" x=50% y=50% anchor=center size=104 weight=900 color=#7CF3FF
+    rect y=176 w=640 h=2 fill=#7CF3FF
+    layer #map x=-640 y=0 w=1920 h=360
+      rect x=0 y=0 w=320 h=360 fill=linear(90deg, #808000, #80F800, #808000, #800800, #808000)
+      rect x=320 y=0 w=320 h=360 fill=linear(90deg, #808000, #80F800, #808000, #800800, #808000)
+      rect x=640 y=0 w=320 h=360 fill=linear(90deg, #808000, #80F800, #808000, #800800, #808000)
+      rect x=960 y=0 w=320 h=360 fill=linear(90deg, #808000, #80F800, #808000, #800800, #808000)
+      rect x=1280 y=0 w=320 h=360 fill=linear(90deg, #808000, #80F800, #808000, #800800, #808000)
+      rect x=1600 y=0 w=320 h=360 fill=linear(90deg, #808000, #80F800, #808000, #800800, #808000)
+  anim #map x 0s:-640 2.5s:0~linear

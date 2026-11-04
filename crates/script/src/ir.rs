@@ -52,7 +52,10 @@ pub enum Ch {
     Tunnel, TunnelDepth, TunnelTwist, TunnelAngle, TunnelRadius, TunnelFog, // tunnel bend 0..1, travel, twist deg, roll deg, focal px, fog (look)
     Glass, GlassBlur, GlassDispersion, GlassThickness, GlassHighlight, GlassRim,
     Streak, Bokeh, Distortion, Aberration, Vignette, Halation, FilmGrain,
-    FluidTime,           // simulation time a fluid shows, s (identity unless remapped)
+    // distort pack (look): dir-blur length px + angle deg, radial blur amount, chromatic px,
+    // displace px + noise feature size px
+    Dblur, DblurAngle, Rblur, Chromatic, DisplaceAmount, DisplaceScale,
+    FluidTime,          // simulation time a fluid shows, s (identity unless remapped)
     PathOffset,          // text on a path: start offset along the path, px
     // 3D (scene3d objects use X Y Z RotX RotY Rot(=rz) Scale Sx Sy Opacity Color too)
     Sz,                  // object scale along z
@@ -79,7 +82,8 @@ impl Ch {
             | GradAngle | Grad0 | Grad1 | Grad2 | Grad3 | TimeSpan | Halftone | Sweep | Rays | Misreg | FluidTime | PathOffset | Rgbsplit | RgbsplitDx | RgbsplitDy | Glitch | GlitchRate | GlitchBlock | Vhs | Dither | Ascii
             | KaleidoAmount | KaleidoAngle | KaleidoZoom | Tunnel | TunnelDepth | TunnelTwist | TunnelAngle | TunnelRadius | TunnelFog
             | Glass | GlassBlur | GlassDispersion | GlassThickness | GlassHighlight | GlassRim
-            | Streak | Bokeh | Distortion | Aberration | Vignette | Halation | FilmGrain => Stage::Paint,
+            | Streak | Bokeh | Distortion | Aberration | Vignette | Halation | FilmGrain
+            | Dblur | DblurAngle | Rblur | Chromatic | DisplaceAmount | DisplaceScale => Stage::Paint,
             Sz | CamX | CamY | CamZ | LookX | LookY | LookZ | Fov | Roll | Ambient | Emissive | Intensity => Stage::PerFrame,
             Gen0 | Gen1 | Gen2 | Gen3 | Gen4 | Gen5 | Gen6 | Gen7 | Gen8 | Gen9 | Gen10 | Gen11 | Gen12 | Gen13 | Gen14 | Gen15 | Gen16 | Gen17 | Gen18 | Gen19 | Gen20 | Gen21 | Gen22 | Gen23 | Gen24 | Gen25 | Gen26 | Gen27 | Gen28 | Gen29 | Gen30 | Gen31 | Gen32 | Gen33 | Gen34 | Gen35 | Gen36 | Gen37 | Gen38 | Gen39 | Gen40 | Gen41 | Gen42 | Gen43 | Gen44 | Gen45 | Gen46 | Gen47 | Gen48 | Gen49 | Gen50 | Gen51 | Gen52 | Gen53 | Gen54 | Gen55 | Gen56 | Gen57 | Gen58 | Gen59 => Stage::PerFrame,
             Wght | Wdth | Opsz | Slnt | Axis0 | Axis1 | Axis2 | Axis3 | Tracking | W | H | LineH | Count => Stage::Layout,
@@ -138,6 +142,8 @@ impl Ch {
             "streak" => Ch::Streak, "bokeh" => Ch::Bokeh, "distortion" => Ch::Distortion,
             "aberration" => Ch::Aberration, "vignette" => Ch::Vignette, "halation" => Ch::Halation,
             "film-grain" => Ch::FilmGrain,
+            "dblur" => Ch::Dblur, "dblur-angle" => Ch::DblurAngle, "rblur" => Ch::Rblur, "chromatic" => Ch::Chromatic,
+            "displace-amount" => Ch::DisplaceAmount, "displace-scale" => Ch::DisplaceScale,
             _ => return gen_ch(&s),
         })
     }
@@ -163,7 +169,7 @@ impl Ch {
     pub fn is_axis(self) -> bool {
         matches!(self, Ch::Wght | Ch::Wdth | Ch::Opsz | Ch::Slnt | Ch::Axis0 | Ch::Axis1 | Ch::Axis2 | Ch::Axis3)
     }
-    pub const NAMES: [&'static str; 86] = [
+    pub const NAMES: [&'static str; 92] = [
         "x", "y", "z", "px", "py", "scale", "sx", "sy", "rot", "rotx", "roty", "opacity", "blur", "glow", "brightness",
         "saturate", "contrast", "hue", "fill", "color", "stroke", "trim-start", "trim", "reveal", "mask-x", "grad-angle", "grad0",
         "grad1", "grad2", "grad3", "wght", "tracking", "w", "h", "count", "halftone", "sweep", "rays", "misreg",
@@ -171,6 +177,7 @@ impl Ch {
         "kaleido-amount", "kaleido-angle", "kaleido-zoom", "tunnel", "tunnel-depth", "tunnel-twist", "tunnel-angle", "tunnel-radius", "tunnel-fog",
         "glass", "glass-blur", "glass-dispersion", "glass-thickness", "glass-highlight", "glass-rim",
         "streak", "bokeh", "distortion", "aberration", "vignette", "halation", "film-grain",
+        "dblur", "dblur-angle", "rblur", "chromatic", "displace-amount", "displace-scale",
         "wdth", "opsz", "slnt", "path-offset",
         "sz", "cam-x", "cam-y", "cam-z", "look-x", "look-y", "look-z", "fov", "roll", "ambient", "emissive", "intensity",
     ];

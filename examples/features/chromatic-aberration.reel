@@ -1,0 +1,20 @@
+// Chromatic aberration: a lens fringe, not a channel offset. The color channels scale apart
+// around a center, so the edges far from it split into a smooth red-to-blue spectrum while
+// the middle stays sharp. `chromatic=` is the red / blue shift in px at the layer's far
+// corner; it kicks on each beat here.
+//
+//   agentfx render examples/features/chromatic-aberration.reel -o chromatic-aberration.mp4
+video "Chromatic aberration" size=640x360 fps=30 captions=off
+theme studio-dark
+  bg #05060A
+
+scene lens dur=3s bg=#05060A
+  layer #lens x=0 y=0 w=640 h=360 chromatic=2 chromatic-center=50%,50%
+    rect x=40 y=40 w=560 h=280 radius=18 fill=#00000000 stroke=#F4F1EA sw=3
+    rect x=0 y=118 w=640 h=2 fill=#F4F1EA
+    rect x=0 y=240 w=640 h=2 fill=#F4F1EA
+    rect x=158 y=0 w=2 h=360 fill=#F4F1EA
+    rect x=480 y=0 w=2 h=360 fill=#F4F1EA
+    text "PRISM" x=50% y=50% anchor=center size=110 weight=900 color=#F4F1EA
+  anim #lens chromatic 0s:2 0.12s:16~out-cubic 0.9s:2~out-cubic 1.5s:2 1.62s:16~out-cubic 2.4s:2~out-cubic
+  anim #lens scale 0s:1 0.12s:1.04~out-cubic 0.9s:1~out-cubic 1.5s:1 1.62s:1.04~out-cubic 2.4s:1~out-cubic

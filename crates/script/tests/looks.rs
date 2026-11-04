@@ -195,3 +195,66 @@ fn lenses_accept_animatable_channels() {
     assert!(s.tracks.iter().any(|t| t.property.ends_with(".halation")));
     assert!(agentfx_ir::validate::validate(&s, &dir).is_ok());
 }
+
+/// (node, effect index) of the first effect matching `f`.
+fn find_fx(s: &Scene, f: impl Fn(&Effect) -> bool) -> (usize, usize) {
+    s.nodes.iter().enumerate().find_map(|(i, n)| n.effects.iter().position(&f).map(|k| (i, k))).expect("effect")
+}
+
+fn has_track(s: &Scene, node: usize, k: usize, field: &str) -> bool {
+    s.tracks.iter().any(|t| t.node == node && t.property == format!("effects.{k}.{field}"))
+}
+
+#[test]
+fn distort_examples_emit_their_effects_and_tracks() {
+    let (s, dir) = scene_of("examples/features/directional-blur.reel");
+    let (n, k) = find_fx(&s, |e| matches!(e, Effect::DirBlur { .. }));
+    assert!(has_track(&s, n, k, "length") && has_track(&s, n, k, "angle"));
+    assert!(agentfx_ir::validate::validate(&s, &dir).is_ok());
+
+    let (s, dir) = scene_of("examples/features/radial-blur.reel");
+    let modes: Vec<String> = s.nodes.iter().flat_map(|n| &n.effects).filter_map(|e| match e { Effect::RadialBlur { mode, .. } => Some(mode.clone()), _ => None }).collect();
+    assert_eq!(modes, ["zoom", "spin"]);
+    let (n, k) = find_fx(&s, |e| matches!(e, Effect::RadialBlur { mode, .. } if mode == "spin"));
+    let Effect::RadialBlur { center, .. } = &s.nodes[n].effects[k] else { unreachable!() };
+    assert_eq!(*center, [320.0, 180.0], "50%,50% of the dial's box");
+    assert!(has_track(&s, n, k, "amount"));
+    assert!(agentfx_ir::validate::validate(&s, &dir).is_ok());
+
+    let (s, dir) = scene_of("examples/features/chromatic-aberration.reel");
+    let (n, k) = find_fx(&s, |e| matches!(e, Effect::Chromatic { .. }));
+    assert!(has_track(&s, n, k, "amount"));
+    assert_eq!(k + 1, s.nodes[n].effects.len(), "chromatic is the last look");
+    assert!(agentfx_ir::validate::validate(&s, &dir).is_ok());
+
+    let (s, dir) = scene_of("examples/features/displace.reel");
+    let (n, k) = find_fx(&s, |e| matches!(e, Effect::Displace { source: None, .. }));
+    assert!(has_track(&s, n, k, "amount"));
+    let Effect::Displace { speed, seed, octaves, .. } = &s.nodes[n].effects[k] else { unreachable!() };
+    assert_eq!((*speed, *seed, *octaves), (0.8, 7, 3));
+    let (n, k) = find_fx(&s, |e| matches!(e, Effect::Displace { source: Some(_), .. }));
+    let src = s.nodes[n].effects[k].source_node().unwrap();
+    assert!(s.nodes[src].hidden, "the map is drawn only as the map");
+    assert!(s.nodes[n].children.contains(&src), "the map is a child");
+    assert_eq!(s.nodes[src].name, "map");
+    assert!(agentfx_ir::validate::validate(&s, &dir).is_ok());
+}
+
+#[test]
+fn distort_lint() {
+    let head = "video \"x\" size=640x360 fps=30 captions=off\nscene a dur=1s\n";
+    let has = |src: &str, code: &str, hint: &str| {
+        let e = errors(&format!("{head}{src}"));
+        assert!(e.iter().any(|d| d.code == code && d.hint.contains(hint)), "{src}: want {code} with `{hint}`, got {e:#?}");
+    };
+    has("  rect #r w=10 h=10 dblur=10 dblur-angel=3\n", "E_LOOK", "dblur-angle");
+    has("  rect #r w=10 h=10 dblur=-4\n", "E_VALUE", "0..2000");
+    has("  rect #r w=10 h=10 rblur=2\n", "E_VALUE", "0..1");
+    has("  rect #r w=10 h=10 rblur=20 rblur-mode=swirl\n", "E_VALUE", "spin");
+    has("  rect #r w=10 h=10 chromatic=4 chromatic-center=middle\n", "E_VALUE", "50%,40%");
+    has("  rect #r w=10 h=10 displace=wobble\n", "E_VALUE", "displace=noise");
+    has("  rect #r w=10 h=10 displace=#nope\n", "E_LOOK", "child");
+    has("  rect #r w=10 h=10 displace-amount=4\n", "E_LOOK", "displace=noise");
+    has("  rect #r w=10 h=10 displace=noise displace-octaves=2.5\n", "E_LOOK", "displace-octaves=3");
+    assert!(errors(&format!("{head}  layer #g w=100 h=100 rblur=40 rblur-mode=spin rblur-center=40,60 chromatic=-3 dblur=12 dblur-angle=90deg displace=#m displace-amount=8\n    rect w=10 h=10\n    rect #m w=100 h=100 fill=#FF8000\n")).is_empty());
+}

@@ -1199,6 +1199,49 @@ pub enum Effect {
         #[serde(default, skip_serializing_if = "is_zero")]
         time_offset: f64,
     },
+    // ---- distort pack (render/src/warp.rs): resample the subtree, output covers the frame
+    /// Directional (motion-style) blur: every pixel averages the subtree along a line of
+    /// `length` scene px through it, at `angle` degrees (0 = horizontal, clockwise in y down).
+    DirBlur {
+        length: f64,
+        #[serde(default)]
+        angle: f64,
+    },
+    /// Radial blur around `center` (node px). mode "zoom": each pixel averages the subtree
+    /// on the segment from itself toward the center over `amount` (0..1) of the distance (a
+    /// zoom streak); mode "spin": over an arc of `amount` degrees around the center.
+    RadialBlur {
+        amount: f64,
+        #[serde(default = "zoom_mode")]
+        mode: String,
+        center: [f64; 2],
+    },
+    /// Lens chromatic aberration: the color channels scale apart around `center` (node px), a
+    /// spectral fringe (red inward, blue outward for positive `amount`) that grows with the
+    /// distance from the center; `amount` = the red / blue shift in scene px at the farthest
+    /// corner of the subtree's ink box (negative: blue inward).
+    Chromatic {
+        amount: f64,
+        center: [f64; 2],
+    },
+    /// Displacement map: every pixel samples the subtree offset by up to `amount` scene px.
+    /// Without `source` the offset is a seeded fractal noise field (feature size `scale` scene
+    /// px, `octaves`, drifting with `speed` x time); with `source` (a node, drawn only as the
+    /// map: mark it `hidden`) the map's red channel moves x and green moves y (0.5 = no move,
+    /// transparent = no move), like After Effects' displacement map.
+    Displace {
+        amount: f64,
+        #[serde(default = "displace_scale")]
+        scale: f64,
+        #[serde(default = "three")]
+        octaves: u32,
+        #[serde(default)]
+        speed: f64,
+        #[serde(default)]
+        seed: u64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        source: Option<NodeId>,
+    },
     /// Liquid glass, using the composited layer alpha as a height field. `strength` is the
     /// refractive offset in scene px; `blur` frosts the sampled image; `dispersion` separates
     /// the red and blue samples. The remaining fields shade the alpha edge.
@@ -1284,6 +1327,12 @@ fn six() -> u32 {
 fn texture_map() -> String {
     "texture".into()
 }
+fn zoom_mode() -> String {
+    "zoom".into()
+}
+fn displace_scale() -> f64 {
+    80.0
+}
 
 impl Effect {
     /// Animatable fields of a look/light effect (`effects.<i>.<field>` tracks), in parameter
@@ -1307,6 +1356,10 @@ impl Effect {
             Effect::Color { .. } => &["brightness", "saturate", "contrast", "hue", "tint"],
             Effect::Kaleido { .. } => &["amount", "angle", "zoom", "cx", "cy"],
             Effect::Tunnel { .. } => &["amount", "depth", "twist", "angle", "radius", "fog"],
+            Effect::DirBlur { .. } => &["length", "angle"],
+            Effect::RadialBlur { .. } => &["amount", "cx", "cy"],
+            Effect::Chromatic { .. } => &["amount", "cx", "cy"],
+            Effect::Displace { .. } => &["amount", "scale", "speed"],
             _ => &[],
         }
     }
@@ -1366,6 +1419,13 @@ impl Effect {
             (Effect::Tunnel { twist, .. }, "twist") => *twist,
             (Effect::Tunnel { radius, .. }, "radius") => *radius,
             (Effect::Tunnel { fog, .. }, "fog") => *fog,
+            (Effect::DirBlur { length, .. }, "length") => *length,
+            (Effect::DirBlur { angle, .. }, "angle") => *angle,
+            (Effect::RadialBlur { amount, .. } | Effect::Chromatic { amount, .. } | Effect::Displace { amount, .. }, "amount") => *amount,
+            (Effect::RadialBlur { center, .. } | Effect::Chromatic { center, .. }, "cx") => center[0],
+            (Effect::RadialBlur { center, .. } | Effect::Chromatic { center, .. }, "cy") => center[1],
+            (Effect::Displace { scale, .. }, "scale") => *scale,
+            (Effect::Displace { speed, .. }, "speed") => *speed,
             _ => 0.0,
         }
     }
@@ -1377,13 +1437,23 @@ impl Effect {
             Effect::Grain { live, .. } => *live,
             Effect::Glitch { .. } | Effect::Vhs { .. } => true,
             Effect::Tunnel { speed, .. } => *speed != 0.0,
+            Effect::Displace { speed, source: None, .. } => *speed != 0.0,
             Effect::Optics { grain, .. } => *grain != 0.0,
             _ => false,
         }
     }
-    /// A space warp (kaleido, tunnel): samples the subtree elsewhere, output covers the frame.
+    /// A space warp (kaleido, tunnel, the distort pack): samples the subtree elsewhere, output
+    /// covers the frame.
     pub fn is_warp(&self) -> bool {
-        matches!(self, Effect::Kaleido { .. } | Effect::Tunnel { .. })
+        matches!(self, Effect::Kaleido { .. } | Effect::Tunnel { .. } | Effect::DirBlur { .. } | Effect::RadialBlur { .. } | Effect::Chromatic { .. } | Effect::Displace { .. })
+    }
+    /// The node the effect draws as an input (a matte's source, a displacement map).
+    pub fn source_node(&self) -> Option<NodeId> {
+        match self {
+            Effect::Matte { source, .. } => Some(*source),
+            Effect::Displace { source, .. } => *source,
+            _ => None,
+        }
     }
     /// A look/light effect (X6/X8), handled by `compiler/src/look.rs` / `light.rs`.
     pub fn is_look(&self) -> bool {

@@ -1,5 +1,5 @@
 //! CSS easing functions, including the discontinuity's before side.
-use crate::{Easing, StepPos};
+use crate::{CurveKind, EaseDir, Easing, StepPos};
 
 /// Evaluate CSS easing at `x`; `before_flag` selects the preceding side of a step.
 pub fn ease(e: &Easing, x: f64, before_flag: bool) -> f64 {
@@ -16,6 +16,7 @@ pub fn ease(e: &Easing, x: f64, before_flag: bool) -> f64 {
             if x <= 1.0 { step = step.min(jumps); }
             step / jumps
         }
+        Easing::Curve { kind, dir, a, b } => curve(kind, dir, a, b, x),
         Easing::Spring { mass, stiffness, damping, velocity } => {
             assert!(mass.is_finite() && mass > 0.0 && stiffness.is_finite() && stiffness > 0.0
                 && damping.is_finite() && damping > 0.0 && velocity.is_finite(),
@@ -69,6 +70,77 @@ pub fn ease(e: &Easing, x: f64, before_flag: bool) -> f64 {
             }
             sy(t)
         }
+    }
+}
+
+/// Closed-form easing family (`Easing::Curve`) at `x`, clamped to [0, 1]. The single
+/// definition: the compiler samples it (HTML `linear()`, baked tracks) through this too.
+pub fn curve(kind: CurveKind, dir: EaseDir, a: f64, b: f64, x: f64) -> f64 {
+    let x = if x.is_nan() { 0.0 } else { x.clamp(0.0, 1.0) };
+    if x == 0.0 || x == 1.0 {
+        return x;
+    }
+    let out_defined = matches!(kind, CurveKind::Elastic | CurveKind::Bounce | CurveKind::Bounces);
+    let f_in = |x: f64| if out_defined { 1.0 - curve_out(kind, a, b, 1.0 - x) } else { curve_in(kind, a, x) };
+    match dir {
+        EaseDir::In => f_in(x),
+        EaseDir::Out => 1.0 - f_in(1.0 - x),
+        EaseDir::InOut if x < 0.5 => f_in(2.0 * x) * 0.5,
+        EaseDir::InOut => 1.0 - f_in(2.0 - 2.0 * x) * 0.5,
+    }
+}
+
+fn curve_in(kind: CurveKind, a: f64, x: f64) -> f64 {
+    use std::f64::consts::FRAC_PI_2;
+    match kind {
+        CurveKind::Power => x.powf(a),
+        CurveKind::Sine => 1.0 - (x * FRAC_PI_2).cos(),
+        CurveKind::Expo => if x <= 0.0 { 0.0 } else { (10.0 * (x - 1.0)).exp2() },
+        CurveKind::Circ => 1.0 - (1.0 - x * x).max(0.0).sqrt(),
+        CurveKind::Back => x * x * ((a + 1.0) * x - a),
+        _ => unreachable!("out-defined curve"),
+    }
+}
+
+fn curve_out(kind: CurveKind, a: f64, b: f64, x: f64) -> f64 {
+    use std::f64::consts::TAU;
+    if x <= 0.0 { return 0.0; }
+    if x >= 1.0 { return 1.0; }
+    match kind {
+        CurveKind::Elastic => {
+            // GSAP's elastic.out(amplitude, period)
+            let amp = a.max(1.0);
+            let shift = b / TAU * (1.0 / amp).asin();
+            amp * (-10.0 * x).exp2() * ((x - shift) * TAU / b).sin() + 1.0
+        }
+        CurveKind::Bounce => {
+            const N: f64 = 7.5625;
+            const D: f64 = 2.75;
+            if x < 1.0 / D {
+                N * x * x
+            } else if x < 2.0 / D {
+                let x = x - 1.5 / D;
+                N * x * x + 0.75
+            } else if x < 2.5 / D {
+                let x = x - 2.25 / D;
+                N * x * x + 0.9375
+            } else {
+                let x = x - 2.625 / D;
+                N * x * x + 0.984375
+            }
+        }
+        CurveKind::Bounces => {
+            let n = a.max(1.0).round();
+            let fall = 1.0 / (1.0 + n.sqrt());
+            if x <= fall {
+                (x / fall).powi(2)
+            } else {
+                let phase = (x - fall) / (1.0 - fall) * n;
+                let u = phase.fract();
+                1.0 - 0.5_f64.powf(phase.floor() + 1.0) * 4.0 * u * (1.0 - u)
+            }
+        }
+        _ => unreachable!("in-defined curve"),
     }
 }
 
@@ -184,6 +256,42 @@ mod tests {
         assert_eq!(ease(&e, 1.5, false), 1.0);
         let flat = Easing::CubicBezier(0.0, 0.0, 0.0, 1.0);
         assert!((ease(&flat, 0.001, false) - 0.028).abs() < 1e-5);
+    }
+    #[test]
+    fn curves() {
+        use CurveKind::*;
+        use EaseDir::*;
+        let c = |k, d, a, b, x| curve(k, d, a, b, x);
+        // endpoints and clamping for every family and direction
+        for (k, a, b) in [(Power, 3.0, 0.0), (Sine, 0.0, 0.0), (Expo, 0.0, 0.0), (Circ, 0.0, 0.0), (Back, 1.70158, 0.0), (Elastic, 1.0, 0.3), (Bounce, 0.0, 0.0), (Bounces, 3.0, 0.0)] {
+            for d in [In, Out, InOut] {
+                assert_eq!(c(k, d, a, b, 0.0), 0.0);
+                assert_eq!(c(k, d, a, b, 1.0), 1.0);
+                assert_eq!(c(k, d, a, b, -1.0), 0.0);
+                assert_eq!(c(k, d, a, b, 2.0), 1.0);
+                // in-out is point-symmetric about (0.5, 0.5)
+                for x in [0.1, 0.3, 0.45] {
+                    let s = c(k, InOut, a, b, x) + c(k, InOut, a, b, 1.0 - x);
+                    assert!((s - 1.0).abs() < 1e-12, "{k:?} {x}");
+                }
+            }
+        }
+        // power2.out = 1 - (1-x)^3 (GSAP)
+        assert!((c(Power, Out, 3.0, 0.0, 0.5) - 0.875).abs() < 1e-12);
+        assert!((c(Sine, In, 0.0, 0.0, 0.5) - (1.0 - std::f64::consts::FRAC_PI_4.cos())).abs() < 1e-12);
+        // back overshoots, elastic oscillates past 1, bounce never exceeds 1
+        let back_max = (1..100).map(|i| c(Back, Out, 1.70158, 0.0, i as f64 / 100.0)).fold(0.0, f64::max);
+        assert!((back_max - 1.1).abs() < 0.01, "{back_max}");
+        assert!((1..100).any(|i| c(Elastic, Out, 1.0, 0.3, i as f64 / 100.0) > 1.0));
+        assert!((1..1000).all(|i| c(Bounce, Out, 0.0, 0.0, i as f64 / 1000.0) <= 1.0));
+        // Penner bounce touches 1 at x = 1/2.75 and dips back to 0.75
+        assert!((c(Bounce, Out, 0.0, 0.0, 1.0 / 2.75) - 1.0).abs() < 1e-12);
+        assert!((c(Bounce, Out, 0.0, 0.0, 1.5 / 2.75) - 0.75).abs() < 1e-12);
+        // the Easing wrapper routes to the same function
+        let e = Easing::Curve { kind: Elastic, dir: Out, a: 1.0, b: 0.3 };
+        assert_eq!(ease(&e, 0.37, false), c(Elastic, Out, 1.0, 0.3, 0.37));
+        let json: Easing = serde_json::from_str(r#"{"curve": {"kind": "elastic", "dir": "in-out", "a": 1, "b": 0.3}}"#).unwrap();
+        assert_eq!(json, Easing::Curve { kind: Elastic, dir: InOut, a: 1.0, b: 0.3 });
     }
     #[test]
     fn step_boundaries() {

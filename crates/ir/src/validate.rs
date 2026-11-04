@@ -609,6 +609,11 @@ fn check_easing(e: &Easing, ctx: &str, errors: &mut Vec<String>) {
         Easing::CubicBezier(x1,y1,x2,y2) if ![x1,y1,x2,y2].iter().all(|v| v.is_finite()) || !(0.0..=1.0).contains(&x1) || !(0.0..=1.0).contains(&x2) => Some("cubic-bezier parameters must be finite and x1/x2 in [0,1]"),
         Easing::Spring { mass, stiffness, damping, velocity } if ![mass,stiffness,damping,velocity].iter().all(|v| v.is_finite()) || mass <= 0.0 || stiffness <= 0.0 || damping < 0.0 => Some("spring parameters must be finite, mass/stiffness > 0 and damping >= 0"),
         Easing::Spring { damping: 0.0, .. } => Some("spring with zero damping never settles; settling-time easing requires damping > 0"),
+        Easing::Curve { a, b, .. } if !a.is_finite() || !b.is_finite() => Some("curve parameters must be finite"),
+        Easing::Curve { kind: crate::CurveKind::Power, a, .. } if a <= 0.0 => Some("power curve exponent `a` must be > 0"),
+        Easing::Curve { kind: crate::CurveKind::Back, a, .. } if a < 0.0 => Some("back curve overshoot `a` must be >= 0"),
+        Easing::Curve { kind: crate::CurveKind::Elastic, b, .. } if b <= 0.0 => Some("elastic curve period `b` must be > 0"),
+        Easing::Curve { kind: crate::CurveKind::Bounces, a, .. } if a < 1.0 => Some("bounces curve count `a` must be >= 1"),
         _ => None,
     };
     if let Some(problem) = problem { errors.push(format!("{ctx}: {problem}")); }

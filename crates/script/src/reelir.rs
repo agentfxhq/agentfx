@@ -101,7 +101,8 @@ fn easing(e: &Ease) -> Value {
         Ease::Steps(n) => json!({"steps": [n, "jump-end"]}),
         Ease::Hold => json!({"steps": [1, "jump-end"]}),
         Ease::Spring { stiffness, damping, mass, velocity } => json!({"spring": {"mass": mass, "stiffness": stiffness, "damping": damping, "velocity": velocity}}),
-        Ease::Bounce { .. } => json!({"cubic-bezier": [0.33, 1.0, 0.68, 1.0]}),
+        Ease::Bounce { bounces } => json!({"curve": {"kind": "bounces", "dir": "out", "a": bounces, "b": 0.0}}),
+        Ease::Curve { kind, dir, a, b } => json!({"curve": {"kind": kind, "dir": dir, "a": a, "b": b}}),
     }
 }
 

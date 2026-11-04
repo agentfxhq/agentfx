@@ -1,0 +1,29 @@
+// GSAP easing names: exact Penner/GSAP curves, kept symbolic in the IR (`curve`).
+// power1..4.in/out/inOut, sine, expo, circ, back.out(s), elastic.out(amp,period), bounce.out, none.
+video "Easing" size=1280x720 fps=30 captions=off
+
+scene ease dur=3.4s
+  label #t1 "power2.out" x=4% y=8% color=$muted
+  ellipse #a w=44 h=44 fill=$mint x=24% y=10% anchor=center
+  label #t2 "power4.inOut" x=4% y=20% color=$muted
+  ellipse #b w=44 h=44 fill=$mint x=24% y=22% anchor=center
+  label #t3 "expo.out" x=4% y=32% color=$muted
+  ellipse #c w=44 h=44 fill=$mint x=24% y=34% anchor=center
+  label #t4 "circ.inOut" x=4% y=44% color=$muted
+  ellipse #d w=44 h=44 fill=$mint x=24% y=46% anchor=center
+  label #t5 "back.out(1.7)" x=4% y=56% color=$muted
+  ellipse #e w=44 h=44 fill=$warn x=24% y=58% anchor=center
+  label #t6 "elastic.out(1,0.3)" x=4% y=68% color=$muted
+  ellipse #f w=44 h=44 fill=$warn x=24% y=70% anchor=center
+  label #t7 "bounce.out" x=4% y=80% color=$muted
+  ellipse #g w=44 h=44 fill=$warn x=24% y=82% anchor=center
+  label #t8 "none" x=4% y=92% color=$muted
+  ellipse #h w=44 h=44 fill=$muted x=24% y=94% anchor=center
+  @0s anim #a x 0s:0 1.6s:560~power2.out
+  @0s anim #b x 0s:0 1.6s:560~power4.inOut
+  @0s anim #c x 0s:0 1.6s:560~expo.out
+  @0s anim #d x 0s:0 1.6s:560~circ.inOut
+  @0s anim #e x 0s:0 1.6s:560~back.out(1.7)
+  @0s anim #f x 0s:0 1.6s:560~elastic.out(1,0.3)
+  @0s anim #g x 0s:0 1.6s:560~bounce.out
+  @0s anim #h x 0s:0 1.6s:560~none

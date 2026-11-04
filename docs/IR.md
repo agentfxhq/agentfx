@@ -658,7 +658,11 @@ the swept ink); a matte target is damaged when its source changes.
 Easing (externally tagged JSON): `"linear"`, `{"cubic-bezier": [x1,y1,x2,y2]}` (solved
 like Chrome's `gfx::CubicBezier`), `{"steps": [n, "jump-end"]}` (CSS step positions incl.
 the before-flag rule), `{"spring": {"mass", "stiffness", "damping", "velocity"}}`
-(closed-form damped oscillator stretched over the segment, settles exactly at 1).
+(closed-form damped oscillator stretched over the segment, settles exactly at 1),
+`{"curve": {"kind", "dir", "a", "b"}}` (closed-form Penner / GSAP families, `timing::curve`:
+`kind` = `power` (exponent `a`) | `sine` | `expo` | `circ` | `back` (overshoot `a`) |
+`elastic` (amplitude `a` >= 1, period `b`) | `bounce` (Penner) | `bounces` (reel's
+`bounce(n)`, `a` = n); `dir` = `in` | `out` | `in-out`).
 
 ### Scene 3D
 

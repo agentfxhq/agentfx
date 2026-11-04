@@ -46,7 +46,7 @@ fn fx_name(e: &Effect) -> &'static str {
 }
 
 /// Every ported effect (the default of `AGENTFX_GPU_FX`).
-pub const ALL_FX: &str = "riso,halftone,rays,shadow,rgbsplit,glitch,vhs,grain,glass,optics,blur,drop-shadow,glow,kaleido,tunnel";
+pub const ALL_FX: &str = "riso,halftone,rays,shadow,rgbsplit,glitch,vhs,grain,glass,optics,blur,drop-shadow,glow,kaleido,tunnel,dir-blur,radial-blur,chromatic,displace";
 
 /// `AGENTFX_GPU_FX=riso,halftone,...` picks the effects that may start a chain (move the
 /// frame to the GPU); default: all ported effects (`ALL_FX`). A chain starts only for a
@@ -73,7 +73,7 @@ fn start_px(name: &str) -> usize {
 /// Effects that join an active chain even when not `enabled` (`AGENTFX_GPU_JOIN=0`: never).
 fn joins(name: &str) -> bool {
     static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_JOIN").map_or(true, |v| v != "0")) && matches!(name, "blur" | "drop-shadow" | "glow" | "rgbsplit" | "glitch" | "vhs" | "grain" | "glass" | "optics" | "kaleido" | "tunnel")
+    *ON.get_or_init(|| agentfx_ir::env::var("AGENTFX_GPU_JOIN").map_or(true, |v| v != "0")) && matches!(name, "blur" | "drop-shadow" | "glow" | "rgbsplit" | "glitch" | "vhs" | "grain" | "glass" | "optics" | "kaleido" | "tunnel" | "dir-blur" | "radial-blur" | "chromatic" | "displace")
 }
 
 /// `AGENTFX_GPU_RESIDENT=0`: read the frame back after every GPU effect (no residency
@@ -91,7 +91,21 @@ enum Op {
     Blur(f64),
     DropShadow([f64; 4], f64, i64, i64),
     Glow([f64; 4], f64, f64),
-    Warp(crate::warp::WarpCfg),
+    /// a warp and the map of a `displace` by a layer
+    Warp(Box<crate::warp::WarpCfg>, Option<std::sync::Arc<[u8]>>),
+}
+
+/// Effect name of a warp kind (`AGENTFX_GPU_FX`, routing, profiles).
+fn warp_name(kind: u32) -> &'static str {
+    use crate::warp::*;
+    match kind {
+        KALEIDO => "kaleido",
+        TUNNEL_TEXTURE | TUNNEL_PERSPECTIVE => "tunnel",
+        DIR_BLUR => "dir-blur",
+        ZOOM_BLUR | SPIN_BLUR => "radial-blur",
+        CHROMATIC => "chromatic",
+        _ => "displace",
+    }
 }
 
 impl Op {
@@ -102,7 +116,7 @@ impl Op {
             Op::Blur(..) => "blur",
             Op::DropShadow(..) => "drop-shadow",
             Op::Glow(..) => "glow",
-            Op::Warp(c) => if c.kind == crate::warp::KALEIDO { "kaleido" } else { "tunnel" },
+            Op::Warp(c, _) => warp_name(c.kind),
         }
     }
 
@@ -113,7 +127,7 @@ impl Op {
             Op::Blur(sigma) => crate::effects::blur(buf, w, h, *sigma),
             Op::DropShadow(c, sigma, dx, dy) => crate::effects::drop_shadow(buf, w, h, *c, *sigma, *dx, *dy),
             Op::Glow(c, k, sigma) => crate::effects::glow(buf, w, h, *c, *k, *sigma),
-            Op::Warp(c) => crate::warp::apply(c, buf, w, h),
+            Op::Warp(c, map) => crate::warp::apply_map(c, buf, map.as_deref(), w, h),
         }
     }
 
@@ -235,10 +249,21 @@ impl Chain {
 
     /// warp::apply on the GPU; false: run it on the CPU (buffer current).
     pub fn warp(&mut self, c: &crate::warp::WarpCfg, buf: &mut [u8], w: usize, h: usize) -> bool {
+        self.warp_map(c, None, buf, w, h)
+    }
+
+    /// warp::apply_map on the GPU (the map of a `displace` by a layer is uploaded); false:
+    /// run it on the CPU (buffer current).
+    pub fn warp_map(&mut self, c: &crate::warp::WarpCfg, map: Option<&[u8]>, buf: &mut [u8], w: usize, h: usize) -> bool {
         if c.identity() {
             return true;
         }
-        self.step(Op::Warp(*c), buf, w, h)
+        let map = map.filter(|m| c.uses_map() && m.len() == w * h * 4);
+        if c.uses_map() && map.is_none() {
+            // nothing to displace by: the buffer stays as it is (like warp::apply_map)
+            return true;
+        }
+        self.step(Op::Warp(Box::new(*c), map.map(std::sync::Arc::from)), buf, w, h)
     }
 
     /// effects::glow on the GPU; false: run it on the CPU (buffer current).
@@ -411,8 +436,8 @@ fn encode(a: &mut Active, op: &Op, _host: Option<&[u8]>) -> anyhow::Result<()> {
         }
         Op::DropShadow(c, sigma, dx, dy) => under_tinted(a, *c, 1.0, *sigma, *dx, *dy),
         Op::Glow(c, k, sigma) => under_tinted(a, *c, *k, *sigma, 0, 0),
-        Op::Warp(c) => {
-            warp(a, c);
+        Op::Warp(c, map) => {
+            warp(a, c, map.as_deref());
             Ok(())
         }
     }
@@ -1035,6 +1060,11 @@ pub fn self_test(g: &'static Gpu) -> anyhow::Result<()> {
         r#"{"type":"kaleido","segments":6,"mirror":true,"center":[40,30],"angle":17,"zoom":1.25,"amount":1}"#,
         r#"{"type":"tunnel","amount":0.8,"depth":0.4,"speed":1.5,"twist":20,"angle":8,"radius":40,"fog":0.2,"fog_color":[0.1,0,0.2,0.8],"center":[50,30],"map":"texture"}"#,
         r#"{"type":"tunnel","amount":0.6,"depth":0.4,"speed":1.5,"twist":20,"angle":8,"radius":40,"fog":0.2,"center":[50,30],"map":"perspective"}"#,
+        r#"{"type":"dir-blur","length":18,"angle":25}"#,
+        r#"{"type":"radial-blur","amount":0.3,"mode":"zoom","center":[40,30]}"#,
+        r#"{"type":"radial-blur","amount":20,"mode":"spin","center":[40,30]}"#,
+        r#"{"type":"chromatic","amount":5,"center":[48,32]}"#,
+        r#"{"type":"displace","amount":9,"scale":20,"octaves":3,"speed":0.5,"seed":4}"#,
     ];
     for j in warps {
         let e: Effect = serde_json::from_str(j)?;
@@ -1059,18 +1089,30 @@ pub fn self_test(g: &'static Gpu) -> anyhow::Result<()> {
 // ---------------------------------------------------------------- warps
 
 /// warp::apply: one pass over a copy of the frame (warp.wgsl, same f32 expressions).
-fn warp(a: &mut Active, c: &crate::warp::WarpCfg) {
+fn warp(a: &mut Active, c: &crate::warp::WarpCfg, map: Option<&[u8]>) {
     let (w, h) = (a.w, a.h);
     let mut q = Params::default();
     q.u(0, w as u32).u(1, h as u32).u(2, c.kind).i(3, c.dom[0]).i(4, c.dom[1]).i(5, c.dom[2]).i(6, c.dom[3]);
     q.f(7, c.c[0]).f(8, c.c[1]).f(9, c.amount).f(10, c.ang).f(11, c.seg).f(12, c.hseg).f(13, c.invseg).u(14, c.mirror as u32).f(15, c.invzoom);
     q.f(16, c.rc).f(17, c.rs).f(18, c.f).f(19, c.invf).u(20, c.plane as u32).f(21, c.rho).f(22, c.yc).f(23, c.cc).f(24, c.gap);
     q.f(25, c.twist).f(26, c.dz).f(27, c.fog).f(28, c.fogc[0]).f(29, c.fogc[1]).f(30, c.fogc[2]).f(31, c.fogc[3]).f(32, c.k).f(33, c.tcx).f(34, c.ty1);
+    // distort pack (warp.wgsl `WTAB`: the tap table from word 48)
+    q.u(35, c.n).f(36, c.step[0]).f(37, c.step[1]).f(38, c.org[0]).f(39, c.org[1]).f(40, c.inv).f(41, c.drift[0]).f(42, c.drift[1]);
+    q.u(43, c.oct).u(44, c.seed[0]).u(45, c.seed[1]).f(46, c.disp);
+    for (i, t) in c.tab[..c.n as usize].iter().enumerate() {
+        for (j, v) in t.iter().enumerate() {
+            q.f(48 + 4 * i + j, *v);
+        }
+    }
     let len = (w * h * 4) as u64;
     let px = a.px.clone();
     let src = a.temp(len);
     a.job.enc.copy_buffer_to_buffer(&px, 0, &src, 0, len);
-    a.job.pass("warp", WARP, 2, "warp", &q, &[&px, &src], [w as u32, h as u32]);
+    let mb = match map {
+        Some(m) => a.upload(m),
+        None => a.temp(16),
+    };
+    a.job.pass("warp", WARP, 3, "warp", &q, &[&px, &src, &mb], [w as u32, h as u32]);
 }
 
 // ---------------------------------------------------------------- tests
@@ -1295,6 +1337,32 @@ pub(crate) mod tests {
                 eprintln!("{name:28} opaque={opaque:5} max {mx} psnr {psnr:.1} dB, >1: {:.4} %", over * 100.0);
                 assert!(mx <= 1, "{name} (opaque {opaque}): max {mx}");
                 assert_ne!(cpu, img, "{name}: warp did nothing (bad fixture)");
+            }
+        }
+    }
+
+    /// Displace by a map layer: GPU within 1/255 of the CPU reference.
+    #[test]
+    fn gpu_displace_map_matches_cpu_within_one() {
+        let Some(g) = device() else { return };
+        let (w, h) = (403, 297);
+        let map = crate::warp::tests::map_fixture(w, h);
+        for opaque in [false, true] {
+            let img = poster(w, h, opaque);
+            for amount in [6.0, -25.0, 120.0] {
+                let e = Effect::Displace { amount, scale: 80.0, octaves: 3, speed: 0.0, seed: 0, source: Some(1) };
+                let p = crate::warp::tests::params(&e, 0.0);
+                let c = crate::warp::cfg(&e, &p, crate::warp::tests::M, [0.0, 0.0, w as f64, h as f64], [0, 0, w as i32, h as i32]).unwrap();
+                let mut cpu = img.clone();
+                crate::warp::apply_map(&c, &mut cpu, Some(&map), w, h);
+                let mut gpu = img.clone();
+                let mut chain = Chain::on(g);
+                assert!(chain.warp_map(&c, Some(&map), &mut gpu, w, h), "not run on GPU");
+                chain.finish(&mut gpu).unwrap();
+                let (mx, psnr, _) = diff(&cpu, &gpu);
+                eprintln!("displace-map {amount:6} opaque={opaque:5} max {mx} psnr {psnr:.1} dB");
+                assert!(mx <= 1, "displace map {amount} (opaque {opaque}): max {mx}");
+                assert_ne!(cpu, img, "did nothing (bad fixture)");
             }
         }
     }

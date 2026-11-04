@@ -973,7 +973,7 @@ impl<'a> Painter<'a> {
                 let mut d = vec![false; scene.nodes.len()];
                 for &x in sched.preorder.iter().rev() {
                     let nd = &scene.nodes[x];
-                    d[x] = nd.motion_blur.is_some() || nd.time.is_some() || nd.effects.iter().any(|e| matches!(e, Effect::Matte { .. })) || matches!(nd.content, Some(Content::Cloud(_)) | Some(Content::Fluid(_))) || matches!(&nd.content, Some(Content::Scene3d(c)) if c.screens().next().is_some()) || nd.children.iter().any(|&c| d[c]);
+                    d[x] = nd.motion_blur.is_some() || nd.time.is_some() || nd.effects.iter().any(|e| e.source_node().is_some()) || matches!(nd.content, Some(Content::Cloud(_)) | Some(Content::Fluid(_))) || matches!(&nd.content, Some(Content::Scene3d(c)) if c.screens().next().is_some()) || nd.children.iter().any(|&c| d[c]);
                 }
                 d
             },
@@ -2147,7 +2147,7 @@ impl<'a> Painter<'a> {
                         crate::look::apply(e, p, buf, w, h, &cx);
                     }
                 }
-                e @ (Effect::Kaleido { .. } | Effect::Tunnel { .. }) => {
+                e @ (Effect::Kaleido { .. } | Effect::Tunnel { .. } | Effect::DirBlur { .. } | Effect::RadialBlur { .. } | Effect::Chromatic { .. } | Effect::Displace { .. }) => {
                     // the subtree's own ink (without the warps' frame-wide margins) is the
                     // default sampling domain
                     let dm: f64 = node.effects.iter().filter(|x| x.is_warp()).count() as f64 * crate::warp::margin([scene.width as f64, scene.height as f64]);
@@ -2155,31 +2155,20 @@ impl<'a> Painter<'a> {
                     let ink = self.sub_ink(true, f, n).map(|r| [r[0] + dm, r[1] + dm, r[2] - 2.0 * dm, r[3] - 2.0 * dm]).filter(|r| r[2] > 0.0 && r[3] > 0.0).unwrap_or(full);
                     let m = k(&view.states[n].chain).as_coeffs();
                     if let Some(c) = crate::warp::cfg(e, p, m, ink, o) {
-                        if !gch.warp(&c, buf, w, h) {
-                            crate::warp::apply(&c, buf, w, h);
+                        // displace by a layer: the map as drawn in this view
+                        let map = match e.source_node().filter(|_| c.uses_map() && !c.identity()) {
+                            Some(src) => Some(self.source_pixmap(view, f, src, o)?),
+                            None => None,
+                        };
+                        let map = map.as_ref().map(|m| m.data_as_u8_slice());
+                        if !gch.warp_map(&c, map, buf, w, h) {
+                            crate::warp::apply_map(&c, buf, map, w, h);
                         }
                     }
                 }
                 Effect::Matte { source, mode } => {
                     gch.flush(buf);
-                    let src = *source;
-                    let m = {
-                        // the source as drawn in this view (it is hidden in the normal pass)
-                        let (w2, h2) = (o[2] as u16, o[3] as u16);
-                        let mut c2 = self.take_ctx(w2, h2, 0);
-                        let b2 = Affine::translate((-o[0] as f64, -o[1] as f64));
-                        let reg = [o[0] as f64, o[1] as f64, o[2] as f64, o[3] as f64];
-                        self.fluid_matte += 1;
-                        let r = self.draw_node(&mut c2, view, f, src, b2, reg, 1.0, true);
-                        self.fluid_matte -= 1;
-                        r?;
-                        let _p = crate::prof::scope_px("vello.rasterize", w2 as u64 * h2 as u64);
-                        c2.flush();
-                        let mut mp = Pixmap::new(w2, h2);
-                        c2.render(&mut mp, &mut self.res);
-                        self.give_ctx(c2);
-                        mp
-                    };
+                    let m = self.source_pixmap(view, f, *source, o)?;
                     let buf = px.data_as_u8_slice_mut();
                     effects::matte(buf, m.data_as_u8_slice(), mode.starts_with("luma"), mode.ends_with("inverted"));
                 }
@@ -2187,6 +2176,25 @@ impl<'a> Painter<'a> {
         }
         gch.flush(px.data_as_u8_slice_mut());
         Ok(px)
+    }
+
+    /// An effect's input node (a matte source, a displacement map) as drawn in this view over
+    /// the raster `o` (it is hidden in the normal pass).
+    fn source_pixmap(&mut self, view: &View, f: usize, src: NodeId, o: [i32; 4]) -> Result<Pixmap> {
+        let (w2, h2) = (o[2] as u16, o[3] as u16);
+        let mut c2 = self.take_ctx(w2, h2, 0);
+        let b2 = Affine::translate((-o[0] as f64, -o[1] as f64));
+        let reg = [o[0] as f64, o[1] as f64, o[2] as f64, o[3] as f64];
+        self.fluid_matte += 1;
+        let r = self.draw_node(&mut c2, view, f, src, b2, reg, 1.0, true);
+        self.fluid_matte -= 1;
+        r?;
+        let _p = crate::prof::scope_px("vello.rasterize", w2 as u64 * h2 as u64);
+        c2.flush();
+        let mut mp = Pixmap::new(w2, h2);
+        c2.render(&mut mp, &mut self.res);
+        self.give_ctx(c2);
+        Ok(mp)
     }
 
     /// A single large blur / glow on a raster `o` far bigger than what can reach the output
@@ -2653,6 +2661,10 @@ fn fx_name(e: &Effect) -> &'static str {
         Effect::Ascii { .. } => "fx.ascii",
         Effect::Kaleido { .. } => "fx.kaleido",
         Effect::Tunnel { .. } => "fx.tunnel",
+        Effect::DirBlur { .. } => "fx.dir-blur",
+        Effect::RadialBlur { .. } => "fx.radial-blur",
+        Effect::Chromatic { .. } => "fx.chromatic",
+        Effect::Displace { .. } => "fx.displace",
         Effect::Glass { .. } => "fx.glass",
         Effect::Optics { .. } => "fx.optics",
     }

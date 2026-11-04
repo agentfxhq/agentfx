@@ -1,6 +1,7 @@
-//! Space warps: `kaleido` (N-fold mirror symmetry) and `tunnel` (fly down a tube made of the
-//! subtree), node effects that resample the subtree's offscreen buffer
-//! (`vraster::effect_pixmap`). The CPU reference here and `gpu/warp.wgsl` evaluate the same
+//! Space warps: `kaleido` (N-fold mirror symmetry), `tunnel` (fly down a tube made of the
+//! subtree) and the distort pack (`dir-blur`, `radial-blur` zoom / spin, `chromatic`,
+//! `displace` by fractal noise or a map layer), node effects that resample the subtree's
+//! offscreen buffer (`vraster::effect_pixmap`). The CPU reference here and `gpu/warp.wgsl` evaluate the same
 //! f32 expression trees: every multiply-add is an explicit fma on both sides (llvmpipe
 //! fuses a * b + c), atan2 / sin / cos are the polynomials below (no libm vs. driver
 //! transcendentals), and everything per frame (sin / cos of the roll, 1 / amount, scales)
@@ -10,6 +11,9 @@
 //! Sampling is bilinear on premultiplied RGBA8 inside the sampling domain (`dom`, the
 //! layer box): kaleido mirrors at its edges, the texture tunnel wraps around it (the angle
 //! around the tube and the depth), the perspective tunnel reads transparent outside it.
+//! The distort pack samples the whole buffer (the frame) and reads transparent outside it;
+//! its blurs average up to `MAXTAP` samples per pixel with host-made tap tables (offsets,
+//! rotations, spectral weights), so the per-pixel work is fma chains identical on both sides.
 use crate::look::{NPARAM, TIME};
 use agentfx_ir::Effect;
 use rayon::prelude::*;
@@ -28,6 +32,16 @@ pub const CLEAR: u32 = 2;
 pub const KALEIDO: u32 = 0;
 pub const TUNNEL_TEXTURE: u32 = 1;
 pub const TUNNEL_PERSPECTIVE: u32 = 2;
+pub const DIR_BLUR: u32 = 3;
+pub const ZOOM_BLUR: u32 = 4;
+pub const SPIN_BLUR: u32 = 5;
+pub const CHROMATIC: u32 = 6;
+pub const DISPLACE_NOISE: u32 = 7;
+pub const DISPLACE_MAP: u32 = 8;
+
+/// Most samples per pixel of a distort blur (directional, zoom, spin) and of the chromatic
+/// fringe (odd counts there). Longer streaks space their samples further apart (bilinear).
+pub const MAXTAP: usize = 64;
 
 /// One warp at one frame, resolved to buffer px (host side, shared by CPU and GPU).
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -66,6 +80,34 @@ pub struct WarpCfg {
     pub k: f32,
     pub tcx: f32,
     pub ty1: f32,
+    // distort pack: tap count, directional step (buffer px per tap index), noise origin
+    // (buffer px), 1 / feature size, drift (noise units), octaves, seeds of the x / y fields,
+    // displacement px (noise: per unit of fbm; map: per unit of (channel - alpha / 2))
+    pub n: u32,
+    pub step: [f32; 2],
+    pub org: [f32; 2],
+    pub inv: f32,
+    pub drift: [f32; 2],
+    pub oct: u32,
+    pub seed: [u32; 2],
+    pub disp: f32,
+    /// taps: dir-blur [offset index, -, weight, -]; zoom [scale, -, weight, -]; spin [cos,
+    /// sin, weight, -]; chromatic [scale, red weight, green weight, blue weight]
+    pub tab: [[f32; 4]; MAXTAP],
+}
+
+impl WarpCfg {
+    fn base(dom: [i32; 4]) -> WarpCfg {
+        WarpCfg {
+            kind: KALEIDO, c: [0.0; 2], dom, amount: 0.0, ang: 0.0, seg: 1.0, hseg: 0.5, invseg: 1.0, mirror: true, invzoom: 1.0,
+            rc: 1.0, rs: 0.0, f: 1.0, invf: 1.0, plane: true, rho: 1.0, yc: 0.0, cc: -1.0, gap: 0.0, twist: 0.0, dz: 0.0, fog: 0.0, fogc: [0.0; 4], k: 1.0, tcx: 0.0, ty1: 0.0,
+            n: 0, step: [0.0; 2], org: [0.0; 2], inv: 1.0, drift: [0.0; 2], oct: 1, seed: [0; 2], disp: 0.0, tab: [[0.0; 4]; MAXTAP],
+        }
+    }
+    /// Needs the map buffer (`apply_map`).
+    pub fn uses_map(&self) -> bool {
+        self.kind == DISPLACE_MAP
+    }
 }
 
 impl WarpCfg {
@@ -74,6 +116,7 @@ impl WarpCfg {
         match self.kind {
             KALEIDO => self.amount <= 0.0,
             TUNNEL_PERSPECTIVE => self.amount <= 0.0 && self.dz == 0.0 && self.twist == 0.0 && self.rs == 0.0 && self.rc == 1.0 && self.fog == 0.0,
+            DIR_BLUR..=DISPLACE_MAP => self.amount == 0.0,
             _ => false,
         }
     }
@@ -89,6 +132,13 @@ pub fn cfg(e: &Effect, p: &[f64; NPARAM], m: [f64; 6], ink: [f64; 4], o: [i32; 4
     let rot = m[1].atan2(m[0]);
     let rect = match e {
         Effect::Kaleido { rect, .. } | Effect::Tunnel { rect, .. } => *rect,
+        Effect::DirBlur { .. } | Effect::RadialBlur { .. } | Effect::Chromatic { .. } | Effect::Displace { .. } => {
+            if w <= 0 || h <= 0 {
+                return None;
+            }
+            let ink_b = [ink[0] - o[0] as f64, ink[1] - o[1] as f64, ink[0] + ink[2] - o[0] as f64, ink[1] + ink[3] - o[1] as f64];
+            return Some(distort(e, p, s, rot, &to_buf, ink_b, [0, 0, w, h]));
+        }
         _ => return None,
     };
     let d = match rect {
@@ -110,10 +160,7 @@ pub fn cfg(e: &Effect, p: &[f64; NPARAM], m: [f64; 6], ink: [f64; 4], o: [i32; 4
     if dom[2] <= dom[0] || dom[3] <= dom[1] {
         return None;
     }
-    let mut c = WarpCfg {
-        kind: KALEIDO, c: [0.0; 2], dom, amount: p[0].clamp(0.0, 1.0) as f32, ang: 0.0, seg: 1.0, hseg: 0.5, invseg: 1.0, mirror: true, invzoom: 1.0,
-        rc: 1.0, rs: 0.0, f: 1.0, invf: 1.0, plane: true, rho: 1.0, yc: 0.0, cc: -1.0, gap: 0.0, twist: 0.0, dz: 0.0, fog: 0.0, fogc: [0.0; 4], k: 1.0, tcx: 0.0, ty1: 0.0,
-    };
+    let mut c = WarpCfg { amount: p[0].clamp(0.0, 1.0) as f32, ..WarpCfg::base(dom) };
     match e {
         Effect::Kaleido { segments, mirror, .. } => {
             let n = (*segments).clamp(2, 64) as f64;
@@ -163,6 +210,109 @@ pub fn cfg(e: &Effect, p: &[f64; NPARAM], m: [f64; 6], ink: [f64; 4], o: [i32; 4
         _ => return None,
     }
     Some(c)
+}
+
+/// `n` (>= 2) values spread evenly over [lo, hi].
+fn spread(n: usize, lo: f64, hi: f64) -> impl Iterator<Item = f64> {
+    (0..n).map(move |i| lo + (hi - lo) * i as f64 / (n - 1) as f64)
+}
+
+/// Samples for a streak of `len` buffer px: about one per px, 2..=MAXTAP.
+fn taps(len: f64) -> usize {
+    (len.abs().ceil() as usize + 1).clamp(2, MAXTAP)
+}
+
+/// The distort pack resolved for a buffer (`dom` = the whole buffer): `ink` = the subtree's
+/// ink box in buffer px (x0 y0 x1 y1, the reach of the radial effects), `s` / `rot` = the
+/// node's scale and rotation, `to_buf` = node px -> buffer px.
+fn distort(e: &Effect, p: &[f64; NPARAM], s: f64, rot: f64, to_buf: &dyn Fn(f64, f64) -> [f64; 2], ink: [f64; 4], dom: [i32; 4]) -> WarpCfg {
+    let mut c = WarpCfg::base(dom);
+    // farthest ink corner from a center (buffer px): the reach of zoom / spin / chromatic
+    let reach = |ctr: [f64; 2]| [(ink[0], ink[1]), (ink[2], ink[1]), (ink[0], ink[3]), (ink[2], ink[3])].iter().map(|(x, y)| (x - ctr[0]).hypot(y - ctr[1])).fold(1.0, f64::max);
+    match e {
+        Effect::DirBlur { .. } => {
+            let len = p[0].clamp(0.0, 2000.0) * s;
+            let n = taps(len);
+            let a = p[1].to_radians() + rot;
+            let d = len / (n - 1) as f64;
+            c.kind = DIR_BLUR;
+            c.amount = len as f32;
+            c.n = n as u32;
+            c.step = [(d * a.cos()) as f32, (d * a.sin()) as f32];
+            let wgt = (1.0 / n as f64) as f32;
+            for (i, k) in spread(n, -0.5 * (n - 1) as f64, 0.5 * (n - 1) as f64).enumerate() {
+                c.tab[i] = [k as f32, 0.0, wgt, 0.0];
+            }
+        }
+        Effect::RadialBlur { mode, .. } => {
+            let ctr = to_buf(p[1], p[2]);
+            let r = reach(ctr);
+            c.c = [ctr[0] as f32, ctr[1] as f32];
+            if mode == "spin" {
+                let a = p[0].clamp(0.0, 360.0).to_radians();
+                let n = taps(a * r);
+                c.kind = SPIN_BLUR;
+                c.amount = a as f32;
+                c.n = n as u32;
+                let wgt = (1.0 / n as f64) as f32;
+                for (i, t) in spread(n, -0.5 * a, 0.5 * a).enumerate() {
+                    c.tab[i] = [t.cos() as f32, t.sin() as f32, wgt, 0.0];
+                }
+            } else {
+                let a = p[0].clamp(0.0, 1.0);
+                let n = taps(a * r);
+                c.kind = ZOOM_BLUR;
+                c.amount = a as f32;
+                c.n = n as u32;
+                let wgt = (1.0 / n as f64) as f32;
+                for (i, k) in spread(n, 1.0, 1.0 - a).enumerate() {
+                    c.tab[i] = [k as f32, 0.0, wgt, 0.0];
+                }
+            }
+        }
+        Effect::Chromatic { .. } => {
+            let ctr = to_buf(p[1], p[2]);
+            let amt = p[0].clamp(-500.0, 500.0) * s;
+            let k = amt / reach(ctr);
+            // odd count: the middle tap is pure green
+            let mut n = (2 * amt.abs().ceil() as usize + 1).clamp(3, MAXTAP - 1);
+            if n % 2 == 0 {
+                n -= 1;
+            }
+            c.kind = CHROMATIC;
+            c.c = [ctr[0] as f32, ctr[1] as f32];
+            c.amount = amt as f32;
+            c.n = n as u32;
+            // u = 0 red .. 0.5 green .. 1 blue (tent weights), red sampled farther out
+            let w: Vec<[f64; 3]> = spread(n, 0.0, 1.0).map(|u| [(1.0 - 2.0 * u).max(0.0), 1.0 - (2.0 * u - 1.0).abs(), (2.0 * u - 1.0).max(0.0)]).collect();
+            let sum: [f64; 3] = std::array::from_fn(|ch| w.iter().map(|x| x[ch]).sum::<f64>().max(1e-12));
+            for (i, u) in spread(n, 0.0, 1.0).enumerate() {
+                let t = 2.0 * u - 1.0;
+                c.tab[i] = [(1.0 - k * t) as f32, (w[i][0] / sum[0]) as f32, (w[i][1] / sum[1]) as f32, (w[i][2] / sum[2]) as f32];
+            }
+        }
+        Effect::Displace { octaves, seed, source, .. } => {
+            let amt = p[0].clamp(-2000.0, 2000.0) * s;
+            c.amount = amt as f32;
+            if source.is_some() {
+                c.kind = DISPLACE_MAP;
+                c.disp = (amt / 127.5) as f32;
+            } else {
+                c.kind = DISPLACE_NOISE;
+                c.disp = amt as f32;
+                let o = to_buf(0.0, 0.0);
+                c.org = [o[0] as f32, o[1] as f32];
+                c.inv = (1.0 / (p[1].clamp(1.0, 1e5) * s).max(1e-6)) as f32;
+                let d = p[2] * p[TIME];
+                c.drift = [d as f32, (0.618 * d) as f32];
+                c.oct = (*octaves).clamp(1, 8);
+                let sd = *seed as u32;
+                c.seed = [sd, sd.wrapping_add(0x9e37_79b9)];
+            }
+        }
+        _ => {}
+    }
+    c
 }
 
 #[inline(always)]
@@ -333,6 +483,43 @@ pub fn pixel(c: &WarpCfg, src: &[u8], w: usize, x: usize, y: usize) -> [f32; 4] 
             let sy = fma(rs, sn, c.c[1]);
             sample(src, w, c.dom, MIRROR, fma(c.amount, sx - px, px), fma(c.amount, sy - py, py))
         }
+        DIR_BLUR..=SPIN_BLUR => {
+            let mut acc = [0.0f32; 4];
+            for t in &c.tab[..c.n as usize] {
+                let (sx, sy) = match c.kind {
+                    DIR_BLUR => (fma(c.step[0], t[0], px), fma(c.step[1], t[0], py)),
+                    ZOOM_BLUR => (fma(qx, t[0], c.c[0]), fma(qy, t[0], c.c[1])),
+                    _ => (fma(t[0], qx, fma(-t[1], qy, c.c[0])), fma(t[1], qx, fma(t[0], qy, c.c[1]))),
+                };
+                let v = sample(src, w, c.dom, CLEAR, sx, sy);
+                for k in 0..4 {
+                    acc[k] = fma(v[k], t[2], acc[k]);
+                }
+            }
+            acc
+        }
+        CHROMATIC => {
+            // per channel: its color and its own coverage; alpha = the widest coverage
+            let mut col = [0.0f32; 3];
+            let mut cov = [0.0f32; 3];
+            for t in &c.tab[..c.n as usize] {
+                let v = sample(src, w, c.dom, CLEAR, fma(qx, t[0], c.c[0]), fma(qy, t[0], c.c[1]));
+                for k in 0..3 {
+                    col[k] = fma(v[k], t[k + 1], col[k]);
+                    cov[k] = fma(v[3], t[k + 1], cov[k]);
+                }
+            }
+            [col[0], col[1], col[2], cov[0].max(cov[1]).max(cov[2])]
+        }
+        DISPLACE_NOISE => {
+            let nx = fma(px - c.org[0], c.inv, c.drift[0]);
+            let ny = fma(py - c.org[1], c.inv, c.drift[1]);
+            let dx = crate::generator::fbm(nx, ny, c.oct, c.seed[0]);
+            let dy = crate::generator::fbm(nx, ny, c.oct, c.seed[1]);
+            sample(src, w, c.dom, CLEAR, fma(dx, c.disp, px), fma(dy, c.disp, py))
+        }
+        // needs the map: `map_pixel`
+        DISPLACE_MAP => sample(src, w, c.dom, CLEAR, px, py),
         kind => {
             let dx = fma(c.rc, qx, c.rs * qy);
             let dy = fma(c.rc, qy, -(c.rs * qx));
@@ -361,15 +548,39 @@ pub fn pixel(c: &WarpCfg, src: &[u8], w: usize, x: usize, y: usize) -> [f32; 4] 
     }
 }
 
+/// The pixel (x, y) displaced by `map` (premultiplied, the size of `src`): red moves x,
+/// green moves y, by (channel - alpha / 2) x `disp` (transparent or mid-grey: no move).
+#[inline]
+pub fn map_pixel(c: &WarpCfg, src: &[u8], map: &[u8], w: usize, x: usize, y: usize) -> [f32; 4] {
+    let i = (y * w + x) * 4;
+    let (mr, mg, ma) = (map[i] as f32, map[i + 1] as f32, map[i + 3] as f32);
+    let dx = fma(-0.5, ma, mr);
+    let dy = fma(-0.5, ma, mg);
+    sample(src, w, c.dom, CLEAR, fma(dx, c.disp, x as f32 + 0.5), fma(dy, c.disp, y as f32 + 0.5))
+}
+
 /// Apply a resolved warp to a w x h premultiplied RGBA8 buffer in place.
 pub fn apply(c: &WarpCfg, buf: &mut [u8], w: usize, h: usize) {
+    apply_map(c, buf, None, w, h)
+}
+
+/// `apply` with the map of a `displace` by a layer (`uses_map`; without a map of the
+/// buffer's size that kind leaves the buffer as it is).
+pub fn apply_map(c: &WarpCfg, buf: &mut [u8], map: Option<&[u8]>, w: usize, h: usize) {
     if w == 0 || h == 0 || c.identity() {
+        return;
+    }
+    let map = map.filter(|m| m.len() == buf.len());
+    if c.uses_map() && map.is_none() {
         return;
     }
     let src = buf.to_vec();
     buf.par_chunks_mut(w * 4).enumerate().for_each(|(y, row)| {
         for x in 0..w {
-            let v = pixel(c, &src, w, x, y);
+            let v = match map {
+                Some(m) if c.uses_map() => map_pixel(c, &src, m, w, x, y),
+                _ => pixel(c, &src, w, x, y),
+            };
             for k in 0..4 {
                 row[x * 4 + k] = (v[k] + 0.5).clamp(0.0, 255.0) as u8;
             }
@@ -413,7 +624,48 @@ pub(crate) mod tests {
                 v.push((format!("tunnel-{map}-{a}"), e, p));
             }
         }
+        for (name, e) in distorts() {
+            v.push((name, e.clone(), params(&e, 1.7)));
+        }
         v
+    }
+
+    /// The distort pack cases (no map layer).
+    pub fn distorts() -> Vec<(String, Effect)> {
+        vec![
+            ("dir-blur-24-30".into(), Effect::DirBlur { length: 24.0, angle: 30.0 }),
+            ("dir-blur-200-0".into(), Effect::DirBlur { length: 200.0, angle: 0.0 }),
+            ("dir-blur-3-97".into(), Effect::DirBlur { length: 3.0, angle: 97.0 }),
+            ("zoom-0.25".into(), Effect::RadialBlur { amount: 0.25, mode: "zoom".into(), center: [150.0, 120.0] }),
+            ("zoom-1".into(), Effect::RadialBlur { amount: 1.0, mode: "zoom".into(), center: [10.0, 290.0] }),
+            ("spin-12".into(), Effect::RadialBlur { amount: 12.0, mode: "spin".into(), center: [201.0, 148.0] }),
+            ("spin-90".into(), Effect::RadialBlur { amount: 90.0, mode: "spin".into(), center: [60.0, 40.0] }),
+            ("chromatic-6".into(), Effect::Chromatic { amount: 6.0, center: [201.0, 148.0] }),
+            ("chromatic--2.5".into(), Effect::Chromatic { amount: -2.5, center: [120.0, 60.0] }),
+            ("chromatic-40".into(), Effect::Chromatic { amount: 40.0, center: [300.0, 200.0] }),
+            ("displace-noise".into(), Effect::Displace { amount: 14.0, scale: 60.0, octaves: 3, speed: 0.4, seed: 9, source: None }),
+            ("displace-noise-8oct".into(), Effect::Displace { amount: -30.0, scale: 150.0, octaves: 8, speed: 0.0, seed: 3, source: None }),
+        ]
+    }
+
+    pub fn params(e: &Effect, t: f64) -> [f64; NPARAM] {
+        let mut p = [0.0; NPARAM];
+        for (i, f) in e.look_fields().iter().enumerate() {
+            p[i] = e.look_field(f);
+        }
+        p[TIME] = t;
+        p
+    }
+
+    /// A displacement map: smooth red / green ramps and a transparent hole.
+    pub fn map_fixture(w: usize, h: usize) -> Vec<u8> {
+        (0..w * h).flat_map(|i| {
+            let (x, y) = (i % w, i / w);
+            let a: u32 = if (x as i64 - 80).pow(2) + (y as i64 - 60).pow(2) < 900 { 0 } else { 255 };
+            let r = ((x * 255 / w.max(1)) as u32 * a / 255) as u8;
+            let g = (((y * 7) % 256) as u32 * a / 255) as u8;
+            [r, g, 0, a as u8]
+        }).collect()
     }
 
     pub const M: [f64; 6] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0];
@@ -536,6 +788,134 @@ pub(crate) mod tests {
             let d = a.chunks_exact(4).zip(b.chunks_exact(4)).map(|(x, y)| x[3].abs_diff(y[3])).max().unwrap();
             assert!(d <= 1, "{map}: alpha after a long flight differs by {d} (sum {} vs {})", alpha(&a), alpha(&b));
         }
+    }
+
+    fn cfg_of(e: &Effect, p: &[f64; NPARAM], w: usize, h: usize) -> WarpCfg {
+        cfg(e, p, M, [0.0, 0.0, w as f64, h as f64], [0, 0, w as i32, h as i32]).unwrap()
+    }
+
+    #[test]
+    fn distort_zero_is_identity() {
+        let (w, h) = (120, 90);
+        let src = poster(w, h);
+        let zero = [
+            Effect::DirBlur { length: 0.0, angle: 30.0 },
+            Effect::RadialBlur { amount: 0.0, mode: "zoom".into(), center: [60.0, 45.0] },
+            Effect::RadialBlur { amount: 0.0, mode: "spin".into(), center: [60.0, 45.0] },
+            Effect::Chromatic { amount: 0.0, center: [60.0, 45.0] },
+            Effect::Displace { amount: 0.0, scale: 40.0, octaves: 3, speed: 1.0, seed: 1, source: None },
+        ];
+        for e in zero {
+            let p = params(&e, 0.5);
+            assert!(cfg_of(&e, &p, w, h).identity(), "{e:?}");
+            assert_eq!(run(&e, &p, &src, w, h), src, "{e:?}");
+        }
+    }
+
+    #[test]
+    fn dir_blur_streaks_along_its_angle() {
+        // a 1 px vertical white line: a horizontal blur of 21 px spreads it over 21 columns
+        // at 1/21 each; a vertical blur leaves it where it is
+        let (w, h) = (101, 41);
+        let mut src = vec![0u8; w * h * 4];
+        for y in 0..h {
+            src[(y * w + 50) * 4..][..4].copy_from_slice(&[255; 4]);
+        }
+        let blur = |angle: f64| run(&Effect::DirBlur { length: 20.0, angle }, &params(&Effect::DirBlur { length: 20.0, angle }, 0.0), &src, w, h);
+        let hz = blur(0.0);
+        let row = |b: &[u8], x: usize| b[(20 * w + x) * 4 + 3];
+        let lit: Vec<usize> = (0..w).filter(|&x| row(&hz, x) > 0).collect();
+        assert_eq!((lit[0], *lit.last().unwrap()), (40, 60), "{lit:?}");
+        assert!((row(&hz, 50) as i32 - 12).abs() <= 1, "{}", row(&hz, 50));
+        let vt = blur(90.0);
+        assert_eq!(row(&vt, 50), 255);
+        assert_eq!(row(&vt, 49), 0);
+    }
+
+    #[test]
+    fn radial_blurs_keep_the_center_sharp() {
+        let (w, h) = (161, 121);
+        let src = poster(w, h);
+        let c = [80.5, 60.5];
+        for mode in ["zoom", "spin"] {
+            let e = Effect::RadialBlur { amount: if mode == "zoom" { 0.6 } else { 40.0 }, mode: mode.into(), center: c };
+            let out = run(&e, &params(&e, 0.0), &src, w, h);
+            let at = |b: &[u8], x: usize, y: usize| b[(y * w + x) * 4..][..4].to_vec();
+            let d = at(&out, 80, 60).iter().zip(at(&src, 80, 60)).map(|(a, b)| a.abs_diff(b)).max().unwrap();
+            assert!(d <= 2, "{mode}: center moved by {d}");
+            assert_ne!(out, src, "{mode}");
+        }
+    }
+
+    #[test]
+    fn chromatic_splits_red_and_blue_apart() {
+        // a white disc on transparent: red shrinks toward the center, blue grows past it,
+        // green stays; alpha covers the widest
+        let (w, h) = (161, 161);
+        let src: Vec<u8> = (0..w * h).flat_map(|i| {
+            let (x, y) = ((i % w) as f64 - 80.0, (i / w) as f64 - 80.0);
+            if x.hypot(y) < 50.0 { [255u8; 4] } else { [0; 4] }
+        }).collect();
+        let e = Effect::Chromatic { amount: 8.0, center: [80.5, 80.5] };
+        let out = run(&e, &params(&e, 0.0), &src, w, h);
+        let px = |x: usize| &out[(80 * w + x) * 4..][..4];
+        // just inside the original edge (x = 80 + 48): red already gone, blue still there
+        let edge = px(128);
+        assert!(edge[0] < edge[2], "inside the edge red {} blue {}", edge[0], edge[2]);
+        // just outside (x = 80 + 52): only blue (and some green) spill out
+        let out_px = px(132);
+        assert!(out_px[2] > 0 && out_px[0] == 0, "outside {out_px:?}");
+        assert!(out.chunks_exact(4).all(|q| q[..3].iter().all(|c| *c <= q[3])), "premultiplied");
+    }
+
+    #[test]
+    fn displace_map_moves_by_red_and_green() {
+        let (w, h) = (160, 120);
+        let src = poster(w, h);
+        // alpha 254: green 127 is exactly half (no y move), red 254 moves x by amount x 127 / 127.5
+        let e = Effect::Displace { amount: 10.0 * 127.5 / 127.0, scale: 80.0, octaves: 3, speed: 0.0, seed: 0, source: Some(1) };
+        let p = params(&e, 0.0);
+        let c = cfg_of(&e, &p, w, h);
+        assert!(c.uses_map());
+        // a transparent map and an exact half grey move nothing
+        let mut b = src.clone();
+        apply_map(&c, &mut b, Some(&vec![0u8; w * h * 4]), w, h);
+        assert_eq!(b, src, "transparent map");
+        let mut b = src.clone();
+        apply_map(&c, &mut b, Some(&(0..w * h).flat_map(|_| [127u8, 127, 0, 254]).collect::<Vec<_>>()), w, h);
+        assert_eq!(b, src, "half grey map");
+        // full red: every pixel samples 10 px to the right
+        let red: Vec<u8> = (0..w * h).flat_map(|_| [254u8, 127, 0, 254]).collect();
+        let mut b = src.clone();
+        apply_map(&c, &mut b, Some(&red), w, h);
+        let mut worst = 0u8;
+        for y in 0..h {
+            for x in 0..w - 11 {
+                let a = &b[(y * w + x) * 4..][..4];
+                let s = &src[(y * w + x + 10) * 4..][..4];
+                worst = worst.max(a.iter().zip(s).map(|(p, q)| p.abs_diff(*q)).max().unwrap());
+            }
+        }
+        assert!(worst <= 2, "shift by 10 px off by {worst}");
+        // no map: unchanged
+        let mut b = src.clone();
+        apply_map(&c, &mut b, None, w, h);
+        assert_eq!(b, src);
+    }
+
+    #[test]
+    fn displace_noise_moves_with_time_only_when_it_has_speed() {
+        let (w, h) = (120, 90);
+        let src = poster(w, h);
+        let e = Effect::Displace { amount: 12.0, scale: 30.0, octaves: 4, speed: 0.5, seed: 4, source: None };
+        let a = run(&e, &params(&e, 0.0), &src, w, h);
+        assert_ne!(a, src);
+        assert_ne!(a, run(&e, &params(&e, 1.0), &src, w, h), "it evolves");
+        assert!(e.time_dependent());
+        let still = Effect::Displace { amount: 12.0, scale: 30.0, octaves: 4, speed: 0.0, seed: 4, source: None };
+        assert!(!still.time_dependent());
+        let other_seed = Effect::Displace { amount: 12.0, scale: 30.0, octaves: 4, speed: 0.5, seed: 5, source: None };
+        assert_ne!(a, run(&other_seed, &params(&other_seed, 0.0), &src, w, h), "seeded");
     }
 
     #[test]

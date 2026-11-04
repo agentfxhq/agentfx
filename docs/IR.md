@@ -814,6 +814,32 @@ already resident there), and are part of `--gpu=auto`'s start-up self-test.
 | `kaleido` | `segments`: 2..64 (default 6); `mirror`: bool (default true); `center`: [x, y]; `angle`: degrees (wedge start, default 0); `zoom`: 0.05..20 (default 1); `amount`: 0..1 (default 1); `rect` | amount, angle, zoom, cx, cy |
 | `tunnel` | `amount`: 0..1 (default 1); `depth`: floor units (default 0); `speed`: units/s (default 0, static); `twist`: degrees per unit of depth; `angle`: camera roll, degrees; `radius`: focal length px (required, 1..1e5); `fog`: >= 0 (default 0; fades by the distance from the camera, independent of the travel); `fog_color`: RGBA (default none = fade to transparent); `center`: [x, y]; `map`: `texture` (default) or `perspective`; `rect`; `time_offset`: seconds added to the travel clock (default 0; `agentfx frame` / clip slicing sets it) | amount, depth, twist, angle, radius, fog |
 
+The distort pack works the same way (look effects in `warp.rs` / `warp.wgsl`, output over
+the frame, never cached, CPU and GPU within 1/255) but samples the whole buffer and reads
+transparent outside it. Lengths are scene px, scaled with the node.
+
+| type | parameters | animatable fields |
+|---|---|---|
+| `dir-blur` | `length`: px 0..2000 (required); `angle`: degrees (default 0 = +x, 90 = +y; plus the node's rotation) | length, angle |
+| `radial-blur` | `amount` (required); `mode`: `zoom` (default; amount 0..1) or `spin` (amount 0..360 degrees); `center`: [x, y] | amount, cx, cy |
+| `chromatic` | `amount`: px -500..500 (required); `center`: [x, y] | amount, cx, cy |
+| `displace` | `amount`: px -2000..2000 (required); `scale`: noise feature size px 1..1e5 (default 80); `octaves`: 1..8 (default 3); `speed`: noise drift per second (default 0); `seed`: u64 (default 0); `source`: node id of a displacement map (optional; mark it `hidden`) | amount, scale, speed |
+
+Dir-blur: the mean of n = clamp(ceil(length) + 1, 2, 64) bilinear samples evenly spaced
+on the segment of `length` centered on the pixel. Radial blur, with r = the distance from
+`center` to the farthest corner of the subtree's ink box: zoom = the mean of samples at
+center + (p - center) k for k evenly from 1 to 1 - amount; spin = the mean over rotations
+by -amount/2 .. amount/2 about the center; n = clamp(ceil(streak at r) + 1, 2, 64).
+Chromatic: n odd taps (3..63) at center + (p - center)(1 - k t), t from -1 to 1,
+k = amount / r; red, green and blue weigh the taps by tents peaking at t = -1, 0, 1
+(each normalized), each channel's coverage likewise; alpha = the largest coverage.
+Displace without `source`: the pixel samples p + amount (fbm(q, seed), fbm(q, seed + 0x9e3779b9)),
+q = (p - node origin) / (scale x node scale) + speed t (1, 0.618), fbm = `generator::fbm`
+(gradient noise, octaves rotated and doubled). With `source`: the source drawn in the same
+view is the map: p + amount / 127.5 (R - A/2, G - A/2) (premultiplied 0..255 channels), so
+50% grey and transparent do not move. A `speed` other than 0 makes the node change every
+frame.
+
 Kaleido: a pixel at polar (r, a) around `center` reads radius r / zoom at angle
 a' = angle + ((a - angle) mod w), w = 360 / segments; with `mirror` the angle folds into
 the first half wedge (w/2 - |a' - w/2|), so neighbouring wedges are mirror images and the

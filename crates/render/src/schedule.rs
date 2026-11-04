@@ -372,8 +372,8 @@ pub fn build_v1(scene: &Scene, info: &dyn ContentInfo) -> Result<Schedule> {
     for &n in &preorder {
         let mut v = parents[n].map(|p| matte_srcs[p].clone()).unwrap_or_default();
         for e in &scene.nodes[n].effects {
-            if let Effect::Matte { source, .. } = e {
-                v.push(*source);
+            if let Some(source) = e.source_node() {
+                v.push(source);
             }
         }
         if let Some(Content::Scene3d(c)) = &scene.nodes[n].content {

@@ -171,6 +171,27 @@ pub fn validate(scene: &Scene, base_dir: &Path) -> Result<Vec<String>, Vec<Strin
                     if !finite(center) || !finite(&[*amount, *depth, *speed, *twist, *angle, *radius, *fog, *time_offset]) || !(0.0..=1.0).contains(amount) || *radius < 1.0 || *radius > 1e5 || *fog < 0.0 || depth.abs() > 1e6 || speed.abs() > 1e4 || fog_color.is_some_and(|c| c.iter().any(|v| !v.is_finite() || !(0.0..=1.0).contains(v))) || rect.is_some_and(|r| !finite(&r) || r[2] <= 0.0 || r[3] <= 0.0) { errors.push(format!("{ctx}: invalid tunnel (amount 0..1, radius 1..1e5 px, fog >= 0, fog_color 0..1, rect w/h > 0)")); }
                     if !matches!(map.as_str(), "texture" | "perspective") { errors.push(format!("{ctx}: tunnel map {map:?} (texture | perspective)")); }
                 }
+                Effect::DirBlur { length, angle } => {
+                    if !finite(&[*length, *angle]) || !(0.0..=2000.0).contains(length) { errors.push(format!("{ctx}: invalid dir-blur (length 0..2000 px, finite angle)")); }
+                }
+                Effect::RadialBlur { amount, mode, center } => {
+                    if !finite(center) || !amount.is_finite() { errors.push(format!("{ctx}: invalid radial-blur (finite amount and center)")); }
+                    match mode.as_str() {
+                        "zoom" => if !(0.0..=1.0).contains(amount) { errors.push(format!("{ctx}: radial-blur zoom amount 0..1 (fraction of the distance to the center)")); },
+                        "spin" => if !(0.0..=360.0).contains(amount) { errors.push(format!("{ctx}: radial-blur spin amount 0..360 (degrees)")); },
+                        _ => errors.push(format!("{ctx}: radial-blur mode {mode:?} (zoom | spin)")),
+                    }
+                }
+                Effect::Chromatic { amount, center } => {
+                    if !finite(center) || !amount.is_finite() || amount.abs() > 500.0 { errors.push(format!("{ctx}: invalid chromatic (amount -500..500 px, finite center)")); }
+                }
+                Effect::Displace { amount, scale, octaves, speed, source, .. } => {
+                    if !finite(&[*amount, *scale, *speed]) || amount.abs() > 2000.0 || !(1.0..=1e5).contains(scale) || !(1..=8).contains(octaves) || speed.abs() > 1e4 { errors.push(format!("{ctx}: invalid displace (amount -2000..2000 px, scale 1..1e5 px, octaves 1..8)")); }
+                    if let Some(s) = source {
+                        if *s >= n || *s == i { errors.push(format!("{ctx}: displace source {s} invalid")); }
+                        else if !scene.nodes[*s].hidden { warnings.push(format!("{ctx}: displace source {s} is not hidden (it is also drawn normally)")); }
+                    }
+                }
                 Effect::Glass { strength, blur, dispersion, thickness, highlight, rim, tint } => {
                     if !finite(&[*strength, *blur, *dispersion, *thickness, *highlight, *rim]) || *blur < 0.0 || *thickness < 0.0 || tint.is_some_and(|c| !finite(&c)) { errors.push(format!("{ctx}: invalid glass")); }
                 }

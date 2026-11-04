@@ -1274,7 +1274,7 @@ impl<'a> Em<'a> {
         for t in &tracks {
             if t.keys.len() > 1 && !t.is_static() {
                 let ok = matches!(t.ch, Ch::Rgbsplit | Ch::RgbsplitDx | Ch::RgbsplitDy | Ch::Glitch | Ch::GlitchRate | Ch::GlitchBlock | Ch::Vhs | Ch::Dither | Ch::Ascii | Ch::Glass | Ch::GlassBlur | Ch::GlassDispersion | Ch::GlassThickness | Ch::GlassHighlight | Ch::GlassRim | Ch::Streak | Ch::Bokeh | Ch::Distortion | Ch::Aberration | Ch::Vignette | Ch::Halation | Ch::FilmGrain | Ch::Halftone
-                    | Ch::KaleidoAmount | Ch::KaleidoAngle | Ch::KaleidoZoom | Ch::Tunnel | Ch::TunnelDepth | Ch::TunnelTwist | Ch::TunnelAngle | Ch::TunnelRadius | Ch::TunnelFog | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
+                    | Ch::KaleidoAmount | Ch::KaleidoAngle | Ch::KaleidoZoom | Ch::Tunnel | Ch::TunnelDepth | Ch::TunnelTwist | Ch::TunnelAngle | Ch::TunnelRadius | Ch::TunnelFog | Ch::Dblur | Ch::DblurAngle | Ch::Rblur | Ch::Chromatic | Ch::DisplaceAmount | Ch::DisplaceScale | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
                     || (t.ch == Ch::PathOffset && l.style.text_path.is_some())
                     || (t.ch == Ch::Morph && !l.style.morph.is_empty())
                     || (matches!(l.kind, Kind::Scene3d(_)) && s3d_emit::scene_ch(t.ch))
@@ -1312,6 +1312,25 @@ impl<'a> Em<'a> {
         }
         for (m, &k) in knockouts.iter().enumerate() {
             self.nodes[idx]["effects"][m]["source"] = json!(kids[first_child + k]);
+        }
+        // displace by a child layer: its node index, and it is drawn only as the map
+        let n_fx = self.nodes[idx]["effects"].as_array().map_or(0, |v| v.len());
+        for m in 0..n_fx {
+            let Some(name) = self.nodes[idx]["effects"][m]["source"].as_str().map(str::to_string) else { continue };
+            match l.children.iter().position(|c| c.name.as_deref() == Some(name.as_str())).filter(|_| !matches!(l.kind, Kind::Scene3d(_))) {
+                Some(k) => {
+                    let ci = kids[first_child + k];
+                    self.nodes[idx]["effects"][m]["source"] = json!(ci);
+                    self.nodes[ci]["hidden"] = json!(true);
+                }
+                None => {
+                    if let Some(o) = self.nodes[idx]["effects"][m].as_object_mut() {
+                        o.remove("source");
+                        o.insert("amount".into(), json!(0.0));
+                    }
+                    self.note("displace map layer");
+                }
+            }
         }
         // vignette overlay: its own element in the snapshot (`<id>~vig`), above the children
         let vig = format!("{}~vig", l.id);
@@ -1919,6 +1938,27 @@ impl<'a> Em<'a> {
                     }
                     effects.push(e);
                     for (ch, field) in [(Ch::Tunnel, "amount"), (Ch::TunnelDepth, "depth"), (Ch::TunnelTwist, "twist"), (Ch::TunnelAngle, "angle"), (Ch::TunnelRadius, "radius"), (Ch::TunnelFog, "fog")] { num_track(self, ch, k, field); }
+                }
+                Look::DirBlur { length, angle } => {
+                    effects.push(json!({"type": "dir-blur", "length": length, "angle": angle}));
+                    for (ch, field) in [(Ch::Dblur, "length"), (Ch::DblurAngle, "angle")] { num_track(self, ch, k, field); }
+                }
+                Look::RadialBlur { amount, spin, center } => {
+                    effects.push(json!({"type": "radial-blur", "amount": amount, "mode": if spin { "spin" } else { "zoom" }, "center": at(&center)}));
+                    num_track(self, Ch::Rblur, k, "amount");
+                }
+                Look::Chromatic { amount, center } => {
+                    effects.push(json!({"type": "chromatic", "amount": amount, "center": at(&center)}));
+                    num_track(self, Ch::Chromatic, k, "amount");
+                }
+                Look::Displace { amount, scale, octaves, speed, seed, source } => {
+                    let mut e = json!({"type": "displace", "amount": amount, "scale": scale, "octaves": octaves, "speed": speed, "seed": seed});
+                    // the child's name: `layer` patches in its node index once the children are emitted
+                    if let Some(s) = source {
+                        e["source"] = json!(s);
+                    }
+                    effects.push(e);
+                    for (ch, field) in [(Ch::DisplaceAmount, "amount"), (Ch::DisplaceScale, "scale")] { num_track(self, ch, k, field); }
                 }
                 Look::Rgbsplit { dx, dy, amount, mode } => {
                     effects.push(json!({"type": "rgbsplit", "dx": dx, "dy": dy, "amount": amount, "mode": mode}));

@@ -39,6 +39,9 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Stylised 3D | `scene3d #w camera=(0, 2, 8)` + `box`, `extrude "L"`, `screen src=#ui`; `orbit #w`, `dolly #w`, `lookat`, `spin`, `drop`, `assemble`, `stack` | implemented (planar shadows, no glTF) | letter blocks, product stages, UI on a screen in 3D |
 | Tunnel / fold into a tube | `tunnel=0 tunnel-speed=1` + `anim #grid tunnel 0s:0 1.5s:1`; `tunnel-map=perspective` for a grid already drawn in perspective | implemented (direct only) | vaporwave flythroughs, a cut that is a fold |
 | Kaleidoscope | `kaleido=8` + `anim #g kaleido-amount 0s:0 2s:1` / `kaleido-angle` | implemented (direct only) | psychedelic blooms of the real layer, music videos |
+| Directional / radial blur | `dblur=24 dblur-angle=30deg`; `rblur=0.3 rblur-mode=zoom\|spin rblur-center=50%,50%` + `anim #t dblur 0s:200 0.5s:0` | implemented (direct only) | whip-ins, speed lines, zoom bursts, spinning wheels |
+| Chromatic aberration | `chromatic=6 chromatic-center=50%,50%` + `anim #x chromatic 0s:2 0.1s:16 0.9s:2` | implemented (direct only) | lens fringe, beat hits, glitchy titles with a sharp center |
+| Displacement | `displace=noise displace-amount=12 displace-scale=80 displace-speed=0.5`; `displace=#map` (child layer: red moves x, green y) | implemented (direct only) | heat haze, wobble, liquid ripples, refraction by a moving map |
 | Depth of field | `camera dof=` | planned | |
 
 ## Transitions

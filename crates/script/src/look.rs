@@ -43,6 +43,14 @@ pub enum Look {
     Kaleido { segments: u32, mirror: bool, angle: f64, zoom: f64, amount: f64, center: [(f64, bool); 2] },
     /// fly down a tube made of the layer (`tunnel=1`); radius None = half the layer's short side
     Tunnel { amount: f64, depth: f64, speed: f64, twist: f64, angle: f64, radius: Option<f64>, fog: f64, fog_color: Option<Rgba>, center: [(f64, bool); 2], map: String },
+    /// directional blur (`dblur=24 dblur-angle=30deg`)
+    DirBlur { length: f64, angle: f64 },
+    /// zoom / spin blur (`rblur=0.3 rblur-mode=zoom|spin rblur-center=`)
+    RadialBlur { amount: f64, spin: bool, center: [(f64, bool); 2] },
+    /// lens chromatic aberration (`chromatic=6 chromatic-center=`)
+    Chromatic { amount: f64, center: [(f64, bool); 2] },
+    /// displacement (`displace=noise` or `displace=#map`, a child layer drawn only as the map)
+    Displace { amount: f64, scale: f64, octaves: u32, speed: f64, seed: u64, source: Option<String> },
 }
 
 impl Look {
@@ -67,6 +75,12 @@ impl Look {
             Look::Ascii { .. } => 13,
             Look::Glass { .. } => 14,
             Look::Optics { .. } => 15,
+            // distort pack: displace and the blurs resample the layer before the looks print
+            // on it (after the kaleido / tunnel warps); chromatic is a lens fringe at the end
+            Look::Displace { .. } => 1,
+            Look::DirBlur { .. } => 1,
+            Look::RadialBlur { .. } => 1,
+            Look::Chromatic { .. } => 16,
         }
     }
 }
@@ -90,9 +104,11 @@ pub const LOOK_KEYS: &[&str] = &[
     "tunnel", "tunnel-depth", "tunnel-speed", "tunnel-twist", "tunnel-angle", "tunnel-radius", "tunnel-fog", "tunnel-fog-color", "tunnel-center", "tunnel-map",
     "glass", "glass-blur", "glass-dispersion", "glass-thickness", "glass-highlight", "glass-rim", "glass-tint",
     "optics", "streak", "bokeh", "distortion", "aberration", "vignette", "halation", "film-grain",
+    "dblur", "dblur-angle", "rblur", "rblur-mode", "rblur-center", "chromatic", "chromatic-center",
+    "displace", "displace-amount", "displace-scale", "displace-octaves", "displace-speed",
     "shadow", "rays", "rays-length", "rays-strength", "rays-color",
 ];
-const PREFIXES: &[&str] = &["riso-", "halftone-", "grain-", "paper-", "rays-", "light-", "rgbsplit-", "glitch-", "vhs-", "dither-", "ascii-", "kaleido-", "tunnel-", "glass-", "optics-"];
+const PREFIXES: &[&str] = &["riso-", "halftone-", "grain-", "paper-", "rays-", "light-", "rgbsplit-", "glitch-", "vhs-", "dither-", "ascii-", "kaleido-", "tunnel-", "glass-", "optics-", "dblur-", "rblur-", "chromatic-", "displace-"];
 const SHADOW_ARGS: &[&str] = &["light", "height", "opacity", "color"];
 
 fn rgba(r: f64, g: f64, b: f64, a: f64) -> Rgba {
@@ -329,6 +345,55 @@ impl<'a> Ctx<'a> {
                 self.set_base(i, Ch::TunnelRadius, TV::N(r));
             }
             looks.push(Look::Tunnel { amount, depth, speed, twist, angle, radius, fog, fog_color, center, map });
+        }
+        // distort pack
+        if let Some(v) = n.props.get("displace") {
+            let raw = v.raw();
+            let source = match raw.as_str() {
+                "noise" => None,
+                r if r.starts_with('#') && r.len() > 1 => {
+                    let name = r[1..].to_string();
+                    let is_child = n.children.iter().any(|c| c.args.iter().any(|a| a.raw() == r));
+                    if !is_child {
+                        self.err("E_LOOK", format!("`displace={r}`: no child layer `{r}`"), format!("the map is a child of this layer, drawn only as the map: `layer ... displace={r}` with an indented `rect {r} ...` (or `displace=noise`)"), n.span);
+                    }
+                    Some(name)
+                }
+                other => {
+                    self.err("E_VALUE", format!("`displace={other}`: expected `noise` or `#layer`"), "write `displace=noise` (fractal noise) or `displace=#map` (a child layer: red moves x, green moves y)", n.span);
+                    None
+                }
+            };
+            let amount = self.look_range(n, "displace-amount", 12.0, -2000.0, 2000.0);
+            let scale = self.look_range(n, "displace-scale", 80.0, 1.0, 1e5);
+            let octaves = self.look_range(n, "displace-octaves", 3.0, 1.0, 8.0);
+            if octaves.fract() != 0.0 {
+                self.err("E_LOOK", format!("`displace-octaves={octaves}`: octaves are a whole number"), "write e.g. `displace-octaves=3`", n.span);
+            }
+            let speed = self.look_range(n, "displace-speed", 0.0, -1e4, 1e4);
+            for (ch, v) in [(Ch::DisplaceAmount, amount), (Ch::DisplaceScale, scale)] { self.set_base(i, ch, TV::N(v)); }
+            looks.push(Look::Displace { amount, scale, octaves: octaves.round() as u32, speed, seed, source });
+        } else if let Some(k) = ["displace-amount", "displace-scale", "displace-octaves", "displace-speed"].iter().find(|k| n.props.contains_key(**k)) {
+            self.err("E_LOOK", format!("`{k}` without `displace=`"), "add `displace=noise` or `displace=#map`", n.span);
+        }
+        if n.props.contains_key("dblur") {
+            let length = self.look_range(n, "dblur", 16.0, 0.0, 2000.0);
+            let angle = self.num(n, "dblur-angle").unwrap_or(0.0);
+            for (ch, v) in [(Ch::Dblur, length), (Ch::DblurAngle, angle)] { self.set_base(i, ch, TV::N(v)); }
+            looks.push(Look::DirBlur { length, angle });
+        }
+        if n.props.contains_key("rblur") {
+            let spin = self.look_enum(n, "rblur-mode", &["zoom", "spin"]).as_deref() == Some("spin");
+            let amount = if spin { self.look_range(n, "rblur", 10.0, 0.0, 360.0) } else { self.look_range(n, "rblur", 0.2, 0.0, 1.0) };
+            let center = self.look_center(n, "rblur-center");
+            self.set_base(i, Ch::Rblur, TV::N(amount));
+            looks.push(Look::RadialBlur { amount, spin, center });
+        }
+        if n.props.contains_key("chromatic") {
+            let amount = self.look_range(n, "chromatic", 4.0, -500.0, 500.0);
+            let center = self.look_center(n, "chromatic-center");
+            self.set_base(i, Ch::Chromatic, TV::N(amount));
+            looks.push(Look::Chromatic { amount, center });
         }
         if n.props.contains_key("glass") {
             let strength = self.look_range(n, "glass", 12.0, 0.0, 200.0);

@@ -3,9 +3,59 @@
 // P: 0 w, 1 h, 2 kind, 3..6 dom x0 y0 x1 y1 (i32), 7 cx, 8 cy, 9 amount,
 //    10 ang, 11 seg, 12 hseg, 13 invseg, 14 mirror, 15 invzoom,
 //    16 rc, 17 rs, 18 f, 19 invf, 20 plane, 21 rho, 22 yc, 23 cc, 24 gap,
-//    25 twist, 26 dz, 27 fog, 28..31 fog color (premultiplied 0..255), 32 k, 33 tcx, 34 ty1
+//    25 twist, 26 dz, 27 fog, 28..31 fog color (premultiplied 0..255), 32 k, 33 tcx, 34 ty1,
+//    distort pack: 35 n (taps), 36 37 step, 38 39 noise origin, 40 inv, 41 42 drift,
+//    43 octaves, 44 45 seeds, 46 disp, 48.. tap table (4 words per tap, see warp.rs)
+// map: the displacement map (displace by a layer), else a dummy
 @group(0) @binding(1) var<storage, read_write> px: array<u32>;
 @group(0) @binding(2) var<storage, read_write> src: array<u32>;
+@group(0) @binding(3) var<storage, read_write> dmap: array<u32>;
+
+fn tap(i: u32) -> vec4<f32> {
+    let b = 48u + 4u * i;
+    return vec4<f32>(pf(b), pf(b + 1u), pf(b + 2u), pf(b + 3u));
+}
+
+// generator::gnoise / fbm (f32, the same expressions as generator/common.wgsl)
+fn wn_corner(ix: i32, iy: i32, seed: u32, dx: f32, dy: f32) -> f32 {
+    let h = hash(ix, iy, seed);
+    let gx = fma(f32(h & 0xffffu), 1.0 / 32768.0, -1.0);
+    let gy = fma(f32(h >> 16u), 1.0 / 32768.0, -1.0);
+    return fma(gx, dx, gy * dy);
+}
+fn wn_fade(t: f32) -> f32 { return t * t * t * fma(t, fma(t, 6.0, -15.0), 10.0); }
+fn wnoise(x: f32, y: f32, seed: u32) -> f32 {
+    let xf = floor(x);
+    let yf = floor(y);
+    let ix = i32(xf);
+    let iy = i32(yf);
+    let tx = x - xf;
+    let ty = y - yf;
+    let sx = wn_fade(tx);
+    let sy = wn_fade(ty);
+    let a = wn_corner(ix, iy, seed, tx, ty);
+    let b = wn_corner(ix + 1, iy, seed, tx - 1.0, ty);
+    let c = wn_corner(ix, iy + 1, seed, tx, ty - 1.0);
+    let d = wn_corner(ix + 1, iy + 1, seed, tx - 1.0, ty - 1.0);
+    let ab = fma(b - a, sx, a);
+    let cd = fma(d - c, sx, c);
+    return fma(cd - ab, sy, ab);
+}
+fn wfbm(x0: f32, y0: f32, oct: u32, seed: u32) -> f32 {
+    var x = x0;
+    var y = y0;
+    var sum = 0.0;
+    var amp = 0.5;
+    for (var o = 0u; o < oct; o++) {
+        sum = fma(amp, wnoise(x, y, seed + o * 7919u), sum);
+        let nx = fma(1.6, x, 1.2 * y);
+        let ny = fma(-1.2, x, 1.6 * y);
+        x = nx;
+        y = ny;
+        amp = amp * 0.5;
+    }
+    return sum * 1.6;
+}
 
 const WPI: f32 = 3.1415927410125732;
 const WPIO2: f32 = 1.5707963705062866;
@@ -137,6 +187,55 @@ fn fade(z: f32, s: vec4<f32>) -> vec4<f32> {
     return fma(s - fc, vec4<f32>(f), fc);
 }
 
+// warp.rs `pixel` / `map_pixel` for the distort pack (kinds 3..8)
+fn distort_px(kind: u32, x: u32, y: u32, fx: f32, fy: f32, cx: f32, cy: f32, qx: f32, qy: f32) -> vec4<f32> {
+    let n = pu(35u);
+    if (kind <= 5u) {
+        var acc = vec4<f32>(0.0);
+        for (var i = 0u; i < n; i++) {
+            let t = tap(i);
+            var sx = 0.0;
+            var sy = 0.0;
+            if (kind == 3u) {
+                sx = fma(pf(36u), t.x, fx);
+                sy = fma(pf(37u), t.x, fy);
+            } else if (kind == 4u) {
+                sx = fma(qx, t.x, cx);
+                sy = fma(qy, t.x, cy);
+            } else {
+                sx = fma(t.x, qx, fma(-t.y, qy, cx));
+                sy = fma(t.y, qx, fma(t.x, qy, cy));
+            }
+            acc = fma(sample(2u, sx, sy), vec4<f32>(t.z), acc);
+        }
+        return acc;
+    }
+    if (kind == 6u) {
+        var col = vec3<f32>(0.0);
+        var cov = vec3<f32>(0.0);
+        for (var i = 0u; i < n; i++) {
+            let t = tap(i);
+            let v = sample(2u, fma(qx, t.x, cx), fma(qy, t.x, cy));
+            col = fma(v.xyz, t.yzw, col);
+            cov = fma(vec3<f32>(v.w), t.yzw, cov);
+        }
+        return vec4<f32>(col, max(max(cov.x, cov.y), cov.z));
+    }
+    let disp = pf(46u);
+    if (kind == 7u) {
+        let nx = fma(fx - pf(38u), pf(40u), pf(41u));
+        let ny = fma(fy - pf(39u), pf(40u), pf(42u));
+        let dx = wfbm(nx, ny, pu(43u), pu(44u));
+        let dy = wfbm(nx, ny, pu(43u), pu(45u));
+        return sample(2u, fma(dx, disp, fx), fma(dy, disp, fy));
+    }
+    let m = dmap[y * pu(0u) + x];
+    let ma = f32(ch(m, 3u));
+    let dx = fma(-0.5, ma, f32(ch(m, 0u)));
+    let dy = fma(-0.5, ma, f32(ch(m, 1u)));
+    return sample(2u, fma(dx, disp, fx), fma(dy, disp, fy));
+}
+
 fn warp_px(x: u32, y: u32) -> vec4<f32> {
     let cx = pf(7u);
     let cy = pf(8u);
@@ -160,6 +259,9 @@ fn warp_px(x: u32, y: u32) -> vec4<f32> {
         let sy = fma(rs, sc.x, cy);
         let am = pf(9u);
         return sample(0u, fma(am, sx - fx, fx), fma(am, sy - fy, fy));
+    }
+    if (kind >= 3u) {
+        return distort_px(kind, x, y, fx, fy, cx, cy, qx, qy);
     }
     let rc = pf(16u);
     let rsn = pf(17u);

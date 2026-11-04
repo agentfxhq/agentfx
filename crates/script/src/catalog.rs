@@ -151,6 +151,7 @@ pub const ITEMS: &[Item] = &[
     // ---- motion
     it("keyframes", "motion", "motion", "-", "impl", "anim #x <channel> <t>:<v>[~ease] ... [ease=] [repeat=3] [yoyo]", "Explicit keyframes; times relative to the event, or @anchor:value."),
     it("bezier easing", "motion", "motion", "-", "impl", "ease=out-cubic | cubic(.2,.8,.2,1) | steps(4) | hold", ""),
+    it("GSAP easing names", "motion", "motion", "-", "impl", "ease=power2.out | power3.inOut | expo.out | back.out(1.7) | elastic.out(1, 0.3) | bounce.out", "Exact Penner/GSAP curves kept symbolic in the IR (`curve`); HTML samples them into CSS linear()."),
     it("spring / bounce", "motion", "motion", "-", "impl", "ease=spring(170,26) | bouncy | snappy | bounce(3)", "Physical spring kept symbolic in the IR; HTML samples it into CSS linear()."),
     it("stagger / repeat", "motion", "motion", "-", "impl", "in=rise stagger=80ms ; anim ... repeat=3 yoyo", ""),
     it("seeded random", "motion", "motion", "-", "impl", "seed=7", "SplitMix64; same seed, same frames."),

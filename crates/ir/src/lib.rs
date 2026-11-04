@@ -95,10 +95,52 @@ pub enum Easing {
     /// duration in seconds); may overshoot. Not a CSS feature.
     /// JSON: {"spring": {"mass": 1, "stiffness": 170, "damping": 26, "velocity": 0}}
     Spring { mass: f64, stiffness: f64, damping: f64, velocity: f64 },
+    /// Closed-form easing family (Penner / GSAP shapes), evaluated exactly by
+    /// `timing::curve`. Not a CSS feature (the HTML backend samples it into CSS `linear()`).
+    /// JSON: {"curve": {"kind": "elastic", "dir": "out", "a": 1, "b": 0.3}}
+    Curve {
+        kind: CurveKind,
+        dir: EaseDir,
+        /// power: exponent; back: overshoot; elastic: amplitude (>= 1); bounces: rebound count
+        #[serde(default)]
+        a: f64,
+        /// elastic: period
+        #[serde(default)]
+        b: f64,
+    },
 }
 
 impl Easing {
     pub const EASE: Easing = Easing::CubicBezier(0.25, 0.1, 0.25, 1.0);
+}
+
+/// Easing families of `Easing::Curve`. Most are defined by their "in" shape f(x)
+/// (f(0) = 0, f(1) = 1); `out` is 1 - f(1 - x) and `in-out` joins both halves at x = 0.5.
+/// `elastic`, `bounce` and `bounces` are defined by their "out" shape instead.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CurveKind {
+    /// x^a
+    Power,
+    Sine,
+    Expo,
+    Circ,
+    /// overshoot a (1.70158 = about 10 %)
+    Back,
+    /// amplitude a (>= 1), period b
+    Elastic,
+    /// Penner's out-bounce (three rebounds, heights 1/4, 1/16, 1/64)
+    Bounce,
+    /// reel's `bounce(n)`: a fall, then a halving parabolic rebounds of equal length
+    Bounces,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum EaseDir {
+    In,
+    Out,
+    InOut,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]

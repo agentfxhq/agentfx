@@ -1,5 +1,6 @@
 //! Typed Reel Script values and deterministic easing curves.
 use serde::Serialize;
+use agentfx_ir::{CurveKind, EaseDir};
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ValueError { pub code: String, pub message: String, pub hint: String }
@@ -234,6 +235,58 @@ pub fn parse_paint(s: &str) -> Result<Paint, ValueError> {
 pub enum Ease {
     Linear, Hold, Cubic(f64, f64, f64, f64), Steps(u32),
     Spring { stiffness: f64, damping: f64, mass: f64, velocity: f64 }, Bounce { bounces: u32 },
+    /// Closed-form family (GSAP / Penner names), kept symbolic in the IR (`Easing::Curve`).
+    Curve { kind: CurveKind, dir: EaseDir, a: f64, b: f64 },
+}
+/// GSAP-style names: `power2.out`, `sine.inOut`, `back.out(1.7)`, `elastic.out(1, 0.3)`,
+/// `bounce.out`, `none`; a family without a direction is `.out` (GSAP's default). Also the
+/// easings.net spellings the cubic presets lack: `out-circ`, `out-quint`, `out-elastic`,
+/// `out-bounce` (and `in-` / `inout-`).
+fn named_curve(s: &str) -> Option<Result<Ease, ValueError>> {
+    let (head, body) = function(s).unwrap_or((s, ""));
+    let head = head.trim().to_lowercase();
+    let (family, dir) = if let Some((f, d)) = head.split_once('.') {
+        (f.to_string(), d.replace(['-', '_'], ""))
+    } else {
+        let c = canonical(&head);
+        const FAMILIES: [&str; 13] = ["none", "power0", "power1", "power2", "power3", "power4", "strong", "quint", "circ", "expo", "sine", "back", "elastic"];
+        if FAMILIES.contains(&c.as_str()) {
+            (c, String::new())
+        } else {
+            let (d, f) = ["inout", "in", "out"].iter().find_map(|d| c.strip_prefix(d).map(|f| (*d, f)))?;
+            if !["circ", "quint", "elastic", "bounce"].contains(&f) { return None; }
+            (f.to_string(), d.to_string())
+        }
+    };
+    let dir = match dir.as_str() { "in" => EaseDir::In, "out" | "" => EaseDir::Out, "inout" => EaseDir::InOut, _ => return None };
+    let args = if body.trim().is_empty() { vec![] } else {
+        match split_top(body, ',').map(|a| a.into_iter().map(finite).collect::<Option<Vec<f64>>>()) {
+            Some(Some(v)) => v,
+            _ => return Some(Err(ease_error())),
+        }
+    };
+    let curve = |kind, a, b| Ease::Curve { kind, dir, a, b };
+    let power = |p: f64| if p == 1.0 { Ease::Linear } else { curve(CurveKind::Power, p, 0.0) };
+    let (ease, max_args) = match family.as_str() {
+        "none" | "linear" | "power0" => (Ease::Linear, 0),
+        "power1" | "quad" => (power(2.0), 0),
+        "power2" | "cubic" => (power(3.0), 0),
+        "power3" | "quart" => (power(4.0), 0),
+        "power4" | "quint" | "strong" => (power(5.0), 0),
+        "sine" => (curve(CurveKind::Sine, 0.0, 0.0), 0),
+        "expo" => (curve(CurveKind::Expo, 0.0, 0.0), 0),
+        "circ" => (curve(CurveKind::Circ, 0.0, 0.0), 0),
+        "back" => (curve(CurveKind::Back, *args.first().unwrap_or(&1.70158), 0.0), 1),
+        "elastic" => (curve(CurveKind::Elastic, *args.first().unwrap_or(&1.0), *args.get(1).unwrap_or(&0.3)), 2),
+        "bounce" => (curve(CurveKind::Bounce, 0.0, 0.0), 0),
+        _ => return None,
+    };
+    if args.len() > max_args { return Some(Err(ease_error())); }
+    match ease {
+        Ease::Curve { kind: CurveKind::Back, a, .. } if a < 0.0 => Some(Err(ease_error())),
+        Ease::Curve { kind: CurveKind::Elastic, a, b, .. } if a <= 0.0 || b <= 0.0 => Some(Err(ease_error())),
+        e => Some(Ok(e)),
+    }
 }
 const PRESETS: &[(&str, [f64; 4])] = &[
     ("ease", [0.25,0.1,0.25,1.0]), ("in", [0.42,0.0,1.0,1.0]), ("out", [0.0,0.0,0.58,1.0]), ("inout", [0.42,0.0,0.58,1.0]),
@@ -245,7 +298,7 @@ const PRESETS: &[(&str, [f64; 4])] = &[
     ("in-back", [0.36,0.0,0.66,-0.56]), ("out-back", [0.34,1.56,0.64,1.0]), ("inout-back", [0.68,-0.6,0.32,1.6]),
 ];
 fn canonical(s: &str) -> String { s.to_lowercase().chars().filter(|c| *c != '-' && *c != '_').collect() }
-fn ease_error() -> ValueError { err("E_EASE", "Invalid easing parameters", "write `cubic(0.33, 1, 0.68, 1)`, `steps(4)`, or `spring(170, 26, 1, 0)`; spring stiffness, damping and mass must be positive") }
+fn ease_error() -> ValueError { err("E_EASE", "Invalid easing parameters", "write `cubic(0.33, 1, 0.68, 1)`, `steps(4)`, `spring(170, 26, 1, 0)`, `back.out(1.7)` or `elastic.out(1, 0.3)`; spring stiffness, damping and mass, elastic amplitude and period must be positive, back overshoot >= 0") }
 pub fn parse_ease(s: &str) -> Result<Ease, ValueError> {
     let s = s.trim();
     let key = canonical(s);
@@ -257,6 +310,7 @@ pub fn parse_ease(s: &str) -> Result<Ease, ValueError> {
         "soft" => return Ok(spring(120.0,20.0)), "bouncy" => return Ok(spring(180.0,12.0)),
         "bounce" => return Ok(Ease::Bounce { bounces: 3 }), _ => {},
     }
+    if let Some(r) = named_curve(s) { return r; }
     let (kind, body) = function(s).unwrap_or((s, ""));
     let kind = canonical(kind);
     if ["cubic", "steps", "spring", "bounce"].contains(&kind.as_str()) {
@@ -277,7 +331,9 @@ pub fn parse_ease(s: &str) -> Result<Ease, ValueError> {
         return Err(ease_error());
     }
     let mut candidates: Vec<_> = PRESETS.iter().map(|(label, _)| *label).collect();
-    candidates.extend(["linear", "hold", "step", "steps", "spring", "snappy", "soft", "bouncy", "bounce", "cubic"]);
+    candidates.extend(["linear", "hold", "step", "steps", "spring", "snappy", "soft", "bouncy", "bounce", "cubic",
+        "power1.out", "power2.out", "power3.out", "power4.out", "power2.inOut", "sine.inOut", "expo.out", "circ.out",
+        "back.out(1.7)", "elastic.out(1, 0.3)", "bounce.out", "out-elastic", "out-bounce", "out-circ", "out-quint"]);
     let hint = suggest(&kind, &candidates).map(|v| format!("did you mean `{v}`?"))
         .unwrap_or_else(|| "write `linear`, `out-cubic`, or `spring(170, 26)`".into());
     Err(err("E_EASE", "Unknown easing", &hint))
@@ -343,16 +399,10 @@ impl Ease {
                 let lo = index.floor() as usize;
                 curve[lo].1 + (curve[lo+1].1-curve[lo].1)*(index-lo as f64)
             }
-            Self::Bounce { bounces } => {
-                // First fall, then n successively smaller parabolic rebounds.
-                let n = f64::from(*bounces);
-                let fall = 1.0 / (1.0 + n.sqrt());
-                if t <= fall { (t/fall).powi(2) } else {
-                    let phase = (t-fall)/(1.0-fall)*n;
-                    let u = phase.fract();
-                    1.0 - 0.5_f64.powf(phase.floor()+1.0)*4.0*u*(1.0-u)
-                }
-            }
+            // First fall, then n successively smaller parabolic rebounds; the IR's closed form
+            // (`Easing::Curve` kind `bounces`), so compiler samples and renderer agree exactly.
+            Self::Bounce { bounces } => agentfx_ir::timing::curve(CurveKind::Bounces, EaseDir::Out, f64::from(*bounces), 0.0, t),
+            Self::Curve { kind, dir, a, b } => agentfx_ir::timing::curve(*kind, *dir, *a, *b, t),
         }
     }
     pub fn natural_duration(&self) -> Option<f64> {

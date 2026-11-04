@@ -90,6 +90,40 @@ fn easing_parsing_and_sampling() {
     let e = parse_ease("bounse").unwrap_err(); assert_eq!(e.code,"E_EASE"); assert!(e.hint.contains("bounce"));
 }
 #[test]
+fn gsap_names() {
+    use agentfx_ir::{CurveKind, EaseDir};
+    let c = |kind, dir, a, b| Ease::Curve { kind, dir, a, b };
+    assert_eq!(parse_ease("power2.out").unwrap(), c(CurveKind::Power, EaseDir::Out, 3.0, 0.0));
+    assert_eq!(parse_ease("power4.inOut").unwrap(), c(CurveKind::Power, EaseDir::InOut, 5.0, 0.0));
+    assert_eq!(parse_ease("Power1.In").unwrap(), c(CurveKind::Power, EaseDir::In, 2.0, 0.0));
+    assert_eq!(parse_ease("power3").unwrap(), c(CurveKind::Power, EaseDir::Out, 4.0, 0.0));
+    assert_eq!(parse_ease("none").unwrap(), Ease::Linear);
+    assert_eq!(parse_ease("power0.out").unwrap(), Ease::Linear);
+    assert_eq!(parse_ease("back.out(1.7)").unwrap(), c(CurveKind::Back, EaseDir::Out, 1.7, 0.0));
+    assert_eq!(parse_ease("back.in").unwrap(), c(CurveKind::Back, EaseDir::In, 1.70158, 0.0));
+    assert_eq!(parse_ease("elastic.out(1, 0.3)").unwrap(), c(CurveKind::Elastic, EaseDir::Out, 1.0, 0.3));
+    assert_eq!(parse_ease("elastic").unwrap(), c(CurveKind::Elastic, EaseDir::Out, 1.0, 0.3));
+    assert_eq!(parse_ease("elastic.inOut(1.2)").unwrap(), c(CurveKind::Elastic, EaseDir::InOut, 1.2, 0.3));
+    assert_eq!(parse_ease("bounce.out").unwrap(), c(CurveKind::Bounce, EaseDir::Out, 0.0, 0.0));
+    assert_eq!(parse_ease("out-bounce").unwrap(), c(CurveKind::Bounce, EaseDir::Out, 0.0, 0.0));
+    assert_eq!(parse_ease("inout-elastic").unwrap(), c(CurveKind::Elastic, EaseDir::InOut, 1.0, 0.3));
+    assert_eq!(parse_ease("out-circ").unwrap(), c(CurveKind::Circ, EaseDir::Out, 0.0, 0.0));
+    assert_eq!(parse_ease("in-quint").unwrap(), c(CurveKind::Power, EaseDir::In, 5.0, 0.0));
+    assert_eq!(parse_ease("expo.inOut").unwrap(), c(CurveKind::Expo, EaseDir::InOut, 0.0, 0.0));
+    assert_eq!(parse_ease("sine.in").unwrap(), c(CurveKind::Sine, EaseDir::In, 0.0, 0.0));
+    // existing names keep their cubic-bezier meaning
+    assert!(matches!(parse_ease("out-cubic").unwrap(), Ease::Cubic(..)));
+    assert_eq!(parse_ease("bounce").unwrap(), Ease::Bounce { bounces: 3 });
+    for s in ["power2.sideways", "back.out(-1)", "elastic.out(1, 0)", "elastic.out(1,0.3,2)", "power2.out(3)", "bounce.out(x)"] {
+        code(parse_ease(s), "E_EASE");
+    }
+    let e = parse_ease("power2.otu").unwrap_err(); assert_eq!(e.code, "E_EASE");
+    near(parse_ease("power2.out").unwrap().sample(0.5), 0.875);
+    near(Ease::Bounce { bounces: 3 }.sample(1.0), 1.0);
+    // HTML mode samples curves into CSS linear()
+    assert!(ease_to_css(&parse_ease("elastic.out").unwrap()).starts_with("linear(0, "));
+}
+#[test]
 fn spring_physics_and_css() {
     let e = parse_ease("spring(170,26)").unwrap();
     assert!(e.is_physical());

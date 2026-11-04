@@ -161,7 +161,7 @@ coordinates.
 | type | fields | notes |
 |---|---|---|
 | `rect` | `rect: {rect:[x,y,w,h], radius:[tl,tr,br,bl]}`, `color` (straight RGBA 0..1) | |
-| `path` | `d` (SVG path data), `fill?: Brush`, `fill_transform?: [a,b,c,d,e,f]` (brush space -> scene, places an `image` brush), `stroke?: {width, cap, join, miter_limit, dash, dash_offset, brush}`, `trim: [start, end]` | draw-on: the stroke shows only `[start, end]` of the total arc length; tracks `trim-start` / `trim-end`. The fill is drawn only when untrimmed. |
+| `path` | `d` (SVG path data), `fill?: Brush`, `fill_transform?: [a,b,c,d,e,f]` (brush space -> scene, places an `image` brush), `stroke?: {width, cap, join, miter_limit, dash, dash_offset, brush}`, `trim: [start, end]`, `morph?: [d, ...]` (morph targets, scene coordinates) | draw-on: the stroke shows only `[start, end]` of the total arc length; tracks `trim-start` / `trim-end`. The fill is drawn only when untrimmed. With `morph`, track `morph` picks the shape (see "Path morph"). |
 | `text` | `text`, `font` (index into `fonts`), `size`, `weight` (wght), `letter_spacing` px, `line_height` (× size), `pos` (top-left of the layout box), `max_width?`, `align` left/center/right (center/right need `max_width`), `brush`, `unit` glyph/word/line | shaped by reel at load (Parley/HarfRust); `opsz` follows `size`; one font per node (no fallback). Glyphs are drawn at their exact fractional position. `\n` breaks lines. |
 | `paint` | `rect` (ink bounds), `items: [Draw]`, `elements?`, `text?` | resolved display list (what the HTML frontend emits per paint unit); `elements` = identity of the painted DOM elements (document-order indices); `text` = text animators / text on a path over its glyph runs ([Text v2](#text-v2)) |
 | `switch` | `rect`, `frames: [[first_frame, state]]`, `states: [paint]` | content that changes (repaint states, typed text in HTML mode); a switch is damage |
@@ -193,6 +193,31 @@ optional `transform` `[a,b,c,d,e,f]`):
 `{"image": {asset, quality 0|1|2, extend: [x, y], alpha}}` (asset at natural size,
 placed by `brush_transform`). Colors are straight-alpha sRGB 0..1, gradients interpolate
 in sRGB.
+
+### Path morph
+
+A `path` with `morph: [d1, d2, ...]` has shapes 0 (`d`), 1 (`d1`), 2, ... The number track
+`morph` selects the shape: an integer k shows shape k exactly, k + f interpolates between shapes
+k and k + 1 (values are clamped to `0..=morph.len()`, so overshooting eases hold at the ends).
+Without a `morph` track the path shows `d`.
+
+The renderer matches each consecutive pair of shapes once at load, deterministically, so any
+SVG path data can morph into any other (different commands, segment counts, subpath counts):
+
+1. every subpath becomes a run of cubic beziers (lines and quads elevated exactly, arcs as
+   cubics); a closed subpath ends with an explicit closing segment;
+2. when the largest closed subpaths of the two shapes wind in opposite directions, every closed
+   subpath of the target is reversed (this changes neither the nonzero nor the even-odd fill);
+3. subpaths are paired largest first by centroid distance and size; an unpaired subpath grows
+   from (or shrinks into) a point at its own centroid;
+4. paired subpaths get equal segment counts by halving the longest segment (arc length);
+5. a closed pair takes the start-point rotation of the target with the least summed squared
+   control-point travel.
+
+Interpolation is per control point (linear). Trim (`trim-start` / `trim-end`), fill and stroke
+brushes and `fill.color` / `stroke.color` tracks apply to the interpolated shape. The node's ink
+bounds are the union of all shapes' control points (the interpolated curves stay inside it), so
+damage stays conservative. `sig`/damage: a `morph` track redraws the path while it changes.
 
 ### Video
 
@@ -614,6 +639,7 @@ the default per segment.
 | `opacity` | `{"number": v}` | any node | composite; quantized to 1/255 |
 | `glyph.transform` / `glyph.opacity` | transform / number, per unit (glyph/word/line) about the unit's center; with `stagger: {each, from: start|end|center}` unit i runs `i·each` later | text | per-frame vector redraw of that text node; damage = union of the evaluated glyph boxes |
 | `trim-start` / `trim-end` | number 0..1 | path | per-frame redraw of the path; damage = path ink |
+| `morph` | number 0..`morph.len()` | path with `morph` targets | shape k (+ fraction toward k + 1), see "Path morph"; per-frame redraw of the path; damage = ink of all shapes |
 | `fill.color` / `stroke.color` | `{"color": [r,g,b,a]}` straight sRGB 0..1, interpolated per channel | path with a fill / stroke | the brush is replaced by that solid color; per-frame redraw of the path; damage = path ink |
 | `fluid.time` | number (s) | fluid node | simulation time shown; damage = rect while the shown frame changes |
 | `gen.<param>` | number | `gen` node whose kind declares `<param>` | per-frame re-evaluation while the value changes; damage = rect |

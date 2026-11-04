@@ -54,6 +54,7 @@ pub enum Ch {
     Streak, Bokeh, Distortion, Aberration, Vignette, Halation, FilmGrain,
     FluidTime,           // simulation time a fluid shows, s (identity unless remapped)
     PathOffset,          // text on a path: start offset along the path, px
+    Morph,               // path morph position: k = shape k (`morph` verb, `morph=[...]` targets)
     // 3D (scene3d objects use X Y Z RotX RotY Rot(=rz) Scale Sx Sy Opacity Color too)
     Sz,                  // object scale along z
     CamX, CamY, CamZ,    // scene3d camera position (world units)
@@ -76,7 +77,7 @@ impl Ch {
         match self {
             X | Y | Z | Px | Py | Scale | Sx | Sy | Rot | RotX | RotY | Opacity | Magic => Stage::Composite,
             Blur | Glow | Brightness | Saturate | Contrast | Hue | Fill | Color | Stroke | TrimStart | TrimEnd | Reveal | MaskX
-            | GradAngle | Grad0 | Grad1 | Grad2 | Grad3 | TimeSpan | Halftone | Sweep | Rays | Misreg | FluidTime | PathOffset | Rgbsplit | RgbsplitDx | RgbsplitDy | Glitch | GlitchRate | GlitchBlock | Vhs | Dither | Ascii
+            | GradAngle | Grad0 | Grad1 | Grad2 | Grad3 | TimeSpan | Halftone | Sweep | Rays | Misreg | FluidTime | PathOffset | Morph | Rgbsplit | RgbsplitDx | RgbsplitDy | Glitch | GlitchRate | GlitchBlock | Vhs | Dither | Ascii
             | KaleidoAmount | KaleidoAngle | KaleidoZoom | Tunnel | TunnelDepth | TunnelTwist | TunnelAngle | TunnelRadius | TunnelFog
             | Glass | GlassBlur | GlassDispersion | GlassThickness | GlassHighlight | GlassRim
             | Streak | Bokeh | Distortion | Aberration | Vignette | Halation | FilmGrain => Stage::Paint,
@@ -124,7 +125,7 @@ impl Ch {
             "trim-start" => Ch::TrimStart, "trim" | "trim-end" => Ch::TrimEnd, "reveal" => Ch::Reveal,
             "mask-x" => Ch::MaskX, "grad-angle" | "angle" => Ch::GradAngle, "grad0" => Ch::Grad0, "grad1" => Ch::Grad1,
             "grad2" => Ch::Grad2, "grad3" => Ch::Grad3, "wght" | "weight" | "font-weight" => Ch::Wght, "tracking" => Ch::Tracking,
-            "wdth" => Ch::Wdth, "opsz" => Ch::Opsz, "slnt" => Ch::Slnt, "path-offset" | "offset" => Ch::PathOffset,
+            "wdth" => Ch::Wdth, "opsz" => Ch::Opsz, "slnt" => Ch::Slnt, "path-offset" | "offset" => Ch::PathOffset, "morph" => Ch::Morph,
             "w" | "width" => Ch::W, "h" | "height" => Ch::H, "count" => Ch::Count,
             "halftone" => Ch::Halftone, "sweep" => Ch::Sweep, "rays" => Ch::Rays, "misreg" => Ch::Misreg,
             "rgbsplit" => Ch::Rgbsplit, "rgbsplit-dx" => Ch::RgbsplitDx, "rgbsplit-dy" => Ch::RgbsplitDy,
@@ -157,13 +158,18 @@ impl Ch {
     }
     /// The generator parameter of a `Gen` channel (`zoom`, `cx`, ...).
     pub fn gen_param(self) -> Option<String> {
+        // `morph` is one channel: the path morph position, and on a `gen` layer the generator
+        // parameter of the same name (flame)
+        if self == Ch::Morph {
+            return agentfx_ir::generator::param_names().contains(&"morph").then(|| "morph".to_string());
+        }
         let i = GEN_CHS.iter().position(|c| *c == self)?;
         agentfx_ir::generator::param_names().get(i).map(|s| s.to_string())
     }
     pub fn is_axis(self) -> bool {
         matches!(self, Ch::Wght | Ch::Wdth | Ch::Opsz | Ch::Slnt | Ch::Axis0 | Ch::Axis1 | Ch::Axis2 | Ch::Axis3)
     }
-    pub const NAMES: [&'static str; 86] = [
+    pub const NAMES: [&'static str; 87] = [
         "x", "y", "z", "px", "py", "scale", "sx", "sy", "rot", "rotx", "roty", "opacity", "blur", "glow", "brightness",
         "saturate", "contrast", "hue", "fill", "color", "stroke", "trim-start", "trim", "reveal", "mask-x", "grad-angle", "grad0",
         "grad1", "grad2", "grad3", "wght", "tracking", "w", "h", "count", "halftone", "sweep", "rays", "misreg",
@@ -171,7 +177,7 @@ impl Ch {
         "kaleido-amount", "kaleido-angle", "kaleido-zoom", "tunnel", "tunnel-depth", "tunnel-twist", "tunnel-angle", "tunnel-radius", "tunnel-fog",
         "glass", "glass-blur", "glass-dispersion", "glass-thickness", "glass-highlight", "glass-rim",
         "streak", "bokeh", "distortion", "aberration", "vignette", "halation", "film-grain",
-        "wdth", "opsz", "slnt", "path-offset",
+        "wdth", "opsz", "slnt", "path-offset", "morph",
         "sz", "cam-x", "cam-y", "cam-z", "look-x", "look-y", "look-z", "fov", "roll", "ambient", "emissive", "intensity",
     ];
 }
@@ -192,6 +198,9 @@ pub const GEN_CHS: [Ch; 60] = [
 /// Channel of a generator parameter name (any kind's). More distinct parameter names than
 /// `GEN_CHS` slots: add slots (test `gen_channels_cover_every_parameter`).
 pub fn gen_ch(name: &str) -> Option<Ch> {
+    if name == "morph" {
+        return Some(Ch::Morph);
+    }
     agentfx_ir::generator::param_names().iter().position(|p| *p == name).and_then(|i| GEN_CHS.get(i).copied())
 }
 
@@ -572,6 +581,9 @@ pub struct Style {
     /// text on a path (`on=#path offset=`): target path layer id, start offset px
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text_path: Option<(String, f64)>,
+    /// path morph targets after the path's own `d` (`morph=[...]`, `morph #p to=`): shape k = `morph[k-1]`
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub morph: Vec<MorphShape>,
     /// fill text with the paint (text matte)
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub text_fill: bool,
@@ -668,6 +680,15 @@ impl Layer {
             c.walk(f);
         }
     }
+}
+
+/// One path morph target: path data in the morphing layer's own box (its `vb`), or another
+/// path element (by its user name, `#star`), whose rest geometry is used in scene space.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum MorphShape {
+    D(String),
+    Layer(String),
 }
 
 /// Work that needs final layout (measured once before frame 0, never per frame).

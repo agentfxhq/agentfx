@@ -57,6 +57,7 @@ pub fn validate(scene: &Scene, base_dir: &Path) -> Result<Vec<String>, Vec<Strin
                 let node = &scene.nodes[track.node];
                 let ok = match track.property.as_str() {
                     "trim-start" | "trim-end" => matches!(node.content, Some(Content::Path(_))),
+                    "morph" => matches!(&node.content, Some(Content::Path(p)) if !p.morph.is_empty()),
                     "fill.color" => matches!(&node.content, Some(Content::Path(p)) if p.fill.is_some()),
                     "stroke.color" => matches!(&node.content, Some(Content::Path(p)) if p.stroke.is_some()),
                     "text.fill" | "text.stroke" | "text.stroke-width" => matches!(&node.content, Some(Content::Paint { .. })),
@@ -386,7 +387,7 @@ fn check_time(scene: &Scene, i: usize, node: &Node, tf: &crate::TimeFx, ctx: &st
 pub fn property_kind(p: &str) -> Option<bool> {
     match p {
         "transform" | "glyph.transform" => Some(true),
-        "opacity" | "glyph.opacity" | "trim-start" | "trim-end" => Some(false),
+        "opacity" | "glyph.opacity" | "trim-start" | "trim-end" | "morph" => Some(false),
         p if p.starts_with("effects.") => Some(false),
         "time.span" | "fluid.time" => Some(false),
         "fill.color" | "stroke.color" => Some(false),
@@ -520,6 +521,7 @@ fn check_content(scene: &Scene, c: &Content, ctx: &str, sizes: &[Option<(u32, u3
         Content::Path(p) => {
             if p.fill.is_none() && p.stroke.is_none() { errors.push(format!("{ctx}: path needs fill or stroke")); }
             if p.d.trim().is_empty() { errors.push(format!("{ctx}: empty path")); }
+            if p.morph.iter().any(|d| d.trim().is_empty()) { errors.push(format!("{ctx}: empty morph target")); }
             if p.fill_transform.is_some_and(|m| m.iter().any(|v| !v.is_finite())) { errors.push(format!("{ctx}: fill_transform must be finite")); }
             if !(0.0..=1.0).contains(&p.trim[0]) || !(0.0..=1.0).contains(&p.trim[1]) { errors.push(format!("{ctx}: trim must be within [0,1]")); }
         }

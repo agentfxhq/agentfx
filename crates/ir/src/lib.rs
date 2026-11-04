@@ -161,7 +161,7 @@ pub struct Keyframe {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Track {
     pub node: NodeId,
-    /// "transform" | "opacity" | "trim-start" | "trim-end" | "glyph.opacity" |
+    /// "transform" | "opacity" | "trim-start" | "trim-end" | "morph" | "glyph.opacity" |
     /// "glyph.transform" | "effects.<i>.<field>" | "fill.color" | "stroke.color" (path
     /// content: replaces the fill / stroke brush by a solid color) (see IR.md for stages).
     pub property: String,
@@ -668,6 +668,12 @@ pub struct PathContent {
     /// Base trim `[start, end]` as fractions of the total length (tracks `trim-start` / `trim-end`).
     #[serde(default = "full_trim")]
     pub trim: [f64; 2],
+    /// Morph targets (SVG path data, scene coordinates): `d` is shape 0, `morph[k - 1]` shape k.
+    /// The number track `morph` picks the shape: 2.5 = halfway between shapes 2 and 3 (clamped
+    /// to `0..=morph.len()`). The renderer pairs subpaths and segments once at load (see IR.md
+    /// "Path morph"); without a `morph` track the path shows `d`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub morph: Vec<String>,
 }
 fn full_trim() -> [f64; 2] {
     [0.0, 1.0]

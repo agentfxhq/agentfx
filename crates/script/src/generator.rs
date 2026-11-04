@@ -238,6 +238,8 @@ pub fn rules(ir: &Ir) -> Vec<Diag> {
         match gens.get(t.layer.as_str()) {
             Some((_, c)) if g::kind(&c.kind).is_some_and(|k| k.param(&p).is_some()) => {}
             Some((l, c)) => d.push(Diag::error("E_GEN", format!("gen {} `{}` has no parameter `{p}`", c.kind, label(l)), "see `agentfx catalog` > gen for the parameters of each kind", Span::default()).with_id(label(l))),
+            // `morph` on a path is the path morph
+            None if t.ch == crate::ir::Ch::Morph => {}
             None => d.push(Diag::error("E_GEN", format!("channel `{p}` only animates a gen layer, not `{}`", t.layer), "target the gen layer: `anim #g zoom 0s:1 8s:400`", Span::default()).with_id(t.layer.clone())),
         }
     }

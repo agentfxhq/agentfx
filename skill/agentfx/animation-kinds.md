@@ -89,7 +89,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Echo trails | `echo #x n=6 dt=60ms` | implemented | speed, rhythm |
 | Slit-scan, time displacement | `slitscan #g span=` / `timedisplace #g map=` | implemented | dreamy, psychedelic |
 | Motion blur | `mblur=12 shutter=180deg` | implemented | any fast move |
-| Motion paths with auto-orient | `anim #x path=... orient` | planned | |
+| Motion paths with auto-orient | `move #x along="M0 0 C200 -150 400 150 600 0" orient dur=3s` / `along=#road` | implemented | vehicles, paper planes, arrows along a route, cursors on a curve |
 
 ## Shapes and drawing
 
@@ -98,7 +98,7 @@ Status: **implemented** (offer freely), **partial** (offer with the limit stated
 | Draw-on strokes | `trim=0` + `anim trim` / `draw #p` | implemented | diagrams, signatures, lines |
 | Charts building | `chart ... ; draw #c` | implemented | data |
 | Connectors | `link #a -> #b` | implemented | diagrams |
-| Path morph | `anim #p d ...` | planned | |
+| Path morph | `morph #p to=#star dur=0.8s` / `to="M..."`, chain by repeating | implemented (direct only) | logo reveals, icon to icon, shape transitions |
 | Boolean ops, repeaters | | planned | |
 
 ## Looks (direct only)

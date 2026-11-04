@@ -38,6 +38,7 @@ mod m2;
 mod plan2;
 mod prof;
 mod model;
+mod morph;
 mod pathx;
 mod record;
 mod regress;

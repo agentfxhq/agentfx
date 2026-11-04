@@ -859,6 +859,22 @@ impl<'a> Ctx<'a> {
                 l.style.dash = Some((p[0], p[1]));
             }
         }
+        if let Some(v) = n.props.get("morph") {
+            if matches!(l.kind, Kind::Path { .. }) {
+                let items = match v {
+                    Value::List(xs) => xs.iter().map(|x| x.raw()).collect(),
+                    x => vec![x.raw()],
+                };
+                for raw in items {
+                    match crate::motionpath::morph_shape(&raw) {
+                        Ok(m) => l.style.morph.push(m),
+                        Err((msg, hint)) => self.err("E_MORPH", format!("morph=: {msg}"), hint, n.span),
+                    }
+                }
+            } else {
+                self.err("E_MORPH", format!("morph= needs a path, not a `{k}`"), "morph works on `path`, `line`, `poly` and `star`; draw the shape as `path d=\"...\"`", n.span);
+            }
+        }
         let i = self.add(Some(parent), l);
         if let Some(t) = self.num(n, "trim") {
             self.set_base(i, Ch::TrimEnd, TV::N(t));

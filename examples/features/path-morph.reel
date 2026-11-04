@@ -1,0 +1,24 @@
+// Path morph: any SVG path into any other (different commands, segment and subpath counts).
+// `morph #p to=#other` takes another path element's shape at its place, `to="M..."` path data in
+// #p's own box; repeat to chain. Fill gradients, strokes and trim keep working while morphing.
+video "Path morph" size=1920x1080 fps=30 captions=off
+
+scene morph dur=7.5s bg=#0E1116
+  // a filled blob: circle -> star -> heart -> ring with a hole -> circle
+  path #blob d="M200 20 A180 180 0 1 1 200 380 A180 180 0 1 1 200 20 Z" w=400 h=400 x=24% y=50% anchor=center fill=linear(135deg, #FF48B0, #FFE800)
+  star #star points=5 inner=0.42 size=400 x=24% y=50% anchor=center fill=#FFFFFF opacity=0
+  @0.5s morph #blob to=#star dur=1.1s ease=inout-cubic
+  @2.1s morph #blob to="M200 360 C40 250 0 150 60 80 C120 10 190 50 200 110 C210 50 280 10 340 80 C400 150 360 250 200 360 Z" dur=1.1s ease=inout-cubic
+  @3.7s morph #blob to="M200 30 A170 170 0 1 1 200 370 A170 170 0 1 1 200 30 Z M200 120 A80 80 0 1 0 200 280 A80 80 0 1 0 200 120 Z" dur=1.1s ease=inout-cubic
+  @5.3s morph #blob to=#blob dur=1.1s ease=inout-cubic
+  // stroked icons: check -> arrow (two subpaths) -> plus, the stroke color follows
+  path #icon d="M60 210 L160 300 L340 110" w=400 h=400 x=55% y=50% anchor=center stroke=#5BD0FF sw=26
+  @0.5s morph #icon to="M60 200 H330 M250 120 L330 200 L250 280" dur=0.9s ease=out-back
+  @0.5s anim #icon stroke 0s:#5BD0FF 0.9s:#FFE45B
+  @2.6s morph #icon to="M200 60 V340 M60 200 H340" dur=0.9s ease=out-back
+  @2.6s anim #icon stroke 0s:#FFE45B 0.9s:#FF5E5B
+  @4.7s morph #icon to=#icon dur=0.9s ease=inout-cubic
+  // manual timing: targets declared on the element, the `morph` channel animated, drawn on
+  path #wave d="M20 200 C120 40 280 40 380 200" w=400 h=400 x=82% y=50% anchor=center stroke=linear(90deg, #18C29C, #3D5BFF) sw=14 trim=0 morph=["M20 200 C80 360 160 40 200 200 S320 40 380 200", "M200 40 L360 200 L200 360 L40 200 Z"]
+    anim trim 0s:0 1.2s:1~inout-cubic
+    anim morph 1.5s:0 3s:1~inout-cubic 4.5s:2~inout-cubic 6s:0~inout-cubic

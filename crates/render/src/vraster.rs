@@ -54,6 +54,8 @@ pub struct PPath {
     pub stroke: Option<(kurbo::Stroke, Paint)>,
     pub bounds: [f64; 4],
     pub trim: [f64; 2],
+    /// shape correspondence of `PathContent::morph` (None = no morph targets)
+    pub morph: Option<crate::morph::Morph>,
 }
 
 pub enum PContent {
@@ -249,7 +251,23 @@ impl Prepared {
                 }
                 Some(Content::Path(p)) => {
                     let path = BezPath::from_svg(&p.d).map_err(|e| anyhow::anyhow!("node {ni}: bad path: {e:?}"))?;
-                    let mut b = path.bounding_box();
+                    let morph = if p.morph.is_empty() {
+                        None
+                    } else {
+                        let mut shapes = vec![path.clone()];
+                        for (k, d) in p.morph.iter().enumerate() {
+                            shapes.push(BezPath::from_svg(d).map_err(|e| anyhow::anyhow!("node {ni}: bad morph target {}: {e:?}", k + 1))?);
+                        }
+                        if shapes.iter().any(|s| crate::morph::subpaths(s).is_empty()) {
+                            anyhow::bail!("node {ni}: a morph shape has no drawable segments");
+                        }
+                        Some(crate::morph::Morph::new(&shapes))
+                    };
+                    // interpolated curves stay inside the control-point hull of all shapes
+                    let mut b = match &morph {
+                        Some(m) => path.bounding_box().union(m.hull),
+                        None => path.bounding_box(),
+                    };
                     let stroke = match &p.stroke {
                         Some(s) => {
                             let st = stroke_of(&s.style);
@@ -263,7 +281,7 @@ impl Prepared {
                         Some(f) => Some(brush(f, &images)?),
                         None => None,
                     };
-                    Some(PContent::Path(PPath { m: pathx::measure(path), fill, fill_pt: p.fill_transform.map(|m| aff(&m)).unwrap_or(Affine::IDENTITY), stroke, bounds: [b.x0, b.y0, b.width(), b.height()], trim: p.trim }))
+                    Some(PContent::Path(PPath { m: pathx::measure(path), fill, fill_pt: p.fill_transform.map(|m| aff(&m)).unwrap_or(Affine::IDENTITY), stroke, bounds: [b.x0, b.y0, b.width(), b.height()], trim: p.trim, morph }))
                 }
                 Some(Content::Cloud(c)) => {
                     if shaper.is_none() && c.forms.iter().any(|f| matches!(f.shape, agentfx_ir::CloudShape::Text(_))) {
@@ -596,6 +614,9 @@ impl ContentInfo for Info<'_> {
                 let b = schedule::number_at(scene, &self.tracks[n], "trim-end", t, p.trim[1]);
                 a.to_bits().hash(&mut h);
                 b.to_bits().hash(&mut h);
+                if p.morph.is_some() {
+                    schedule::number_at(scene, &self.tracks[n], "morph", t, 0.0).to_bits().hash(&mut h);
+                }
                 for prop in ["fill.color", "stroke.color"] {
                     if let Some(c) = schedule::color_at(scene, &self.tracks[n], prop, t) {
                         c.map(f64::to_bits).hash(&mut h);
@@ -918,7 +939,7 @@ impl<'a> Painter<'a> {
                 Some(PContent::Switch(states)) => !states.iter().any(|s| has_blend(s)),
                 Some(PContent::Video { .. }) => true,
                 Some(PContent::Text(_)) => glyph_tracks(scene, &info.tracks[n]).is_empty(),
-                Some(PContent::Path(_)) => !info.tracks[n].iter().any(|&i| scene.tracks[i].property.starts_with("trim") || scene.tracks[i].property.ends_with(".color")),
+                Some(PContent::Path(_)) => !info.tracks[n].iter().any(|&i| scene.tracks[i].property.starts_with("trim") || scene.tracks[i].property == "morph" || scene.tracks[i].property.ends_with(".color")),
                 Some(PContent::Gen(g)) => !g.animated(scene, &info.tracks[n]),
                 _ => false,
             })
@@ -1475,11 +1496,23 @@ impl<'a> Painter<'a> {
             PContent::Path(p) => {
                 let a = schedule::number_at(self.scene, &self.info.tracks[n], "trim-start", view.t, p.trim[0]);
                 let b = schedule::number_at(self.scene, &self.info.tracks[n], "trim-end", view.t, p.trim[1]);
-                let trimmed;
+                let (trimmed, morphed);
+                let m = match &p.morph {
+                    Some(mo) => {
+                        let v = schedule::number_at(self.scene, &self.info.tracks[n], "morph", view.t, 0.0);
+                        if v <= 0.0 {
+                            &p.m
+                        } else {
+                            morphed = pathx::measure(mo.at(v));
+                            &morphed
+                        }
+                    }
+                    None => &p.m,
+                };
                 let path = if a <= 0.0 && b >= 1.0 {
-                    &p.m.path
+                    &m.path
                 } else {
-                    trimmed = p.m.trim(a, b);
+                    trimmed = m.trim(a, b);
                     &trimmed
                 };
                 ctx.set_transform(chain);
@@ -2807,6 +2840,72 @@ mod context_tests {
             assert_eq!(pooled.stats.ctx_created, 2);
             pooled.give_ctx(ctx);
         }
+    }
+}
+
+#[cfg(test)]
+mod morph_tests {
+    use super::*;
+    use agentfx_ir::{Easing, FillMode, Keyframe, PathContent, Track, Value};
+
+    /// A filled square (with a stroke) that morphs into a circle over 10 frames, then into a
+    /// ring with a hole.
+    fn scene() -> Scene {
+        let mut node = agentfx_ir::Node::new("blob");
+        node.content = Some(Content::Path(PathContent {
+            d: "M10 10 H90 V90 H10 Z".into(),
+            fill: Some(Brush::Solid([1.0, 1.0, 1.0, 1.0])),
+            fill_transform: None,
+            stroke: None,
+            trim: [0.0, 1.0],
+            morph: vec![
+                "M50 10 A40 40 0 1 1 50 90 A40 40 0 1 1 50 10 Z".into(),
+                "M50 10 A40 40 0 1 1 50 90 A40 40 0 1 1 50 10 Z M50 30 A20 20 0 1 0 50 70 A20 20 0 1 0 50 30 Z".into(),
+            ],
+        }));
+        let track = Track {
+            node: 0, property: "morph".into(), order: 0, label: "morph".into(), delay: 0.0, duration: 20.0 / 30.0,
+            fill: FillMode::Both, easing: Easing::Linear,
+            keyframes: [(0.0, 0.0), (0.5, 1.0), (1.0, 2.0)].iter().map(|&(o, v)| Keyframe { offset: o, value: Value::Number(v), easing: None }).collect(),
+            stagger: None,
+        };
+        Scene {
+            version: agentfx_ir::IR_VERSION, width: 100, height: 100, fps: 30, frames: 21,
+            nodes: vec![node], tracks: vec![track], assets: vec![], fonts: vec![],
+            camera: None, text_aa: Default::default(),
+        }
+    }
+
+    fn alpha(px: &Pixmap, x: u16, y: u16) -> u8 {
+        px.data_as_u8_slice()[(y as usize * px.width() as usize + x as usize) * 4 + 3]
+    }
+
+    #[test]
+    fn square_becomes_circle_then_ring() {
+        let scene = scene();
+        agentfx_ir::validate::validate(&scene, Path::new(".")).unwrap();
+        let prep = Prepared::new(&scene, Path::new("."), None, None).unwrap();
+        let info = Info::new(&scene, &prep);
+        let sched = schedule::build(&scene, &info).unwrap();
+        let mut p = Painter::new(&scene, &prep, &sched, &info, 0);
+        let full = [0, 0, 100, 100];
+        let (a, b, c) = (p.render_rect(0, full).unwrap(), p.render_rect(10, full).unwrap(), p.render_rect(20, full).unwrap());
+        // square: corner filled; circle: corner empty, edge midpoints and center filled
+        assert_eq!(alpha(&a, 13, 13), 255);
+        assert_eq!(alpha(&b, 13, 13), 0);
+        assert_eq!(alpha(&b, 50, 12), 255);
+        assert_eq!(alpha(&b, 50, 50), 255);
+        // ring: the hole is empty (nonzero fill, the hole winds the other way)
+        assert_eq!(alpha(&c, 50, 50), 0);
+        assert_eq!(alpha(&c, 50, 20), 255);
+        // halfway square -> circle: less ink than the square, about the circle's (linear blending
+        // of control points may dip a little below the end shapes, never collapse)
+        let h = p.render_rect(5, full).unwrap();
+        let ink = |px: &Pixmap| px.data_as_u8_slice().chunks(4).map(|c| c[3] as u64).sum::<u64>();
+        assert!(ink(&h) < ink(&a) && ink(&h) as f64 > ink(&b) as f64 * 0.9, "{} {} {}", ink(&a), ink(&h), ink(&b));
+        assert_eq!(alpha(&h, 50, 50), 255);
+        // frames differ while the morph runs, so the schedule must not reuse frame 0
+        assert_ne!(a.data_as_u8_slice(), h.data_as_u8_slice());
     }
 }
 

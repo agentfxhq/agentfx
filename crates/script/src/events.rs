@@ -292,11 +292,20 @@ impl<'a> Ctx<'a> {
                     self.burst(i, t, e);
                 }
             }
+            "morph" => {
+                if let Some(Target::El(i)) = self.target(e, true) {
+                    self.morph_verb(i, e);
+                }
+            }
             "move" => {
                 if let Some(Target::El(i)) = self.target(e, true) {
                     let d = self.dur(n, "dur").unwrap_or(self.th.durs.get("move-dur").copied().unwrap_or(self.th.dur("move")));
                     let mv = self.th.ease("move");
                     let ease = self.ease(n, "ease", mv);
+                    if n.props.contains_key("along") || n.props.contains_key("path") {
+                        self.move_along(i, e, d, ease);
+                        return;
+                    }
                     // move to=#other: center onto the other element's box (native layout, S1); x/y add on top
                     let mut base = (0.0, 0.0);
                     let mut to_ok = false;

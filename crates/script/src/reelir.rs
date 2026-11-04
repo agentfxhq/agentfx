@@ -1129,6 +1129,31 @@ impl<'a> Em<'a> {
                     self.note("connector without endpoints");
                 } else {
                     let mut pc = json!({"type": "path", "d": dd, "trim": [base(Ch::TrimStart).unwrap_or(0.0).clamp(0.0, 1.0), base(Ch::TrimEnd).unwrap_or(1.0).clamp(0.0, 1.0)]});
+                    if !l.style.morph.is_empty() {
+                        let (sx, sy) = (if vb.0 > 0.0 { r[2] / vb.0 } else { 1.0 }, if vb.1 > 0.0 { r[3] / vb.1 } else { 1.0 });
+                        let mut targets = vec![];
+                        for m in &l.style.morph {
+                            match m {
+                                MorphShape::D(md) => targets.push(map_path(md, r[0], r[1], sx, sy)),
+                                // another path element: its rest geometry in scene space
+                                MorphShape::Layer(name) if l.name.as_deref() == Some(name.as_str()) => targets.push(dd.clone()),
+                                MorphShape::Layer(name) => match self.find_named_id(&l.id, name).and_then(|id| self.ir_layer(&id).map(|p| (id, p))) {
+                                    Some((pid, p)) => match &p.kind {
+                                        Kind::Path { d: pd, vb: pvb, .. } => {
+                                            let pr = self.rect.get(&pid).copied().unwrap_or([0.0; 4]);
+                                            let (px, py) = (if pvb.0 > 0.0 { pr[2] / pvb.0 } else { 1.0 }, if pvb.1 > 0.0 { pr[3] / pvb.1 } else { 1.0 });
+                                            targets.push(self.link_d.get(&pid).cloned().unwrap_or_else(|| map_path(pd, pr[0], pr[1], px, py)));
+                                        }
+                                        _ => self.note(&format!("morph to=#{name}: not a path")),
+                                    },
+                                    None => self.note(&format!("morph to=#{name}: no such path")),
+                                },
+                            }
+                        }
+                        if targets.len() == l.style.morph.len() {
+                            pc["morph"] = json!(targets);
+                        }
+                    }
                     if let Some((b, m)) = l.style.fill.clone().and_then(|p| self.raster_brush(&p, r)) {
                         pc["fill"] = serde_json::to_value(b).unwrap();
                         pc["fill_transform"] = json!(m);
@@ -1251,6 +1276,7 @@ impl<'a> Em<'a> {
                 let ok = matches!(t.ch, Ch::Rgbsplit | Ch::RgbsplitDx | Ch::RgbsplitDy | Ch::Glitch | Ch::GlitchRate | Ch::GlitchBlock | Ch::Vhs | Ch::Dither | Ch::Ascii | Ch::Glass | Ch::GlassBlur | Ch::GlassDispersion | Ch::GlassThickness | Ch::GlassHighlight | Ch::GlassRim | Ch::Streak | Ch::Bokeh | Ch::Distortion | Ch::Aberration | Ch::Vignette | Ch::Halation | Ch::FilmGrain | Ch::Halftone
                     | Ch::KaleidoAmount | Ch::KaleidoAngle | Ch::KaleidoZoom | Ch::Tunnel | Ch::TunnelDepth | Ch::TunnelTwist | Ch::TunnelAngle | Ch::TunnelRadius | Ch::TunnelFog | Ch::Sweep | Ch::Rays | Ch::Misreg | Ch::Opacity | Ch::Blur | Ch::Glow | Ch::Brightness | Ch::Saturate | Ch::Contrast | Ch::Hue | Ch::TimeSpan | Ch::FluidTime | Ch::TrimEnd | Ch::TrimStart | Ch::Reveal | Ch::MaskX) || TF.contains(&t.ch) || resolved_ch(t.ch)
                     || (t.ch == Ch::PathOffset && l.style.text_path.is_some())
+                    || (t.ch == Ch::Morph && !l.style.morph.is_empty())
                     || (matches!(l.kind, Kind::Scene3d(_)) && s3d_emit::scene_ch(t.ch))
                     || (matches!(l.kind, Kind::Gen(_)) && t.ch.gen_param().is_some());
                 if !ok {
@@ -1346,6 +1372,15 @@ impl<'a> Em<'a> {
                 if let Some(t) = tracks.iter().find(|t| t.ch == ch) {
                     let keys: Vec<(f64, Value, Ease)> = t.keys.iter().map(|k| (k.t, json!({"number": r4(k.v.n().clamp(0.0, 1.0))}), k.ease.clone())).collect();
                     if let Some(j) = self.track_json(idx, if ch == Ch::TrimEnd { "trim-end" } else { "trim-start" }, &keys, "trim") {
+                        self.tracks.push(j);
+                    }
+                }
+            }
+            if self.nodes[idx]["content"].get("morph").is_some() {
+                if let Some(t) = tracks.iter().find(|t| t.ch == Ch::Morph) {
+                    let k = l.style.morph.len() as f64;
+                    let keys: Vec<(f64, Value, Ease)> = t.keys.iter().map(|x| (x.t, json!({"number": r4(x.v.n().clamp(0.0, k))}), x.ease.clone())).collect();
+                    if let Some(j) = self.track_json(idx, "morph", &keys, "morph") {
                         self.tracks.push(j);
                     }
                 }

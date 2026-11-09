@@ -47,4 +47,8 @@ WORKDIR /work
 LABEL io.modelcontextprotocol.server.name="io.github.agentfxhq/agentfx"
 LABEL org.opencontainers.image.source="https://github.com/agentfxhq/agentfx"
 
-ENTRYPOINT ["agentfx"]
+# `docker run <image> mcp` starts the MCP server (stdio); any other arguments go to the agentfx CLI.
+RUN printf '#!/bin/sh\nif [ "$1" = mcp ]; then shift; exec python3 /usr/local/share/agentfx/mcp/server.py "$@"; fi\nexec agentfx "$@"\n' \
+      > /usr/local/bin/agentfx-entrypoint && chmod 755 /usr/local/bin/agentfx-entrypoint
+
+ENTRYPOINT ["agentfx-entrypoint"]

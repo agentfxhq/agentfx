@@ -1,0 +1,13 @@
+{
+  "id": "hello-ink",
+  "title": "Hello ink",
+  "description": "A word dissolves into a swirl of fluid ink.",
+  "tags": ["text", "fluid", "ink"],
+  "formats": ["16:9", "9:16", "1:1"],
+  "duration_s": 4,
+  "params": [
+    {"id": "text", "type": "text", "label": "Text", "default": "AGENTFX", "max_len": 16},
+    {"id": "color", "type": "color", "label": "Colour", "default": "#3CBF87"},
+    {"id": "duration", "type": "number", "label": "Length (s)", "default": 4, "min": 2, "max": 8, "step": 1}
+  ]
+}

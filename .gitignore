@@ -12,3 +12,4 @@ __pycache__/
 *.pyc
 agentfx-projects/
 .claude-lock
+service/.data/

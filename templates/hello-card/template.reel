@@ -1,0 +1,6 @@
+video "Hello card" size=1080x1080 captions=off
+scene card dur=1s bg={{bg}}
+  stack #list x=50% y=50% w=80% anchor=center gap=28
+    text #title "{{title}}" size=88 weight=800 color={{fg}}
+{{#rows}}    text #row{{i}} "{{label}}  {{value}}" size=44 weight=500 color={{fg}}
+{{/rows}}

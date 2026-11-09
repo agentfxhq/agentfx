@@ -1,0 +1,11 @@
+video "Glitch text" size=1280x720 fps=30 captions=off formats=[16:9, 9:16, 1:1]
+scene glitch dur=4s bg={{bg}}
+  layer #signal x=0 y=0 w=100% h=100%
+    text #word "{{text}}" x=50% y=50% anchor=center size=180 weight=900 color={{color}} nowrap
+      when portrait
+        set #word size=96
+      when square
+        set #word size=120
+  anim #word scale 0s:0.8 0.6s:1~out-back 3.4s:1.06~inout-sine 4s:1.2~in-expo
+  anim #word opacity 0s:0 0.3s:1 3.6s:1 4s:0
+  @0.2s temporalglitch #signal span=0.35s block=28 intensity={{intensity}} smear=0.7 stutter=0.12 rgb=0.5 scanline=0.3 seed=17

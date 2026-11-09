@@ -1,0 +1,9 @@
+video "Lyric lines" size=1280x720 fps=30 captions=off formats=[16:9, 9:16, 1:1]
+{{#lines}}
+scene l{{i}} dur={{seconds}}s bg={{bg}}
+  text #line{{i}} "{{line}}" x=50% y=50% anchor=center size=72 weight=800 color={{color}} w=84% align=center
+    when portrait
+      set #line{{i}} size=56
+  anim #line{{i}} opacity 0s:0 0.35s:1~out-cubic
+  anim #line{{i}} y 0s:54% 0.5s:50%~out-expo
+{{/lines}}

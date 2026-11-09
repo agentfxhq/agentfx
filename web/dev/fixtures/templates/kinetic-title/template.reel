@@ -1,0 +1,15 @@
+video "Kinetic title" size=1280x720 fps=30 captions=off formats=[16:9, 9:16, 1:1]
+scene title dur=5s bg=linear(155deg, {{bg}} 0%, #0B0D14 100%)
+  text #kicker "{{kicker}}" x=50% y=34% anchor=center size=30 weight=700 tracking=0.2 color={{accent}} nowrap
+  text #headline "{{headline}}" x=50% y=52% anchor=center size=96 weight=850 color=#FFFFFF w=86% align=center
+    when portrait
+      set #headline size=72
+  rect #bar x=50% y=68% w=160 h=8 radius=4 anchor=center fill={{accent}}
+  anim #kicker opacity 0s:0 0.5s:1~out-cubic
+  anim #kicker y 0s:30% 0.6s:34%~{{ease}}
+  anim #headline opacity 0.2s:0 0.8s:1~out-cubic
+  anim #headline scale 0.2s:0.86 1s:1~{{ease}}
+  anim #bar sx 0.6s:0 1.4s:1~{{ease}}
+  @4.2s anim #headline opacity 0s:1 0.8s:0~in-cubic
+  @4.2s anim #kicker opacity 0s:1 0.6s:0~in-cubic
+  @4.4s anim #bar sx 0s:1 0.6s:0~in-expo

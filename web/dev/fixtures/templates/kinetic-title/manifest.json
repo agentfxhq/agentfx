@@ -1,0 +1,15 @@
+{
+  "id": "kinetic-title",
+  "title": "Kinetic title",
+  "description": "A clean animated headline with a kicker and an accent bar.",
+  "tags": ["text", "title", "intro"],
+  "formats": ["16:9", "9:16", "1:1"],
+  "duration_s": 5,
+  "params": [
+    {"id": "headline", "type": "text", "label": "Headline", "default": "Make it move", "max_len": 40},
+    {"id": "kicker", "type": "text", "label": "Kicker", "default": "INTRODUCING", "max_len": 24},
+    {"id": "accent", "type": "color", "label": "Accent", "default": "#3CBF87"},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#16233A"},
+    {"id": "ease", "type": "enum", "label": "Motion", "default": "out-back", "options": ["out-back", "out-expo", "power3.out", "elastic.out(1, 0.4)"]}
+  ]
+}

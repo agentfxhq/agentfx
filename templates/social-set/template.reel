@@ -1,0 +1,64 @@
+// Social media set: one message in every channel size. Design units: short side 1080 (#page);
+// positions are % of the page, decorations are full-page layers (nothing bleeds off the frame).
+video "{{headline}}" size={{W}}x{{H}} fps=30
+
+theme studio-dark
+  layout safe=0
+  lint min-contrast=3 motion=false
+
+scene post dur=60s bg={{bg}}
+  layer #page w={{DW}} h={{DH}} x=0 y=0 scale={{S}} origin=top-left
+{{#style=glow}}
+    rect #glow1 w={{DW}} h={{DH}} x=0 y=0 fill=radial(at {{= 88 if A > 1.3 else 92}}% {{= 6 if A > 1.3 else 4}}%, {{accent.rgb}}C0 0%, {{accent.rgb}}00 {{= 46 if A > 1.3 else 58}}%)
+    rect #glow2 w={{DW}} h={{DH}} x=0 y=0 fill=radial(at 4% 100%, {{accent2.rgb}}A0 0%, {{accent2.rgb}}00 {{= 42 if A > 1.3 else 55}}%)
+{{/style=glow}}
+{{#= A > 1.3}}
+{{#style=split}}
+    rect #panel w={{= DW*0.34}} h={{DH}} x=66% y=0 fill=linear(160deg, {{accent}} 0%, {{accent2}} 100%)
+{{#logo}}
+    image #biglogo src={{logo}} fit=contain w={{= DH*0.36}} h={{= DH*0.36}} x=83% y=50% anchor=center
+{{/logo}}
+{{/style=split}}
+{{^style=split}}
+    svg #rings w={{DW}} h={{DH}} x=0 y=0 |
+      <svg viewBox="0 0 {{DW}} {{DH}}"><circle cx="{{= DW - DH*0.36}}" cy="{{= DH*0.56}}" r="{{= DH*0.43}}" fill="none" stroke="{{accent.rgb}}" stroke-opacity="0.6" stroke-width="3"/><circle cx="{{= DW - DH*0.36}}" cy="{{= DH*0.56}}" r="{{= DH*0.28}}" fill="none" stroke="{{ink.rgb}}" stroke-opacity="0.2" stroke-width="2"/><circle cx="{{= DW - DH*0.36 + DH*0.304}}" cy="{{= DH*0.56 - DH*0.304}}" r="18" fill="{{accent.rgb}}"/></svg>
+{{#logo}}
+    image #biglogo src={{logo}} fit=contain w={{= DH*0.3}} h={{= DH*0.3}} x={{= 100 - 100*DH*0.36/DW}}% y=56% anchor=center
+{{/logo}}
+{{/style=split}}
+    row #brandrow gap=22 x=6% y=9% align=center
+{{#logo}}
+      image #logo src={{logo}} fit=contain w=80 h=80
+{{/logo}}
+      text #brand "{{brand}}" font="Space Grotesk" size=40 weight=700 color={{ink}} nowrap
+    text #headline "{{headline}}" font="{{font}}" size=124 weight=700 lh=1.0 tracking=-0.025 color={{ink}} w={{= DW*0.54}} h={{= DH*0.42}} x=6% y=25% fit
+    text #body "{{body}}" font="Inter" size=38 weight=400 lh=1.35 color={{ink}} opacity=0.8 w={{= DW*0.5}} h={{= DH*0.15}} x=6% y=67% fit
+    row #ctarow gap=30 x=6% y=84% align=center
+{{#cta}}
+      row #ctabtn fill={{accent}} pad=22 radius=99
+        text #cta "{{cta}}" font="Space Grotesk" size=34 weight=700 color={{bg}} nowrap
+{{/cta}}
+      text #url "{{url}}" font="Space Grotesk" size=32 weight=500 color={{ink}} opacity=0.75 align=left w={{= DW*0.24}} h=44 fit nowrap
+{{/= A > 1.3}}
+{{#= A <= 1.3}}
+{{#style=split}}
+    rect #panel w={{DW}} h={{= DH*0.3}} x=0 y=70% fill=linear(160deg, {{accent}} 0%, {{accent2}} 100%)
+{{/style=split}}
+{{^style=split}}
+    svg #rings w={{DW}} h={{DH}} x=0 y=0 |
+      <svg viewBox="0 0 {{DW}} {{DH}}"><circle cx="{{= DW*0.86}}" cy="{{= DH*0.1}}" r="{{= DW*0.45}}" fill="none" stroke="{{accent.rgb}}" stroke-opacity="0.6" stroke-width="3"/><circle cx="{{= DW*0.86}}" cy="{{= DH*0.1}}" r="{{= DW*0.29}}" fill="none" stroke="{{ink.rgb}}" stroke-opacity="0.2" stroke-width="2"/></svg>
+{{/style=split}}
+    row #brandrow gap=22 x=8% y={{= 12 if A < 0.7 else 8}}% align=center
+{{#logo}}
+      image #logo src={{logo}} fit=contain w=80 h=80
+{{/logo}}
+      text #brand "{{brand}}" font="Space Grotesk" size=40 weight=700 color={{ink}} nowrap
+    text #headline "{{headline}}" font="{{font}}" size=124 weight=700 lh=1.0 tracking=-0.025 color={{ink}} w={{= DW*0.84}} h={{= DH*(0.3 if A < 0.7 else 0.34)}} x=8% y={{= 30 if A < 0.7 else 25}}% fit
+    text #body "{{body}}" font="Inter" size=40 weight=400 lh=1.35 color={{ink}} opacity=0.8 w={{= DW*0.8}} h={{= DH*(0.1 if A < 0.7 else 0.13)}} x=8% y={{= 61 if A < 0.7 else 61}}% fit
+    row #ctarow gap=30 x=8% y={{= 74 if A < 0.7 else (76 if A < 0.9 else 79)}}% align=center
+{{#cta}}
+      row #ctabtn fill={{accent}} pad=24 radius=99
+        text #cta "{{cta}}" font="Space Grotesk" size=36 weight=700 color={{bg}} nowrap
+{{/cta}}
+      text #url "{{url}}" font="Space Grotesk" size=34 weight=500 color={{ink}} opacity=0.75 align=left w={{= DW*0.4}} h=46 fit nowrap
+{{/= A <= 1.3}}

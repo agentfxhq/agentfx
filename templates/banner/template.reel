@@ -1,0 +1,107 @@
+// Web banner set: display ads and social covers. Design units: short side 1080 (#page), so a
+// 728x90 leaderboard is 8736x1080 here and a 160x600 skyscraper 1080x4050.
+video "{{headline}}" size={{W}}x{{H}} fps=30
+
+theme studio-dark
+  layout safe=0
+  lint min-contrast=3 motion=false
+
+scene banner dur=60s bg={{bg}}
+  layer #page w={{DW}} h={{DH}} x=0 y=0 scale={{S}} origin=top-left
+    rect #glow w={{DW}} h={{DH}} x=0 y=0 fill=radial(at {{= 85 if A >= 1 else 50}}% {{= 50 if A >= 3 else 0}}%, {{bg2.rgb}} 0%, {{bg2.rgb}}00 {{= 70 if A >= 3 else 75}}%)
+{{#= A >= 3}}
+{{: thin = A > 6}}
+{{: pad = 160 if thin else 110}}
+{{: lw = (DH*0.62 if logo_len else 0)}}
+{{: iw = (DH*1.25 if image_len else 0)}}
+{{: cw = (2100 if thin else 1350) if cta_len else 0}}
+{{#image}}
+    image #photo src={{image}} fit=cover w={{= iw}} h={{DH}} x={{= 100*(DW - iw - cw - (pad*2 if cta_len else 0))/DW}}% y=0
+    rect #photofade w={{= iw*0.4}} h={{DH}} x={{= 100*(DW - iw - cw - (pad*2 if cta_len else 0))/DW}}% y=0 fill=linear(90deg, {{bg.rgb}} 0%, {{bg.rgb}}00 100%)
+{{/image}}
+{{#logo}}
+    image #logo src={{logo}} fit=contain w={{= lw}} h={{= lw}} x={{= 100*pad/DW}}% y=50% anchor=left
+{{/logo}}
+    col #words gap={{= 30 if thin else 40}} align=start justify=center x={{= 100*(pad + lw + (pad*0.7 if logo_len else 0))/DW}}% y=50% anchor=left w={{= DW - (pad + lw + (pad*0.7 if logo_len else 0)) - iw - cw - pad*(3 if cta_len else 1)}}
+      text #headline "{{headline}}" font="Space Grotesk" size={{= 470 if thin else 300}} weight=700 lh=1.0 tracking=-0.02 color={{ink}} align=left w={{= DW - (pad + lw + (pad*0.7 if logo_len else 0)) - iw - cw - pad*(3 if cta_len else 1)}} h={{= DH*(0.62 if thin else 0.5)}} fit
+{{#subline}}
+{{^= A > 6}}
+      text #subline "{{subline}}" font="Inter" size=120 weight=400 lh=1.2 color={{ink}} opacity=0.82 align=left w={{= DW - (pad + lw + (pad*0.7 if logo_len else 0)) - iw - cw - pad*(3 if cta_len else 1)}} h={{= DH*0.2}} fit
+{{/= A > 6}}
+{{/subline}}
+{{#cta}}
+    row #button fill={{accent}} radius=99 w={{= cw}} h={{= DH*(0.5 if thin else 0.34)}} x={{= 100*(DW - pad)/DW}}% y=50% anchor=right
+      text #cta "{{cta}}" font="Space Grotesk" size={{= 300 if thin else 140}} weight=700 color={{cta_ink}} align=center w={{= cw*0.84}} h={{= DH*(0.36 if thin else 0.2)}} fit nowrap
+{{/cta}}
+{{/= A >= 3}}
+{{#= A <= 0.55}}
+{{: pad = 90}}
+    rect #band w={{DW}} h={{= DH*0.42}} x=0 y=58% fill=linear(180deg, {{bg2.rgb}}00 0%, {{bg2.rgb}}66 100%)
+    col #top gap=60 align=start x={{= 100*pad/DW}}% y={{= 100*pad*1.4/DH}}% w={{= DW - 2*pad}}
+      row #brandrow gap=36 align=center
+{{#logo}}
+        image #logo src={{logo}} fit=contain w=150 h=150
+{{/logo}}
+        text #brand "{{brand}}" font="Space Grotesk" size=84 weight=700 color={{ink}} align=left w={{= DW - 2*pad - (186 if logo_len else 0)}} h=110 fit nowrap
+      text #headline "{{headline}}" font="Space Grotesk" size=210 weight=700 lh=1.0 tracking=-0.02 color={{ink}} align=left w={{= DW - 2*pad}} h={{= DH*(0.3 if A < 0.4 else 0.26)}} fit
+{{#subline}}
+      text #subline "{{subline}}" font="Inter" size=90 weight=400 lh=1.25 color={{ink}} opacity=0.82 align=left w={{= DW - 2*pad}} h={{= DH*0.13}} fit
+{{/subline}}
+{{#image}}
+    image #photo src={{image}} fit=cover radius=40 w={{= DW - 2*pad}} h={{= DH*0.2}} x=50% y={{= 70 if A < 0.4 else 66}}% anchor=center
+{{/image}}
+{{#cta}}
+    row #button fill={{accent}} radius=99 w={{= DW - 2*pad}} h=200 x=50% y={{= 100 - 100*pad*1.4/DH}}% anchor=bottom
+      text #cta "{{cta}}" font="Space Grotesk" size=96 weight=700 color={{cta_ink}} align=center w={{= DW - 2*pad - 120}} h=120 fit nowrap
+{{/cta}}
+{{/= A <= 0.55}}
+{{#= A > 0.55 and A < 3}}
+{{: yt = SIZE_youtube_banner}}
+{{: bx = 0.5*(DW - 1546/S) if yt else 0}}
+{{: by = 0.5*(DH - 423/S) if yt else 0}}
+{{: bw = DW - 2*bx}}
+{{: bh = DH - 2*by}}
+{{: pad = (60 if yt else 110) if A > 1.5 else 80}}
+{{: lw = 120 if A > 1.5 else 150}}
+{{#= A > 1.5}}
+{{#image}}
+    image #photo src={{image}} fit=cover w={{= DW*0.4}} h={{DH}} x=60% y=0
+    rect #photofade w={{= DW*0.2}} h={{DH}} x=60% y=0 fill=linear(90deg, {{bg.rgb}} 0%, {{bg.rgb}}00 100%)
+{{/image}}
+    col #words gap=34 align=start x={{= 100*(bx + pad + (bw*0.42 if not image_len else 0))/DW}}% y=50% anchor=left w={{= bw*(0.5 if image_len else 0.54)}}
+      row #brandrow gap=24 align=center
+{{#logo}}
+        image #logo src={{logo}} fit=contain w={{= lw*0.8}} h={{= lw*0.8}}
+{{/logo}}
+        text #brand "{{brand}}" font="Space Grotesk" size=52 weight=700 color={{ink}} nowrap
+      text #headline "{{headline}}" font="Space Grotesk" size=150 weight=700 lh=1.0 tracking=-0.02 color={{ink}} align=left w={{= bw*(0.5 if image_len else 0.54)}} h={{= bh*0.42}} fit
+{{#subline}}
+      text #subline "{{subline}}" font="Inter" size=54 weight=400 lh=1.25 color={{ink}} opacity=0.82 align=left w={{= bw*(0.5 if image_len else 0.54)}} h={{= bh*0.14}} fit
+{{/subline}}
+{{#cta}}
+      row #button fill={{accent}} radius=99 pad=36
+        text #cta "{{cta}}" font="Space Grotesk" size=52 weight=700 color={{cta_ink}} nowrap
+{{/cta}}
+{{/= A > 1.5}}
+{{#= A <= 1.5}}
+{{#image}}
+    image #photo src={{image}} fit=cover w={{DW}} h={{= DH*0.45}} x=0 y=0
+{{/image}}
+    col #words gap=34 align=start x={{= 100*pad/DW}}% y={{= 56 if image_len else 50}}% anchor=left w={{= DW - 2*pad}}
+{{^image}}
+      row #brandrow gap=24 align=center
+{{#logo}}
+        image #logo src={{logo}} fit=contain w=110 h=110
+{{/logo}}
+        text #brand "{{brand}}" font="Space Grotesk" size=60 weight=700 color={{ink}} nowrap
+{{/image}}
+      text #headline "{{headline}}" font="Space Grotesk" size=150 weight=700 lh=1.0 tracking=-0.02 color={{ink}} align=left w={{= DW - 2*pad}} h={{= DH*(0.22 if image_len else 0.3)}} fit
+{{#subline}}
+      text #subline "{{subline}}" font="Inter" size=62 weight=400 lh=1.25 color={{ink}} opacity=0.82 align=left w={{= DW - 2*pad}} h={{= DH*(0.1 if image_len else 0.14)}} fit
+{{/subline}}
+{{#cta}}
+      row #button fill={{accent}} radius=99 pad=40
+        text #cta "{{cta}}" font="Space Grotesk" size=60 weight=700 color={{cta_ink}} nowrap
+{{/cta}}
+{{/= A <= 1.5}}
+{{/= A > 0.55 and A < 3}}

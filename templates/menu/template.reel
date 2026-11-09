@@ -1,0 +1,67 @@
+// Restaurant menu from a table. Sections flow into a grid of columns; type size follows the
+// amount of content. Design units: short side 1080 (#page).
+video "{{name}}" size={{W}}x{{H}} fps=30
+
+theme {{#= bg_luma > 0.45}}studio-light{{/= bg_luma > 0.45}}{{^= bg_luma > 0.45}}studio-dark{{/= bg_luma > 0.45}}
+  layout safe=0
+  type min=14
+  lint min-contrast=3 motion=false
+
+{{: wide = A > 1.2}}
+{{: m = 0.075*min(DW, DH)}}
+{{: nsec = rows_groups_section}}
+{{: hh = 250 if wide else 330}}
+{{: fh = 80}}
+{{: aw = DW - 2*m}}
+{{: ah = DH - 2*m - hh - fh}}
+{{: fd = rows_filled_description/rows_count}}
+{{: c1 = 2 if wide else 1}}
+{{: w1 = (aw - (c1 - 1)*70)/c1}}
+{{: w2 = (aw - c1*70)/(c1 + 1)}}
+{{: w3 = (aw - (c1 + 1)*70)/(c1 + 2)}}
+{{: d1 = min(0.9*(ah - (ceil(nsec/c1) - 1)*70)/((rows_count/c1)*(1.85 + 1.07*fd) + ceil(nsec/c1)*1.9), w1/15)}}
+{{: d2 = min(0.9*(ah - (ceil(nsec/(c1 + 1)) - 1)*70)/((rows_count/(c1 + 1))*(1.85 + 1.07*fd) + ceil(nsec/(c1 + 1))*1.9), w2/15) if nsec > c1 else 0}}
+{{: d3 = min(0.9*(ah - (ceil(nsec/(c1 + 2)) - 1)*70)/((rows_count/(c1 + 2))*(1.85 + 1.07*fd) + ceil(nsec/(c1 + 2))*1.9), w3/15) if nsec > c1 + 1 else 0}}
+{{: n1 = min(0.9*(ah - (ceil(nsec/c1) - 1)*70)/((rows_count/c1)*1.85 + ceil(nsec/c1)*1.9), w1/15)}}
+{{: n2 = min(0.9*(ah - (ceil(nsec/(c1 + 1)) - 1)*70)/((rows_count/(c1 + 1))*1.85 + ceil(nsec/(c1 + 1))*1.9), w2/15) if nsec > c1 else 0}}
+{{: n3 = min(0.9*(ah - (ceil(nsec/(c1 + 2)) - 1)*70)/((rows_count/(c1 + 2))*1.85 + ceil(nsec/(c1 + 2))*1.9), w3/15) if nsec > c1 + 1 else 0}}
+{{: dbest = max(d1, d2, d3)}}
+{{: showdesc = fd > 0 and dbest >= 24}}
+{{: best = dbest if showdesc else max(n1, n2, n3)}}
+{{: cols = min(nsec, (c1 if best == (d1 if showdesc else n1) else (c1 + 1 if best == (d2 if showdesc else n2) else c1 + 2)))}}
+{{: cg = 70 if cols > 1 else 0}}
+{{: colw = (aw - (cols - 1)*cg)/cols}}
+{{: isz = clamp(best, 18, 48)}}
+{{: pw = isz*3.2}}
+scene menu dur=60s bg={{bg}}
+  layer #page w={{DW}} h={{DH}} x=0 y=0 scale={{S}} origin=top-left
+    rect #frame w={{= DW - m}} h={{= DH - m}} x=50% y=50% anchor=center radius=6 stroke={{accent}} sw=2 opacity=0.55
+    text #name "{{name}}" font="{{font}}" size={{= 118 if wide else 128}} weight=700 lh=1 tracking=-0.015 color={{ink}} align=center w={{= aw - 80}} h={{= 130 if wide else 150}} x=50% y={{= 100*(m + 30)/DH}}% anchor=top fit nowrap
+    row #orn gap=22 align=center x=50% y={{= 100*(m + (178 if wide else 205))/DH}}% anchor=center
+      rect #orn1 w=120 h=2 fill={{accent}}
+      rect #orn2 w=14 h=14 fill={{accent}} rot=45
+      rect #orn3 w=120 h=2 fill={{accent}}
+{{#tagline}}
+    text #tagline "{{tagline}}" font="Space Grotesk" size=30 weight=600 tracking=0.2 upper color={{accent}} align=center w={{= aw - 120}} h=44 x=50% y={{= 100*(m + (212 if wide else 245))/DH}}% anchor=top fit nowrap
+{{/tagline}}
+    grid #menu cols={{cols}} cols-portrait={{cols}} gap={{cg}} align=start justify=start w={{= aw}} x={{= 100*m/DW}}% y={{= 100*(m + hh)/DH}}%
+{{#rows}}
+{{#@changed.section}}
+      col #s{{@n}} gap={{= isz*0.6}} align=start justify=start w={{= colw}}
+        text #s{{@n}}h "{{.section}}" font="Space Grotesk" size={{= isz*0.78}} weight=700 tracking=0.18 upper color={{accent}} align=left w={{= colw}} h={{= isz*1.3}} fit nowrap
+{{/@changed.section}}
+        row #i{{@n}} gap=24 align=start justify=space-between w={{= colw}}
+          col #i{{@n}}t gap={{= isz*0.12}} align=start w={{= colw - pw - 24}}
+            text #i{{@n}}n "{{.item}}" font="{{font}}" size={{= isz}} weight=600 lh=1.15 color={{ink}} align=left w={{= colw - pw - 24}}
+{{#.description}}
+{{#= showdesc}}
+            text #i{{@n}}d "{{.description}}" font="Inter" size={{= isz*0.66}} weight=400 lh=1.3 color={{ink}} opacity=0.72 align=left w={{= colw - pw - 24}}
+{{/= showdesc}}
+{{/.description}}
+{{#.price}}
+          text #i{{@n}}p "{{#currency_pos=before}}{{currency}} {{/currency_pos=before}}{{.price}}{{#currency_pos=after}} {{currency}}{{/currency_pos=after}}" font="{{font}}" size={{= isz}} weight=600 color={{ink}} align=right w={{= pw}} h={{= isz*1.25}} fit nowrap
+{{/.price}}
+{{/rows}}
+{{#footer}}
+    text #footer "{{footer}}" font="Inter" size=26 weight=500 color={{ink}} opacity=0.7 align=center w={{= aw - 80}} h=40 x=50% y={{= 100*(DH - m - 30)/DH}}% anchor=bottom fit nowrap
+{{/footer}}

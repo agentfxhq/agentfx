@@ -1,0 +1,68 @@
+// Certificate: frame, title, recipient, course, date, signature and seal. Batch: one still per
+// row of `recipients` (index = row). Design units: short side 1080 (#page).
+video "{{title}} {{name}}" size={{W}}x{{H}} fps=30
+
+theme {{#= bg_luma > 0.45}}studio-light{{/= bg_luma > 0.45}}{{^= bg_luma > 0.45}}studio-dark{{/= bg_luma > 0.45}}
+  layout safe=0
+  lint min-contrast=3 motion=false
+
+{{: wide = A > 1.2}}
+{{: sq = A > 0.9 and A <= 1.2}}
+{{: k = 1 if wide else (0.93 if sq else 1)}}
+{{: yl = 7 if wide else (7 if sq else 8)}}
+{{: yi = 15 if wide else (14 if sq else 14.5)}}
+{{: yt = 20.5 if wide else (19 if sq else 20)}}
+{{: ys = 32.5 if wide else (29.5 if sq else 28.5)}}
+{{: yintro = 40.5 if wide else (36.5 if sq else 36)}}
+{{: yname = 46 if wide else (41.5 if sq else 40.5)}}
+{{: yrule = 60 if wide else (54 if sq else 50.5)}}
+{{: ycourse = 63 if wide else (57 if sq else 53.5)}}
+{{: yb = 85 if wide else (86 if sq else 86)}}
+{{: yseal = 84 if wide else (73.5 if sq else 71)}}
+{{: bx = 24 if wide else 27}}
+{{: bw = DW*(0.24 if wide else 0.34)}}
+scene certificate dur=60s bg={{bg}}
+  layer #page w={{DW}} h={{DH}} x=0 y=0 scale={{S}} origin=top-left
+    rect #frame w={{= DW - 80}} h={{= DH - 80}} x=50% y=50% anchor=center stroke={{accent}} sw=6
+    rect #frame2 w={{= DW - 120}} h={{= DH - 120}} x=50% y=50% anchor=center stroke={{accent}} sw=1.5 opacity=0.8
+    rect #c1 w=16 h=16 x={{= 100*60/DW}}% y={{= 100*60/DH}}% anchor=center rot=45 fill={{accent}}
+    rect #c2 w=16 h=16 x={{= 100 - 100*60/DW}}% y={{= 100*60/DH}}% anchor=center rot=45 fill={{accent}}
+    rect #c3 w=16 h=16 x={{= 100*60/DW}}% y={{= 100 - 100*60/DH}}% anchor=center rot=45 fill={{accent}}
+    rect #c4 w=16 h=16 x={{= 100 - 100*60/DW}}% y={{= 100 - 100*60/DH}}% anchor=center rot=45 fill={{accent}}
+{{#logo}}
+    image #logo src={{logo}} fit=contain w=84 h=84 x=50% y={{yl}}% anchor=top
+{{/logo}}
+{{#issuer}}
+    text #issuer "{{issuer}}" font="Space Grotesk" size=26 weight=700 tracking=0.22 upper color={{ink}} opacity=0.75 align=center w={{= DW*0.6}} h=36 x=50% y={{= yi + (0 if logo_len else -6)}}% anchor=top fit nowrap
+{{/issuer}}
+    text #title "{{title}}" font="Fraunces" size={{= 100*k}} weight=700 tracking=0.08 upper color={{ink}} align=center w={{= DW*0.8}} h={{= 120*k}} x=50% y={{yt}}% anchor=top fit nowrap
+{{#subtitle}}
+    text #subtitle "{{subtitle}}" font="Space Grotesk" size=30 weight=600 tracking=0.32 upper color={{accent}} align=center w={{= DW*0.7}} h=44 x=50% y={{ys}}% anchor=top fit nowrap
+{{/subtitle}}
+{{#intro}}
+    text #intro "{{intro}}" font="Inter" size=32 weight=400 color={{ink}} opacity=0.75 align=center w={{= DW*0.7}} h=46 x=50% y={{yintro}}% anchor=top fit nowrap
+{{/intro}}
+{{#recipients}}
+{{#= n == min(index, recipients_count)}}
+    text #name "{{.name}}" font="{{font}}" size={{= 118*k}} weight=500 lh=1 tracking=-0.01 color={{ink}} align=center w={{= DW*(0.72 if wide else 0.84)}} h={{= 140*k}} x=50% y={{yname}}% anchor=top fit nowrap
+    text #course "{{#.course}}{{.course}}{{/.course}}{{^.course}}{{course}}{{/.course}}" font="Inter" size=34 weight=400 lh=1.4 color={{ink}} opacity=0.85 align=center w={{= DW*(0.62 if wide else 0.76)}} h=100 x=50% y={{ycourse}}% anchor=top fit
+    text #date "{{#.date}}{{.date}}{{/.date}}{{^.date}}{{date}}{{/.date}}" font="Fraunces" size=36 weight=500 color={{ink}} align=center w={{= bw}} h=50 x={{bx}}% y={{yb}}% anchor=bottom fit nowrap
+{{/= n == min(index, recipients_count)}}
+{{/recipients}}
+{{^recipients}}
+    text #name "{{name}}" font="{{font}}" size={{= 118*k}} weight=500 lh=1 tracking=-0.01 color={{ink}} align=center w={{= DW*(0.72 if wide else 0.84)}} h={{= 140*k}} x=50% y={{yname}}% anchor=top fit nowrap
+    text #course "{{course}}" font="Inter" size=34 weight=400 lh=1.4 color={{ink}} opacity=0.85 align=center w={{= DW*(0.62 if wide else 0.76)}} h=100 x=50% y={{ycourse}}% anchor=top fit
+    text #date "{{date}}" font="Fraunces" size=36 weight=500 color={{ink}} align=center w={{= bw}} h=50 x={{bx}}% y={{yb}}% anchor=bottom fit nowrap
+{{/recipients}}
+    rect #namerule w={{= DW*(0.46 if wide else 0.62)}} h=2 x=50% y={{yrule}}% anchor=center fill={{accent}}
+    rect #dateline w={{= bw}} h=2 x={{bx}}% y={{= yb + 0.8}}% anchor=center fill={{ink}} opacity=0.5
+    text #datelabel "Date" font="Space Grotesk" size=24 weight=600 tracking=0.2 upper color={{ink}} opacity=0.6 align=center w={{= bw}} h=34 x={{bx}}% y={{= yb + 1.8}}% anchor=top nowrap
+    text #signer "{{signer}}" font="Fraunces" size=36 weight=500 color={{ink}} align=center w={{= bw}} h=50 x={{= 100 - bx}}% y={{yb}}% anchor=bottom fit nowrap
+    rect #signline w={{= bw}} h=2 x={{= 100 - bx}}% y={{= yb + 0.8}}% anchor=center fill={{ink}} opacity=0.5
+    text #signrole "{{signer_role}}" font="Space Grotesk" size=24 weight=600 tracking=0.2 upper color={{ink}} opacity=0.6 align=center w={{= bw}} h=34 x={{= 100 - bx}}% y={{= yb + 1.8}}% anchor=top fit nowrap
+{{#seal}}
+    svg #seal w=180 h=180 x=50% y={{yseal}}% anchor=center |
+      <svg viewBox="0 0 200 200"><polygon fill="{{accent.rgb}}" points="100.0,2.0 111.5,12.8 125.4,5.3 133.7,18.7 149.0,15.1 153.6,30.2 169.3,30.7 169.8,46.4 184.9,51.0 181.3,66.3 194.7,74.6 187.2,88.5 198.0,100.0 187.2,111.5 194.7,125.4 181.3,133.7 184.9,149.0 169.8,153.6 169.3,169.3 153.6,169.8 149.0,184.9 133.7,181.3 125.4,194.7 111.5,187.2 100.0,198.0 88.5,187.2 74.6,194.7 66.3,181.3 51.0,184.9 46.4,169.8 30.7,169.3 30.2,153.6 15.1,149.0 18.7,133.7 5.3,125.4 12.8,111.5 2.0,100.0 12.8,88.5 5.3,74.6 18.7,66.3 15.1,51.0 30.2,46.4 30.7,30.7 46.4,30.2 51.0,15.1 66.3,18.7 74.6,5.3 88.5,12.8"/><circle cx="100" cy="100" r="76" fill="none" stroke="{{bg.rgb}}" stroke-width="3"/><circle cx="100" cy="100" r="69" fill="none" stroke="{{bg.rgb}}" stroke-width="1.5" stroke-opacity="0.7"/></svg>
+    row #sealdisc w=128 h=128 radius=64 fill={{accent}} x=50% y={{yseal}}% anchor=center align=center justify=center
+      text #sealtext "{{seal}}" font="Fraunces" size=40 weight=700 color={{bg}} align=center w=110 h=50 fit nowrap
+{{/seal}}

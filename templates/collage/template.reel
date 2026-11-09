@@ -1,0 +1,72 @@
+// Photo collage: grid, mosaic (one hero) or polaroids, 2 to 9 photos. Design units: short side
+// 1080 (#page); every cell is computed here, positions are % of the page.
+video "{{title}}" size={{W}}x{{H}} fps=30
+
+theme {{#= bg_luma > 0.45}}studio-light{{/= bg_luma > 0.45}}{{^= bg_luma > 0.45}}studio-dark{{/= bg_luma > 0.45}}
+  layout safe=0
+  lint min-contrast=3 motion=false
+
+{{: th = (150 if A > 0.9 else 190) if title_len > 0 else 0}}
+{{: m = max(margin, 40) if layout_polaroid else margin}}
+{{: g = gap}}
+{{: aw = DW - 2*m}}
+{{: ah = DH - 2*m - th}}
+{{: ay = m + th}}
+{{: nn = photos_count}}
+{{: cols = clamp(round(sqrt(nn*aw/ah)), 1, nn)}}
+{{: rows = ceil(nn/cols)}}
+{{: lastk = nn - (rows - 1)*cols}}
+{{: wide = aw/ah >= 1.1}}
+{{: hw = ((aw - g)*(0.5 if nn == 2 else 0.6)) if wide else aw}}
+{{: hh = ah if wide else (ah - g)*(0.5 if nn == 2 else 0.6)}}
+{{: mm = nn - 1}}
+{{: mcols = (1 if mm <= 3 else 2) if wide else (mm if mm <= 3 else ceil(mm/2))}}
+{{: mrows = ceil(mm/mcols)}}
+{{: mlast = mm - (mrows - 1)*mcols}}
+{{: mx = m + hw + g if wide else m}}
+{{: my = ay if wide else ay + hh + g}}
+{{: mw = aw - hw - g if wide else aw}}
+{{: mh = ah if wide else ah - hh - g}}
+scene collage dur=60s bg={{bg}}
+  layer #page w={{DW}} h={{DH}} x=0 y=0 scale={{S}} origin=top-left
+{{#title}}
+    text #title "{{title}}" font="{{font}}" size={{= 92 if A > 0.9 else 104}} weight=700 lh=1 tracking=-0.02 color={{ink}} align=center w={{= DW - 2*max(m, 60)}} h={{= th - 40}} x=50% y={{= 100*(max(m, 30) + th/2 - 10)/DH}}% anchor=center fit nowrap
+{{/title}}
+{{#photos}}
+{{#layout=grid}}
+{{: r = i // cols}}
+{{: k = lastk if r == rows - 1 else cols}}
+{{: cw = (aw - (k - 1)*g)/k}}
+{{: ch = (ah - (rows - 1)*g)/rows}}
+    image #p{{@n}} src={{.src}} fit=cover radius={{radius}} w={{= cw}} h={{= ch}} x={{= 100*(m + (i - r*cols)*(cw + g))/DW}}% y={{= 100*(ay + r*(ch + g))/DH}}%
+{{/layout=grid}}
+{{#layout=mosaic}}
+{{#@first}}
+    image #p1 src={{.src}} fit=cover radius={{radius}} w={{= hw}} h={{= hh}} x={{= 100*m/DW}}% y={{= 100*ay/DH}}%
+{{/@first}}
+{{^@first}}
+{{: j = i - 1}}
+{{: r = j // mcols}}
+{{: k = mlast if r == mrows - 1 else mcols}}
+{{: cw = (mw - (k - 1)*g)/k}}
+{{: ch = (mh - (mrows - 1)*g)/mrows}}
+    image #p{{@n}} src={{.src}} fit=cover radius={{radius}} w={{= cw}} h={{= ch}} x={{= 100*(mx + (j - r*mcols)*(cw + g))/DW}}% y={{= 100*(my + r*(ch + g))/DH}}%
+{{/@first}}
+{{/layout=mosaic}}
+{{#layout=polaroid}}
+{{: r = i // cols}}
+{{: k = lastk if r == rows - 1 else cols}}
+{{: cw = aw/k}}
+{{: ch = ah/rows}}
+{{: card = min(cw*0.94, ch*0.86)}}
+{{: pad = card*0.055}}
+{{: img = card - 2*pad}}
+{{: cx = m + (i - r*cols + 0.5)*cw + ((i*53) % 7 - 3)*cw*0.012}}
+{{: cy = ay + (r + 0.5)*ch + ((i*29) % 5 - 2)*ch*0.012}}
+    col #p{{@n}} w={{= card}} h={{= card*1.16}} fill=#FFFFFF pad={{= pad}} gap={{= pad*0.7}} justify=start align=center radius=4 rot={{= ((i*37) % 9 - 4)*1.3 + (1.5 if (i*37) % 9 == 4 else 0)}} shadow=lg x={{= 100*cx/DW}}% y={{= 100*cy/DH}}% anchor=center
+      image #p{{@n}}img src={{.src}} fit=cover w={{= img}} h={{= img}}
+{{#.caption}}
+      text #p{{@n}}cap "{{.caption}}" font="Nunito" size={{= max(28, card*0.075)}} weight=700 color=#2B2621 align=center w={{= img}} h={{= card*0.16 - pad*0.7}} fit nowrap
+{{/.caption}}
+{{/layout=polaroid}}
+{{/photos}}

@@ -1,0 +1,29 @@
+// Animated chart: title rises, the chart draws (bars grow with counting values, lines draw on,
+// the donut fills), the highlight pulses. 16:9, 9:16 and 1:1 from one source.
+video "{{title}}" size=1920x1080 fps=30 captions=off formats=[16:9, 9:16, 1:1]
+
+theme {{#= bg_luma > 0.45}}studio-light{{/= bg_luma > 0.45}}{{^= bg_luma > 0.45}}studio-dark{{/= bg_luma > 0.45}}
+  colors bg={{bg}} text={{ink}} muted={{ink.rgb}}B8 faint={{ink.rgb}}8C border={{ink.rgb}}33 mint={{accent}} accent={{color}} accent2={{color}}
+  layout safe=7%
+
+scene chart dur=10s bg={{bg}}
+  text #title "{{title}}" font="Space Grotesk" size=72 weight=700 tracking=-0.02 color={{ink}} align=left w=1600 h=90 x=7% y=9% fit nowrap in=rise
+  text #subtitle "{{subtitle}}" font="Inter" size=34 color={{ink}} opacity=0.7 align=left w=1600 h=46 x=7% y=18% fit nowrap in=rise at=@0.15s
+  chart #c type={{type}} data=[{{#rows}}{{.value}}{{^@last}}, {{/@last}}{{/rows}}] labels=[{{#rows}}"{{.label}}"{{^@last}}, {{/@last}}{{/rows}}] unit="{{unit}}" locale={{locale}} color={{color}}{{#= highlight > 0 and highlight <= rows_count}} highlight={{highlight}}{{/= highlight > 0 and highlight <= rows_count}} w=1600 h=620 x=7% y=27% in=draw at=@0.4s
+  text #source "{{source}}" font="Inter" size=28 color={{ink}} opacity=0.6 align=left w=1200 h=40 x=7% y=93% anchor=bottom-left fit nowrap in=fade at=@1s
+  when portrait
+    set #title w=920 h=180 y=13% size=76
+    set #subtitle w=920 y=24%
+    set #c w=900 h=960 y=31%
+    set #source w=900 y=88%
+  when square
+    set #title w=920 h=170 y=8%
+    set #subtitle w=920 y=24%
+    set #c w=900 h=580 y=32%
+    set #source w=900
+  @2.4s anim #c scale 0s:1 7.6s:1.015~inout-sine
+{{#= highlight > 0 and highlight <= rows_count}}
+{{^type=donut}}
+  @2.6s glow #c for=0.8s
+{{/type=donut}}
+{{/= highlight > 0 and highlight <= rows_count}}

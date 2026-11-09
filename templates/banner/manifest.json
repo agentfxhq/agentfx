@@ -1,0 +1,22 @@
+{
+  "id": "banner",
+  "kind": "still",
+  "title": "Web banner set",
+  "description": "Display ads (leaderboard, medium rectangle, skyscraper, billboard, mobile) and social covers from one message.",
+  "tags": ["banner", "banner maker", "banner erstellen", "display ads", "web banner", "linkedin banner", "header", "cover"],
+  "sizes": ["medium-rectangle", "leaderboard", "skyscraper", "wide-skyscraper", "billboard", "mobile-banner", "linkedin-cover", "x-header", "facebook-cover", "youtube-banner"],
+  "still_at": "0s",
+  "params": [
+    {"id": "headline", "type": "text", "label": "Headline", "default": "Spring sale: 30% off", "max_len": 48, "required": true},
+    {"id": "subline", "type": "text", "label": "Subline (hidden on the thinnest banners)", "default": "All plans, this week only.", "max_len": 80},
+    {"id": "cta", "type": "text", "label": "Button", "default": "Shop now", "max_len": 20},
+    {"id": "brand", "type": "text", "label": "Brand name", "default": "Northwind", "max_len": 24},
+    {"id": "logo", "type": "image", "label": "Logo (square PNG, optional)", "default": "logo.png", "accept": [".png"]},
+    {"id": "image", "type": "image", "label": "Product or photo (optional)", "default": "", "accept": [".png"]},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#14123A"},
+    {"id": "bg2", "type": "color", "label": "Background glow", "default": "#4B2BD6"},
+    {"id": "ink", "type": "color", "label": "Text colour", "default": "#FFFFFF"},
+    {"id": "accent", "type": "color", "label": "Button colour", "default": "#FFC93C"},
+    {"id": "cta_ink", "type": "color", "label": "Button text", "default": "#14123A"}
+  ]
+}

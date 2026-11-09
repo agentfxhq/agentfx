@@ -1,0 +1,23 @@
+{
+  "id": "flyer",
+  "kind": "still",
+  "title": "Flyer",
+  "description": "Event or sale flyer: photo, big headline, date and place. Print (A4, A5, A3) and Instagram sizes.",
+  "tags": ["flyer", "poster", "event", "sale", "print", "flyer maker", "flyer erstellen"],
+  "sizes": ["a4-flyer", "a5-flyer", "a3-poster", "instagram-post", "instagram-portrait", "story"],
+  "still_at": "0s",
+  "params": [
+    {"id": "headline", "type": "text", "label": "Headline", "default": "Summer Night Market", "max_len": 60, "required": true},
+    {"id": "subline", "type": "text", "label": "Subline", "default": "Street food, live music and makers from the neighbourhood. Free entry.", "max_len": 140},
+    {"id": "kicker", "type": "text", "label": "Label above the headline", "default": "Open air", "max_len": 24},
+    {"id": "date", "type": "text", "label": "Date and time", "default": "Sat 14 June, 6 pm", "max_len": 40},
+    {"id": "place", "type": "text", "label": "Place", "default": "Harbour Square", "max_len": 40},
+    {"id": "image", "type": "image", "label": "Photo (optional)", "default": "photo.png", "accept": [".png"]},
+    {"id": "font", "type": "enum", "label": "Headline font", "default": "Fraunces", "options": ["Fraunces", "Space Grotesk", "Inter", "Libre Franklin", "Source Serif 4", "Nunito"]},
+    {"id": "theme", "type": "enum", "label": "Theme", "default": "dark", "options": ["dark", "light"]},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#1A0E2B"},
+    {"id": "ink", "type": "color", "label": "Text colour", "default": "#FFF4E8"},
+    {"id": "accent", "type": "color", "label": "Accent", "default": "#F6B26B"},
+    {"id": "accent2", "type": "color", "label": "Second accent (no photo)", "default": "#E0645A"}
+  ]
+}

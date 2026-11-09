@@ -120,8 +120,9 @@ def test_studio(pg: Page):
     pg.mouse.move(x + 15, y, steps=4)
     pg.mouse.move(x + 30, y, steps=4)
     pg.mouse.up()
-    new = wait_until(lambda: re.search(r'anim #bar sx 0\.6s:0 ([\d.]+)s:1~out-back', code()) and code(), msg='code after drag')
-    t = float(re.search(r'anim #bar sx 0\.6s:0 ([\d.]+)s:1~out-back', new).group(1))
+    key_re = r'anim #bar sx 0\.6s:0 ([\d.]+)s:1~out-back'
+    new = wait_until(lambda: (m := re.search(key_re, code())) and m.group(1) != '1.4' and code(), msg='code after drag')
+    t = float(re.search(key_re, new).group(1))
     assert t > 1.45, f'key did not move ({t})'
     assert '// Welcome to AgentFX Studio' in new, 'comments must survive a timeline edit'
     print('  key moved to', t)

@@ -199,7 +199,7 @@ export function buildTimeline(doc: ReelDoc, timing: Timing | null): Timeline {
       const t = (baseAbs ?? start) + (a?.offset?.seconds ?? 0);
       const ev: TLEvent = {
         uid: `e${path.join('.')}`, path, sceneIdx: scene.idx, t, expr, anchor: a, baseAbs: baseAbs ?? start,
-        locked: !a || baseAbs === null || (a.base !== null && a.base.startsWith('beat')), label: eventLabel(en),
+        locked: !a || baseAbs === null || (a.base !== null && /^(beat|bar):/.test(a.base)), label: eventLabel(en),
       };
       events.push(ev);
       prevEvent = t;

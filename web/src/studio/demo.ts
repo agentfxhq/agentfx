@@ -4,7 +4,7 @@ export const DEMO = `// Welcome to AgentFX Studio. Edit the code or drag keyfram
 video "Studio demo" size=1280x720 fps=30 captions=off formats=[16:9, 9:16, 1:1]
 
 scene intro dur=3.5s bg=linear(155deg, #10221B 0%, #0B0D14 100%)
-  text #kicker "AGENTFX STUDIO" x=50% y=33% anchor=center size=26 weight=700 tracking=0.24 color=#3CBF87 nowrap
+  text #kicker "AGENTFX STUDIO" x=50% y=33% anchor=center size=30 weight=700 tracking=0.22 color=#3CBF87 nowrap
   text #title "Motion from text" x=50% y=50% anchor=center size=92 weight=850 color=#FFFFFF nowrap
     when portrait
       set #title size=60

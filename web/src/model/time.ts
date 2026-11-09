@@ -63,7 +63,8 @@ export interface Anchor {
   offset: Dur | null; // offset (or the time itself when base is null)
 }
 
-const ANCHOR_RE = /^([A-Za-z_À-￿][\wÀ-￿-]*(?:\.end)?)(?:([+-])(.+))?$/;
+// word anchors, `start`/`end`/`prev`, and the music grid (`beat:4`, `bar:5`)
+const ANCHOR_RE = /^((?:beat|bar):\d+(?:\.\d+)?|[A-Za-z_À-￿][\wÀ-￿-]*(?:\.end)?)(?:([+-])(.+))?$/;
 
 export function parseAnchor(expr: string, fps = 30): Anchor | null {
   const e = expr.trim().replace(/^@/, '');

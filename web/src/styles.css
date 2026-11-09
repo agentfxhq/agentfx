@@ -1696,6 +1696,22 @@ input[type='range']::-moz-range-thumb {
   }
 }
 
+/* narrow studio: the transport's right controls get their own row */
+.transport .scrub {
+  min-width: 80px;
+}
+@media (max-width: 1180px) {
+  .studio-stage .transport {
+    grid-template-columns: auto auto minmax(80px, 1fr);
+    row-gap: 8px;
+  }
+  .studio-stage .transport > .row {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+}
+
 /* ---------------------------------------------------------------- stills, data, batch */
 .thumb {
   position: relative;

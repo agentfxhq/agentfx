@@ -4,7 +4,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { easeGroups, easePath, normEase } from '../model/easings';
 import { getNode, type PropValue, type ReelDoc } from '../model/reel';
 import type { Timeline, TLEvent, TLKey, TLRow, TLScene } from '../model/timeline';
-import { num } from '../model/time';
+import { num, parseDur } from '../model/time';
 import type { Catalog } from '../api';
 import { Diamond, Plus, Trash } from '../ui/icons';
 import type { Sel } from './Timeline';
@@ -87,8 +87,8 @@ export function Inspector({ doc, tl, sel, catalog, time, act }: Props) {
         <div class="field">
           <label class="field-label">Length <span class="count">starts {num(s.start, 2)}s</span></label>
           <CommitInput value={s.durProp ?? num(s.dur, 3) + 's'} mono onCommit={(v) => {
-            const n = parseFloat(v);
-            if (!Number.isNaN(n)) act.setSceneDur(s, /ms$/.test(v) ? n / 1000 : n);
+            const d = parseDur(v.trim(), tl.fps);
+            if (d && d.seconds > 0) act.setSceneDur(s, d.seconds);
           }} />
         </div>
         <PropList props={node.props ?? {}} skip={['dur']} onSet={(k, v) => act.setProp(s.path, k, v)} />
@@ -130,8 +130,8 @@ function KeyInspector({ k, row, catalog, act }: { k: TLKey; row: TLRow; catalog:
       <div class="props" style={{ gridTemplateColumns: '64px 1fr' }}>
         <label>time</label>
         <CommitInput value={num(k.t, 3) + 's'} mono disabled={k.locked} testid="key-time" onCommit={(v) => {
-          const n = parseFloat(v);
-          if (!Number.isNaN(n)) act.moveKey(k, n);
+          const d = parseDur(v.trim());
+          if (d) act.moveKey(k, d.seconds);
         }} />
         <label>value</label>
         <CommitInput value={k.value} mono testid="key-value" onCommit={(v) => act.setKey(k, { value: v })} />

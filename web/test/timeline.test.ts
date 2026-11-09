@@ -36,6 +36,7 @@ describe('time', () => {
     expect(parseAnchor('@Klick+0.2s')).toEqual({ base: 'Klick', offset: { seconds: 0.2, unit: 's' } });
     expect(parseAnchor('offen.end-6f', 30)!.offset!.seconds).toBeCloseTo(-0.2);
     expect(parseAnchor('2.5s')).toEqual({ base: null, offset: { seconds: 2.5, unit: 's' } });
+    expect(parseAnchor('bar:5+2f', 30)).toEqual({ base: 'bar:5', offset: { seconds: 2 / 30, unit: 'f' } });
     expect(formatAnchor({ base: 'x', offset: { seconds: -0.3, unit: 's' } })).toBe('x-0.3s');
     expect(formatAnchor({ base: 'x', offset: { seconds: 0.001, unit: 's' } })).toBe('x');
   });

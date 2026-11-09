@@ -80,6 +80,13 @@ per file), [examples/showcase.reel](examples/showcase.reel), [examples/component
 
 ## Use with Claude Code, Codex and MCP
 
+**Claude Code plugin (skill + MCP server in one step, needs Docker):**
+
+```
+/plugin marketplace add agentfxhq/agentfx
+/plugin install agentfx@agentfx
+```
+
 **Skill.** [skill/agentfx/](skill/agentfx/) is an agent skill: quick mode (write, lint, look,
 render) by default, and an optional director mode that agrees on brief, directions, dramaturgy,
 storyboard and hero variants before the full render. For Claude Code, copy or link the folder

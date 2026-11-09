@@ -1,0 +1,18 @@
+{
+  "name": "agentfx",
+  "version": "0.1.1",
+  "description": "Motion graphics and video effects your agent can script, lint, preview and render. Adds the AgentFX skill (quick mode and director mode) and the AgentFX MCP server (runs in Docker).",
+  "author": { "name": "AgentFX", "url": "https://agentfx.dev" },
+  "homepage": "https://agentfx.dev",
+  "repository": "https://github.com/agentfxhq/agentfx",
+  "license": "Apache-2.0",
+  "keywords": ["video", "motion-graphics", "animation", "render", "mcp", "effects"],
+  "skills": ["./skill/agentfx"],
+  "mcpServers": {
+    "agentfx": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-v", "${PWD}:/work", "--entrypoint", "python3",
+               "ghcr.io/agentfxhq/agentfx:latest", "/usr/local/share/agentfx/mcp/server.py"]
+    }
+  }
+}

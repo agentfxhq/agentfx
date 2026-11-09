@@ -1,0 +1,13 @@
+{
+  "name": "agentfx",
+  "description": "AgentFX: motion graphics and video effects for AI agents.",
+  "owner": { "name": "AgentFX", "url": "https://agentfx.dev" },
+  "plugins": [
+    {
+      "name": "agentfx",
+      "description": "The AgentFX skill and MCP server: write a Reel Script, lint it, look at frames and contact sheets, render MP4, GIF, WebP or alpha video.",
+      "source": "./",
+      "category": "media"
+    }
+  ]
+}

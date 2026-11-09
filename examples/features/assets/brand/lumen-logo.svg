@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 140" width="540" height="140">
+  <!-- Lumen: a fictional brand for the AgentFX examples (mark + stroked wordmark, ids for `svg ... parts`) -->
+  <g id="mark">
+    <circle id="ring" cx="70" cy="70" r="52" fill="none" stroke="#e30613" stroke-width="14"/>
+    <path id="spark" d="M70 34 L80 60 L106 70 L80 80 L70 106 L60 80 L34 70 L60 60 Z" fill="#ffb400"/>
+  </g>
+  <g id="word" fill="none" stroke="#111111" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path id="l" d="M165 32 V108 H205"/>
+    <path id="u" d="M228 32 V80 A28 28 0 0 0 284 80 V32"/>
+    <path id="m" d="M310 108 V32 L343 78 L376 32 V108"/>
+    <path id="e" d="M444 32 H402 V108 H444 M402 70 H436"/>
+    <path id="n" d="M470 108 V32 L516 108 V32"/>
+  </g>
+</svg>

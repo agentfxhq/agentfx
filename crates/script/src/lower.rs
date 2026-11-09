@@ -98,6 +98,8 @@ pub struct Ctx<'a> {
     pub director: Vec<Ev>,
     /// storyboard notes (scene `note=` and `@t note "..."`), kept as IR metadata
     pub notes: Vec<crate::ir::ShotNote>,
+    /// part names of `svg #id ... parts` ("id@scene" -> names), for `E_SVG_ID` hints
+    pub svg_part_names: HashMap<String, Vec<String>>,
 }
 
 /// Geometry of a first compile pass, laid out natively (`native.rs`): boxes of named
@@ -488,8 +490,19 @@ fn compile_pass(doc0: &Document, tl: &Timeline, fmt: Option<&str>, base: &Path, 
         format!("{}:{}", size.0 / g, size.1 / g)
     });
     let (w, h) = format_size(size, &fmt);
-    let doc = specialize(doc0, &fmt, w, h);
     let mut diags = vec![];
+    // brand kits expand before anything reads the theme (the CLI does it at load; library
+    // callers may pass an unexpanded document)
+    let expanded;
+    let doc0 = if doc0.nodes.iter().any(|n| n.kind == "brand") {
+        let mut d = doc0.clone();
+        crate::brand::expand(&mut d, base, &mut diags);
+        expanded = d;
+        &expanded
+    } else {
+        doc0
+    };
+    let doc = specialize(doc0, &fmt, w, h);
     crate::design::set_doc_base(base);
     let th = Theme::from_doc(&doc, &mut diags);
     let mut c = Ctx {
@@ -525,6 +538,7 @@ fn compile_pass(doc0: &Document, tl: &Timeline, fmt: Option<&str>, base: &Path, 
         worlds: vec![],
         director: vec![],
         notes: vec![],
+        svg_part_names: HashMap::new(),
     };
     let mut stage = Layer::new("stage", Kind::Group);
     stage.layout.pos = Pos::Flow;
@@ -545,7 +559,7 @@ fn compile_pass(doc0: &Document, tl: &Timeline, fmt: Option<&str>, base: &Path, 
         match n.kind.as_str() {
             "chapterbar" => c.chapterbar(n, &scenes),
             "music" => c.music(n),
-            "video" | "scene" | "theme" | "design" | "pronounce" | "when" | "font" => {}
+            "video" | "scene" | "theme" | "design" | "pronounce" | "when" | "font" | "brand" => {}
             k => {
                 let hint = "top-level nodes: video, theme, pronounce, music, chapterbar, scene";
                 c.err("E_TOPLEVEL", format!("`{k}` is not allowed at top level"), hint, n.span);

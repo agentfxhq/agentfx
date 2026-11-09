@@ -291,7 +291,7 @@ pub fn range_ir(scene: &Value, f0: u32, f1: u32) -> Value {
                     let o = c["time_offset"].as_f64().unwrap_or(0.0);
                     c["time_offset"] = json!(o + t);
                 }
-                if c["type"] == json!("video") {
+                if c["type"] == json!("video") || c["type"] == json!("lottie") {
                     // The range gets a new time origin, like its tracks. Keep the source
                     // frame mapping unchanged for frame/sheet and cached scene renders.
                     let start = c["start"].as_f64().unwrap_or(0.0);

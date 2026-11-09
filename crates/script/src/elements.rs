@@ -11,7 +11,7 @@ pub const ELEMENTS: &[&str] = &[
     "particles", "layer", "group", "rect", "ellipse", "circle", "path", "line", "poly", "star", "lower3", "toast",
     "chapter", "link", "diagram", "node", "camera", "lottie", "shader", "textpath", "stat", "note", "steps", "pill", "quote",
     "list", "window", "device", "progress", "panel", "cloud", "presenter", "light", "world", "place", "fluid", "nest",
-    "scene3d", "gen",
+    "scene3d", "gen", "logo",
 ];
 
 const ICONS: &[(&str, &str)] = &[
@@ -160,8 +160,11 @@ impl<'a> Ctx<'a> {
             "stack" | "row" | "col" | "grid" | "box" | "card" | "diagram" | "node" | "layer" | "group" | "spacer" => self.container(parent, si, n, lid),
             "image" | "video" => {
                 let src = praw(n, "src").or_else(|| text_arg(n)).unwrap_or_default();
+                let src = self.asset_token(&src, n);
+                // an unknown `$token` already reported E_TOKEN
+                let bad_token = src.is_empty() && praw(n, "src").is_some_and(|s| s.starts_with('$'));
                 let src = self.asset(&src, n);
-                if k == "image" && image_size(std::path::Path::new(&src)).is_none() {
+                if k == "image" && !bad_token && image_size(std::path::Path::new(&src)).is_none() {
                     self.err("E_ASSET", format!("unsupported or invalid image `{src}`"), "use a local PNG or JPEG image", n.span);
                 }
                 let kind = if k == "image" {
@@ -179,12 +182,18 @@ impl<'a> Ctx<'a> {
             "svg" | "html" => {
                 let markup = match (&n.body, praw(n, "src")) {
                     (Some(b), _) => b.clone(),
-                    (None, Some(src)) => std::fs::read_to_string(self.base.join(&src)).unwrap_or_else(|_| {
-                        self.err("E_ASSET", format!("cannot read `{src}`"), "paths are relative to the .reel file", n.span);
-                        String::new()
-                    }),
+                    (None, Some(src)) => {
+                        let src = self.asset_token(&src, n);
+                        std::fs::read_to_string(self.base.join(&src)).unwrap_or_else(|_| {
+                            self.err("E_ASSET", format!("cannot read `{src}`"), "paths are relative to the .reel file", n.span);
+                            String::new()
+                        })
+                    }
                     _ => String::new(),
                 };
+                if k == "svg" && flag(n, "parts") {
+                    return self.svg_parts_el(parent, si, n, lid, &markup, user.as_deref(), in_abs);
+                }
                 // relative src= in raw markup resolve against the .reel file (both backends)
                 let markup = absolutize_src(&markup, &self.base);
                 let kind = if k == "svg" { Kind::Svg { markup } } else { Kind::Html { markup } };
@@ -271,7 +280,12 @@ impl<'a> Ctx<'a> {
             }
             "chapter" => self.chapter_card(si, n, lid),
             "link" => self.link(si, n, lid),
-            "lottie" | "shader" | "textpath" => {
+            "logo" => {
+                let n2 = self.logo_node(n)?;
+                return self.element(parent, si, &n2, in_abs);
+            }
+            "lottie" => self.lottie(parent, n, lid),
+            "shader" | "textpath" => {
                 self.warn("W_PLANNED", format!("`{k}` is planned (spec v0) and not rendered in S0"), "remove it or replace with svg/video for now", n.span);
                 return None;
             }
@@ -347,6 +361,97 @@ impl<'a> Ctx<'a> {
                 }
             }
         }
+        Some(idx)
+    }
+
+    /// `$logo`, `$logo-on-light`, `$mark`, ...: asset tokens (theme `assets` line, brand kits).
+    pub fn asset_token(&mut self, src: &str, n: &Node) -> String {
+        let Some(t) = src.strip_prefix('$') else { return src.to_string() };
+        if let Some(p) = self.th.assets.get(t) {
+            return p.clone();
+        }
+        let names: Vec<&str> = self.th.assets.keys().map(|s| s.as_str()).collect();
+        let hint = match suggest(t, &names) {
+            Some(s) => format!("did you mean `${s}`?"),
+            None if names.is_empty() => "no asset tokens defined: add a brand kit (`brand \"brand.json\"` with a `logo`) or a theme line `assets logo=logo.svg`".into(),
+            None => format!("asset tokens: {}", names.iter().map(|s| format!("${s}")).collect::<Vec<_>>().join(" ")),
+        };
+        self.err("E_TOKEN", format!("unknown asset token `{src}`"), hint, n.span);
+        String::new()
+    }
+
+    /// `logo #l [variant=on-dark|on-light|mark] [raw]`: the brand logo as `svg ... parts`
+    /// (SVG) or `image fit=contain` (PNG/JPEG).
+    fn logo_node(&mut self, n: &Node) -> Option<Node> {
+        let variant = praw(n, "variant").unwrap_or_default();
+        let key = match variant.as_str() {
+            "" => "logo".to_string(),
+            "mark" => "mark".to_string(),
+            v if v.starts_with("mark-") => v.to_string(),
+            v => format!("logo-{v}"),
+        };
+        let src = self.asset_token(&format!("${key}"), n);
+        if src.is_empty() {
+            return None;
+        }
+        let mut m = n.clone();
+        m.props.shift_remove("variant");
+        m.props.insert("src".into(), Value::Str(src.clone()));
+        if src.to_ascii_lowercase().ends_with(".svg") {
+            m.kind = "svg".into();
+            if !flag(n, "raw") {
+                m.args.push(Value::Str("parts".into()));
+            }
+        } else {
+            m.kind = "image".into();
+            m.props.entry("fit".into()).or_insert(Value::Str("contain".into()));
+        }
+        Some(m)
+    }
+
+    fn lottie(&mut self, parent: usize, n: &Node, lid: String) -> usize {
+        let src = praw(n, "src").or_else(|| text_arg(n)).unwrap_or_default();
+        let src = self.asset_token(&src, n);
+        let src = self.asset(&src, n);
+        let offset = self.dur(n, "offset").or_else(|| self.dur(n, "in")).unwrap_or(0.0);
+        let rate = self.num(n, "speed").or_else(|| self.num(n, "rate")).unwrap_or(1.0);
+        if rate <= 0.0 {
+            self.err("E_VALUE", "lottie speed must be positive", "write speed=1 (or 0.5, 2, ...)", n.span);
+        }
+        let mut l = Layer::new(lid, Kind::Lottie { src: src.clone(), offset, rate: rate.max(1e-3), looped: flag(n, "loop"), hold: flag(n, "hold") });
+        match lottie_meta(std::path::Path::new(&src)) {
+            Ok(m) => {
+                for (what, hint) in &m.unsupported {
+                    self.warn("W_LOTTIE", format!("lottie `{}`: {what}", praw(n, "src").unwrap_or_default()), hint.clone(), n.span);
+                }
+                match (n.props.contains_key("w"), n.props.contains_key("h")) {
+                    (false, false) => {
+                        l.layout.w = Some(Len::px(m.w));
+                        l.layout.h = Some(Len::px(m.h));
+                    }
+                    (true, true) => {}
+                    _ => l.layout.aspect = Some(m.w / m.h.max(1e-6)),
+                }
+            }
+            Err(e) if std::path::Path::new(&src).is_file() => {
+                self.err("E_LOTTIE", format!("lottie `{}`: {e}", praw(n, "src").unwrap_or_default()), "export Bodymovin/Lottie JSON (not .lottie zip, not dotLottie): After Effects + Bodymovin, LottieFiles 'Lottie JSON'", n.span);
+            }
+            Err(_) => {}
+        }
+        self.add(Some(parent), l)
+    }
+
+    fn svg_parts_el(&mut self, parent: usize, si: usize, n: &Node, lid: String, markup: &str, user: Option<&str>, in_abs: bool) -> Option<usize> {
+        let idx = self.svg_parts(parent, si, n, lid, markup, user);
+        if let Some(u) = user {
+            self.layers[idx].name = Some(u.to_string());
+            self.names.insert(u.to_string(), Named { idx, scene: si, kind: "svg".into() });
+            self.names.insert(format!("{u}@{si}"), Named { idx, scene: si, kind: "svg".into() });
+        }
+        // fill/stroke/recolor are the parts' (applied above), not a box fill
+        let mut cn = n.clone();
+        cn.props.retain(|k, _| !crate::svgparts::PART_PROPS.contains(&k.as_str()));
+        self.common(idx, &cn, in_abs);
         Some(idx)
     }
 
@@ -1428,6 +1533,55 @@ fn absolutize_src(markup: &str, base: &std::path::Path) -> String {
     }
     out.push_str(rest);
     out
+}
+
+pub struct LottieMeta {
+    pub w: f64,
+    pub h: f64,
+    pub fps: f64,
+    pub frames: f64,
+    /// (feature, hint) the renderer does not draw
+    pub unsupported: Vec<(String, String)>,
+}
+
+/// Header of a Lottie JSON file (size, frame rate, length) and the features velato skips.
+pub fn lottie_meta(p: &std::path::Path) -> Result<LottieMeta, String> {
+    let raw = std::fs::read(p).map_err(|e| format!("cannot read: {e}"))?;
+    let j: serde_json::Value = serde_json::from_slice(&raw).map_err(|e| format!("not JSON: {e}"))?;
+    let f = |k: &str| j.get(k).and_then(|v| v.as_f64());
+    let (Some(w), Some(h), Some(fps), Some(ip), Some(op)) = (f("w"), f("h"), f("fr"), f("ip"), f("op")) else {
+        return Err("not a Lottie animation (needs w, h, fr, ip, op and layers)".into());
+    };
+    if j.get("layers").and_then(|l| l.as_array()).is_none() || w <= 0.0 || h <= 0.0 || fps <= 0.0 {
+        return Err("not a Lottie animation (needs w, h, fr, ip, op and layers)".into());
+    }
+    let mut un: Vec<(String, String)> = vec![];
+    let mut push = |a: &str, b: &str| {
+        if !un.iter().any(|x| x.0 == a) {
+            un.push((a.to_string(), b.to_string()));
+        }
+    };
+    let mut layers: Vec<&serde_json::Value> = j["layers"].as_array().into_iter().flatten().collect();
+    for a in j.get("assets").and_then(|a| a.as_array()).into_iter().flatten() {
+        layers.extend(a.get("layers").and_then(|l| l.as_array()).into_iter().flatten());
+    }
+    for l in layers {
+        match l.get("ty").and_then(|t| t.as_i64()) {
+            Some(5) => push("text layers are not drawn", "convert text to shapes in After Effects (Create Shapes from Text)"),
+            Some(2) => push("image layers are not drawn", "use vector shapes, or place the bitmap with `image`"),
+            _ => {}
+        }
+        if l.get("tm").is_some() {
+            push("time remapping is ignored", "precompose without time remap, or use reel `timemap`/`rewind` on the layer");
+        }
+        if l.get("ef").and_then(|e| e.as_array()).is_some_and(|e| !e.is_empty()) {
+            push("layer effects are ignored", "use reel effects on the lottie element (glow=, blur=, shadow=)");
+        }
+    }
+    if String::from_utf8_lossy(&raw).contains("\"x\":\"") {
+        push("expressions are ignored (keyframed values are used)", "bake expressions to keyframes in After Effects (Convert Expression to Keyframes)");
+    }
+    Ok(LottieMeta { w, h, fps, frames: op - ip, unsupported: un })
 }
 
 pub fn praw_n(n: &Node, k: &str) -> Option<f64> {

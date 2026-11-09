@@ -44,7 +44,7 @@ pub fn doc_base() -> PathBuf {
 
 pub const SURFACES: &[&str] = &["elevated", "flat", "outline", "glass", "tinted"];
 pub const ICON_STYLES: &[&str] = &["tile", "solid", "outline", "plain", "ring"];
-pub const LINE_KINDS: &[&str] = &["colors", "color", "type", "sizes", "motion", "durs", "eases", "layout", "lint", "bg", "space", "surface", "elevation", "texture", "icons", "scale", "treatment", "do", "dont", "grid", "skin", "skins"];
+pub const LINE_KINDS: &[&str] = &["colors", "color", "type", "sizes", "motion", "durs", "eases", "layout", "lint", "bg", "assets", "space", "surface", "elevation", "texture", "icons", "scale", "treatment", "do", "dont", "grid", "skin", "skins"];
 /// Signature treatments components understand (others are kept as notes for agents and the critic).
 pub const TREATMENTS: &[&str] = &["hairlines", "grid-bg", "glow", "grain", "mesh-bg", "draw-on", "motion-blur", "numbered", "underline-accent", "dot-grid", "big-numbers", "caps-labels", "frame-rules"];
 

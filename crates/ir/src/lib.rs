@@ -308,6 +308,25 @@ pub enum Content {
         #[serde(default)]
         hold: bool,
     },
+    /// Lottie (Bodymovin JSON) animation (P5, additive), drawn as vectors by the renderer
+    /// (velato's evaluator) into `rect` (contain fit, centered). Clip time like `Video`:
+    /// clip time = (scene t - `start`) * `rate` + `offset` seconds, Lottie frame = `ip` + clip
+    /// time * the file's frame rate; `looped` wraps over `ip..op`, `hold` keeps the last frame,
+    /// otherwise nothing is drawn after `op`. A pure function of t.
+    Lottie {
+        path: String,
+        rect: [f64; 4],
+        #[serde(default)]
+        start: f64,
+        #[serde(default)]
+        offset: f64,
+        #[serde(default = "one_f64")]
+        rate: f64,
+        #[serde(default)]
+        looped: bool,
+        #[serde(default)]
+        hold: bool,
+    },
     /// Solid rounded rectangle (vector). color = straight RGBA 0..1.
     Rect { rect: RRect, color: [f64; 4] },
     /// Resolved vector display list (M1): what the HTML frontend emits for one paint
@@ -716,6 +735,24 @@ pub struct PathContent {
     /// "Path morph"); without a `morph` track the path shows `d`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub morph: Vec<String>,
+    /// Fill rule of `fill` (P5, additive): `nonzero` (default, omitted) or `evenodd` (imported
+    /// SVG paths keep theirs).
+    #[serde(default, skip_serializing_if = "FillRule::is_nonzero")]
+    pub fill_rule: FillRule,
+}
+
+/// Path fill rule (SVG `fill-rule`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum FillRule {
+    #[default]
+    Nonzero,
+    Evenodd,
+}
+impl FillRule {
+    pub fn is_nonzero(&self) -> bool {
+        *self == FillRule::Nonzero
+    }
 }
 fn full_trim() -> [f64; 2] {
     [0.0, 1.0]

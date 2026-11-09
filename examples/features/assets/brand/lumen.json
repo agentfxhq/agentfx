@@ -1,0 +1,19 @@
+{
+  "name": "Lumen",
+  "colors": {
+    "primary": "#3d5afe",
+    "secondary": "#00b8d4",
+    "accent": "#ffb400",
+    "bg": "#0b1026",
+    "fg": "#f5f7ff",
+    "named": { "coral": "#ff6f61", "ink": "#111111" }
+  },
+  "background": "linear(160deg, #0b1026 0%, #17204d 100%)",
+  "fonts": {
+    "display": { "family": "Inter" },
+    "body": { "family": "Inter" }
+  },
+  "logo": { "src": "lumen-logo.svg", "on-dark": "lumen-logo-white.svg" },
+  "motion": { "ease": "power3.out", "enter": "0.5s", "exit": "0.3s", "move": "0.7s", "stagger": "0.09s" },
+  "layout": { "safe": "7%", "radius": 22 }
+}

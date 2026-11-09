@@ -472,7 +472,7 @@ impl<'a> Storyboard<'a> {
                 Kind::Image { .. } => (Shape::Media { video: false }, ra),
                 // a procedural image (`gen`): drawn like a still image panel
                 Kind::Gen(_) => (Shape::Media { video: false }, ra),
-                Kind::Video { .. } => (Shape::Media { video: true }, ra),
+                Kind::Video { .. } | Kind::Lottie { .. } => (Shape::Media { video: true }, ra),
                 Kind::Html { .. } | Kind::Svg { .. } => (Shape::Raw, ra * 0.5),
                 Kind::Cloud(_) => (Shape::Cloud, ra.min(self.fa) * 0.3),
                 Kind::Fluid(_) => (Shape::Fluid, ra.min(self.fa) * 0.25),
@@ -782,6 +782,7 @@ impl<'a> Storyboard<'a> {
             Kind::Path { .. } => "line",
             Kind::Image { .. } => "image",
             Kind::Video { .. } => "video",
+            Kind::Lottie { .. } => "lottie",
             Kind::Cloud(_) => "particles",
             Kind::Fluid(_) => "fluid",
             Kind::Scene3d(_) => "3d scene",

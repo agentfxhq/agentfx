@@ -414,7 +414,7 @@ impl Page {
         }
         // ---- style
         let s = &l.style;
-        let is_box = matches!(l.kind, Kind::Group | Kind::Rect | Kind::Ellipse | Kind::Image { .. } | Kind::Video { .. } | Kind::Text { .. } | Kind::Counter { .. } | Kind::Html { .. });
+        let is_box = matches!(l.kind, Kind::Group | Kind::Rect | Kind::Ellipse | Kind::Image { .. } | Kind::Video { .. } | Kind::Lottie { .. } | Kind::Text { .. } | Kind::Counter { .. } | Kind::Html { .. });
         if let Some(p) = &s.fill {
             if !matches!(l.kind, Kind::Path { .. }) {
                 if s.text_fill && snap {
@@ -699,6 +699,11 @@ impl Page {
                 let loop_attr = if *looped { " loop" } else { "" };
                 let _ = write!(self.body, "<video src=\"{}\" muted playsinline preload=\"auto\"{} data-offset=\"{}\" data-rate=\"{}\" data-hold=\"{}\" style=\"width:100%;height:100%;object-fit:{};display:block\"></video>", esc(&u), loop_attr, offset, rate, hold, fit);
             }
+            // Lottie is drawn by the native renderer only; the box keeps its place here
+            Kind::Lottie { src, .. } => {
+                open(&mut self.body, "");
+                let _ = write!(self.body, "<div data-lottie=\"{}\" style=\"width:100%;height:100%\"></div>", esc(src));
+            }
             Kind::Html { markup } if l.children.iter().any(|c| c.tags.iter().any(|t| t == "part")) => {
                 open(&mut self.body, "");
                 // parts: the element carrying data-part="x" becomes the layer (id, class L, channel styles)
@@ -749,8 +754,8 @@ impl Page {
                     let _ = write!(pst, "stroke-dasharray:{} {};", f(a), f(b));
                 }
                 let pl = if chans.contains(&Ch::TrimEnd) || chans.contains(&Ch::TrimStart) { " pathLength=\"1\"" } else { "" };
-                let _ = write!(self.body, "<svg viewBox=\"0 0 {} {}\" width=\"100%\" height=\"100%\" preserveAspectRatio=\"none\" style=\"overflow:visible;display:block\"><path class=\"p\"{pl} d=\"{}\" fill=\"{}\" stroke=\"{}\" stroke-width=\"{}\" stroke-linecap=\"{}\" stroke-linejoin=\"round\" style=\"{}\"/></svg>",
-                    f(vb.0), f(vb.1), esc(d), esc(&fill), esc(&stroke), f(s.stroke_w), if l.tags.iter().any(|t| t == "slice") { "butt" } else { "round" }, pst);
+                let _ = write!(self.body, "<svg viewBox=\"0 0 {} {}\" width=\"100%\" height=\"100%\" preserveAspectRatio=\"none\" style=\"overflow:visible;display:block\"><path class=\"p\"{pl} d=\"{}\" fill=\"{}\" stroke=\"{}\" stroke-width=\"{}\" stroke-linecap=\"{}\" stroke-linejoin=\"{}\"{} style=\"{}\"/></svg>",
+                    f(vb.0), f(vb.1), esc(d), esc(&fill), esc(&stroke), f(s.stroke_w), if l.tags.iter().any(|t| t == "slice") { "butt" } else { s.stroke_cap.unwrap_or("round") }, s.stroke_join.unwrap_or("round"), if s.even_odd { " fill-rule=\"evenodd\"" } else { "" }, pst);
             }
             _ => open(&mut self.body, ""),
         }

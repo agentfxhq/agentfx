@@ -33,6 +33,7 @@ mod jobstatus;
 mod lcd;
 mod light;
 mod look;
+mod lottie;
 mod pixel;
 mod m2;
 mod plan2;

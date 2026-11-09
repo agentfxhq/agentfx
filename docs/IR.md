@@ -1,5 +1,10 @@
 # reel IR (v1)
 
+> **Changes (brand kits and imports, P5, 2026-11-09)**: additive: new content type `lottie`
+> (Bodymovin JSON drawn as vectors through velato, the `video` clock) and the optional path field
+> `fill_rule` (`"evenodd"`; omitted = nonzero); see [Lottie](#lottie). Files without them load
+> and render unchanged.
+
 > **Changes (generators, 2026-10-31)**: additive: new content type `gen` (procedural images:
 > Julia, Mandelbrot; a registry for more kinds) and the track properties `gen.<param>`; see
 > [Generator](#generator). Files without it load and render unchanged.
@@ -161,13 +166,14 @@ coordinates.
 | type | fields | notes |
 |---|---|---|
 | `rect` | `rect: {rect:[x,y,w,h], radius:[tl,tr,br,bl]}`, `color` (straight RGBA 0..1) | |
-| `path` | `d` (SVG path data), `fill?: Brush`, `fill_transform?: [a,b,c,d,e,f]` (brush space -> scene, places an `image` brush), `stroke?: {width, cap, join, miter_limit, dash, dash_offset, brush}`, `trim: [start, end]`, `morph?: [d, ...]` (morph targets, scene coordinates) | draw-on: the stroke shows only `[start, end]` of the total arc length; tracks `trim-start` / `trim-end`. The fill is drawn only when untrimmed. With `morph`, track `morph` picks the shape (see "Path morph"). |
+| `path` | `d` (SVG path data), `fill?: Brush`, `fill_transform?: [a,b,c,d,e,f]` (brush space -> scene, places an `image` brush), `stroke?: {width, cap, join, miter_limit, dash, dash_offset, brush}`, `trim: [start, end]`, `morph?: [d, ...]` (morph targets, scene coordinates), `fill_rule?: "nonzero" \| "evenodd"` (default nonzero) | draw-on: the stroke shows only `[start, end]` of the total arc length; tracks `trim-start` / `trim-end`. The fill is drawn only when untrimmed. With `morph`, track `morph` picks the shape (see "Path morph"). |
 | `text` | `text`, `font` (index into `fonts`), `size`, `weight` (wght), `letter_spacing` px, `line_height` (× size), `pos` (top-left of the layout box), `max_width?`, `align` left/center/right (center/right need `max_width`), `brush`, `unit` glyph/word/line | shaped by reel at load (Parley/HarfRust); `opsz` follows `size`; one font per node (no fallback). Glyphs are drawn at their exact fractional position. `\n` breaks lines. |
 | `paint` | `rect` (ink bounds), `items: [Draw]`, `elements?`, `text?` | resolved display list (what the HTML frontend emits per paint unit); `elements` = identity of the painted DOM elements (document-order indices); `text` = text animators / text on a path over its glyph runs ([Text v2](#text-v2)) |
 | `switch` | `rect`, `frames: [[first_frame, state]]`, `states: [paint]` | content that changes (repaint states, typed text in HTML mode); a switch is damage |
 | `image` | `asset`, `rect`, `variants?` | M0 raster content (`asset.scale` = device px per scene px) |
 | `sequence` | `rect`, `frames: [[first_frame, asset]]` | M0 raster sequence |
 | `video` | `path`, `rect`, `start?`, `offset?`, `rate?`, `looped?`, `hold?` | Native ffmpeg-decoded RGBA video. See [Video](#video). |
+| `lottie` | `path`, `rect`, `start?`, `offset?`, `rate?`, `looped?`, `hold?` | Lottie (Bodymovin JSON) drawn as vectors, contain fit in `rect`. See [Lottie](#lottie). |
 
 | `cloud` | `count`, `seed`, `radius`, `radius_jitter`, `palette`, `weights`, `forms`, `projection` | instanced point cloud, see [Point cloud](#point-cloud) |
 | `scene3d` | `rect`, `camera`, `ambient`, `ambient_color`, `lights`, `fog`, `bg`, `aa`, `bloom`, `shadow`, `objects` | stylised 3D rasterised into one layer, see [Scene 3D](#scene-3d) |
@@ -218,6 +224,17 @@ Interpolation is per control point (linear). Trim (`trim-start` / `trim-end`), f
 brushes and `fill.color` / `stroke.color` tracks apply to the interpolated shape. The node's ink
 bounds are the union of all shapes' control points (the interpolated curves stay inside it), so
 damage stays conservative. `sig`/damage: a `morph` track redraws the path while it changes.
+
+### Lottie
+
+`{"type":"lottie","path":"anim.json","rect":[x,y,w,h]}` loads the file once (velato, Apache-2.0
+OR MIT) and draws the composition per frame through velato's renderer-agnostic `RenderSink`
+onto the vello_cpu context: shapes, transforms, trim paths, gradients, masks and precomps;
+contain fit, centered in `rect`. Clock as video: clip time `c = offset + (t - start) * rate`,
+Lottie frame `ip + c * fr` (fractional, so curves are sampled exactly at any output fps); before
+the clip nothing is drawn; after `op - 1` `looped` wraps over `ip..op`, `hold` keeps the last
+frame, otherwise nothing is drawn. The frame number is the content signature (cached while it is
+stable). Not drawn: image layers, text layers; expressions and time remap are ignored.
 
 ### Video
 

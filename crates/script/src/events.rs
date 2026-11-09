@@ -169,6 +169,18 @@ impl<'a> Ctx<'a> {
                 }
             }
         }
+        // `#logo.part` of an imported svg: name the parts it has
+        if let Some((svg, part)) = name.split_once('.') {
+            if let Some(parts) = self.svg_part_names.get(&format!("{svg}@{si}")) {
+                let refs: Vec<&str> = parts.iter().map(|s| s.as_str()).collect();
+                let hint = match suggest(part, &refs) {
+                    Some(s) => format!("did you mean `#{svg}.{s}`?"),
+                    None => format!("parts of #{svg}: {}", refs.iter().take(16).map(|s| format!("#{svg}.{s}")).collect::<Vec<_>>().join(" ")),
+                };
+                self.diags.push(crate::diag::Diag::error("E_SVG_ID", format!("svg `#{svg}` has no part `{part}`"), hint, n.span).with_id(name.clone()).with_at(e.t));
+                return None;
+            }
+        }
         // unknown: suggest
         let mut cands: Vec<String> = self.names.iter().filter(|(_, v)| v.scene == si).map(|(k, _)| k.split('@').next().unwrap().to_string()).collect();
         for b in self.browsers.iter().filter(|b| b.scene == si) {
@@ -649,7 +661,20 @@ impl<'a> Ctx<'a> {
                     self.track(i, Ch::Opacity).jump(t, TV::N(1.0));
                 }
                 let kids = self.kids[i].clone();
-                if matches!(self.layers[i].kind, Kind::Path { .. } | Kind::Rect | Kind::Ellipse) {
+                let svg_group = matches!(self.layers[i].kind, Kind::Group) && tags.iter().any(|x| x == "svg-parts" || x == "svg-part");
+                if svg_group {
+                    // an imported SVG: its paths draw on one after another within `dur`
+                    let mut leaves = vec![];
+                    self.svg_leaves(i, &mut leaves);
+                    let k = leaves.len();
+                    let dp = if k > 1 { d * 0.6 } else { d };
+                    let st = if k > 1 { (d - dp) / (k - 1) as f64 } else { 0.0 };
+                    for (j, c) in leaves.into_iter().enumerate() {
+                        self.draw_part(c, t + st * j as f64, dp, e.clone());
+                    }
+                } else if tags.iter().any(|x| x == "svg-fill") {
+                    self.draw_part(i, t, d, e);
+                } else if matches!(self.layers[i].kind, Kind::Path { .. } | Kind::Rect | Kind::Ellipse) {
                     self.fromto(i, Ch::TrimEnd, TV::N(0.0), TV::N(1.0), t, d, e);
                 } else {
                     for (k, c) in kids.iter().enumerate() {
@@ -678,6 +703,43 @@ impl<'a> Ctx<'a> {
                 let hint = suggest(other, ENTER).map(|s| format!("did you mean `{s}`?")).unwrap_or(format!("presets: {}", ENTER.join(", ")));
                 self.err("E_PRESET", format!("unknown enter preset `{other}`"), hint, n.span);
             }
+        }
+    }
+
+    /// Draw-on of one imported SVG path. Filled shapes (logos) trace their outline in the fill
+    /// color, then the fill fades in while the outline fades out (`svg-fill` parts).
+    fn draw_part(&mut self, i: usize, t: f64, d: f64, e: Ease) {
+        if self.track(i, Ch::Opacity).eval(t).n() < 0.5 {
+            self.track(i, Ch::Opacity).jump(t, TV::N(1.0));
+        }
+        self.fromto(i, Ch::TrimEnd, TV::N(0.0), TV::N(1.0), t, d, e);
+        let solid = match &self.layers[i].style.fill {
+            Some(Paint::Solid(ColorRef::Lit(c))) => Some(c.clone()),
+            Some(Paint::Linear { stops, .. } | Paint::Radial { stops, .. }) => stops.first().and_then(|s| self.th.color(&s.color)),
+            _ => None,
+        };
+        let Some(c) = solid.filter(|_| self.layers[i].tags.iter().any(|x| x == "svg-fill")) else { return };
+        let c0 = Rgba { a: 0.0, ..c.clone() };
+        let fd = (d * 0.5).min(0.45);
+        if self.layers[i].style.stroke.is_none() {
+            self.layers[i].style.stroke = Some(c0.clone());
+            self.layers[i].style.stroke_w = 2.0;
+            self.layers[i].style.stroke_cap = Some("round");
+            self.layers[i].style.stroke_join = Some("round");
+        }
+        let st = self.track(i, Ch::Stroke);
+        if st.keys.is_empty() {
+            st.base = TV::C(c0.clone());
+        }
+        st.jump(t, TV::C(c.clone()));
+        st.to(t + d, t + d + fd, TV::C(c0.clone()), OUT);
+        if matches!(self.layers[i].style.fill, Some(Paint::Solid(_))) {
+            let ft = self.track(i, Ch::Fill);
+            if ft.keys.is_empty() {
+                ft.base = TV::C(c.clone());
+            }
+            ft.jump(t, TV::C(c0));
+            ft.to(t + d, t + d + fd, TV::C(c), OUT);
         }
     }
 

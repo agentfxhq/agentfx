@@ -1,0 +1,22 @@
+{
+  "id": "mockup",
+  "kind": "still",
+  "title": "Mockup",
+  "description": "Your screenshot on a phone in 3D or a laptop, or your artwork printed on a t-shirt, with an optional headline.",
+  "tags": ["mockup", "mockup generator", "t-shirt mockup", "phone mockup", "laptop mockup", "app screenshot", "device mockup"],
+  "sizes": ["instagram-post", "instagram-portrait", "story", "x-post", "og-image", "full-hd"],
+  "still_at": "0s",
+  "assets": ["tshirt.png"],
+  "params": [
+    {"id": "type", "type": "enum", "label": "Mockup", "default": "phone", "options": ["phone", "laptop", "tshirt"]},
+    {"id": "phone_screen", "type": "image", "label": "Phone screenshot (portrait, about 9:19.5)", "default": "screen-phone.png", "accept": [".png"]},
+    {"id": "laptop_screen", "type": "image", "label": "Laptop screenshot (16:10)", "default": "screen-laptop.png", "accept": [".png"]},
+    {"id": "artwork", "type": "image", "label": "Artwork (t-shirt print, PNG with transparency works best)", "default": "artwork.png", "accept": [".png"]},
+    {"id": "shirt", "type": "color", "label": "Shirt colour", "default": "#F4F2EC"},
+    {"id": "headline", "type": "text", "label": "Headline (optional)", "default": "Your numbers, at a glance", "max_len": 60},
+    {"id": "subline", "type": "text", "label": "Subline (optional)", "default": "The Northwind dashboard, now on every device.", "max_len": 100},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#E9E4DC"},
+    {"id": "bg2", "type": "color", "label": "Background glow", "default": "#FFFFFF"},
+    {"id": "ink", "type": "color", "label": "Text colour", "default": "#1B1D22"}
+  ]
+}

@@ -20,7 +20,7 @@ theme {{#= bg_luma > 0.45}}studio-light{{/= bg_luma > 0.45}}{{^= bg_luma > 0.45}
 {{: yb = 85 if wide else (86 if sq else 86)}}
 {{: yseal = 84 if wide else (73.5 if sq else 71)}}
 {{: bx = 24 if wide else 27}}
-{{: bw = DW*(0.24 if wide else 0.34)}}
+{{: bw = DW*(0.27 if wide else 0.36)}}
 scene certificate dur=60s bg={{bg}}
   layer #page w={{DW}} h={{DH}} x=0 y=0 scale={{S}} origin=top-left
     rect #frame w={{= DW - 80}} h={{= DH - 80}} x=50% y=50% anchor=center stroke={{accent}} sw=6

@@ -11,7 +11,7 @@
     {"id": "tagline", "type": "text", "label": "Tagline", "default": "Seasonal kitchen since 1998", "max_len": 60},
     {"id": "rows", "type": "data", "label": "Menu (section, item, description, price)", "min_rows": 1, "max_rows": 40,
      "columns": [{"id": "section", "type": "text", "max_len": 28}, {"id": "item", "type": "text", "max_len": 40, "required": true},
-                 {"id": "description", "type": "text", "max_len": 90}, {"id": "price", "type": "text", "max_len": 9}],
+                 {"id": "description", "type": "text", "max_len": 70}, {"id": "price", "type": "text", "max_len": 9}],
      "default": [
        {"section": "Starters", "item": "Burrata", "description": "Heirloom tomatoes, basil oil, sea salt", "price": "12"},
        {"section": "Starters", "item": "Vitello tonnato", "description": "Veal, tuna caper sauce, rocket", "price": "14"},

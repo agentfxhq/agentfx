@@ -201,39 +201,87 @@ def product(path, w=900, h=1100):
     print(path.relative_to(ROOT), path.stat().st_size // 1024, "KB")
 
 
-def tshirt(path, w=1400, h=1400, color=(244, 243, 239)):
-    """Front view t-shirt on transparent background with soft fabric shading."""
+def catmull(points, n=24):
+    """Smooth closed curve through points; a point given twice in a row stays a corner."""
+    pts = list(points)
+    out = []
+    m = len(pts)
+    for i in range(m):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[(i + 1) % m], pts[(i + 2) % m]
+        if p1 == p2:
+            continue
+        for k in range(n):
+            t = k / n
+            t2, t3 = t * t, t * t * t
+            out.append(tuple(0.5 * ((2 * p1[j]) + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2
+                                    + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3) for j in (0, 1)))
+    return out
+
+
+def tshirt(path, w=1200, h=1200, color=(246, 245, 241)):
+    """Front view crew-neck t-shirt on transparent background: smooth outline, folds, seams,
+    fine cotton grain. Near white, so a colour can be multiplied over it."""
     k = 2
     W, H = w * k, h * k
+
     def P(x, y):
         return (x * W, y * H)
-    outline = [P(0.36, 0.07), P(0.43, 0.06), P(0.47, 0.1), P(0.5, 0.11), P(0.53, 0.1), P(0.57, 0.06), P(0.64, 0.07),
-               P(0.83, 0.15), P(0.95, 0.33), P(0.83, 0.41), P(0.77, 0.33), P(0.78, 0.93), P(0.5, 0.95), P(0.22, 0.93),
-               P(0.23, 0.33), P(0.17, 0.41), P(0.05, 0.33), P(0.17, 0.15)]
+    c = [(0.395, 0.075), (0.43, 0.105), (0.5, 0.125), (0.57, 0.105), (0.605, 0.075),
+         (0.70, 0.10), (0.80, 0.135), (0.87, 0.20), (0.94, 0.34), (0.94, 0.34), (0.83, 0.405), (0.83, 0.405),
+         (0.765, 0.33), (0.755, 0.55), (0.775, 0.92), (0.775, 0.92), (0.5, 0.935), (0.225, 0.92), (0.225, 0.92),
+         (0.245, 0.55), (0.235, 0.33), (0.17, 0.405), (0.17, 0.405), (0.06, 0.34), (0.06, 0.34), (0.13, 0.20),
+         (0.20, 0.135), (0.30, 0.10)]
+    outline = [P(x, y) for x, y in catmull(c)]
     mask = Image.new("L", (W, H), 0)
     ImageDraw.Draw(mask).polygon(outline, fill=255)
-    mask = mask.filter(ImageFilter.GaussianBlur(k * 1.2))
-    base = np.zeros((H, W, 3), np.float32) + np.array(color, np.float32)
-    # shading: darker at the sides and under the sleeves, folds
+    back = [P(x, y) for x, y in catmull([(0.392, 0.078), (0.392, 0.078), (0.45, 0.062), (0.5, 0.058), (0.55, 0.062), (0.608, 0.078), (0.608, 0.078), (0.56, 0.12), (0.5, 0.14), (0.44, 0.12)], n=16)]
+    ImageDraw.Draw(mask).polygon(back, fill=255)
+    mask = mask.filter(ImageFilter.GaussianBlur(k * 0.8))
+    backm = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(backm).polygon(back, fill=255)
+    ImageDraw.Draw(backm).polygon(outline, fill=0)
+    backm = np.array(backm.filter(ImageFilter.GaussianBlur(k * 1.5))) / 255.0
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
     xn, yn = xx / W, yy / H
-    shade = 1 - 0.10 * np.clip(np.abs(xn - 0.5) / 0.28, 0, 1) ** 2
-    for (fx, fy, fr, amt) in [(0.3, 0.55, 0.12, -0.05), (0.68, 0.62, 0.1, -0.05), (0.5, 0.82, 0.18, -0.03), (0.42, 0.3, 0.1, 0.03)]:
-        shade += amt * np.exp(-(((xn - fx) / fr) ** 2 + ((yn - fy) / (fr * 2.2)) ** 2))
-    # collar
-    col_mask = Image.new("L", (W, H), 0)
-    ImageDraw.Draw(col_mask).arc([int(0.43 * W), int(0.02 * H), int(0.57 * W), int(0.17 * H)], 20, 160, fill=255, width=int(0.014 * W))
-    col_mask = np.array(col_mask.filter(ImageFilter.GaussianBlur(k * 2))) / 255.0
-    shade -= 0.08 * col_mask
+    shade = 1 - 0.07 * np.clip(np.abs(xn - 0.5) / 0.27, 0, 1) ** 3
+
+    def streak(x0, y0, x1, y1, width, amt):
+        dx, dy = x1 - x0, y1 - y0
+        L2 = dx * dx + dy * dy
+        t = np.clip(((xn - x0) * dx + (yn - y0) * dy) / L2, 0, 1)
+        d = np.sqrt((xn - (x0 + t * dx)) ** 2 + (yn - (y0 + t * dy)) ** 2)
+        return amt * np.exp(-(d / width) ** 2) * np.sin(np.pi * t)
+    shade += streak(0.25, 0.36, 0.40, 0.62, 0.018, -0.06) + streak(0.75, 0.36, 0.61, 0.66, 0.02, -0.06)
+    shade += streak(0.27, 0.40, 0.42, 0.68, 0.03, 0.025) + streak(0.33, 0.78, 0.47, 0.90, 0.02, -0.04)
+    shade += streak(0.66, 0.74, 0.55, 0.90, 0.02, -0.035) + streak(0.45, 0.2, 0.55, 0.45, 0.06, 0.02)
+    shade += streak(0.13, 0.22, 0.17, 0.39, 0.012, -0.035) + streak(0.87, 0.22, 0.83, 0.39, 0.012, -0.035)
+    seams = Image.new("L", (W, H), 0)
+    d = ImageDraw.Draw(seams)
+    d.line([P(0.229, 0.895), P(0.5, 0.91), P(0.771, 0.895)], fill=255, width=int(0.003 * W))
+    d.line([P(0.075, 0.315), P(0.175, 0.375)], fill=255, width=int(0.003 * W))
+    d.line([P(0.925, 0.315), P(0.825, 0.375)], fill=255, width=int(0.003 * W))
+    d.line([P(0.30, 0.10), P(0.235, 0.33)], fill=160, width=int(0.002 * W))
+    d.line([P(0.70, 0.10), P(0.765, 0.33)], fill=160, width=int(0.002 * W))
+    seams = np.array(seams.filter(ImageFilter.GaussianBlur(k * 1.2))) / 255.0
+    shade -= 0.10 * seams
+    neck = [(0.395, 0.075), (0.43, 0.105), (0.5, 0.125), (0.57, 0.105), (0.605, 0.075)]
+    rib = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(rib).line([P(x, y) for x, y in neck], fill=255, width=int(0.022 * W), joint="curve")
+    rib = np.array(rib.filter(ImageFilter.GaussianBlur(k * 2))) / 255.0
+    shade -= 0.05 * rib
     inner = Image.new("L", (W, H), 0)
-    ImageDraw.Draw(inner).polygon([P(0.43, 0.06), P(0.47, 0.1), P(0.5, 0.11), P(0.53, 0.1), P(0.57, 0.06), P(0.5, 0.075)], fill=255)
-    shade -= 0.25 * np.array(inner.filter(ImageFilter.GaussianBlur(k * 3))) / 255.0
-    rgb = np.clip(base * shade[..., None], 0, 255)
-    # drop shadow
-    shadow = mask.filter(ImageFilter.GaussianBlur(W * 0.02))
+    ImageDraw.Draw(inner).polygon([P(x, y) for x, y in catmull([(0.405, 0.075), (0.44, 0.098), (0.5, 0.112), (0.56, 0.098), (0.595, 0.075), (0.5, 0.085)], n=12)], fill=255)
+    shade -= 0.22 * np.array(inner.filter(ImageFilter.GaussianBlur(k * 2))) / 255.0
+    shade -= 0.16 * backm
+    rng = np.random.default_rng(3)
+    grain = rng.normal(0, 1, (H // 2, W // 2)).astype(np.float32)
+    grain = np.array(Image.fromarray(((grain * 18) + 128).clip(0, 255).astype(np.uint8)).resize((W, H), Image.BILINEAR)) / 255.0 - 0.5
+    shade += 0.018 * grain
+    rgb = np.clip(np.array(color, np.float32) * shade[..., None], 0, 255)
+    shadow = mask.filter(ImageFilter.GaussianBlur(W * 0.018))
     out = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    sh = Image.fromarray((np.array(shadow) * 0.35).astype(np.uint8))
-    out.paste((0, 0, 0, 255), (int(W * 0.006), int(H * 0.012)), sh)
+    sh = Image.fromarray((np.array(shadow) * 0.28).astype(np.uint8))
+    out.paste((0, 0, 0, 255), (int(W * 0.004), int(H * 0.012)), sh)
     shirt = Image.fromarray(rgb.astype(np.uint8)).convert("RGBA")
     out.paste(shirt, (0, 0), mask)
     out = out.resize((w, h), Image.LANCZOS)

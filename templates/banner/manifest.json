@@ -8,7 +8,7 @@
   "still_at": "0s",
   "params": [
     {"id": "headline", "type": "text", "label": "Headline", "default": "Spring sale: 30% off", "max_len": 48, "required": true},
-    {"id": "subline", "type": "text", "label": "Subline (hidden on the thinnest banners)", "default": "All plans, this week only.", "max_len": 80},
+    {"id": "subline", "type": "text", "label": "Subline (hidden on the thinnest banners)", "default": "All plans, this week only.", "max_len": 60},
     {"id": "cta", "type": "text", "label": "Button", "default": "Shop now", "max_len": 20},
     {"id": "brand", "type": "text", "label": "Brand name", "default": "Northwind", "max_len": 24},
     {"id": "logo", "type": "image", "label": "Logo (square PNG, optional)", "default": "logo.png", "accept": [".png"]},

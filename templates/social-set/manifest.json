@@ -9,9 +9,9 @@
   "params": [
     {"id": "headline", "type": "text", "label": "Headline", "default": "Ship videos from a text file", "max_len": 70, "required": true},
     {"id": "body", "type": "text", "label": "Supporting line", "default": "Write it, lint it, render it. Exact text and brand colours in every format.", "max_len": 140},
-    {"id": "cta", "type": "text", "label": "Call to action", "default": "Try it free", "max_len": 28},
+    {"id": "cta", "type": "text", "label": "Call to action", "default": "Try it free", "max_len": 20},
     {"id": "brand", "type": "text", "label": "Brand name", "default": "Northwind", "max_len": 28},
-    {"id": "url", "type": "text", "label": "Web address", "default": "northwind.example", "max_len": 40},
+    {"id": "url", "type": "text", "label": "Web address", "default": "northwind.example", "max_len": 32},
     {"id": "logo", "type": "image", "label": "Logo (square PNG, optional)", "default": "logo.png", "accept": [".png"]},
     {"id": "style", "type": "enum", "label": "Background", "default": "glow", "options": ["glow", "solid", "split"]},
     {"id": "font", "type": "enum", "label": "Headline font", "default": "Space Grotesk", "options": ["Space Grotesk", "Inter", "Fraunces", "Libre Franklin", "Source Serif 4", "Nunito"]},

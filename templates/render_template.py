@@ -37,7 +37,8 @@ Still templates and tables (manifest "kind": "still", "sizes", "data" params):
                                 (first row of a run of equal cells: section headers); in {{= }} the
                                 loop index is i / n and number cells are row_<col>
     {{rows.count}}              number of rows (rows_count in expressions; also rows_groups_<col>
-                                runs of equal cells, rows_filled_<col>, rows_max_<col>, rows_min_<col>)
+                                runs of equal cells, rows_maxrun_<col> longest run, rows_maxlen_<col>, rows_filled_<col>,
+                                rows_max_<col>, rows_min_<col>)
     {{: name = expr}}           bind a number for the rest of the enclosing block (no output)
     <colour>_luma               in expressions: relative luminance of a colour param, 0..1
     <enum>_<option>             in expressions: 1 when the enum param has that value, else 0
@@ -301,7 +302,7 @@ def _data(v, p: dict, pid: str) -> list[dict]:
         if len(v.encode("utf-8")) > MAX_DATA_BYTES:
             raise ValueError(f"param {pid!r}: table is larger than {MAX_DATA_BYTES // 1024} KB")
         s = v.strip()
-        if s.startswith("["):
+        if s.startswith(("[", "{", "\"")):
             try:
                 rows = json.loads(s)
             except json.JSONDecodeError as e:
@@ -782,6 +783,12 @@ def _numeric_env(values, decl, scope):
                 # runs of equal consecutive cells (sections) and non-empty cells
                 env[f"{pid}_groups_{cid}"] = sum(1 for k, v in enumerate(cells) if k == 0 or v != cells[k - 1])
                 env[f"{pid}_filled_{cid}"] = sum(1 for v in cells if v not in ("", None))
+                runs, cur = [], 0
+                for k, v in enumerate(cells):
+                    cur = cur + 1 if k and v == cells[k - 1] else 1
+                    runs.append(cur)
+                env[f"{pid}_maxrun_{cid}"] = max(runs, default=0)
+                env[f"{pid}_maxlen_{cid}"] = max((len(v) for v in cells if isinstance(v, str)), default=0)
                 nums = [v for v in cells if isinstance(v, float)]
                 if nums:
                     env[f"{pid}_max_{cid}"] = max(nums)

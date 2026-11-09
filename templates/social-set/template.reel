@@ -60,5 +60,5 @@ scene post dur=60s bg={{bg}}
       row #ctabtn fill={{accent}} pad=24 radius=99
         text #cta "{{cta}}" font="Space Grotesk" size=36 weight=700 color={{bg}} nowrap
 {{/cta}}
-      text #url "{{url}}" font="Space Grotesk" size=34 weight=500 color={{ink}} opacity=0.75 align=left w={{= DW*0.4}} h=46 fit nowrap
+      text #url "{{url}}" font="Space Grotesk" size=34 weight=500 color={{ink}} opacity=0.75 align=left w={{= DW*0.36}} h=46 fit nowrap
 {{/= A <= 1.3}}

@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Rust stable with edition 2024 support (1.85 or newer) and a C linker (`cc`).
+- Rust stable with edition 2024 support (1.91 or newer) and a C linker (`cc`).
 - At run time: `ffmpeg` and `ffprobe` (ffmpeg with libx264) on `PATH`, or pointed at by
   `AGENTFX_FFMPEG` / `AGENTFX_FFPROBE`.
 - Optional: Vulkan on Linux or Metal on macOS for GPU effects (`--gpu`), VAAPI/QSV or NVENC on
@@ -126,7 +126,7 @@ workflow). Rendering on a real GPU box is not covered by CI yet.
 ### Prerequisites
 
 - **Rust** via [rustup](https://rustup.rs) (`rustup-init.exe`), default host
-  `x86_64-pc-windows-msvc`, stable 1.85 or newer.
+  `x86_64-pc-windows-msvc`, stable 1.91 or newer.
 - **Visual Studio Build Tools** (2019 or newer) with the *Desktop development with C++*
   workload (MSVC linker and the Windows SDK). rustup-init offers to install it.
 - **Git for Windows**. The repository's `.gitattributes` checks text files out with LF, which

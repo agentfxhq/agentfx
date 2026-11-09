@@ -15,20 +15,11 @@ frames.
 
 Website: [agentfx.dev](https://agentfx.dev) · Videos: [YouTube @agentfxdev](https://www.youtube.com/@agentfxdev) · Trailer: [watch on YouTube](https://youtu.be/R8wOTUdO-5Y)
 
-## Quick start (Linux)
+## Nine lines, one clip
 
-You need Rust stable (1.85 or newer) and `ffmpeg`. Optional: Vulkan on Linux or Metal on macOS for GPU effects,
-and [piper](https://github.com/OHF-Voice/piper1-gpl) for text to speech.
+<img src="docs/media/quickstart.webp" width="64%" alt="The word AGENTFX dissolves into green fluid ink, which is then stirred into a swirl">
 
-```sh
-git clone https://github.com/agentfxhq/agentfx && cd agentfx
-tools/install.sh        # builds, installs agentfx + agentfx-render to ~/.local/bin, data to ~/.local/share/agentfx
-```
-
-Or build in place with `cargo build --release` (binaries in `target/release/`). Details and all
-environment variables: [docs/BUILD.md](docs/BUILD.md).
-
-Write `hello.reel` (also in [examples/quickstart.reel](examples/quickstart.reel)):
+This is the whole script for the clip above ([examples/quickstart.reel](examples/quickstart.reel)):
 
 ```
 video "Hello AgentFX" size=1280x720 fps=30 captions=off
@@ -42,7 +33,37 @@ scene ink dur=4s
   @1.4s stir #ink at=50%,50% radius=30% strength=3 dur=1.4s
 ```
 
-Then lint, look, render:
+## Try it with Docker (no build)
+
+The image contains the CLI, the renderer, ffmpeg and the MCP server. GPU effects fall back to
+the CPU path inside the container.
+
+```sh
+docker run --rm -v "$PWD:/work" ghcr.io/agentfxhq/agentfx render examples/quickstart.reel -o hello.mp4 --no-tts
+```
+
+Add it to Claude Code as an MCP server, with the current folder as the working folder:
+
+```sh
+claude mcp add agentfx -- docker run -i --rm -v "$PWD:/work" --entrypoint python3 \
+  ghcr.io/agentfxhq/agentfx /usr/local/share/agentfx/mcp/server.py
+```
+
+## Quick start (Linux)
+
+You need Rust stable (1.91 or newer) and `ffmpeg`. Optional: Vulkan on Linux or Metal on macOS for GPU effects,
+and [piper](https://github.com/OHF-Voice/piper1-gpl) for text to speech.
+
+```sh
+git clone https://github.com/agentfxhq/agentfx && cd agentfx
+tools/install.sh        # builds, installs agentfx + agentfx-render to ~/.local/bin, data to ~/.local/share/agentfx
+```
+
+Or build in place with `cargo build --release` (binaries in `target/release/`). Details and all
+environment variables: [docs/BUILD.md](docs/BUILD.md).
+
+Copy the nine-line script above to `hello.reel` (or use [examples/quickstart.reel](examples/quickstart.reel)),
+then lint, look, render:
 
 ```sh
 agentfx lint hello.reel --measure --all-formats   # JSON diagnostics, checked in 16:9 and 9:16

@@ -296,7 +296,7 @@ def main():
             continue  # notification
         try:
             if method == "initialize":
-                res = {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "agentfx", "version": "0.1.0"}}
+                res = {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "agentfx", "version": "0.1.1"}}
             elif method == "tools/list":
                 res = {"tools": TOOLS}
             elif method == "tools/call":

@@ -10,7 +10,7 @@
 # software path. See docs/BUILD.md for details.
 
 # ---- build stage ----
-FROM rust:1.85-bookworm AS builder
+FROM rust:1.94-bookworm AS builder
 
 WORKDIR /src
 COPY . .

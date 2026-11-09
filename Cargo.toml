@@ -4,7 +4,7 @@ default-members = ["crates/ir", "crates/render", "crates/script"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 license = "Apache-2.0"
 homepage = "https://agentfx.dev"
 authors = ["Levels Branding and Webdevelopment OG"]

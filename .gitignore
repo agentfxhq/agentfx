@@ -11,3 +11,4 @@ frames/
 __pycache__/
 *.pyc
 agentfx-projects/
+.claude-lock

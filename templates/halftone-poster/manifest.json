@@ -1,0 +1,20 @@
+{
+  "id": "halftone-poster",
+  "title": "Halftone poster",
+  "description": "A bold poster printed as halftone dots that resolve from coarse to fine; optional photo, CMYK or one ink.",
+  "tags": ["halftone", "halftone effect", "poster", "print", "pop art"],
+  "formats": ["16:9", "9:16", "1:1"],
+  "duration_s": 6,
+  "params": [
+    {"id": "title", "type": "text", "label": "Headline", "default": "Loud Print", "max_len": 28, "required": true},
+    {"id": "sub", "type": "text", "label": "Band text", "default": "Live  Friday 21:00", "max_len": 40},
+    {"id": "image", "type": "image", "label": "Photo (optional, png/jpg)", "required": false, "accept": [".png", ".jpg", ".jpeg"]},
+    {"id": "mode", "type": "enum", "label": "Screen", "default": "cmyk", "options": ["cmyk", "mono"]},
+    {"id": "angle", "type": "number", "label": "Screen angle (deg)", "default": 45, "min": 0, "max": 90, "step": 1},
+    {"id": "fine", "type": "number", "label": "Final dot size (px)", "default": 9, "min": 4, "max": 40, "step": 1},
+    {"id": "color1", "type": "color", "label": "Shape", "default": "#E8442E"},
+    {"id": "color2", "type": "color", "label": "Shape highlight", "default": "#FFC93C"},
+    {"id": "ink", "type": "color", "label": "Ink", "default": "#141414"},
+    {"id": "paper", "type": "color", "label": "Paper", "default": "#F4EFE6"}
+  ]
+}

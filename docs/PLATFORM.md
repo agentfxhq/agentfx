@@ -53,6 +53,46 @@ that the service maps to a file name in the job dir.
 `python3 templates/render_template.py <id> [--set k=v ...] [-o out.reel]` instantiates a template
 locally (stdlib only) and is the single implementation of substitution.
 
+### Template language (P3, implemented in `templates/render_template.py`)
+
+Python API for P1: `instantiate(template_id, params, templates_dir) -> str` (raises `ValueError` with
+a message fit for the user), `resolve_params(manifest, params) -> dict`, `load_manifest(id, dir)`,
+`list_templates(dir)` and `default_assets(id, params, dir) -> {name: path}` (files from the
+template's own directory that the source references because the user did not upload a
+replacement, e.g. the default track; copy them into the job dir next to the source).
+
+| Tag | Meaning |
+|---|---|
+| `{{id}}` | the value. `text`: markup-safe (`**`, `{`, `}`, `` ` `` are neutralised, whitespace collapsed) and `"`/`\` escaped, so use it inside quotes |
+| `{{id.rgb}}` | a colour without its alpha (`#RRGGBB`), to append an alpha: `{{color1.rgb}}55` |
+| `{{= expr}}` | arithmetic over number params and literals: `+ - * / // % ( )`, `min max round abs floor ceil clamp`; also `<text>_len`, `<longtext>_count`, `<longtext>_end` |
+| `{{ramp a b n [mirror]}}` | `n` colours from colour `a` to `b` (linear-light mix), comma-separated, for `colors=[...]`; `mirror` runs a -> b -> a |
+| `{{#id}}...{{/id}}` / `{{^id}}...{{/id}}` | block shown when the param is non-empty / non-zero (`^`: when empty) |
+| `{{#id=v}}...{{/id=v}}` / `{{^id=v}}...{{/id=v}}` | block shown when the param equals / does not equal `v` (enums) |
+| `{{#lyrics}}...{{/lyrics}}` | for a `longtext` param (here `lyrics`): the block repeats once per non-empty line, with `{{text}}` (escaped line), `{{n}}` (1-based), `{{i}}`, `{{start}}`, `{{end}}`, `{{dur}}` (seconds), `{{#first}}`, `{{#last}}`; in `{{= }}` also `len` (characters of the line) |
+| `{{id.count}}` / `{{id.end}}` | a `longtext`: number of lines / end of the last line in seconds |
+
+A section tag alone on its line removes the whole line. Unknown names, unclosed blocks and any
+`{{`/`}}` left in the output are errors.
+
+Param types beyond the list above: `image` (uploaded asset id like `audio`; `.png .jpg .jpeg .svg`;
+empty when optional and not given, so templates can fall back with `{{^logo}}`; an optional
+`"accept": [".png", ".jpg"]` narrows the extensions, e.g. where the renderer reads raster only) and `times`
+(per-line times, below). Asset params (`audio`, `image`) take plain file names only
+(`[A-Za-z0-9][A-Za-z0-9._-]*`, no paths); a `default` names a file shipped in the template dir.
+`longtext` takes `max_lines` (default and cap 64) and `max_line_len` (default 120). Text params
+with `required: true` reject an empty value. Numbers are clamped; `step` is a UI hint only.
+
+**Line timing (lyric videos).** A `longtext` param may carry
+`"timing": {"bpm": "<number param>", "offset": "<number param>", "beats": "<number param>", "times": "<times param>", "gap": <s>}`
+(each value a param id or a literal). Line k starts at `offset + k * beats * 60 / bpm` (the beat
+grid) and ends where the next starts (minus `gap`). A `times` param overrides the grid line by
+line: a JSON list or a string of starts (`"0, 2.4, 5.1"`) or start-end pairs (`[[0, 2.2], [2.4, 4.9]]`,
+`"0-2.2, 2.4-4.9"`), non-decreasing seconds. Lines past the given times continue on the beat grid
+from the next beat after the last given line. This is the hook for forced alignment: a later
+service step can run `tools/transcribe.py` on the uploaded song, match the words to the lyric
+lines and fill `times` with `[start, end]` pairs; the template does not change.
+
 ## HTTP API (P1 serves, P2 and the remote MCP use)
 
 Base `/api/v1`. JSON in and out. Auth: `Authorization: Bearer <key>`; anonymous requests get the

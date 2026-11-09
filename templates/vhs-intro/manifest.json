@@ -1,0 +1,20 @@
+{
+  "id": "vhs-intro",
+  "title": "VHS intro",
+  "description": "A retro tape intro: tracking noise, the deck locks on, your title glows over a striped sun.",
+  "tags": ["vhs", "vhs effect", "retro", "80s", "intro", "tape"],
+  "formats": ["16:9", "9:16", "1:1"],
+  "duration_s": 6,
+  "params": [
+    {"id": "title", "type": "text", "label": "Title", "default": "Summer Tapes", "max_len": 28, "required": true},
+    {"id": "sub", "type": "text", "label": "Subline", "default": "Vol. 1  1986", "max_len": 40},
+    {"id": "osd", "type": "text", "label": "Deck display", "default": "PLAY", "max_len": 10},
+    {"id": "stamp", "type": "text", "label": "Date stamp", "default": "JUL. 14 1986", "max_len": 20},
+    {"id": "wear", "type": "number", "label": "Tape wear", "default": 1, "min": 0.3, "max": 2, "step": 0.1},
+    {"id": "seed", "type": "number", "label": "Variation", "default": 3, "min": 1, "max": 999, "step": 1},
+    {"id": "color1", "type": "color", "label": "Sun top", "default": "#FFD23D"},
+    {"id": "color2", "type": "color", "label": "Sun bottom / lines", "default": "#FF2B8A"},
+    {"id": "text_color", "type": "color", "label": "Title colour", "default": "#FFFFFF"},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#140A2E"}
+  ]
+}

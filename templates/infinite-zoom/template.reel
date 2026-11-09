@@ -1,0 +1,34 @@
+// Infinite zoom (AgentFX template): a self-similar nest of levels and a camera that zooms through
+// it at constant log-speed; the last frame runs into the first, so the clip loops seamlessly.
+video "{{title}}" size=1920x1080 fps=30 captions=off formats=[16:9, 9:16, 1:1]
+
+scene zoom dur={{duration}}s bg={{bg}}
+  layer #tunnel
+{{#style=tunnel}}
+    nest #halo levels=30 scale=0.72 rot={{twist}} cycle=[{{color1}}, {{color2}}, {{color3}}] w=1920 h=1920 blur=22 blend=plus
+      rect x=50 y=50 w=1820 h=1820 radius=150 stroke=$cycle sw=44
+    nest #core levels=30 scale=0.72 rot={{twist}} cycle=[{{color1}}, {{color2}}, {{color3}}] w=1920 h=1920 blend=plus
+      rect x=50 y=50 w=1820 h=1820 radius=150 stroke=$cycle sw=14 blend=plus
+      rect x=50 y=50 w=1820 h=1820 radius=150 stroke=#FFFFFFB0 sw=4 blend=plus
+      path d="M260 170 H1660 Q1750 170 1750 260 V1660 Q1750 1750 1660 1750 H260 Q170 1750 170 1660 V260 Q170 170 260 170 Z" w=1920 h=1920 stroke=#FFF3D6 sw=16 dash=[0.5, 105] blend=plus
+{{/style=tunnel}}
+{{#style=rings}}
+    nest #halo levels=30 scale=0.74 rot={{twist}} cycle=[{{color1}}, {{color2}}, {{color3}}] w=1920 h=1920 blur=26 blend=plus
+      ellipse x=60 y=60 w=1800 h=1800 stroke=$cycle sw=50 fill=#00000000
+    nest #core levels=30 scale=0.74 rot={{twist}} cycle=[{{color1}}, {{color2}}, {{color3}}] w=1920 h=1920 blend=plus
+      ellipse x=60 y=60 w=1800 h=1800 stroke=$cycle sw=16 fill=#00000000 blend=plus
+      ellipse x=60 y=60 w=1800 h=1800 stroke=#FFFFFFA0 sw=4 fill=#00000000 blend=plus
+      ellipse x=190 y=190 w=1540 h=1540 stroke=#FFF3D6 sw=14 dash=[0.5, 80] fill=#00000000 blend=plus
+{{/style=rings}}
+{{#style=portal}}
+    nest #core levels=30 scale=0.7 rot={{twist}} cycle=[{{color1}}, {{color2}}, {{color3}}] w=1920 h=1920
+      rect x=0 y=0 w=1920 h=1920 radius=60 fill=$cycle
+      rect x=150 y=150 w=1620 h=1620 radius=40 fill={{bg}}
+      rect x=210 y=210 w=1500 h=1500 radius=36 stroke=#FFFFFF33 sw=3 fill=#00000000
+{{/style=portal}}
+  camera loop #tunnel levels=3 dur={{duration}}s{{#reverse=yes}} dir=out{{/reverse=yes}}
+{{#title}}
+  text #title "{{title}}" size=120 weight=900 color={{text_color}} tracking=-0.02 x=50% y=50% anchor=center w=70% fit nowrap align=center hud glow=24 glow-color={{bg}}
+{{/title}}
+  when portrait
+    set #title size=96 w=84%

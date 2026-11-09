@@ -1,0 +1,20 @@
+id: explainer-request-diagram
+tags:
+- explainer
+- diagram
+formats:
+- '16:9'
+duration_s: null
+files: {}
+prompt: explain how a web request goes from the browser to the server to the database and back. simple diagram with
+  arrows, make it look clean
+must_text:
+- Browser
+- Server
+- Database
+must_haves:
+- 'three nodes: browser, server, database'
+- arrows/connectors between them
+- the request path is shown step by step (not all at once)
+- the way back (response) is shown
+- clean, uncluttered look

@@ -1,0 +1,19 @@
+id: data-budget-donut
+tags:
+- data
+- chart
+formats:
+- '16:9'
+duration_s: null
+files: {}
+prompt: 'pie chart showing where our budget goes: Rent 40%, Salaries 35%, Marketing 15%, Other 10%'
+must_text:
+- Rent
+- Salaries
+- Marketing
+- Other
+must_haves:
+- pie or donut chart with four slices
+- labels/legend with the four categories
+- percentages correct
+- chart animates in

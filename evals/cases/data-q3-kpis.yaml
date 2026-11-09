@@ -1,0 +1,19 @@
+id: data-q3-kpis
+tags:
+- data
+- kpi
+formats:
+- '16:9'
+duration_s: null
+files: {}
+prompt: 'animate our Q3 numbers for the all-hands: revenue 1.2M (+18%), 4,300 new customers, churn 2.1%. numbers
+  should count up'
+must_text:
+- Q3
+- 18%
+- '2.1'
+must_haves:
+- 'three KPIs shown: revenue 1.2M, 4,300 new customers, churn 2.1%'
+- numbers count up
+- the +18% growth is visible
+- numbers are correct (no invented figures)

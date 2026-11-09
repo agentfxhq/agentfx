@@ -1,0 +1,18 @@
+id: edit-brand-colors-hold
+tags:
+- edit
+- brand
+formats:
+- '16:9'
+duration_s: null
+files:
+  film.reel: evals/fixtures/edit-colors.reel
+prompt: 'please change the colours in film.reel to our brand: blue #1E3A8A and yellow #FACC15. and the ending should
+  stay on screen longer'
+must_text:
+- Quarterly Update
+- Thanks for watching
+must_haves:
+- 'colours replaced by #1E3A8A and #FACC15 (no leftover #FF4D6D pink)'
+- the outro holds longer than before (was 2s)
+- copy unchanged

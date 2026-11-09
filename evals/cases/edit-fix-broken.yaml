@@ -1,0 +1,18 @@
+id: edit-fix-broken
+tags:
+- edit
+- lint
+formats:
+- '9:16'
+duration_s: null
+files:
+  film.reel: evals/fixtures/edit-broken.reel
+prompt: my coffee promo film.reel doesn't work, can you fix it and render it?
+must_text:
+- BEAN BOX
+- Fresh roasted, every week
+must_haves:
+- the script lints clean and renders
+- 'BEAN BOX in the cream colour #FFE0B2 (the colour prop is fixed, not dropped)'
+- the intended rise entrance and the pulse on the name work
+- the tagline still exits

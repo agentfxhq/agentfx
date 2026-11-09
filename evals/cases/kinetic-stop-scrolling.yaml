@@ -1,0 +1,20 @@
+id: kinetic-stop-scrolling
+tags:
+- social
+- kinetic-type
+- vertical
+formats:
+- '9:16'
+duration_s: 8
+files: {}
+prompt: 'make me a punchy 8 second reel for instagram. big bold words that slam in one after another: STOP SCROLLING.
+  then START BUILDING. high energy, black and neon green'
+must_text:
+- STOP SCROLLING
+- START BUILDING
+must_haves:
+- vertical 9:16 frame
+- the words appear one after another (not all at once)
+- black background with neon green accents
+- text is big and fills most of the frame width
+- feels high energy (fast, punchy motion)

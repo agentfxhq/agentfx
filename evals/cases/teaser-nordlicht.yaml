@@ -1,0 +1,20 @@
+id: teaser-nordlicht
+tags:
+- product
+- brand
+formats:
+- '16:9'
+duration_s: 15
+files: {}
+prompt: 'teaser for our new planning app Nordlicht. our colours are navy #0B1F3A and teal #4FD1C5. tagline is "Plan
+  less. Live more." end with "Coming March 2027". 15 seconds, landscape'
+must_text:
+- Nordlicht
+- Plan less. Live more.
+- Coming March 2027
+must_haves:
+- 'uses navy #0B1F3A and teal #4FD1C5 as the main colours'
+- app name Nordlicht is prominent
+- tagline shown
+- ends on Coming March 2027
+- looks like a polished product teaser, not a slideshow

@@ -1,0 +1,5 @@
+video "Open Day" size=1920x1080 fps=30 captions=off
+
+scene main dur=6s bg=linear(135deg, #2D0A4E 0%, #0F0326 100%)
+  text #head "OPEN DAY AT THE MAKERSPACE" size=110 weight=900 color=#FFFFFF x=50% y=40% anchor=center nowrap in=rise
+  text #sub "Saturday 10:00 to 16:00, free entry" size=48 color=#C9B6FF x=50% y=62% anchor=center nowrap in=fade delay=0.4s

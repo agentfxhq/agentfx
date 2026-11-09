@@ -1,0 +1,15 @@
+id: fx-glitch-system-failure
+tags:
+- effect
+- glitch
+formats:
+- '16:9'
+duration_s: null
+files: {}
+prompt: glitchy title SYSTEM FAILURE like a broken TV
+must_text:
+- SYSTEM FAILURE
+must_haves:
+- SYSTEM FAILURE shown
+- visible glitch artefacts (RGB split, block displacement, scanlines or noise)
+- broken TV feel

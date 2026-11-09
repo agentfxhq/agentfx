@@ -1,0 +1,20 @@
+id: promo-summer-sale-multi
+tags:
+- product
+- multi-format
+formats:
+- '1:1'
+- '9:16'
+duration_s: null
+files: {}
+prompt: 'summer sale promo, needs to work both as a square post and as a story. text: "Summer Sale", "-30% on everything",
+  "ends Sunday". sunny colours'
+must_text:
+- Summer Sale
+- -30% on everything
+- ends Sunday
+must_haves:
+- works in square (frames show a well composed square layout)
+- the discount -30% is the most prominent element
+- sunny warm colours
+- all three lines readable

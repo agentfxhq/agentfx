@@ -1,0 +1,8 @@
+video "Quarterly update" size=1920x1080 fps=30 captions=off
+
+scene intro dur=3s bg=#222222
+  text #t "Quarterly Update" size=140 weight=800 color=#E5E5E5 x=50% y=45% anchor=center nowrap in=rise
+  text #k "Q2 2027" size=56 weight=600 color=#FF4D6D x=50% y=62% anchor=center nowrap in=fade delay=0.3s
+
+scene outro dur=2s bg=#222222
+  text #thanks "Thanks for watching" size=110 weight=800 color=#E5E5E5 x=50% y=50% anchor=center nowrap in=fade

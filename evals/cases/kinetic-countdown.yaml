@@ -1,0 +1,20 @@
+id: kinetic-countdown
+tags:
+- social
+- kinetic-type
+- vertical
+formats:
+- '9:16'
+duration_s: null
+files: {}
+prompt: countdown for our tiktok, 3 2 1 then LAUNCH, loud colours, each number pops
+must_text:
+- '3'
+- '2'
+- '1'
+- LAUNCH
+must_haves:
+- numbers 3, 2, 1 shown in sequence
+- LAUNCH shown after the countdown
+- loud, saturated colours
+- each number pops (scale/bounce entrance)

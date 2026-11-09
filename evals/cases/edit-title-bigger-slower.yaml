@@ -1,0 +1,17 @@
+id: edit-title-bigger-slower
+tags:
+- edit
+formats:
+- '16:9'
+duration_s: null
+files:
+  film.reel: evals/fixtures/edit-title.reel
+prompt: here's my video script film.reel. can you make the title bigger and the animation slower? it feels rushed
+must_text:
+- Spring Workshop 2027
+- April 12, Vienna
+must_haves:
+- title size clearly larger than before (was size=56)
+- title entrance is slower than before
+- the rest of the design is kept (copy, colours)
+- nothing cut off

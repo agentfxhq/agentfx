@@ -1,0 +1,5 @@
+-r requirements.txt
+pytest==9.2.0
+httpx==0.28.1
+# interop test of /mcp with the official MCP Python client
+mcp==2.3.0

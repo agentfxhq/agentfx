@@ -18,3 +18,4 @@ evals/results/**/*.png
 evals/results/**/*.webp
 evals/results/**/*.gif
 evals/results/**/work/
+service/.data/

@@ -1,0 +1,70 @@
+{
+  "id": "hello-card",
+  "kind": "still",
+  "title": "Hello card",
+  "description": "A title and a list from a data table, as a social post, story or flyer.",
+  "tags": [
+    "still",
+    "list",
+    "data",
+    "social"
+  ],
+  "formats": [
+    "1:1",
+    "9:16"
+  ],
+  "still_at": "0.5s",
+  "sizes": [
+    "instagram-post",
+    "story",
+    "a4-flyer"
+  ],
+  "params": [
+    {
+      "id": "title",
+      "type": "text",
+      "label": "Title",
+      "default": "Opening hours",
+      "max_len": 40
+    },
+    {
+      "id": "rows",
+      "type": "data",
+      "label": "Rows (label, value)",
+      "default": [
+        {
+          "label": "Mon-Fri",
+          "value": "9-18"
+        },
+        {
+          "label": "Sat",
+          "value": "10-14"
+        }
+      ],
+      "columns": [
+        {
+          "id": "label",
+          "type": "text",
+          "max_len": 40
+        },
+        {
+          "id": "value",
+          "type": "text",
+          "max_len": 40
+        }
+      ]
+    },
+    {
+      "id": "fg",
+      "type": "color",
+      "label": "Text colour",
+      "default": "#F4EFE6"
+    },
+    {
+      "id": "bg",
+      "type": "color",
+      "label": "Background",
+      "default": "#14111F"
+    }
+  ]
+}

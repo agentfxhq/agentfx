@@ -28,6 +28,7 @@ manifest.json:
 ```json
 {
   "id": "glitch-text",
+  "kind": "video",
   "title": "Glitch text",
   "description": "One line for the gallery card.",
   "tags": ["text", "glitch"],
@@ -178,37 +179,69 @@ free tier, keyed by IP. Errors: `{"error": {"code": "...", "message": "..."}}` w
 
 | Method | Path | Body / query | Response |
 |---|---|---|---|
-| GET | `/templates` | | `[manifest + {"preview_url"}]` |
-| GET | `/templates/{id}` | | manifest + `{"source": "<template.reel>"}` |
-| POST | `/instantiate` | `{"template": id, "params": {...}, "size"?: "story"}` (size: stills) | `{"source": "..."}` |
-| POST | `/parse` | `{"source"}` or `{"json"}`, `to: "json"|"text"` | `{"json": {...}}` or `{"source": "..."}` |
-| POST | `/lint` | `{"source", "format"?}` | `{"diagnostics": [...]}` (CLI JSON unchanged) |
+| GET | `/templates` | | `[manifest + {"kind", "preview_url"}]` (`preview_url` null without preview.webp) |
+| GET | `/templates/{id}` | | manifest + `{"kind", "source": "<template.reel>", "preview_url"}` |
+| GET | `/templates/{id}/preview.webp` | | the preview (public, cached) |
+| POST | `/instantiate` | `{"template": id, "params": {...}, "size"?: preset}` | `{"source": "..."}` |
+| POST | `/parse` | `{"source"}` or `{"json"}`, `to: "json"|"text"` | `{"json": {...}}` or `{"source": "..."}` (+ `"diagnostics"` when it does not parse cleanly) |
+| POST | `/lint` | `{"source", "format"?, "measure"?: true}` | `{"diagnostics": [...], "summary": "lint: ..."}` (diagnostics = CLI JSON unchanged) |
 | POST | `/timing` | `{"source", "format"?}` | CLI timing JSON |
 | POST | `/frame` | `{"source", "at": "2.5s", "format"?, "width"?}` | `image/png` (preview width default 640) |
 | POST | `/sheet` | `{"source", "n"?, "format"?}` | `image/png` |
 | POST | `/assets` | multipart `file` (audio/image/svg/font, size caps) | `{"asset_id", "name"}` |
-| POST | `/renders` | `{"source", "format"?, "output": "mp4|gif|webp", "quality": "preview|hd"}` | `{"job_id"}` 202 |
-| GET | `/renders/{job_id}` | | `{"status": "queued|running|done|error", "progress": 0..1, "url"?, "error"?}` |
-| GET | `/files/{job_id}/{name}` | | the rendered file (signed, expires) |
+| POST | `/renders` | `{"source", "format"?, "output": "mp4|gif|webp|png|jpg|pdf", "quality": "preview|hd", "at"?}` or `{"template", "params", "sizes"?: [preset], "output"?, "quality"?}` | `{"job_id", "status_url", ...}` 202 |
+| POST | `/batch` | `{"template", "rows": [{params}, ...], "params"?: {shared}, "sizes"?, "output"?}` | `{"job_id", "status_url", ...}` 202, the job yields one zip |
+| GET | `/renders/{job_id}` | | `{"status": "queued|running|done|error", "progress": 0..1, "kind", "output", "url"?, "expires_at"?, "files"?: [{"name", "size"?, "row"?, "url"}], "failures"?, "error"?}` |
+| GET | `/files/{job_id}/{name}` | `?exp=&sig=` | the rendered file (HMAC signed URL, expires with the job) |
 
-Sources reference uploaded assets by the name returned from `/assets`. The service rejects
-absolute paths, `..`, URLs and any file reference not in the job's asset set.
+Renders: a raw `source` with a still output (png/jpg/pdf) renders the frame at `at` (default
+`0s`). A template job renders one file per size (default: the template's own size); `url` is
+the first file, `files` lists all. Outputs: stills png (default) / jpg / pdf (the raster at its
+pixel size wrapped in a one-page PDF, page size at 300 dpi), videos mp4 (default) / gif / webp.
+A batch renders rows x sizes and zips them (`url` = the zip; rows that fail are listed in
+`failures` and in `failures.json` in the zip; the job fails only when every row fails). Each
+row's params override the shared `params`. The first file is checked synchronously, so most
+bad requests get a 4xx instead of a failed job. Errors carry `code`: `invalid_request`,
+`invalid_source`, `forbidden_reference`, `unknown_asset`, `parse_error`, `compile_error`,
+`invalid_params`, `limit_exceeded`, `rate_limited`, `too_many_renders`, `too_large`,
+`unsupported_type`, `unauthorized`, `not_found`, `busy`, `render_error`, `internal`.
 
-Free tier limits (initial, configurable): source <= 64 KB, duration <= 20 s, 720p, preview
-quality, 10 renders/day/IP, frame/sheet 60/min/IP, one running render per client. API keys raise
-the limits. Watermark: small "agentfx.dev" corner mark on free renders (renderer-side overlay
-appended by the service, not by the user's script).
+Sources reference uploaded assets by the name returned from `/assets` (`a<24 hex>.<ext>`; the
+name is the capability, assets are not bound to a client). The service rejects absolute paths,
+`..`, URLs and any file reference not in the job's asset set (uploads + template default
+assets). Uploads are typed by their content (magic bytes), never by name or content type:
+PNG/JPEG (<= 8000 px per side, <= 40 MP), SVG (UTF-8, markup checked like inline svg), MP3/WAV/
+OGG/FLAC/M4A, TTF/OTF/WOFF/WOFF2; caps 8 MB image, 512 KB svg, 25 MB audio, 8 MB font.
+
+Free tier limits (initial, configurable via `AFX_FREE_*`, keys via `AFX_KEY_*` and per-key
+overrides): source <= 64 KB, duration <= 20 s, 720p (a video source whose header size has a
+short side over 720 is rejected with `limit_exceeded`; templates meant for the free tier
+default to 1280x720 or offer such a size preset), preview quality, 10 render jobs/day/IP, 200
+output files/day, 100 files/job, 3 videos/job, 50 batch rows, stills <= 12 MP, frame/sheet
+60/min/IP (lint/timing/parse/instantiate 240/min), one queued-or-running render job per client.
+Watermark: small "agentfx.dev" corner mark on free renders and stills, burned in by an ffmpeg
+pass over the finished output (the user's script cannot reach it).
 
 ## Remote MCP (P1)
 
-Streamable HTTP at `/mcp`, same tools and schemas as `mcp/server.py` (reuse its tool table; do not
-fork it). `agentfx_render` returns a job URL (and waits up to ~50 s for short renders). Frames and
-sheets come back as image content, like the stdio server. Auth as the HTTP API.
+Streamable HTTP at `/mcp` (stateless, JSON responses, protocol 2025-06-18; also answers
+2025-11-25/2025-03-26/2024-11-05 clients), same tools and schemas as `mcp/server.py` (its tool
+table and handlers are imported, not forked) with two hosted-only differences: the filesystem
+arguments `file`, `assets_dir`, `out`, `out_dir` are removed from the schemas (`source` is
+required instead), and `agentfx_critique` is not offered (it reads local files and spends the
+operator's Anthropic key). `agentfx_render` and `agentfx_render_template` return the job status
+and URLs (and wait up to ~50 s; `structuredContent` = the `/renders/{id}` JSON + `status_url`);
+template stills come back as image content too. `agentfx_list_templates` lists the manifests.
+Frames and sheets come back as image content, like the stdio server. Auth as the HTTP API.
 
 ## Runtime and security (P1)
 
 - Each request runs the CLI in a throwaway job dir, as an unprivileged user, with CPU time,
   wall clock, memory and output size limits; no network for the renderer process.
+  Implementation (service/README.md "Security"): uid per worker slot, prlimit (AS, CPU, FSIZE,
+  NOFILE, NPROC, CORE), wall clock + job dir size watchdog killing the process group, clean
+  environment (`AGENTFX_TTS=none`, own HOME/cache), iptables owner rule for the sandbox uid
+  range, static source checks before compiling.
 - One job queue, N workers (N = cores / threads per render); priority: frame/sheet > render.
 - Storage: job dirs on local disk, outputs kept 24 h (free) / 7 d (key), then deleted.
 - Deploy target: Docker compose (service + Caddy in front), same image as ghcr.io/agentfxhq/agentfx.

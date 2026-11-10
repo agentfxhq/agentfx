@@ -1,0 +1,71 @@
+# AgentFX render service behind Caddy (TLS via Let's Encrypt for AFX_DOMAIN).
+#
+#   cd service && AFX_DOMAIN=api.agentfx.dev docker compose up -d --build
+#   docker compose exec agentfx python3 -m agentfx_service.keys mint --name "acme"
+#
+# Local smoke without TLS: AFX_DOMAIN=http://localhost AFX_HTTP_PORT=8790 docker compose up -d
+name: agentfx-service
+
+services:
+  agentfx:
+    build:
+      context: ..
+      dockerfile: service/Dockerfile
+      args:
+        BASE: ${AGENTFX_BASE_IMAGE:-ghcr.io/agentfxhq/agentfx:latest}
+    image: agentfx-service:dev
+    restart: unless-stopped
+    environment:
+      AFX_PUBLIC_URL: ${AFX_PUBLIC_URL:-https://api.agentfx.dev}
+      AFX_TRUST_PROXY: "1"                 # client IP from Caddy's X-Forwarded-For
+      AFX_WORKERS: ${AFX_WORKERS:-}
+      AFX_RENDER_THREADS: ${AFX_RENDER_THREADS:-2}
+      AFX_CORS_ORIGINS: ${AFX_CORS_ORIGINS:-*}
+      AFX_SIGNING_KEY: ${AFX_SIGNING_KEY:-}
+    volumes:
+      - agentfx-data:/var/lib/agentfx
+    expose:
+      - "8780"                             # only Caddy talks to the service
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    cap_drop: [ALL]
+    cap_add:
+      - CHOWN          # hand job dirs to the sandbox uid
+      - DAC_OVERRIDE   # read outputs / delete job dirs of sandbox uids
+      - FOWNER
+      - SETUID         # switch renderers to their slot uid
+      - SETGID
+      - KILL           # kill runaway renderer process groups
+      - NET_ADMIN      # entrypoint only: iptables rule, dropped before the service starts
+      - SETPCAP        # entrypoint only: to drop NET_ADMIN (and itself) from the bounding set
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${AFX_MEM_LIMIT:-12g}
+    pids_limit: 4096
+    ulimits:
+      core: 0
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "5"}
+
+  caddy:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    depends_on: [agentfx]
+    environment:
+      AFX_DOMAIN: ${AFX_DOMAIN:-api.agentfx.dev}
+    ports:
+      - "${AFX_HTTP_PORT:-80}:80"
+      - "${AFX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+
+volumes:
+  agentfx-data:
+  caddy-data:
+  caddy-config:

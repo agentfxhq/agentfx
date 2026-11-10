@@ -1,0 +1,23 @@
+{
+	admin off
+}
+
+{$AFX_DOMAIN} {
+	encode zstd gzip
+	request_body {
+		max_size 32MB
+	}
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+	}
+	reverse_proxy {$AFX_UPSTREAM:agentfx:8780} {
+		# Caddy replaces client supplied X-Forwarded-* (no trusted_proxies configured)
+		flush_interval -1
+		transport http {
+			response_header_timeout 120s
+		}
+	}
+	log
+}

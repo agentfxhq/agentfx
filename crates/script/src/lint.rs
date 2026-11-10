@@ -100,7 +100,12 @@ pub fn static_rules(doc: &Document, tl: &Timeline, ir: &Ir) -> Vec<Diag> {
     }
     crate::textv2::lint_families(&all, &ir.fonts, &mut d);
     note_rules(doc, &mut d);
-    number_format_rules(&all, &mut d);
+    // ids are unique per scene: resolve `count #id` against the counters of its own scene
+    for top in &doc.nodes {
+        let mut sub = vec![];
+        walk_nodes(std::slice::from_ref(top), &mut sub);
+        number_format_rules(&sub, &mut d);
+    }
     // events: outside their scene, cursor clicks too dense, zooms overlapping
     let scenes: Vec<&Node> = doc.nodes.iter().filter(|n| n.kind == "scene").collect();
     for (si, sn) in scenes.iter().enumerate() {
@@ -226,7 +231,11 @@ pub fn static_rules(doc: &Document, tl: &Timeline, ir: &Ir) -> Vec<Diag> {
             crate::look::Look::Displace { source: Some(s), .. } => Some(s.as_str()),
             _ => None,
         }).collect();
-        for c in &l.children {
+        // particle dots start at their emitter and fly (often in from or out past the edge, e.g.
+        // bubbles rising from y=105%): they are not placed content, and one error per dot buried
+        // real diagnostics under dozens of `u-<id>-0-pN` lines
+        let particles = l.tags.iter().any(|t| t == "particles");
+        for c in l.children.iter().filter(|_| !particles) {
             if c.name.as_deref().is_some_and(|n| maps.contains(&n)) {
                 continue;
             }

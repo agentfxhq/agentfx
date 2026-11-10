@@ -136,12 +136,15 @@ def tool_env(work_root):
             link.unlink()
     # the agent's and the scorer's `agentfx`: heavy subcommands (render, sheet, storyboard; single frames are light)
     # wait for the machine-wide heavy-job lock, so a shared box runs one heavy job at a time
-    lock = os.environ.get("AGENTFX_HEAVY_LOCK", "/tmp/claude-1000/agentfx-heavy.lock")
+    lock = os.environ.get("AGENTFX_HEAVY_LOCK") or (
+        "/tmp/claude-1000/agentfx-heavy.lock" if os.path.isdir("/tmp/claude-1000") else os.path.join(tempfile.gettempdir(), "agentfx-heavy.lock"))
+    Path(lock).parent.mkdir(parents=True, exist_ok=True)
+    heavy = f"exec flock {lock} {real} \"$@\"" if shutil.which("flock") else f"exec {real} \"$@\""
     (bindir / "agentfx").write_text(
         "#!/bin/sh\n"
         f"export AGENTFX_RENDERER={real.parent / 'agentfx-render'}\n"
         "case \"$1\" in\n"
-        f"  render|sheet|storyboard) exec flock {lock} {real} \"$@\" ;;\n"
+        f"  render|sheet|storyboard) {heavy} ;;\n"
         f"  *) exec {real} \"$@\" ;;\n"
         "esac\n")
     (bindir / "agentfx").chmod(0o755)

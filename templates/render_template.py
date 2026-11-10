@@ -448,6 +448,11 @@ def resolve_params(manifest: dict, params: dict | None) -> dict:
         elif t == "data":
             v = _data(v, p, pid)
         out[pid] = v
+    b = manifest.get("batch")
+    if b and out.get(b["param"]):
+        k, rows = out.get(b["index"]), len(out[b["param"]])
+        if not isinstance(k, float) or k != int(k) or not 1 <= k <= rows:
+            raise ValueError(f"param {b['index']!r}: batch row {k:g} is out of range (1..{rows})")
     _line_timing(manifest, decl, out)
     return out
 

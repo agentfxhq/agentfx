@@ -21,12 +21,12 @@ theme {{#= bg_luma > 0.45}}studio-light{{/= bg_luma > 0.45}}{{^= bg_luma > 0.45}
 {{: w3 = (aw - (c1 + 1)*70)/(c1 + 2)}}
 {{: mr = rows_maxrun_section}}
 {{: pi = 1.85 + 1.07*fd}}
-{{: d1 = min(0.92*(ah - (ceil(nsec/c1) - 1)*70)/(ceil(nsec/c1)*(1.9 + mr*pi)), w1/10)}}
-{{: d2 = min(0.92*(ah - (ceil(nsec/(c1 + 1)) - 1)*70)/(ceil(nsec/(c1 + 1))*(1.9 + mr*pi)), w2/10) if nsec > c1 else 0}}
-{{: d3 = min(0.92*(ah - (ceil(nsec/(c1 + 2)) - 1)*70)/(ceil(nsec/(c1 + 2))*(1.9 + mr*pi)), w3/10) if nsec > c1 + 1 else 0}}
-{{: n1 = min(0.92*(ah - (ceil(nsec/c1) - 1)*70)/(ceil(nsec/c1)*(1.9 + mr*1.85)), w1/10)}}
-{{: n2 = min(0.92*(ah - (ceil(nsec/(c1 + 1)) - 1)*70)/(ceil(nsec/(c1 + 1))*(1.9 + mr*1.85)), w2/10) if nsec > c1 else 0}}
-{{: n3 = min(0.92*(ah - (ceil(nsec/(c1 + 2)) - 1)*70)/(ceil(nsec/(c1 + 2))*(1.9 + mr*1.85)), w3/10) if nsec > c1 + 1 else 0}}
+{{: d1 = min(0.92*(ah - (ceil(nsec/c1) - 1)*70)/(ceil(nsec/c1)*(1.9 + mr*pi)), w1/12)}}
+{{: d2 = min(0.92*(ah - (ceil(nsec/(c1 + 1)) - 1)*70)/(ceil(nsec/(c1 + 1))*(1.9 + mr*pi)), w2/12) if nsec > c1 else 0}}
+{{: d3 = min(0.92*(ah - (ceil(nsec/(c1 + 2)) - 1)*70)/(ceil(nsec/(c1 + 2))*(1.9 + mr*pi)), w3/12) if nsec > c1 + 1 else 0}}
+{{: n1 = min(0.92*(ah - (ceil(nsec/c1) - 1)*70)/(ceil(nsec/c1)*(1.9 + mr*1.85)), w1/12)}}
+{{: n2 = min(0.92*(ah - (ceil(nsec/(c1 + 1)) - 1)*70)/(ceil(nsec/(c1 + 1))*(1.9 + mr*1.85)), w2/12) if nsec > c1 else 0}}
+{{: n3 = min(0.92*(ah - (ceil(nsec/(c1 + 2)) - 1)*70)/(ceil(nsec/(c1 + 2))*(1.9 + mr*1.85)), w3/12) if nsec > c1 + 1 else 0}}
 {{: dbest = max(d1, d2, d3)}}
 {{: showdesc = fd > 0 and dbest >= 24}}
 {{: best = dbest if showdesc else max(n1, n2, n3)}}
@@ -41,6 +41,8 @@ theme {{#= bg_luma > 0.45}}studio-light{{/= bg_luma > 0.45}}{{^= bg_luma > 0.45}
 {{: pi2 = 0.6 + 1.3*fw + (fd*(0.12 + 0.86*max(fdw, 1)) if showdesc else 0)}}
 {{: isz = clamp(min(isz0, 0.96*(ah - (ceil(nsec/cols) - 1)*70)/(ceil(nsec/cols)*(1.9 + mr*pi2))), 16, 48)}}
 {{: pw = isz*pl}}
+{{: hest = ceil(nsec/cols)*(1.9 + mr*pi2)*isz + (ceil(nsec/cols) - 1)*70}}
+{{: voff = max(0, (ah - hest)*0.4)}}
 scene menu dur=60s bg={{bg}}
   layer #page w={{DW}} h={{DH}} x=0 y=0 scale={{S}} origin=top-left
     rect #frame w={{= DW - m}} h={{= DH - m}} x=50% y=50% anchor=center radius=6 stroke={{accent}} sw=2 opacity=0.55
@@ -52,7 +54,7 @@ scene menu dur=60s bg={{bg}}
 {{#tagline}}
     text #tagline "{{tagline}}" font="Space Grotesk" size=30 weight=600 tracking=0.2 upper color={{accent}} align=center w={{= aw - 120}} h=44 x=50% y={{= 100*(m + (212 if wide else 245))/DH}}% anchor=top fit nowrap
 {{/tagline}}
-    grid #menu cols={{cols}} cols-portrait={{cols}} gap={{cg}} align=start justify=start w={{= aw}} x={{= 100*m/DW}}% y={{= 100*(m + hh)/DH}}%
+    grid #menu cols={{cols}} cols-portrait={{cols}} gap={{cg}} align=start justify=start w={{= aw}} x={{= 100*m/DW}}% y={{= 100*(m + hh + voff)/DH}}%
 {{#rows}}
 {{#@changed.section}}
       col #s{{@n}} gap={{= isz*0.6}} align=start justify=start w={{= colw}}

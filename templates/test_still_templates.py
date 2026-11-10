@@ -159,6 +159,12 @@ def test_batch_params():
     assert [s["n"] for s in sets] == [1, 2, 3]
     assert rt.batch_params(m, {"rows": []}) == [{"rows": []}]
     assert rt.batch_params(M, {"title": "x"}) == [{"title": "x"}]
+    for bad in (4, 1.5):
+        try:
+            rt.resolve_params(m, {"n": bad})
+            raise AssertionError(f"batch index {bad} accepted")
+        except ValueError as e:
+            assert "out of range" in str(e)
 
 
 def test_video_templates_unchanged():

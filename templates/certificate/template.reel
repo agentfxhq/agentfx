@@ -43,11 +43,11 @@ scene certificate dur=60s bg={{bg}}
     text #intro "{{intro}}" font="Inter" size=32 weight=400 color={{ink}} opacity=0.75 align=center w={{= DW*0.7}} h=46 x=50% y={{yintro}}% anchor=top fit nowrap
 {{/intro}}
 {{#recipients}}
-{{#= n == min(index, recipients_count)}}
+{{#= n == index}}
     text #name "{{.name}}" font="{{font}}" size={{= 118*k}} weight=500 lh=1 tracking=-0.01 color={{ink}} align=center w={{= DW*(0.72 if wide else 0.84)}} h={{= 140*k}} x=50% y={{yname}}% anchor=top fit nowrap
     text #course "{{#.course}}{{.course}}{{/.course}}{{^.course}}{{course}}{{/.course}}" font="Inter" size=34 weight=400 lh=1.4 color={{ink}} opacity=0.85 align=center w={{= DW*(0.62 if wide else 0.76)}} h=100 x=50% y={{ycourse}}% anchor=top fit
     text #date "{{#.date}}{{.date}}{{/.date}}{{^.date}}{{date}}{{/.date}}" font="Fraunces" size=36 weight=500 color={{ink}} align=center w={{= bw}} h=50 x={{bx}}% y={{yb}}% anchor=bottom fit nowrap
-{{/= n == min(index, recipients_count)}}
+{{/= n == index}}
 {{/recipients}}
 {{^recipients}}
     text #name "{{name}}" font="{{font}}" size={{= 118*k}} weight=500 lh=1 tracking=-0.01 color={{ink}} align=center w={{= DW*(0.72 if wide else 0.84)}} h={{= 140*k}} x=50% y={{yname}}% anchor=top fit nowrap

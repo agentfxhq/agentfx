@@ -340,6 +340,8 @@ def _data(v, p: dict, pid: str) -> list[dict]:
             x = r.get(cid, c.get("default"))
             where = f"{pid}[{k}].{cid}"
             if ct == "number":
+                if c.get("required") and x in (None, ""):
+                    raise ValueError(f"{where} is required")
                 row[cid] = _number(0 if x in (None, "") else x, where)
             elif ct == "image":
                 x = "" if x is None else str(x).strip()
@@ -861,12 +863,17 @@ def instantiate(template_id: str, params: dict | None, templates_dir, size: str 
 def default_assets(template_id: str, params: dict | None, templates_dir) -> dict[str, Path]:
     """Files from the template's own directory that the instantiated source references (default
     audio/images that the user did not replace): {name: path}. The service copies them into the
-    job dir next to the instantiated source; user uploads are mapped by the service itself."""
+    job dir next to the instantiated source; user uploads are mapped by the service itself.
+    Params the caller supplied are skipped: their file names refer to uploads, and a packaged file
+    with the same name must not overwrite the upload."""
     manifest = load_manifest(template_id, templates_dir)
     values = resolve_params(manifest, params)
+    given = {k for k, v in (params or {}).items() if v is not None}
     d = template_dir(template_id, templates_dir)
     out = {}
     for p in manifest.get("params", []):
+        if p["id"] in given:
+            continue
         if p["type"] in ASSET_TYPES:
             v = values[p["id"]]
             if v and (d / v).is_file():

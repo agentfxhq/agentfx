@@ -102,7 +102,8 @@ colours) when its manifest says so:
 - `image` param: an uploaded asset name (plain file name, no paths or URLs), PNG for direct mode
   (`accept`, the service converts JPEG/WebP uploads to PNG). Default images ship in the template
   dir and are copied into the job dir with the source (`default_assets(id, params, dir)` lists
-  them, including image cells of data params). An empty optional image hides its block
+  them, including image cells of data params; params the caller supplied are left out, their
+  names refer to uploads). An empty optional image hides its block
   (`{{#image}}...{{/image}}`, `{{^image}}` for the fallback).
 - `data` param: a table, given as a JSON array of objects (or of arrays in column order), JSON
   text, or CSV text with a header row (`,` `;` or tab). At most 500 rows (`max_rows` may lower

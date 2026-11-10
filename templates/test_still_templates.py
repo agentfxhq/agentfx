@@ -155,6 +155,19 @@ def test_expressions_and_bindings():
         pass
 
 
+def test_required_number_cell_and_default_assets():
+    m = {"id": "t", "params": [{"id": "rows", "type": "data", "columns": [{"id": "v", "type": "number", "required": True}]}]}
+    try:
+        rt.render_source("{{rows.count}}", m, {"rows": [{"v": ""}]})
+        raise AssertionError("missing required number accepted")
+    except ValueError as e:
+        assert "required" in str(e)
+    # a supplied image named like a packaged default is an upload: not copied over
+    assert "logo.png" in rt.default_assets("social-set", {}, HERE)
+    assert "logo.png" not in rt.default_assets("social-set", {"logo": "logo.png"}, HERE)
+    assert "photo-1.png" not in rt.default_assets("collage", {"photos": [{"src": "photo-1.png"}, {"src": "x.png"}]}, HERE)
+
+
 def test_batch_params():
     m = dict(M, batch={"param": "rows", "index": "n"}, params=M["params"] + [{"id": "n", "type": "number", "default": 1, "min": 1}])
     sets = rt.batch_params(m, {})
@@ -265,7 +278,9 @@ def _lint(binary, path):
 def _jobdir(tid, params, tmp):
     d = Path(tmp) / tid
     d.mkdir(parents=True, exist_ok=True)
-    for name, path in rt.default_assets(tid, params, HERE).items():
+    # packaged defaults, plus the same files standing in for uploads a test variant names
+    files = {**rt.default_assets(tid, {}, HERE), **rt.default_assets(tid, params, HERE)}
+    for name, path in files.items():
         shutil.copyfile(path, d / name)
     return d
 

@@ -113,8 +113,11 @@ colours) when its manifest says so:
   `{{@index}}` (0-based), `{{@n}}` (1-based), `{{#@first}}`, `{{#@last}}`, `{{#.col}}` /
   `{{^.col}}` / `{{#.col=v}}` blocks, and `{{#@changed.col}}` (the first row of a run of equal
   cells: section headers). `{{rows.count}}` is the row count. In expressions: `rows_count`,
-  `rows_groups_<col>` (runs), `rows_filled_<col>`, `rows_max_<col>`, `rows_min_<col>`, and inside
-  the loop `i`, `n` and `row_<col>` for number cells.
+  `rows_groups_<col>` (runs), `rows_maxrun_<col>` (longest run), `rows_maxlen_<col>`,
+  `rows_filled_<col>`, `rows_max_<col>`, `rows_min_<col>`, and inside the loop `i`, `n`,
+  `row_<col>` (number cells), `row_<col>_len` and `row_<col>_num` (first number in a text cell,
+  e.g. the sign of a delta). `{{.value|en}}` / `{{value|de}}` / `{{value|<enum param>}}` prints
+  a number with thousands separators.
 - Expressions and layout logic (stdlib, no `eval`): `{{= expr}}` takes numbers, number params,
   `+ - * / // % ( )`, `< <= > >= == != and or not`, `a if c else b`, `min max round abs floor ceil
   clamp sqrt`; `{{: name = expr}}` binds a number for the rest of its block; `{{#= expr}}...{{/= expr}}`

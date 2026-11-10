@@ -85,9 +85,9 @@ scene banner dur=60s bg={{bg}}
 {{/= A > 1.5}}
 {{#= A <= 1.5}}
 {{#image}}
-    image #photo src={{image}} fit=cover w={{DW}} h={{= DH*0.45}} x=0 y=0
+    image #photo src={{image}} fit=cover w={{DW}} h={{= DH*0.38}} x=0 y=0
 {{/image}}
-    col #words gap=34 align=start x={{= 100*pad/DW}}% y={{= 56 if image_len else 50}}% anchor=left w={{= DW - 2*pad}}
+    col #words gap={{= 22 if image_len else 34}} align=start x={{= 100*pad/DW}}% y={{= 42 if image_len else 50}}% anchor={{#image}}top-left{{/image}}{{^image}}left{{/image}} w={{= DW - 2*pad}}
 {{^image}}
       row #brandrow gap=24 align=center
 {{#logo}}
@@ -95,9 +95,9 @@ scene banner dur=60s bg={{bg}}
 {{/logo}}
         text #brand "{{brand}}" font="Space Grotesk" size=60 weight=700 color={{ink}} nowrap
 {{/image}}
-      text #headline "{{headline}}" font="Space Grotesk" size=150 weight=700 lh=1.0 tracking=-0.02 color={{ink}} align=left w={{= DW - 2*pad}} h={{= DH*(0.22 if image_len else 0.3)}} fit
+      text #headline "{{headline}}" font="Space Grotesk" size=150 weight=700 lh=1.0 tracking=-0.02 color={{ink}} align=left w={{= DW - 2*pad}} h={{= DH*(0.19 if image_len else 0.3)}} fit
 {{#subline}}
-      text #subline "{{subline}}" font="Inter" size=62 weight=400 lh=1.25 color={{ink}} opacity=0.82 align=left w={{= DW - 2*pad}} h={{= DH*(0.1 if image_len else 0.14)}} fit
+      text #subline "{{subline}}" font="Inter" size=62 weight=400 lh=1.25 color={{ink}} opacity=0.82 align=left w={{= DW - 2*pad}} h={{= DH*(0.08 if image_len else 0.14)}} fit
 {{/subline}}
 {{#cta}}
       row #button fill={{accent}} radius=99 pad=40

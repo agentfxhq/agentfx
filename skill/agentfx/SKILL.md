@@ -51,7 +51,14 @@ Ask nothing more than you need. If the request is clear, go:
    `agentfx_render` tool, which blocks until the file is written. Never put a render in the
    background (`&`, `run_in_background`) and never wait for it with `pgrep`/`sleep` loops (they
    match other renders and themselves): when your session ends, a background render is killed and
-   the user gets no video.
+   the user gets no video. Never `pkill`/`kill` agentfx processes by name: on a shared machine
+   they belong to other people.
+   Know the cost before you render: `time agentfx frame film.reel --at <busiest moment>` and
+   multiply by the frame count (fps x seconds). Text, shapes, images, charts and camera moves
+   cost milliseconds per frame; per-frame layers (`gen`, `fluid`, `cloud`, big `particles`,
+   live grain, a moving 3D camera) cost up to seconds per frame on the CPU. Use them where the
+   user asked for that effect, give them `res=` / a smaller box, and never as decoration (an
+   animated noise background turned a 8 s counter into a 30-minute render).
 6. Check the result (a strip of frames: `ffmpeg -i out/film.mp4 -vf fps=2,scale=320:-1,tile=9x1
    out/strip.png`), then hand over the path with one line on what you made. The MP4 has a
    variable frame rate (a still hold is one long frame): extract single frames with the fps
@@ -69,6 +76,15 @@ Ask nothing more than you need. If the request is clear, go:
 - **Fill the frame.** The hero (headline, number, chart, logo) spans at least 60 % of the frame
   width; at 1080p headlines are 120 to 220 px, supporting text at least 44 px (56 px in 9:16).
   `W_SCALE_FILL` and `W_SMALL_MOTION` mean it is too small: scale up, do not ignore them.
+- **Components are sized for slides, not for social frames.** `stat`, `card`, `node`, `chart`
+  at their defaults fill a third of a 1080p frame. For a KPI, chart or diagram video scale them up
+  (a design `scale` line, or `w=`/`size=`) until the hero spans
+  60 % of the width, and check a frame: the judge of a first draft is "can I read it on a phone".
+  The scale line goes into a design block after `video`:
+  `design "Big" base=dark` with the child line `scale components=1.6 diagram=1.6 chart=1.4`.
+- **Social captions.** "Word by word", "TikTok/Reels captions": `captions style=pop` (one word
+  at a time) or `style=hormozi maxwords=2`, `size=` 96 to 120 in 9:16, `place=center`. Captions
+  need narration (`say`) or a transcript (`src=`).
 - **Motion to the end.** Every scene has an entrance and something that moves or lands near its
   end (a camera push, a pulse, an exit); a long static final hold reads as a frozen video
   (`W_STATIC_END`, `W_DEAD_AIR`).

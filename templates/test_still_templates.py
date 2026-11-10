@@ -96,6 +96,8 @@ def test_sizes():
         except ValueError:
             pass
     assert rt.size_px("a4-flyer") == (2480, 3508)
+    # the compiler rounds odd frame sizes up to even, so presets must be even to come out exact
+    assert all(w % 2 == 0 and h % 2 == 0 for w, h in rt.SIZE_PRESETS.values())
 
 
 def test_data_json_csv_and_blocks():

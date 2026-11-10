@@ -79,15 +79,15 @@ colours) when its manifest says so:
   frame at `still_at` (default `"0s"`) per size: `agentfx frame <src> --at <still_at> -o x.png`.
 - `sizes`: named presets the template is designed for, the first one is its main size (preview).
   Presets (px): `instagram-post` 1080x1080, `instagram-portrait` 1080x1350, `story` 1080x1920,
-  `facebook-post` 1200x630, `facebook-cover` 1640x624, `linkedin-post` 1200x627,
+  `facebook-post` 1200x630, `facebook-cover` 1640x624, `linkedin-post` 1200x628,
   `linkedin-cover` 1584x396, `x-post` 1600x900, `x-header` 1500x500, `youtube-thumbnail` 1280x720,
   `youtube-banner` 2560x1440, `og-image` 1200x630, `pinterest-pin` 1000x1500, `full-hd` 1920x1080,
   `leaderboard` 728x90, `medium-rectangle` 300x250, `skyscraper` 160x600, `wide-skyscraper`
   300x600, `billboard` 970x250, `mobile-banner` 320x100, `a4-flyer` 2480x3508, `a5-flyer`
-  1748x2480, `a3-poster` 3508x4961, `a4-landscape` 3508x2480, `letter-flyer` 2550x3300,
+  1748x2480, `a3-poster` 3508x4960, `a4-landscape` 3508x2480, `letter-flyer` 2550x3300,
   `letter-landscape` 3300x2550 (print sizes at 300 dpi). The table lives in
   `templates/render_template.py` (`SIZE_PRESETS`). A template must look right at every size it
-  declares; any other `WxH` (16..8192 px a side, at most 36 MP) is accepted best effort.
+  declares; any other `WxH` (16..8192 px a side, at most 36 MP) is accepted best effort. The renderer rounds odd dimensions up to even (`lower::format_size`), so presets are even and an odd custom WxH comes out 1 px larger.
 - The size is chosen at instantiation: `instantiate(id, params, templates_dir, size=None)` (default:
   the first size), `POST /instantiate {"template", "params", "size"?}`, CLI `--size`. The
   instantiated source has `video size=WxH` set to the exact output pixels, so `/frame` and

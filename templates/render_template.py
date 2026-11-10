@@ -36,7 +36,9 @@ Still templates and tables (manifest "kind": "still", "sizes", "data" params):
                                 {{#@last}}, {{#.col}} / {{#.col=v}} blocks, {{#@changed.col}}
                                 (first row of a run of equal cells: section headers); in {{= }} the
                                 loop index is i / n, number cells are row_<col>,
-                                text cells have row_<col>_len
+                                text cells have row_<col>_len and row_<col>_num (first number)
+    {{x|en}} {{.x|de}} {{x|p}}  a number with thousands separators (locale literal or an enum
+                                param holding it)
     {{rows.count}}              number of rows (rows_count in expressions; also rows_groups_<col>
                                 runs of equal cells, rows_maxrun_<col> longest run, rows_maxlen_<col>, rows_filled_<col>,
                                 rows_max_<col>, rows_min_<col>)
@@ -648,6 +650,7 @@ def _render(nodes, values, decl, scope) -> str:
                     loop = {"." + c: v for c, v in row.items()}
                     loop.update({"row_" + c: v for c, v in row.items() if isinstance(v, float)})
                     loop.update({f"row_{c}_len": len(v) for c, v in row.items() if isinstance(v, str)})
+                    loop.update({f"row_{c}_num": _first_number(v) for c, v in row.items() if isinstance(v, str)})
                     loop.update({"@changed." + c: k == 0 or v != rows[k - 1][c] for c, v in row.items()})
                     loop.update({"@index": k, "@n": k + 1, "@first": k == 0, "@last": k == len(rows) - 1,
                                  "i": k, "n": k + 1, "first": k == 0, "last": k == len(rows) - 1})
@@ -723,9 +726,35 @@ def _ramp(args, values, decl, scope) -> str:
     return ", ".join(out)
 
 
+def _first_number(s: str) -> float:
+    """The first signed number in a text cell ("+12 %" -> 12, "-4 %" -> -4), 0 if none."""
+    m = re.search(r"([+\-\u2212]?)\s*(\d+(?:[.,]\d+)?)", s)
+    if not m:
+        return 0.0
+    v = float(m.group(2).replace(",", "."))
+    return -v if m.group(1) in ("-", "\u2212") else v
+
+
+def format_number(x: float, locale: str = "en") -> str:
+    """Thousands separators and at most two decimals: 12480 -> 12,480 (en) / 12.480 (de)."""
+    s = f"{x:,.2f}".rstrip("0").rstrip(".")
+    if locale.startswith("de"):
+        s = s.replace(",", "\0").replace(".", ",").replace("\0", ".")
+    return s
+
+
 def _lookup(name, values, decl, scope) -> str:
     if name.startswith("ramp "):
         return _ramp(name.split()[1:], values, decl, scope)
+    if "|" in name:
+        # {{value|en}} / {{.value|de}} / {{value|locale_param}}: a number with thousands separators
+        base, loc = (x.strip() for x in name.split("|", 1))
+        v = scope.get(base) if base in scope else _raw(base, values, decl, scope)
+        if loc in decl:
+            loc = str(values[loc])
+        if not isinstance(v, (int, float)) or isinstance(v, bool):
+            raise ValueError(f"{{{{{name}}}}}: {base!r} is not a number")
+        return format_number(float(v), loc)
     if "." in name:
         pid, attr = name.split(".", 1)
         if decl.get(pid, {}).get("type") == "longtext" and attr in ("count", "end"):

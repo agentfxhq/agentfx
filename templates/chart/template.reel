@@ -17,10 +17,26 @@ scene chart dur=60s bg={{bg}}
     chart #c type={{type}} data=[{{#rows}}{{.value}}{{^@last}}, {{/@last}}{{/rows}}] labels=[{{#rows}}"{{.label}}"{{^@last}}, {{/@last}}{{/rows}}] unit="{{unit}}" locale={{locale}} color={{color}}{{#= highlight > 0 and highlight <= rows_count}} highlight={{highlight}}{{/= highlight > 0 and highlight <= rows_count}} w={{= DW - 0.15*min(DW, DH)}} h={{= (DH*(0.86 if A < 0.7 else 1) - 0.075*min(DW, DH) - 90) - ((DH*0.12 if A < 0.7 else 0.075*min(DW, DH)) + 276)}} x={{= 7.5*min(DW, DH)/DW}}% y={{= 100*((DH*0.12 if A < 0.7 else 0.075*min(DW, DH)) + 276)/DH}}%
 {{/type=kpi}}
 {{#type=kpi}}
-    grid #kpis cols={{= min(rows_count, 4) if A > 1.3 else (1 if rows_count == 1 else 2)}} cols-portrait={{= 1 if rows_count == 1 else 2}} gap=28 w={{= DW - 0.15*min(DW, DH)}} x={{= 7.5*min(DW, DH)/DW}}% y={{= 100*((DH*0.12 if A < 0.7 else 0.075*min(DW, DH)) + 300)/DH}}%
+{{: kn = min(rows_count, 4)}}
+{{: kx = 0.075*min(DW, DH)}}
+{{: ky = (DH*0.12 if A < 0.7 else kx) + 300}}
+{{: kw = DW - 2*kx}}
+{{: kh = DH*(0.86 if A < 0.7 else 1) - kx - 90 - ky}}
+{{: kc = kn if A > 1.3 else (1 if kn == 1 or A < 0.7 else 2)}}
+{{: kr = ceil(kn/kc)}}
+{{: tw = (kw - (kc - 1)*28)/kc}}
+{{: th = min((kh - (kr - 1)*28)/kr, tw*0.75)}}
+{{: vs = min(th*0.42, tw*0.22, 150)}}
 {{#rows}}
 {{#= n <= 4}}
-      stat #k{{@n}} label="{{.label}}" value={{.value}} suffix="{{unit}}"{{#.delta}} delta="{{.delta}}"{{/.delta}}
+{{: r = i // kc}}
+    col #k{{@n}} w={{= tw}} h={{= th}} x={{= 100*(kx + (i - r*kc)*(tw + 28))/DW}}% y={{= 100*(ky + r*(th + 28))/DH}}% fill={{ink.rgb}}0D radius=28 pad={{= th*0.14}} gap={{= th*0.05}} align=start justify=center
+      text #k{{@n}}l "{{.label}}" font="Space Grotesk" size={{= max(24, vs*0.24)}} weight=700 tracking=0.14 upper color={{ink}} opacity=0.7 align=left w={{= tw - th*0.28}} h={{= max(24, vs*0.24)*1.3}} fit nowrap
+      text #k{{@n}}v "{{.value|locale}}{{unit}}" font="Space Grotesk" size={{= vs}} weight=700 tracking=-0.02 color={{ink}} align=left w={{= tw - th*0.28}} h={{= vs*1.15}} fit nowrap
+{{#.delta}}
+      row #k{{@n}}p fill={{#= row_delta_num < 0}}#E5484D33{{/= row_delta_num < 0}}{{^= row_delta_num < 0}}{{accent.rgb}}33{{/= row_delta_num < 0}} pad={{= max(8, vs*0.08)}} radius=99
+        text #k{{@n}}d "{{.delta}}" font="Space Grotesk" size={{= max(24, vs*0.22)}} weight=700 color={{#= row_delta_num < 0}}#FF7A80{{/= row_delta_num < 0}}{{^= row_delta_num < 0}}{{accent}}{{/= row_delta_num < 0}} nowrap
+{{/.delta}}
 {{/= n <= 4}}
 {{/rows}}
 {{/type=kpi}}

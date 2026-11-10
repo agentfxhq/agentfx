@@ -439,7 +439,7 @@ def _truthy(v) -> bool:
 
 
 def _ramp(args, values, decl, scope) -> str:
-    """{{ramp a b n}}: n colours from colour a to colour b (OKLab-free, linear sRGB mix),
+    """{{ramp a b n [mirror]}}: n colours from colour a to colour b (linear-light mix),
     comma-separated, for colors=[...] lists. a/b are colour params or #hex literals."""
     mirror = args[3:] == ["mirror"]
     if mirror:
@@ -467,7 +467,7 @@ def _ramp(args, values, decl, scope) -> str:
     out = []
     for k in range(n):
         f = k / (n - 1)
-        if mirror:  # a -> b -> a (symmetric visualizers: bass in the middle / at 12 o'clock)
+        if mirror:  # cyclic a -> b -> a: entry n would be a again (radial visualizers: bass at 12 o'clock)
             f = 1 - abs(2 * k / n - 1) if n > 2 else f
         out.append("#" + "".join(f"{srgb(lin(x) + (lin(y) - lin(x)) * f):02X}" for x, y in zip(a, b)))
     return ", ".join(out)
@@ -541,8 +541,9 @@ def default_assets(template_id: str, params: dict | None, templates_dir) -> dict
     values = resolve_params(manifest, params)
     d = template_dir(template_id, templates_dir)
     out = {}
+    supplied = {k for k, v in (params or {}).items() if v not in (None, "")}
     for p in manifest.get("params", []):
-        if p["type"] in ASSET_TYPES:
+        if p["type"] in ASSET_TYPES and p["id"] not in supplied:  # an upload is never replaced by a default
             v = values[p["id"]]
             if v and (d / v).is_file():
                 out[v] = d / v

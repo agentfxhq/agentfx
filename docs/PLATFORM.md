@@ -66,7 +66,7 @@ replacement, e.g. the default track; copy them into the job dir next to the sour
 | `{{id}}` | the value. `text`: markup-safe (`**`, `{`, `}`, `` ` `` are neutralised, whitespace collapsed) and `"`/`\` escaped, so use it inside quotes |
 | `{{id.rgb}}` | a colour without its alpha (`#RRGGBB`), to append an alpha: `{{color1.rgb}}55` |
 | `{{= expr}}` | arithmetic over number params and literals: `+ - * / // % ( )`, `min max round abs floor ceil clamp`; also `<text>_len`, `<longtext>_count`, `<longtext>_end` |
-| `{{ramp a b n [mirror]}}` | `n` colours from colour `a` to `b` (linear-light mix), comma-separated, for `colors=[...]`; `mirror` runs a -> b -> a |
+| `{{ramp a b n [mirror]}}` | `n` colours from colour `a` to `b` (linear-light mix), comma-separated, for `colors=[...]`; `mirror` is cyclic: a at entry 0, b at entry n/2, back toward a (entry n would be a again), for radial visualizers |
 | `{{#id}}...{{/id}}` / `{{^id}}...{{/id}}` | block shown when the param is non-empty / non-zero (`^`: when empty) |
 | `{{#id=v}}...{{/id=v}}` / `{{^id=v}}...{{/id=v}}` | block shown when the param equals / does not equal `v` (enums) |
 | `{{#lyrics}}...{{/lyrics}}` | for a `longtext` param (here `lyrics`): the block repeats once per non-empty line, with `{{text}}` (escaped line), `{{n}}` (1-based), `{{i}}`, `{{start}}`, `{{end}}`, `{{dur}}` (seconds), `{{#first}}`, `{{#last}}`; in `{{= }}` also `len` (characters of the line) |

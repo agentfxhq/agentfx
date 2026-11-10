@@ -97,6 +97,12 @@ def test_validation_errors():
             raise AssertionError(f"no error for {src}")
 
 
+def test_default_assets_never_replace_uploads():
+    assert "night-drive.mp3" in rt.default_assets("music-visualizer", {}, HERE)
+    assert rt.default_assets("music-visualizer", {"audio": "night-drive.mp3"}, HERE) == {}
+    assert rt.default_assets("music-visualizer", {"audio": "song.mp3"}, HERE) == {}
+
+
 def test_line_timing_grid_and_times():
     src = "{{#lyr}}{{n}}:{{text}}@{{start}}-{{end}};{{/lyr}}|{{lyr.count}}|{{lyr.end}}"
     # 120 bpm, 4 beats per line = 2 s per line, from 0.5 s; empty rows are dropped

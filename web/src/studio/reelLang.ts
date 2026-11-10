@@ -59,7 +59,7 @@ const reel = StreamLanguage.define<State>({
       return 'operator';
     }
     if (st.stmt && ch === '@') {
-      stream.match(/^@[^\s;]+/);
+      if (!stream.match(/^@[^\s;]+/)) stream.next();
       return 'labelName';
     }
     if (st.stmt && stream.match(/^[A-Za-z][\w-]*/)) {
@@ -74,11 +74,11 @@ const reel = StreamLanguage.define<State>({
       return 'operator';
     }
     if (ch === '#') {
-      stream.match(/^#[\w.-]+/);
+      if (!stream.match(/^#[\w.-]+/)) stream.next();
       return /^#[0-9A-Fa-f]{3,8}$/.test(stream.current()) && st.afterEq ? 'atom' : 'variableName';
     }
     if (ch === '$') {
-      stream.match(/^\$[\w-]+/);
+      if (!stream.match(/^\$[\w-]+/)) stream.next();
       return 'variableName.special';
     }
     if (ch === '~') {

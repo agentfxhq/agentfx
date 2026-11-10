@@ -1,0 +1,127 @@
+{
+ "id": "kinetic-stop-scrolling",
+ "tags": [
+  "social",
+  "kinetic-type",
+  "vertical"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": 8,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 31.2,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 12,
+  "cost_usd": 0.1649476,
+  "tokens": {
+   "input_tokens": 20,
+   "output_tokens": 2638,
+   "cache_read_input_tokens": 296076,
+   "cache_creation_input_tokens": 27230
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 8,
+   "Read": 1
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 4,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 4
+  },
+  "warning_codes": {
+   "W_SAFE_AREA": 3
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made the 8-second vertical reel (1080x1920). It's rendered and the duration checks out at 8.00 s. I only looked at the contact sheet and the file length. I didn't look through the rendered frames.\n\n- **0 to 3.6 s, black with neon green bars:** a huge white \"STOP\" slams in. A green \"SCROLLING\" slams in at 0.9 s, and both pulse on the beat before zooming out.\n- **3.6 to 8 s, hard cut to full neon green (#39FF14):** black \"START\" slams in, then \"BUILDING\" at 0.8 s. I added a white \"NOW\" at 1.8 s, which you didn't ask for, so delete that line if you'd rather not have it. All three keep pulsing until the end.\n\nLint is clean apart from one style note about text sizes, which I left alone. There's no sound; it's silent, so add a track in Instagram.\n\nFiles are in `/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-2/kinetic-stop-scrolling`:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 8.0
+  },
+  "text": [
+   {
+    "text": "STOP SCROLLING",
+    "pass": true
+   },
+   {
+    "text": "START BUILDING",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical 9:16 frame",
+     "pass": true,
+     "evidence": "Frames are tall portrait, 1080x1920."
+    },
+    {
+     "item": "the words appear one after another (not all at once)",
+     "pass": false,
+     "evidence": "At 0.33s STOP and SCROLLING are both already on screen; only START, BUILDING, NOW stagger (4.33s, 5.0s, 5.67s)."
+    },
+    {
+     "item": "black background with neon green accents",
+     "pass": false,
+     "evidence": "Black with green bars and green SCROLLING for the first 3.6s. The last 4.4s are a full neon green background with black text, so it isn't black-and-green accents."
+    },
+    {
+     "item": "text is big and fills most of the frame width",
+     "pass": false,
+     "evidence": "SCROLLING, BUILDING and STOP/START span about 70-90% of the width, but NOW is small, and the bottom half of the STOP scene is empty."
+    },
+    {
+     "item": "feels high energy (fast, punchy motion)",
+     "pass": false,
+     "evidence": "The stills show static text held for seconds. The hard cut to green is the only strong beat, and the layout is generic."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "STOP and SCROLLING seem to appear together at the start rather than slamming in one after another, so the sequencing is weak in the first scene.",
+    "The second half is a flat full-green screen with black text. The brief asked for black with neon green, and this loses the look and contrast of the first half.",
+    "The text sits in the upper-middle, leaving big empty areas in the lower half of the STOP scene. The words are not as huge as they could be, and SCROLLING is much smaller than STOP.",
+    "The unrequested 'NOW' is small and weak, with a white fill and thick outline that clash with the rest. It adds clutter.",
+    "Words are held static for seconds, so the energy is low. There are no flashes, shakes or fast cuts, and the hold on the last frame is long."
+   ],
+   "verdict": "Clean and legible, but it misses the brief. The first scene shows both words at once, the second half drops the black background for flat green, and the layout is generic with little energy. It needs a revision.",
+   "cost_usd": 0.0319763,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 59.3
+ },
+ "score_wall_s": 18.2,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-2/kinetic-stop-scrolling"
+}

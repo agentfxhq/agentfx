@@ -1,0 +1,45 @@
+{
+ "run_id": "baseline",
+ "meta": {
+  "run_id": "baseline",
+  "model": "sonnet",
+  "judge_model": "sonnet",
+  "mode": "both",
+  "max_turns": 40,
+  "commit": "ee18d22",
+  "started": "2026-11-10T03:20:46",
+  "work": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline",
+  "commit_first": "1dcf82d+dirty",
+  "product": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/oldroot",
+  "agentfx_bin": "/home/drzivil/dev/agentfx/.claude/worktrees/agent-a0a7fa9d34bdb1909/target/release/agentfx",
+  "wall_min": 26.3
+ },
+ "aggregate": {
+  "cases": 17,
+  "score": 79.04,
+  "accept_rate": 0.353,
+  "judge_accept": 0.353,
+  "quality": 5.29,
+  "checklist_pass": 0.882,
+  "lint_clean": 1.0,
+  "renders": 0.882,
+  "duration_ok": 0.882,
+  "text_ok": 0.941,
+  "turns": 11.8,
+  "lint_calls": 3.12,
+  "first_lint_errors": 2.94,
+  "lint_errors_seen": 3.47,
+  "agent_cost_usd": 2.2,
+  "judge_cost_usd": 0.49,
+  "agent_wall_s": 255.86
+ },
+ "error_codes": {
+  "E_OUT_OF_FRAME": 44,
+  "E_PRESET": 2,
+  "E_ID": 3,
+  "E_EVENT_OUTSIDE": 2,
+  "E_VALUE": 2,
+  "E_PAINT": 3,
+  "E_VERB": 3
+ }
+}

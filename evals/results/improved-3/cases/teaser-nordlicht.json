@@ -1,0 +1,133 @@
+{
+ "id": "teaser-nordlicht",
+ "tags": [
+  "product",
+  "brand"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": 15,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 69.4,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 11,
+  "cost_usd": 0.1719444,
+  "tokens": {
+   "input_tokens": 16,
+   "output_tokens": 3250,
+   "cache_read_input_tokens": 222364,
+   "cache_creation_input_tokens": 29294
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 4,
+   "mcp__agentfx__agentfx_spec": 1,
+   "Read": 1,
+   "mcp__agentfx__agentfx_render": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 1,
+  "first_lint_errors": 1,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 1
+  },
+  "warning_codes": {
+   "W_STATIC_END": 1
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "The Nordlicht teaser is rendered: 15 seconds, landscape 1920×1080, 450 frames. I checked a contact sheet of the script before rendering. I didn't extract frames from the finished MP4 afterwards. Lint shows no errors or warnings, only an info note about text styling varying across scenes.\n\n- **0–3.5 s:** \"Plan less.\" in white on navy `#0B1F3A`, with a teal `#4FD1C5` aurora glow drifting underneath.\n- **3.5–7 s:** \"Live more.\" in teal, with the glow shifting across.\n- **7–11 s:** NORDLICHT wordmark with the tagline \"Plan less. Live more.\" beneath it.\n- **11–15 s:** NORDLICHT, a short teal rule, then \"Coming March 2027\", which holds to the end.\n\nI proposed the structure and the wordmark treatment myself. I didn't have a logo file, so NORDLICHT is set as bold text. If you have an SVG logo, I can swap it in. There's no music or voice-over.\n\nFiles are in `/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-3/teaser-nordlicht/`:\n- `film.reel`\n- `out/nordlicht-teaser.mp4`",
+  "spec_reads": 1,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 15.0
+  },
+  "text": [
+   {
+    "text": "Nordlicht",
+    "pass": true
+   },
+   {
+    "text": "Plan less. Live more.",
+    "pass": true
+   },
+   {
+    "text": "Coming March 2027",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "uses navy #0B1F3A and teal #4FD1C5 as the main colours",
+     "pass": true,
+     "evidence": "Navy background with teal glows and teal text throughout, white for contrast."
+    },
+    {
+     "item": "app name Nordlicht is prominent",
+     "pass": true,
+     "evidence": "Large bold NORDLICHT in scenes 3 and 4, but it only appears after about 7.5s."
+    },
+    {
+     "item": "tagline shown",
+     "pass": true,
+     "evidence": "'Plan less.' and 'Live more.' appear as big headlines, and the full tagline appears at 8–9s."
+    },
+    {
+     "item": "ends on Coming March 2027",
+     "pass": true,
+     "evidence": "The last frames at 11.9–14.4s show NORDLICHT with 'Coming March 2027' in teal."
+    },
+    {
+     "item": "looks like a polished product teaser, not a slideshow",
+     "pass": false,
+     "evidence": "It is four text cards on a blurred glow with empty frames in between. The app and product are never shown, and the last 4s is nearly static."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "Text-only video with no visuals of the app or any imagery. It feels like a slideshow of title cards, not a product teaser.",
+    "The brand name doesn't appear until about 7.5s. The first 7s show only the tagline halves, so the video lacks branding up front.",
+    "Blurred exit transitions leave almost empty glow-only frames at about 3s and 7s. These read as dead air or gaps.",
+    "The ending is static for roughly 4s, with only a slow glow drift. The tagline also repeats three times in total, which is redundant.",
+    "The full tagline in scene 3 is small and low-contrast compared with the headline. The layout is centred and generic, and the glow is a weak substitute for a northern-lights feel."
+   ],
+   "verdict": "The colours, copy and ending are all correct. It is a clean but generic kinetic-type piece with no product visuals and some empty beats, so the user would probably ask for more visual interest.",
+   "cost_usd": 0.029719100000000002,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 77.3
+ },
+ "score_wall_s": 20.9,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-3/teaser-nordlicht"
+}

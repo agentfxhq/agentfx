@@ -1,0 +1,43 @@
+{
+ "run_id": "improved-1",
+ "meta": {
+  "commit_first": "ddbdbbb+dirty",
+  "run_id": "improved-1",
+  "model": "sonnet",
+  "judge_model": "sonnet",
+  "mode": "both",
+  "max_turns": 40,
+  "commit": "ddbdbbb+dirty",
+  "started": "2026-11-10T01:34:18",
+  "work": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-1",
+  "wall_min": 82.2
+ },
+ "aggregate": {
+  "cases": 10,
+  "score": 82.99,
+  "accept_rate": 0.5,
+  "judge_accept": 0.6,
+  "quality": 5.5,
+  "checklist_pass": 0.975,
+  "lint_clean": 1.0,
+  "renders": 0.9,
+  "duration_ok": 1.0,
+  "text_ok": 0.9,
+  "turns": 12.44,
+  "lint_calls": 4.2,
+  "first_lint_errors": 0.3,
+  "lint_errors_seen": 15.3,
+  "agent_cost_usd": 1.31,
+  "judge_cost_usd": 0.28,
+  "agent_wall_s": 373.62
+ },
+ "error_codes": {
+  "E_OVERFLOW": 4,
+  "E_CAMERA": 2,
+  "E_OUT_OF_FRAME": 143,
+  "E_PRESET": 1,
+  "E_ID": 1,
+  "E_EVENT_OUTSIDE": 1,
+  "E_VERB": 1
+ }
+}

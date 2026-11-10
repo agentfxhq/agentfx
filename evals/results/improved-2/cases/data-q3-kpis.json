@@ -1,0 +1,127 @@
+{
+ "id": "data-q3-kpis",
+ "tags": [
+  "data",
+  "kpi"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 56.4,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 12,
+  "cost_usd": 0.16655219999999998,
+  "tokens": {
+   "input_tokens": 20,
+   "output_tokens": 2780,
+   "cache_read_input_tokens": 293042,
+   "cache_creation_input_tokens": 27352
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 8,
+   "Read": 1
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 1,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_VERB": 1
+  },
+  "warning_codes": {
+   "W_SAFE_AREA": 1,
+   "W_SMALL_MOTION": 2,
+   "W_DEAD_AIR": 2
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a 10-second, 1080p 16:9 clip of your Q3 numbers. All three figures count up from zero. The script lints clean, and I checked one frame at 3 s, where the layout and text fit. I didn't watch the rendered MP4 itself.\n\n- **Layout:** \"Q3 results\" sits at the top, with 1.2M, 4,300 and 2.1% large across the middle, each with a label underneath. A \"+18%\" badge sits under Revenue and pulses at 2.4 s.\n- **Counting:** the numbers start counting at 0.6 s and land by about 3 s. The clip then holds with a slow push-in and a final pulse.\n- **Decimals:** the counters only handle whole numbers, so 1.2M and 2.1% are built from two counters each, one for the whole part and one for the decimal. The figures read exactly as you wrote them.\n- **Formatting:** 4,300 uses an English comma. The voice-over is off, since there's no narration.\n\nFiles are in the working directory:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 2,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 10.0
+  },
+  "text": [
+   {
+    "text": "Q3",
+    "pass": true
+   },
+   {
+    "text": "18%",
+    "pass": true
+   },
+   {
+    "text": "2.1",
+    "pass": false
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "three KPIs shown: revenue 1.2M, 4,300 new customers, churn 2.1%",
+     "pass": true,
+     "evidence": "Final frames show 1.2M Revenue, 4,300 New customers, 2.1% Churn."
+    },
+    {
+     "item": "numbers count up",
+     "pass": true,
+     "evidence": "0.0M/0/0.0% at 0.42s, 2,675 at 1.25s, 4,038 at 2.08s, 4,300 by 2.92s."
+    },
+    {
+     "item": "the +18% growth is visible",
+     "pass": true,
+     "evidence": "Small +18% pill under Revenue in all frames, though tiny."
+    },
+    {
+     "item": "numbers are correct (no invented figures)",
+     "pass": true,
+     "evidence": "All final values match the request; no extra figures."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "The layout is small and sits in the middle of the frame, with a lot of empty space above and below. It is hard to read on a big all-hands screen.",
+    "The +18% pill is tiny and low-contrast, and it is the only growth callout. The key message gets almost no emphasis.",
+    "The count-up finishes by about 2.4s and then the video holds on a static slide for about 7s. The slow zoom adds little, and the layout drifts slightly.",
+    "The KPI row is uneven. The +18% pill hangs under only the first column, so the three columns look unbalanced, and the revenue digits and the M sit at slightly different spacing.",
+    "The design is generic: a plain green gradient, no cards or dividers, and no visual separation between the KPIs."
+   ],
+   "verdict": "The video is accurate and the numbers count up as asked. The design is generic and underused: the type is small for the frame, the +18% is easy to miss, and the video sits static for most of its 10 seconds.",
+   "cost_usd": 0.027023,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 80.0
+ },
+ "score_wall_s": 16.7,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-2/data-q3-kpis"
+}

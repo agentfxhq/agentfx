@@ -1,0 +1,125 @@
+{
+ "id": "kinetic-stop-scrolling",
+ "tags": [
+  "social",
+  "kinetic-type",
+  "vertical"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": 8,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 54.3,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 15,
+  "cost_usd": 0.2255348,
+  "tokens": {
+   "input_tokens": 20,
+   "output_tokens": 4299,
+   "cache_read_input_tokens": 301568,
+   "cache_creation_input_tokens": 38087
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 7,
+   "Read": 5
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_SAFE_AREA": 4
+  },
+  "renders": 1,
+  "frames": 1,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made the 8-second vertical reel (1080×1920, 9:16, no audio). I rendered it and checked a frame strip and two full frames, but I haven't played the motion at full speed.\n\n- **0–4 s, black:** \"STOP\" slams in huge and white. About a second later \"SCROLLING.\" slams in neon green with a green bar that draws underneath. A glitch hit lands near the end of the scene.\n- **4–8 s, neon green:** the screen hard-cuts to green and \"START\" slams in black. \"BUILDING.\" follows, with a black bar and a small pulse on the word.\n\nThe slams use a spring scale from 2.4× down to 1×. The final frame has no CTA or other copy, only your four words (the trailing periods on \"SCROLLING.\" and \"BUILDING.\" are my addition).\n\nLint is clean apart from one style note about text styling across scenes. I didn't add music. If you have a track, I can cut the slams to its beat.\n\nFiles are in `/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/kinetic-stop-scrolling`:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 1,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 8.0
+  },
+  "text": [
+   {
+    "text": "STOP SCROLLING",
+    "pass": true
+   },
+   {
+    "text": "START BUILDING",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical 9:16 frame",
+     "pass": true,
+     "evidence": "Frames are tall portrait 1080x1920."
+    },
+    {
+     "item": "the words appear one after another (not all at once)",
+     "pass": true,
+     "evidence": "STOP at 0.33s, SCROLLING at 1.67s, START at 4.33s, BUILDING at 5.67s."
+    },
+    {
+     "item": "black background with neon green accents",
+     "pass": false,
+     "evidence": "The first half is black with green. The second half is a full neon-green background, so it isn't black-and-green throughout."
+    },
+    {
+     "item": "text is big and fills most of the frame width",
+     "pass": false,
+     "evidence": "STOP and START span about 75% of the width. SCROLLING. and BUILDING. are much smaller. Text fills only a middle band, leaving the top and bottom thirds empty."
+    },
+    {
+     "item": "feels high energy (fast, punchy motion)",
+     "pass": false,
+     "evidence": "Word gaps are 1s or longer, and long static holds follow (1.67–3.0s and 5.67–7.67s). The slams are quick but sparse, and the frame at 3.67s is blank black."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "The second words (SCROLLING., BUILDING.) are much smaller than the first words. This breaks the 'big bold words' brief and makes the hierarchy uneven.",
+    "The text sits in a middle band with empty black or green space above and below. It doesn't use the tall 9:16 frame.",
+    "The pacing is slow for a punchy reel. There are 1s+ gaps between words and long static holds of 2s or more, with no motion after the slams.",
+    "Scene 2 is a solid neon-green flood, not black with green accents. The scene 1 to scene 2 transition has a blank black frame around 3.67s.",
+    "The layout is generic: plain stacked words with a thin underline, and no extra graphic energy such as flashes, shake or scale punches."
+   ],
+   "verdict": "The video is clean and legible, and the words do arrive in order. It is too sparse and slow for a high-energy reel, though. The second words are undersized, the frame has a lot of dead space, and half the video is a green flood instead of black with green accents. I'd expect the user to ask for changes.",
+   "cost_usd": 0.0314479,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 65.3
+ },
+ "score_wall_s": 15.2,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/kinetic-stop-scrolling"
+}

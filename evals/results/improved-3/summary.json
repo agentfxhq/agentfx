@@ -1,0 +1,40 @@
+{
+ "run_id": "improved-3",
+ "meta": {
+  "commit_first": "ee18d22+dirty",
+  "run_id": "improved-3",
+  "model": "sonnet",
+  "judge_model": "sonnet",
+  "mode": "both",
+  "max_turns": 40,
+  "commit": "ee18d22+dirty",
+  "started": "2026-11-10T04:24:39",
+  "work": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-3",
+  "product": "/home/drzivil/dev/agentfx/.claude/worktrees/agent-a0a7fa9d34bdb1909",
+  "agentfx_bin": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/target-p4/release/agentfx",
+  "wall_min": 3.5
+ },
+ "aggregate": {
+  "cases": 3,
+  "score": 77.07,
+  "accept_rate": 0.0,
+  "judge_accept": 0.0,
+  "quality": 5.67,
+  "checklist_pass": 0.714,
+  "lint_clean": 1.0,
+  "renders": 1.0,
+  "duration_ok": 1.0,
+  "text_ok": 1.0,
+  "turns": 12.0,
+  "lint_calls": 2.67,
+  "first_lint_errors": 1.67,
+  "lint_errors_seen": 2.0,
+  "agent_cost_usd": 0.61,
+  "judge_cost_usd": 0.09,
+  "agent_wall_s": 52.13
+ },
+ "error_codes": {
+  "E_OUT_OF_FRAME": 4,
+  "E_KIND": 2
+ }
+}

@@ -1,0 +1,124 @@
+{
+ "id": "data-signups-bar",
+ "tags": [
+  "data",
+  "chart"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 28.6,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 9,
+  "cost_usd": 0.0973817,
+  "tokens": {
+   "input_tokens": 16,
+   "output_tokens": 1549,
+   "cache_read_input_tokens": 175757,
+   "cache_creation_input_tokens": 16071
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 5,
+   "Read": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_STATIC_END": 1
+  },
+  "renders": 0,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "The bar chart video is rendered: a 9-second, 16:9 MP4 at `out/film.mp4`, with the script at `film.reel`.\n\n- **Title:** \"Signups are taking off\", large across the top.\n- **Chart:** six bars, Jan to Jun (120, 180, 240, 310, 420, 560), with the value shown above each bar. The bars draw on at the start.\n- **June highlight:** the 560 bar is lighter and glows, so it stands out from the other five.\n- **Motion:** the chart zooms in slowly from 2 s to the end so the last seconds aren't static.\n\nLint reports no errors or warnings, and I checked a still at 6 s. I didn't inspect frames from the rendered MP4 itself.",
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 9.0
+  },
+  "text": [
+   {
+    "text": "Signups are taking off",
+    "pass": true
+   },
+   {
+    "text": "Jun",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "bar chart with six bars Jan to Jun",
+     "pass": true,
+     "evidence": "Six bars labelled Jan–Jun are visible from 1.12s on."
+    },
+    {
+     "item": "values 120 to 560 correct",
+     "pass": true,
+     "evidence": "Final labels read 120, 180, 240, 310, 420, 560."
+    },
+    {
+     "item": "June highlighted",
+     "pass": true,
+     "evidence": "June bar is a lighter mint colour, but it differs only subtly from the other bars."
+    },
+    {
+     "item": "title shown",
+     "pass": true,
+     "evidence": "The title 'Signups are taking off' is white, bold and centred at the top in every frame."
+    },
+    {
+     "item": "bars animate in",
+     "pass": true,
+     "evidence": "At 0.38s the bars are partway up and the counters read 105, 122 and 42. By 1.12s all bars are nearly full."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "The axis ticks and month labels are very small and low contrast, so they would be hard to read on a phone.",
+    "The June highlight is only a lighter tint of the same green, so it does not stand out much. There is no accent colour, callout or emphasis motion.",
+    "The bars finish growing by about 1.5s, and the remaining 7s is almost static apart from a slight 1.04 zoom. The video feels long and flat.",
+    "The chart leaves large empty margins at the sides and the title is relatively small, so the frame is not used well.",
+    "The bars grow with different counter values (105, 122, 42), which looks slightly glitchy. The palette is generic green-on-green."
+   ],
+   "verdict": "The chart is correct and readable: six bars, the right values, a title, and a quick grow-in. It is generic. The June highlight is subtle, the small text is hard to read, and the motion goes static after the first second or so. Most users would accept it as a first draft, though they might ask for a stronger June highlight.",
+   "cost_usd": 0.0252641,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 86.7
+ },
+ "score_wall_s": 15.4,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-2/data-signups-bar"
+}

@@ -1,0 +1,110 @@
+{
+ "id": "logo-reveal-svg",
+ "tags": [
+  "logo",
+  "asset"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": 5,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 55.3,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 14,
+  "cost_usd": 0.1696156,
+  "tokens": {
+   "input_tokens": 24,
+   "output_tokens": 3704,
+   "cache_read_input_tokens": 318956,
+   "cache_creation_input_tokens": 25158
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 8,
+   "Read": 3
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 3,
+  "first_lint_errors": 3,
+  "error_codes": {
+   "E_PAINT": 3
+  },
+  "warning_codes": {},
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made the 5-second logo reveal on a dark navy background (1920x1080). The MP4 is rendered, but I only checked a contact sheet of stills, not the finished video.\n\nThe animation runs in this order:\n- **Ring:** a thin gold ring expands out and fades.\n- **Disc:** the gold disc pops in with a slight overshoot and a glow.\n- **Diamond:** the dark diamond spins in over the disc.\n- **Wordmark:** \"Lumen\" fades in with a blur-to-sharp, and its letter spacing tightens as it lands.\n- **Shine:** a light sweep passes over the wordmark.\n\nThe ring and disc positions are fixed pixel values for 16:9, so a vertical 9:16 render would put them in the wrong place. I only linted 16:9 after that change, since you asked for one format.\n\nFiles are in the current folder:\n- out/film.mp4\n- film.reel\n- out/sheet.png (the contact sheet)",
+  "spec_reads": 2,
+  "tool_errors": 1,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 5.0
+  },
+  "text": [],
+  "judge": {
+   "checklist": [
+    {
+     "item": "the provided logo (yellow circle mark + white Lumen wordmark) is shown, not a re-typed imitation",
+     "pass": true,
+     "evidence": "Yellow disc with dark diamond and white bold 'Lumen' wordmark appear in the final lockup; consistent with an SVG-derived logo."
+    },
+    {
+     "item": "a reveal animation (not just a fade)",
+     "pass": true,
+     "evidence": "Ring expands, disc pops in, diamond spins in, then the wordmark deblurs and slides out beside the mark."
+    },
+    {
+     "item": "dark background",
+     "pass": true,
+     "evidence": "Near-black navy background in all frames."
+    },
+    {
+     "item": "logo holds still at the end",
+     "pass": true,
+     "evidence": "Frames from 2.29s to 4.79s show an identical, static lockup."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "The reveal is over by about 1.5s and the last ~3s are a static hold. The sweep highlight is barely visible, so the middle feels empty.",
+    "The expanding ring is off-centre relative to the final lockup. At 1.04s it is cropped by the top and bottom frame edges, and it fades to almost nothing.",
+    "The logo is fairly small in the frame, with a lot of empty dark space around it. There is no supporting glow, particles or light to make it feel 'cool'.",
+    "The mark and wordmark are not revealed together. The disc appears alone off-centre, then the layout shifts once the word arrives, so the composition feels unbalanced early on.",
+    "The motion is generic: scale, rotate and blur-in with no standout moment or flourish."
+   ],
+   "verdict": "The logo is faithful and the animation is clean, with a ring burst, a disc pop, a spinning gem and a deblurred wordmark on a dark background. It is competent but generic. The reveal is front-loaded, and the long static ending and small logo make it only an acceptable first draft.",
+   "cost_usd": 0.0350987,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 86.7
+ },
+ "score_wall_s": 20.2,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/logo-reveal-svg"
+}

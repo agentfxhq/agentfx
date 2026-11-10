@@ -1,0 +1,134 @@
+{
+ "id": "explainer-request-diagram",
+ "tags": [
+  "explainer",
+  "diagram"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 607.4,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 15,
+  "cost_usd": 0.1993442,
+  "tokens": {
+   "input_tokens": 26,
+   "output_tokens": 3842,
+   "cache_read_input_tokens": 401282,
+   "cache_creation_input_tokens": 30186
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 9,
+   "Read": 3
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 1,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_VERB": 1
+  },
+  "warning_codes": {
+   "W_TEXT_DENSITY": 3,
+   "W_STATIC_END": 2
+  },
+  "renders": 0,
+  "frames": 1,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a 15-second animated diagram of the request and checked it frame by frame. It's a clean green-themed 16:9 video with no voice-over. I did not check how the arrows look when they overlap.\n\n```\n Browser ──(1. request)──▶ Server ──(2. query)──▶ Database\n Browser ◀──(4. response)── Server ◀──(3. data)─── Database\n```\n\n1. **Browser sends a request.** You click a link, and the browser asks the server for a page.\n2. **Server asks the database.** The server runs the app code, which queries the database for whatever it needs.\n3. **Database returns the data.** It sends the result back to the server.\n4. **Server replies, page appears.** The server builds the response, and the browser shows the page.\n\n- **Return arrows:** They draw over the outgoing ones, so each link ends up as a double-headed arrow. The numbered captions show which way each step goes. I couldn't get separate return arrows to lay out cleanly.\n- **Lint warning:** A text-density warning remains. The captions are short and appear one at a time, so I left it.\n\nFiles are in `/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-1/explainer-request-diagram`:\n- `out/film.mp4`\n- `film.reel`",
+  "spec_reads": 0,
+  "tool_errors": 1,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 2,
+    "codes": [
+     "W_STATIC_END",
+     "W_TEXT_DENSITY"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 15.0
+  },
+  "text": [
+   {
+    "text": "Browser",
+    "pass": true
+   },
+   {
+    "text": "Server",
+    "pass": true
+   },
+   {
+    "text": "Database",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "three nodes: browser, server, database",
+     "pass": true,
+     "evidence": "Browser, Server and Database boxes with icons and subtitles are visible in every frame."
+    },
+    {
+     "item": "arrows/connectors between them",
+     "pass": true,
+     "evidence": "Arrows link Browser to Server and Server to Database."
+    },
+    {
+     "item": "the request path is shown step by step (not all at once)",
+     "pass": true,
+     "evidence": "The Browser→Server arrow appears at about 1.9s and Server→Database at about 5.6s. Numbered captions change with each step."
+    },
+    {
+     "item": "the way back (response) is shown",
+     "pass": true,
+     "evidence": "The arrows gain heads at both ends in later frames (8.1s, 10.6s, 11.9s). The return is only a double-headed arrow, not a separate path, so it reads weakly."
+    },
+    {
+     "item": "clean, uncluttered look",
+     "pass": true,
+     "evidence": "Dark green gradient, minimal elements and a consistent style."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": false,
+   "problems": [
+    "The diagram is small. The nodes and their subtitles are tiny for a 1080p frame, and the middle of the frame is mostly empty, with a large gap between the diagram and the caption.",
+    "The response path is not a distinct return. The arrows simply become double-headed, so the way back is easy to miss and the request and response look the same.",
+    "Step captions are small and sit far from the diagram. At 6.9s the frame has no caption, so there is a dead moment.",
+    "The nodes are unevenly spaced, with the Browser–Server gap wider than the Server–Database gap. In the 4.4s frame a stray dash appears next to the Server as the arrow draws.",
+    "The motion is low-energy: only a highlight on the active node and arrows drawing in. Nothing shows data travelling along the arrows, and the final 2 seconds hold with little change."
+   ],
+   "verdict": "The video is clean and the four steps are easy to follow, but the diagram is undersized, the response path is weakly shown, and the motion is plain. It is acceptable as a draft but would probably get a request to enlarge the diagram and show the return more clearly.",
+   "cost_usd": 0.0274595,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 86.7
+ },
+ "score_wall_s": 23.1,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-1/explainer-request-diagram"
+}

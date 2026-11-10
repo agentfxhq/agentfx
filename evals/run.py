@@ -44,6 +44,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 EVALS = ROOT / "evals"
+# the product under test (skill, MCP server, docs, examples): this checkout, or an exported older tree
+# ($AGENTFX_EVAL_PRODUCT, e.g. `git archive <rev> skill mcp docs examples design schema assets tools`)
+PRODUCT = Path(os.environ.get("AGENTFX_EVAL_PRODUCT") or ROOT)
 CASES = EVALS / "cases"
 RESULTS = EVALS / "results"
 LOCK = threading.Lock()  # one scorer render at a time across workers
@@ -153,7 +156,7 @@ def tool_env(work_root):
         if k == "CLAUDECODE" or k.startswith("CLAUDE_CODE_") or k.startswith("CLAUDE_AGENT"):
             env.pop(k)
     env["PATH"] = f"{bindir}:{env.get('PATH', '')}"
-    env["AGENTFX_HOME"] = str(ROOT)
+    env["AGENTFX_HOME"] = str(PRODUCT)
     env["AGENTFX_BIN"] = str(bindir / "agentfx")
     env["AGENTFX_TTS"] = "none"
     env["AGENTFX_CACHE"] = str(Path(work_root) / "_cache")
@@ -165,7 +168,7 @@ def prepare_workdir(case, wd, mode):
         shutil.rmtree(wd)
     (wd / ".claude" / "skills").mkdir(parents=True)
     if mode in ("both", "cli", "mcp"):
-        shutil.copytree(ROOT / "skill" / "agentfx", wd / ".claude" / "skills" / "agentfx")
+        shutil.copytree(PRODUCT / "skill" / "agentfx", wd / ".claude" / "skills" / "agentfx")
     for dest, src in case["files"].items():
         d = wd / dest
         d.parent.mkdir(parents=True, exist_ok=True)
@@ -174,7 +177,7 @@ def prepare_workdir(case, wd, mode):
 
 
 def mcp_config(wd, env):
-    cfg = {"mcpServers": {"agentfx": {"command": sys.executable, "args": [str(ROOT / "mcp" / "server.py")],
+    cfg = {"mcpServers": {"agentfx": {"command": sys.executable, "args": [str(PRODUCT / "mcp" / "server.py")],
                                        "env": {k: env[k] for k in ("AGENTFX_BIN", "AGENTFX_HOME", "AGENTFX_TTS", "AGENTFX_CACHE", "PATH")}}}}
     p = wd / ".mcp-eval.json"
     p.write_text(json.dumps(cfg))
@@ -187,7 +190,7 @@ def run_agent(case, wd, args, env):
            "--model", args.model, "--max-turns", str(args.max_turns),
            "--setting-sources", "project", "--strict-mcp-config", "--no-session-persistence",
            "--permission-mode", "dontAsk",
-           "--append-system-prompt", ENV_NOTE.format(home=ROOT)]
+           "--append-system-prompt", ENV_NOTE.format(home=PRODUCT)]
     if args.mode in ("both", "mcp"):
         cmd += ["--mcp-config", str(mcp_config(wd, env))]
         tools.append("mcp__agentfx")
@@ -711,7 +714,7 @@ def main():
         meta.setdefault("commit_first", git_commit())
         meta.update({"run_id": run_id, "model": args.model, "judge_model": args.judge_model, "mode": args.mode,
                      "max_turns": args.max_turns, "commit": git_commit(), "started": time.strftime("%Y-%m-%dT%H:%M:%S"),
-                     "work": str(work_root)})
+                     "work": str(work_root), "product": str(PRODUCT), "agentfx_bin": agentfx_bin()})
         meta_p.write_text(json.dumps(meta, indent=1))
     t0 = time.time()
     with cf.ThreadPoolExecutor(max_workers=max(1, args.parallel)) as ex:

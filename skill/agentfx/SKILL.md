@@ -85,9 +85,13 @@ Ask nothing more than you need. If the request is clear, go:
 - **Social captions.** "Word by word", "TikTok/Reels captions": `captions style=pop` (one word
   at a time) or `style=hormozi maxwords=2`, `size=` 96 to 120 in 9:16, `place=center`. Captions
   need narration (`say`) or a transcript (`src=`).
-- **Motion to the end.** Every scene has an entrance and something that moves or lands near its
-  end (a camera push, a pulse, an exit); a long static final hold reads as a frozen video
-  (`W_STATIC_END`, `W_DEAD_AIR`).
+- **Motion to the end, then a short hold.** Every scene has an entrance and something that moves
+  or lands near its end (a camera push, a pulse, an exit); more than about 2 s without motion reads
+  as a frozen video (`W_STATIC_END`, `W_DEAD_AIR`). A logo, title or CTA still ends on a settled
+  hold of 0.5 to 1.5 s: let the last move finish, do not keep a slow scale creeping to the last frame.
+- **One look per brief.** Keep the requested palette in every scene (a "black with neon green"
+  brief does not end on a full green screen); a teaser needs a visual (UI, shape, logo lockup),
+  not only centred text cards; kinetic words land one at a time, each big.
 - **Numbers as written.** Number defaults are German: counters group with `.` from 10 000 on and
   charts use a decimal comma. For English copy set `sep=","` on `counter`/`stat` and `locale=en`
   on `chart` (`W_NUMBER_FORMAT`). Show the user's figures exactly (1.2M stays "1.2M", 4,300

@@ -1,0 +1,108 @@
+{
+ "id": "fx-fluid-ink-dream",
+ "tags": [
+  "effect",
+  "fluid"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 135.8,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 8,
+  "cost_usd": 0.09601769999999998,
+  "tokens": {
+   "input_tokens": 14,
+   "output_tokens": 1327,
+   "cache_read_input_tokens": 136717,
+   "cache_creation_input_tokens": 17262
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 4,
+   "Read": 1
+  },
+  "lint_calls": 1,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {},
+  "renders": 0,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "The render is done and the contact sheet looks right. I haven't watched the finished MP4; I only checked the 12-frame sheet.\n\nDREAM fades in, holds, then at about 2.2s breaks into swirling navy ink. Two counter-rotating vortices keep it moving until the end of the clip.\n\n- **Script:** `./film.reel`. It lints clean, with 0 errors and 0 warnings.\n- **Video:** `./out/film.mp4`, 7 seconds, 1920x1080 at 30 fps, 16:9 only.\n- **Look:** ink navy (#14213D) on a warm paper background. The text, colors and timing are my own choices, not from a brief.\n- **Rendering:** the fluid is simulated once and cached, so every render comes out the same.\n\nThe ink fills most of the frame by the end. If you'd rather it stay as a smaller cloud, I can lower the two vortex strengths.",
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 7.0
+  },
+  "text": [
+   {
+    "text": "DREAM",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "the word DREAM is readable first",
+     "pass": true,
+     "evidence": "Bold navy DREAM fades in on cream and is fully legible from 0.9s to 2.0s."
+    },
+    {
+     "item": "it dissolves into fluid ink (simulated fluid, not just a fade)",
+     "pass": true,
+     "evidence": "From 2.6s the letters smear into swirling vortices with real fluid curls, not an opacity fade."
+    },
+    {
+     "item": "the ink motion is visible over several frames",
+     "pass": true,
+     "evidence": "Swirls grow and churn continuously from 2.6s to 6.7s, with a different pattern in each frame."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": false,
+   "problems": [
+    "The ink spreads over the whole frame and ends as a muddy grey-blue mass, with no payoff or clean end state. The word is lost early and nothing resolves.",
+    "Visible banding or striped artifacts in the ink near 3.2–3.8s look like a rendering glitch.",
+    "The ink is pushed against the frame edges and forms rounded box-like walls. This looks like a container boundary rather than free ink.",
+    "The dissolve is hard to read as DREAM turning into ink. The letters are overwhelmed by two big vortices and don't break up letter by letter.",
+    "The word is static for about 2s, then the ink takes over. The ink is washed-out grey rather than rich dark ink, and the pour from the bottom barely shows."
+   ],
+   "verdict": "The brief is met: DREAM is readable first, then it turns into real swirling fluid. It is held back by banding artifacts, edge-bound ink and a muddy ending with no resolution, so it is a decent draft and not a post-ready one.",
+   "cost_usd": 0.0270748,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 86.7
+ },
+ "score_wall_s": 18.9,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/fx-fluid-ink-dream"
+}

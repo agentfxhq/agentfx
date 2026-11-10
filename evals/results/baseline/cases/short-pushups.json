@@ -1,0 +1,138 @@
+{
+ "id": "short-pushups",
+ "tags": [
+  "vertical",
+  "social",
+  "list"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 68.5,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 13,
+  "cost_usd": 0.23689620000000003,
+  "tokens": {
+   "input_tokens": 22,
+   "output_tokens": 6761,
+   "cache_read_input_tokens": 344662,
+   "cache_creation_input_tokens": 33694
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 8,
+   "Read": 2
+  },
+  "lint_calls": 5,
+  "lint_errors_seen": 2,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_VERB": 1,
+   "E_ID": 1
+  },
+  "warning_codes": {
+   "W_OVERLAP": 9,
+   "W_DEAD_AIR": 2,
+   "W_TEXT_DENSITY": 8,
+   "W_SAFE_AREA": 1,
+   "W_STATIC_END": 3
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a 1080x1920 vertical short, about 20 seconds, with no voice-over or music. I checked a contact sheet of one frame per scene and rendered the MP4, but I haven't watched the rendered video itself.\n\n- **Hook (2.8s):** \"You're doing push-ups WRONG\", then \"3 quick fixes\".\n- **Fix 1 (4.6s):** \"Hands under your shoulders\", with a shoulder dot above a hand bar.\n- **Fix 2 (4.6s):** \"Squeeze your glutes\", where a tilted red bar gives way to a straight green one.\n- **Fix 3 (4.6s):** \"Full range of motion\", with a dot bouncing down to a floor line.\n- **Outro (3.4s):** a recap of the three fixes and \"Try your next set\".\n\nThe line \"Straight line, head to heels\" under fix 2 and the outro line \"Try your next set\" are copy I proposed. Say if you want different wording.\n\nLint still shows a few warnings, which I left alone. Some scenes carry slightly more words than are comfortable to read while listening to a voice, and the ending is a small, quiet element. Neither seems to matter for a silent short.\n\nI added no music because AgentFX doesn't make any and you gave no track.\n\nFiles are in `short-pushups/`:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 5,
+    "codes": [
+     "W_STATIC_END",
+     "W_TEXT_DENSITY"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 20.0
+  },
+  "text": [
+   {
+    "text": "You're doing push-ups wrong",
+    "pass": true
+   },
+   {
+    "text": "hands under shoulders",
+    "pass": true
+   },
+   {
+    "text": "squeeze your glutes",
+    "pass": true
+   },
+   {
+    "text": "full range of motion",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical 9:16",
+     "pass": true,
+     "evidence": "Frames are tall portrait, 1080x1920."
+    },
+    {
+     "item": "hook first",
+     "pass": true,
+     "evidence": "0.83s shows 'You're doing push-ups WRONG' as the first content."
+    },
+    {
+     "item": "three fixes in sequence",
+     "pass": true,
+     "evidence": "Big 1, 2, 3 with hands/glutes/full range titles in order."
+    },
+    {
+     "item": "text stays inside the vertical safe area",
+     "pass": true,
+     "evidence": "All text sits in the middle or upper area with side margins. Nothing is near the right rail or the bottom band. The small captions are close to the limit."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "The bottom 40–50% of the frame is empty in the hook and outro. Content clusters in the upper half and feels unbalanced.",
+    "The diagrams are abstract, just a dot, a line and a bar. They don't show a person or a push-up, so the fixes are hard to understand. The fix-3 ball is tiny and the floor line is faint.",
+    "The sub-labels ('shoulder', 'hand', 'Straight line, head to heels', 'Chest to the floor') are small, grey and low-contrast, so they are hard to read on a phone. 'Straight line, head to heels' wraps awkwardly.",
+    "The outro is a plain, small list that repeats the fixes. The final 'Try your next set' call to action is weak and sits in the middle of an empty frame.",
+    "The video runs about 20 s with long static holds, around 4.6 s per fix with little changing. The hook has no visual and is text only, so retention would be weak."
+   ],
+   "verdict": "The structure is correct and the text is legible and safe, but the video is generic and sparse. It has no real push-up visuals, a lot of dead space, and tiny supporting text. It is acceptable but not something to post as is.",
+   "cost_usd": 0.0345003,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 83.3
+ },
+ "score_wall_s": 19.1,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/short-pushups"
+}

@@ -1,0 +1,130 @@
+{
+ "id": "data-q3-kpis",
+ "tags": [
+  "data",
+  "kpi"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 123.6,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 11,
+  "cost_usd": 0.1447578,
+  "tokens": {
+   "input_tokens": 18,
+   "output_tokens": 3179,
+   "cache_read_input_tokens": 218198,
+   "cache_creation_input_tokens": 22778
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 7,
+   "Read": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_ANCHOR_UNUSED": 1,
+   "W_TEXT_DENSITY": 4,
+   "W_DEAD_AIR": 2,
+   "W_STATIC_END": 4,
+   "W_SMALL_MOTION": 1
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a 5.5 s, 16:9 silent clip of the three KPI cards under a \"Q3 results\" title. It's at `out/film.mp4` and the script is `film.reel`. I checked a still of the final frame, but I didn't watch the rendered video or check the 9:16 format.\n\nThe cards count up from 0 one after another, starting at 0.6 s, 1.6 s and 2.6 s: revenue, then new customers, then churn.\n\nThe counters only do whole numbers, and that shaped how three of the numbers appear:\n- **Revenue:** it shows as \"$1200K\", with \"$1.2M in Q3\" and the \"+18 %\" pill under it.\n- **New customers:** it shows as \"4300\", with no thousands comma.\n- **Churn:** it shows \"2.1 %\", but the \".1\" is fixed text and only the \"2\" counts. Mid-count it reads 0.1 %, 1.1 %, then 2.1 %.\n\nThe \"in Q3\" sub-line on the new-customers and churn cards is my wording.\n\nLint still gives a few warnings. They say the screen has a lot of words for 5.5 s, and that the last stretch has little motion. I left them because this is a short slide, not a narrated video.\n\nIf you'd like the churn card to count the decimal too, I can build that card by hand.",
+  "spec_reads": 2,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 2,
+    "codes": [
+     "W_STATIC_END",
+     "W_TEXT_DENSITY"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 5.5
+  },
+  "text": [
+   {
+    "text": "Q3",
+    "pass": true
+   },
+   {
+    "text": "18%",
+    "pass": false
+   },
+   {
+    "text": "2.1",
+    "pass": false
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "three KPIs shown: revenue 1.2M, 4,300 new customers, churn 2.1%",
+     "pass": true,
+     "evidence": "Final frames show $1200K, 4300, 2.1 % cards; revenue shown as $1200K rather than $1.2M and 4300 has no comma."
+    },
+    {
+     "item": "numbers count up",
+     "pass": true,
+     "evidence": "Revenue $241K→$912K→$1170K→$1200K; customers 3018→4133→4300; churn 1.1%→2.1%."
+    },
+    {
+     "item": "the +18% growth is visible",
+     "pass": true,
+     "evidence": "Small '+18 %' badge on the revenue card, but it is tiny and low-impact."
+    },
+    {
+     "item": "numbers are correct (no invented figures)",
+     "pass": true,
+     "evidence": "Values match the brief: 1.2M, +18%, 4,300, 2.1%. $1200K is equivalent to $1.2M."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "The cards are small and sit in the middle of a mostly empty 1080p frame. The numbers are too small to read from the back of an all-hands room.",
+    "Revenue reads '$1200K' instead of '$1.2M', and customers reads '4300' instead of '4,300'. This looks unpolished.",
+    "The +18% growth badge and the sub-labels are tiny and low-contrast. The headline growth figure is easy to miss.",
+    "The title and cards are crowded in the middle. There is a big empty band below, and the layout feels top-heavy and unbalanced.",
+    "The cards appear one after another and the layout shifts as each is added. The last card only appears at about 2.9s, and the final state holds static for about 2s with no emphasis."
+   ],
+   "verdict": "The content is correct and the counting works. The design is generic. The numbers are undersized, they are formatted awkwardly ($1200K, 4300), and the +18% is barely visible. A user would probably ask for bigger numbers and cleaner formatting.",
+   "cost_usd": 0.0260131,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 76.7
+ },
+ "score_wall_s": 39.6,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/data-q3-kpis"
+}

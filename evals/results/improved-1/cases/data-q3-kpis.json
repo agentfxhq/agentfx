@@ -1,0 +1,127 @@
+{
+ "id": "data-q3-kpis",
+ "tags": [
+  "data",
+  "kpi"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 737.2,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 13,
+  "cost_usd": 0.1422399,
+  "tokens": {
+   "input_tokens": 22,
+   "output_tokens": 3094,
+   "cache_read_input_tokens": 277079,
+   "cache_creation_input_tokens": 20887
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 9,
+   "Read": 1
+  },
+  "lint_calls": 5,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_SAFE_AREA": 6,
+   "W_STATIC_END": 3,
+   "W_SMALL_MOTION": 1
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "The Q3 animation is rendered at `./out/film.mp4`. It's 9 seconds, 1920x1080, and the script is at `./film.reel`.\n\n- **Layout:** the \"Q3 results\" title (subtitle \"All-hands\") sits above three stat tiles.\n- **Counting:** each tile counts up in turn, starting at 1.2 s, 1.8 s and 2.4 s.\n- **Revenue:** it counts to 1,200,000 with a \"+18 %\" pill and \"1.2M in Q3\" underneath. The counter only handles whole numbers, so it couldn't count to \"1.2M\" directly. If you want a different format, tell me.\n- **New customers:** it counts to 4,300.\n- **Churn:** it counts 0, 1, 2 and then settles on \"2.1 %\". The \".1 %\" is fixed text, so mid-count it briefly reads \"0.1 %\" and \"1.1 %\".\n- **Lint:** one soft warning, that the motion covers under 8 % of the frame. That's just the counters, so I left it.\n\nI checked a still of the final frame. I didn't preview the middle of the count or look at the rendered file.\n\nI don't know the currency, so the revenue has no symbol. The title and the \"1.2M in Q3\" line are my own copy, so change them if you like.",
+  "spec_reads": 2,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 1,
+    "codes": [
+     "W_SMALL_MOTION"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 9.0
+  },
+  "text": [
+   {
+    "text": "Q3",
+    "pass": true
+   },
+   {
+    "text": "18%",
+    "pass": false
+   },
+   {
+    "text": "2.1",
+    "pass": false
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "three KPIs shown: revenue 1.2M, 4,300 new customers, churn 2.1%",
+     "pass": true,
+     "evidence": "Final frames show 1,200,000 (and '1.2M in Q3'), 4,300, 2.1 %."
+    },
+    {
+     "item": "numbers count up",
+     "pass": true,
+     "evidence": "At 1.88s revenue 1,024,155 and customers 590; at 2.62s customers 4,005 and churn 1.1%, then they settle."
+    },
+    {
+     "item": "the +18% growth is visible",
+     "pass": true,
+     "evidence": "A '+18 %' pill sits under the revenue value, but it is tiny and hard to read."
+    },
+    {
+     "item": "numbers are correct (no invented figures)",
+     "pass": true,
+     "evidence": "Final values match the request. The intermediate counting values are expected."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "The stat cards are small and sit in the middle of a 1080p frame. The numbers, labels and especially the +18% delta are too small for an all-hands screen.",
+    "The +18% growth is a tiny pill and is the key message, so it has no emphasis.",
+    "The first ~1.5s is an empty frame with only the title, and the counting is done by about 3s. The last 5s is static, so the video feels slow and dead.",
+    "The frame is unbalanced, with a large empty area below the cards and a wide gap between the title and the cards.",
+    "The revenue shows as 1,200,000 instead of the requested '1.2M'. The 'New customers' and 'Churn' cards have no context, and the cards are uneven in width."
+   ],
+   "verdict": "The video is correct and clean. All three figures are right and they count up. The layout is generic and undersized, the +18% is barely visible, and the second half has no motion. A user would probably ask for bigger numbers and a stronger +18%.",
+   "cost_usd": 0.0255917,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 76.7
+ },
+ "score_wall_s": 19.6,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-1/data-q3-kpis"
+}

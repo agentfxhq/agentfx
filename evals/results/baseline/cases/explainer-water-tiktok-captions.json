@@ -1,0 +1,125 @@
+{
+ "id": "explainer-water-tiktok-captions",
+ "tags": [
+  "explainer",
+  "captions",
+  "vertical"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": 15,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": "timeout",
+  "stderr": "",
+  "wall_s": 900.2,
+  "orphans_killed": [
+   "/usr/bin/python3 /home/drzivil/dev/agentfx/.claude/worktrees/agent-a0a7fa9d34bdb1909/mcp/server.py ",
+   "/bin/bash -c source /home/drzivil/.claude/shell-snapshots/snapshot-bash-1794269958356-0xs8kj.sh 2>/dev/null || true && s",
+   "flock /tmp/claude-1000/agentfx-heavy.lock /home/drzivil/dev/agentfx/.claude/worktrees/agent-a0a7fa9d34bdb1909/target/rel",
+   "tail -3 ",
+   "/bin/bash -c source /home/drzivil/.claude/shell-snapshots/snapshot-bash-1794269958356-0xs8kj.sh 2>/dev/null || true && s",
+   "flock /tmp/claude-1000/agentfx-heavy.lock /home/drzivil/dev/agentfx/.claude/worktrees/agent-a0a7fa9d34bdb1909/target/rel"
+  ]
+ },
+ "metrics": {
+  "num_turns": 13,
+  "cost_usd": 0.1701354,
+  "tokens": {
+   "input_tokens": 26,
+   "output_tokens": 2419,
+   "cache_read_input_tokens": 393814,
+   "cache_creation_input_tokens": 26628
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 9,
+   "Read": 1
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_COLD_OPEN": 1
+  },
+  "renders": 2,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "The render is running in the background and I'll check it when it finishes.",
+  "spec_reads": 0,
+  "tool_errors": 1,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 1,
+    "codes": [
+     "W_STATIC_END"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": false,
+  "agent_rendered": false,
+  "duration_ok": false,
+  "durations": {
+   "9:16": 17.87
+  },
+  "text": [
+   {
+    "text": "water",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical 9:16",
+     "pass": true,
+     "evidence": "Frames are tall portrait, 1080x1920 ratio."
+    },
+    {
+     "item": "big bold word-by-word captions (tiktok/hormozi style)",
+     "pass": false,
+     "evidence": "Bold outlined text with yellow/green highlights, but it shows 2–3 word chunks on two lines, not one word at a time. It takes up only about half the frame width, so it isn't very big."
+    },
+    {
+     "item": "captions stay clear of the bottom UI band",
+     "pass": true,
+     "evidence": "Captions sit around the vertical middle (about 55–65% down), well above the bottom band."
+    },
+    {
+     "item": "on topic: why drink more water",
+     "pass": true,
+     "evidence": "Copy covers hydration, brain water content, and the benefits of focus, energy, skin and headaches."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "Captions show 2–3 words at a time on two lines rather than true word-by-word, and they're only moderately sized for a TikTok look.",
+    "The visuals are very bare: only a flat blue circle on a dark gradient, with no water imagery, icons or droplets. It feels empty and generic.",
+    "Captions fade to a dim, low-contrast state at scene boundaries (e.g. at 6.70s and 11.17s), which hurts legibility.",
+    "The circle changes position and colour between scenes, and the caption sits in the middle of it. It looks arbitrary, with no visual link to the content.",
+    "Runtime is about 17.9s against the requested 15s, and the hook line is long and slow."
+   ],
+   "verdict": "The video is on topic, vertical, and keeps captions clear of the bottom band. The captions are chunked rather than word by word, and the background is sparse and generic. A user would probably ask for bigger one-word captions and some water visuals.",
+   "cost_usd": 0.0118524,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 61.8
+ },
+ "score_wall_s": 788.3,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/explainer-water-tiktok-captions"
+}

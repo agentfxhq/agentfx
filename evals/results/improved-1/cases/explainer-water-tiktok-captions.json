@@ -1,0 +1,122 @@
+{
+ "id": "explainer-water-tiktok-captions",
+ "tags": [
+  "explainer",
+  "captions",
+  "vertical"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": 15,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 71.9,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 14,
+  "cost_usd": 0.15800270000000002,
+  "tokens": {
+   "input_tokens": 24,
+   "output_tokens": 3155,
+   "cache_read_input_tokens": 314287,
+   "cache_creation_input_tokens": 23744
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 9,
+   "Read": 2
+  },
+  "lint_calls": 5,
+  "lint_errors_seen": 140,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 140
+  },
+  "warning_codes": {
+   "W_COLD_OPEN": 1,
+   "W_SMALL_MOTION": 1,
+   "W_STATIC_END": 4
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a 14.7 s vertical (1080×1920) video with big bold word-by-word captions. The current word is highlighted in yellow, and bubbles rise behind the text.\n\nThe script is `film.reel` and the render is `out/film.mp4`.\n\nI checked one frame, at 2 s, and the caption timing and styling look right. I only ran `ffprobe` on the rendered file, for its length. The `ffmpeg` frame strip I made (`out/strip.png`) was never opened.\n\n- **Copy:** I wrote it myself, so treat it as proposed. It opens with \"Your body is about sixty percent water. So why are you ignoring it?\" It then says dehydration drains your focus, mood and energy, and ends with \"Drink a glass right now. Your brain will thank you.\" The \"sixty percent\" line is a commonly cited figure, not one you gave me, so check it if accuracy matters.\n- **Timing:** The word timings are estimated, because the voice-over wasn't generated with real word timing. The captions may drift slightly against the speech. I never checked how well the timing lines up.\n- **Lint:** There is one leftover warning. The last 2 s only move a small part of the frame, and my camera push at the end didn't clear it.",
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 1,
+    "codes": [
+     "W_STATIC_END"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 14.73
+  },
+  "text": [
+   {
+    "text": "water",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical 9:16",
+     "pass": true,
+     "evidence": "Tall portrait frames, 1080x1920."
+    },
+    {
+     "item": "big bold word-by-word captions (tiktok/hormozi style)",
+     "pass": false,
+     "evidence": "Bold outlined, highlighted text, but it shows 2–4 words at once and is fairly small, not big one-word-at-a-time punch."
+    },
+    {
+     "item": "captions stay clear of the bottom UI band",
+     "pass": true,
+     "evidence": "Captions sit at about 60% height, well above the bottom band."
+    },
+    {
+     "item": "on topic: why drink more water",
+     "pass": true,
+     "evidence": "Text covers 60% water, dehydration, and drink a glass now."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "Captions are small for a 1080-wide vertical frame and show 2–4 words at once, so they are not the big bold word-by-word style requested.",
+    "Frame is mostly empty dark blue gradient with no water, glass, or imagery. It looks generic and bland.",
+    "Some frames have no caption (about 10.4 s) and there are gaps between phrases, so the pacing feels uneven.",
+    "Bubble particles are faint and sparse, and they sometimes look odd, like a lone blob at 5.5 s. They add little visual interest.",
+    "Some captions look dim or greyed out (5.5 s 'EVEN MILD DEHYDRATION', 11.7 s 'RIGHT NOW') and the green on dark blue is low in contrast. The scene transitions look like a flat fade."
+   ],
+   "verdict": "The video is on topic, vertical, and the captions sit in a safe area. The captions are too small and show several words at once, and the background is empty and plain. That makes it a generic first draft rather than a punchy TikTok.",
+   "cost_usd": 0.0281217,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 75.8
+ },
+ "score_wall_s": 32.7,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-1/explainer-water-tiktok-captions"
+}

@@ -1,0 +1,133 @@
+{
+ "id": "teaser-nordlicht",
+ "tags": [
+  "product",
+  "brand"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": 15,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 50.9,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 15,
+  "cost_usd": 0.1911889,
+  "tokens": {
+   "input_tokens": 22,
+   "output_tokens": 2943,
+   "cache_read_input_tokens": 337789,
+   "cache_creation_input_tokens": 31984
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_spec": 2,
+   "Bash": 4,
+   "Write": 1,
+   "mcp__agentfx__agentfx_lint": 2,
+   "mcp__agentfx__agentfx_sheet": 1,
+   "Read": 1
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_DEAD_AIR": 6
+  },
+  "renders": 0,
+  "frames": 0,
+  "sheets": 1,
+  "skill_loaded": true,
+  "result": "I made the 15-second landscape teaser (1920×1080). It's silent and uses only your colours and copy.\n\nIt runs in four beats:\n1. \"Plan less.\" in white on navy.\n2. \"Live more.\" in teal.\n3. \"Nordlicht\" as the brand reveal.\n4. \"Coming March 2027\" in teal, on one line.\n\nThe background is a subtle navy gradient between #0B1F3A and a slightly lighter navy. Each line has a slow push-in so nothing sits static. Lint is clean, apart from an info note that the headline sizes differ between beats (210/230/140 px). I checked a contact sheet and the final frame, and the rendered file is exactly 15.00 s.\n\nI split the tagline across two beats and added the \"Nordlicht\" reveal beat myself, since you didn't specify the structure. There's no music or logo. If you have either, I can add them.\n\nFiles are in `teaser-nordlicht`:\n- `out/film.mp4`\n- `film.reel`",
+  "spec_reads": 2,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 15.0
+  },
+  "text": [
+   {
+    "text": "Nordlicht",
+    "pass": true
+   },
+   {
+    "text": "Plan less. Live more.",
+    "pass": true
+   },
+   {
+    "text": "Coming March 2027",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "uses navy #0B1F3A and teal #4FD1C5 as the main colours",
+     "pass": true,
+     "evidence": "Navy gradient background, teal on 'Live more.' and 'Coming March 2027', white on others."
+    },
+    {
+     "item": "app name Nordlicht is prominent",
+     "pass": true,
+     "evidence": "Large bold white 'Nordlicht' centered, with its own 3.5s scene."
+    },
+    {
+     "item": "tagline shown",
+     "pass": true,
+     "evidence": "'Plan less.' then 'Live more.' appear in sequence, but never together as one tagline."
+    },
+    {
+     "item": "ends on Coming March 2027",
+     "pass": true,
+     "evidence": "Final frames at 13.12s and 14.38s show 'Coming March 2027' in teal."
+    },
+    {
+     "item": "looks like a polished product teaser, not a slideshow",
+     "pass": false,
+     "evidence": "Four centered text cards on a flat gradient. There is no imagery, logo, UI or graphic, and the only motion is a slow scale."
+    }
+   ],
+   "quality": 4,
+   "accept_first_try": false,
+   "problems": [
+    "It reads as a text slideshow. It has four centered text cards with no visuals, no app UI, no logo mark and no aurora or 'Nordlicht' imagery, so it doesn't feel like a product teaser.",
+    "The frame is mostly empty navy. The text is small relative to the 16:9 canvas and sits in a thin band, with no supporting graphic elements.",
+    "The tagline is split across two scenes and never appears whole, and there is an empty navy frame around 3s between 'Plan less.' and 'Live more.' that looks like a dead gap.",
+    "The 'Coming March 2027' card is much smaller than the other text and lacks emphasis. The ending is weak, with no logo lockup or Nordlicht name alongside the date.",
+    "Motion is limited to a slow scale drift and pulses on identical centered text. There is no variety in transitions, no accents and no rhythm, so it feels generic."
+   ],
+   "verdict": "The brief's content and colours are correct, but the result is four plain text cards on a flat navy gradient. It is clean and legible, but it is generic and not a polished teaser, so the user would likely ask for visuals and stronger motion.",
+   "cost_usd": 0.028072100000000003,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 74.0
+ },
+ "score_wall_s": 21.5,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-2/teaser-nordlicht"
+}

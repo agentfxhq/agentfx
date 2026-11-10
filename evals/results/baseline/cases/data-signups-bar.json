@@ -1,0 +1,131 @@
+{
+ "id": "data-signups-bar",
+ "tags": [
+  "data",
+  "chart"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 78.4,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 11,
+  "cost_usd": 0.1033621,
+  "tokens": {
+   "input_tokens": 18,
+   "output_tokens": 1649,
+   "cache_read_input_tokens": 196201,
+   "cache_creation_input_tokens": 16804
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 6,
+   "Read": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 6,
+  "first_lint_errors": 6,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 6
+  },
+  "warning_codes": {
+   "W_STATIC_END": 2,
+   "W_SAFE_AREA": 1
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a 5-second, 16:9 video of your signups bar chart. The title \"Signups are taking off\" sits above bars for Jan to Jun (120, 180, 240, 310, 420, 560), and each bar has its value shown. June is the highlighted bar: it's lighter, with a glow.\n\nI checked one frame at 4 seconds. I didn't look at the rest of the video. Lint reports no errors for 16:9 or 9:16. It still gives 3 warnings, which I didn't look into: the chart is a small element at the end of a mostly static film, and in 9:16 the \"120\" label leaves the safe area. I rendered only 16:9, since you didn't ask for other formats.\n\nThere's no voice-over or music.\n\nFiles are in the working directory:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 2,
+    "codes": [
+     "W_SCALE_FILL",
+     "W_STATIC_END"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 5.0
+  },
+  "text": [
+   {
+    "text": "Signups are taking off",
+    "pass": true
+   },
+   {
+    "text": "Jun",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "bar chart with six bars Jan to Jun",
+     "pass": true,
+     "evidence": "Six bars labelled Jan to Jun are visible from about 1.0s onward."
+    },
+    {
+     "item": "values 120 to 560 correct",
+     "pass": true,
+     "evidence": "The final labels read 120, 180, 240, 310, 420, 560. The numbers are tiny, and the in-between counts (e.g. 518, 137) are transient."
+    },
+    {
+     "item": "June highlighted",
+     "pass": true,
+     "evidence": "The June bar is paler mint and fades toward its base. It is distinct but subtle, and it looks washed out rather than emphasised."
+    },
+    {
+     "item": "title shown",
+     "pass": true,
+     "evidence": "'Signups are taking off' is large and white at the top of every frame."
+    },
+    {
+     "item": "bars animate in",
+     "pass": true,
+     "evidence": "Bars grow between 0.2s and 1.5s. At 0.62s May (137) is lower than Apr (229), so the bars rise unevenly."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "The chart fills only about 45% of the frame width and is small below a big title. Axis labels, month labels and value labels are tiny and hard to read on a phone, and the frame has large empty margins.",
+    "The June highlight is weak. It is a pale, translucent bar that fades at the bottom and reads as ghosted rather than emphasised. It has no accent colour, callout or glow.",
+    "The bars grow unevenly (May drops to 137 at 0.62s) and the chart is done by about 1.5s. After that the frame is static for about 3.5s with no emphasis, so it feels flat.",
+    "The title is already fully visible in the first frame, so the rise-in is barely noticeable. The title and chart also look disconnected, with a large gap and an all-green palette that has little contrast.",
+    "Gridlines and the axis are nearly invisible, and the 0/200/400/600 labels are illegible."
+   ],
+   "verdict": "The chart is correct and clean, but it is small, generic and low in impact. June is not emphasised enough, and the chart needs to be bigger with a stronger highlight before it is ready to post.",
+   "cost_usd": 0.0390184,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 83.3
+ },
+ "score_wall_s": 44.9,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/data-signups-bar"
+}

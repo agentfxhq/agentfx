@@ -40,6 +40,9 @@ rstar = "0.12"
 # E4 GPU effects: Vulkan on Linux, Metal on macOS, DX12/Vulkan on Windows.
 wgpu = { version = "30.0.1", default-features = false, features = ["vulkan", "metal", "dx12", "wgsl", "std"] }
 pollster = "1"
+# P5: Lottie (Bodymovin JSON) evaluator, renderer-agnostic `RenderSink` (Apache-2.0 OR MIT;
+# kurbo/peniko versions match ours, no vello)
+velato = { version = "0.12", default-features = false }
 tiny-skia = { version = "0.11", default-features = false, features = ["std", "simd", "png-format"] }
 
 [dev-dependencies]

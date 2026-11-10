@@ -46,4 +46,6 @@ pub mod audio;
 pub mod fonts;
 pub mod textv2;
 pub mod motionpath;
+pub mod brand;
+pub mod svgparts;
 pub mod storyboard;

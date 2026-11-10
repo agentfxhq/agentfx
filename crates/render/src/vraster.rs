@@ -56,6 +56,7 @@ pub struct PPath {
     pub trim: [f64; 2],
     /// shape correspondence of `PathContent::morph` (None = no morph targets)
     pub morph: Option<crate::morph::Morph>,
+    pub even_odd: bool,
 }
 
 pub enum PContent {
@@ -73,6 +74,7 @@ pub enum PContent {
     Fluid(Box<crate::fluid::Fluid>),
     Scene3d(Box<s3d_paint::Prep3d>),
     Gen(Box<crate::generator::Prep>),
+    Lottie(Box<crate::lottie::Lottie>),
 }
 
 pub struct Prepared {
@@ -221,6 +223,9 @@ impl Prepared {
                     looped: *looped,
                     hold: *hold,
                 }),
+                Some(Content::Lottie { path, rect, start, offset, rate, looped, hold }) => {
+                    Some(PContent::Lottie(Box::new(crate::lottie::Lottie::load(&base.join(path), *rect, *start, *offset, *rate, *looped, *hold).with_context(|| format!("node {ni}"))?)))
+                }
                 Some(Content::Rect { rect, color: c }) => {
                     let r = rect.rect;
                     let path = kurbo::RoundedRect::from_rect(Rect::new(r[0], r[1], r[0] + r[2], r[1] + r[3]), kurbo::RoundedRectRadii::new(rect.radius[0], rect.radius[1], rect.radius[2], rect.radius[3])).to_path(0.1);
@@ -281,7 +286,7 @@ impl Prepared {
                         Some(f) => Some(brush(f, &images)?),
                         None => None,
                     };
-                    Some(PContent::Path(PPath { m: pathx::measure(path), fill, fill_pt: p.fill_transform.map(|m| aff(&m)).unwrap_or(Affine::IDENTITY), stroke, bounds: [b.x0, b.y0, b.width(), b.height()], trim: p.trim, morph }))
+                    Some(PContent::Path(PPath { m: pathx::measure(path), fill, fill_pt: p.fill_transform.map(|m| aff(&m)).unwrap_or(Affine::IDENTITY), stroke, bounds: [b.x0, b.y0, b.width(), b.height()], trim: p.trim, morph, even_odd: p.fill_rule == agentfx_ir::FillRule::Evenodd }))
                 }
                 Some(Content::Cloud(c)) => {
                     if shaper.is_none() && c.forms.iter().any(|f| matches!(f.shape, agentfx_ir::CloudShape::Text(_))) {
@@ -591,6 +596,7 @@ impl ContentInfo for Info<'_> {
             PContent::Video { rect, .. } => Some(*rect),
             PContent::Scene3d(p) => Some(p.c.rect),
             PContent::Gen(g) => Some(g.c.rect),
+            PContent::Lottie(l) => Some(l.rect),
             _ => schedule::content_rect(scene.nodes[n].content.as_ref()?),
         }
     }
@@ -632,6 +638,7 @@ impl ContentInfo for Info<'_> {
             }
             Some(PContent::Scene3d(p)) => s3d_paint::sig3d(scene, &self.tracks[n], p, t, &mut h),
             Some(PContent::Gen(g)) => g.sig(scene, &self.tracks[n], t).hash(&mut h),
+            Some(PContent::Lottie(l)) => l.frame_at(t).map(f64::to_bits).hash(&mut h),
             _ => {}
         }
         h.finish()
@@ -640,7 +647,7 @@ impl ContentInfo for Info<'_> {
         // text glyph tracks and path trims are the node's own tracks (covered by the
         // planner's activity intervals); clouds and fluids change with t itself
         match self.prep.contents[n].as_ref() {
-            Some(PContent::Cloud(_) | PContent::Fluid(_) | PContent::Video { .. }) => true,
+            Some(PContent::Cloud(_) | PContent::Fluid(_) | PContent::Video { .. } | PContent::Lottie(_)) => true,
             // per-unit key times depend on t itself
             Some(PContent::TextFx(b)) => b.0.keyed,
             // generator parameter tracks are the node's own; some kinds move with t itself
@@ -937,7 +944,7 @@ impl<'a> Painter<'a> {
                 Some(PContent::List(items)) => !has_blend(items),
                 Some(PContent::TextFx(b)) => !has_blend(&b.1) && !b.0.keyed && b.0.fx.path.is_none() && b.0.fx.animators.is_empty() && info.tracks[n].is_empty(),
                 Some(PContent::Switch(states)) => !states.iter().any(|s| has_blend(s)),
-                Some(PContent::Video { .. }) => true,
+                Some(PContent::Video { .. } | PContent::Lottie(_)) => true,
                 Some(PContent::Text(_)) => glyph_tracks(scene, &info.tracks[n]).is_empty(),
                 Some(PContent::Path(_)) => !info.tracks[n].iter().any(|&i| scene.tracks[i].property.starts_with("trim") || scene.tracks[i].property == "morph" || scene.tracks[i].property.ends_with(".color")),
                 Some(PContent::Gen(g)) => !g.animated(scene, &info.tracks[n]),
@@ -1392,6 +1399,7 @@ impl<'a> Painter<'a> {
             PContent::Fluid(_) => "fluid.draw",
             PContent::Scene3d(_) => "s3d.draw",
             PContent::Gen(_) => "gen.draw",
+            PContent::Lottie(_) => "lottie.draw",
         });
         match c {
             PContent::Raster { rect } => {
@@ -1492,6 +1500,11 @@ impl<'a> Painter<'a> {
             PContent::Cloud(c) => self.draw_cloud(ctx, n, c, view.t, chain)?,
             PContent::Fluid(fl) => self.draw_fluid(ctx, view, n, fl, chain)?,
             PContent::Gen(g) => self.draw_gen(ctx, view, n, g, chain),
+            PContent::Lottie(l) => {
+                if let Some(frame) = l.frame_at(view.t) {
+                    l.draw(ctx, chain, frame);
+                }
+            }
             PContent::Scene3d(p) => self.draw_scene3d(ctx, view, view_frame(view, self.scene, self.sched), n, p, chain)?,
             PContent::Path(p) => {
                 let a = schedule::number_at(self.scene, &self.info.tracks[n], "trim-start", view.t, p.trim[0]);
@@ -1525,13 +1538,13 @@ impl<'a> Painter<'a> {
                         let dithered = match fp {
                             Paint::Gradient(g) if self.dither && p.fill_pt == Affine::IDENTITY => {
                                 let screen = [0, 0, self.scene.width as i32, self.scene.height as i32];
-                                crate::dither::fill(ctx, &mut self.grad_cache, g as *const _ as usize, path, g, chain, Affine::IDENTITY, 1.0, self.origin, screen, false)
+                                crate::dither::fill(ctx, &mut self.grad_cache, g as *const _ as usize, path, g, chain, Affine::IDENTITY, 1.0, self.origin, screen, p.even_odd)
                             }
                             _ => false,
                         };
                         if !dithered {
                             ctx.set_transform(chain);
-                            ctx.set_fill_rule(Fill::NonZero);
+                            ctx.set_fill_rule(if p.even_odd { Fill::EvenOdd } else { Fill::NonZero });
                             ctx.set_paint(fp.clone());
                             let pt = p.fill_pt != Affine::IDENTITY && over.is_none();
                             if pt {
@@ -2870,6 +2883,7 @@ mod morph_tests {
             fill_transform: None,
             stroke: None,
             trim: [0.0, 1.0],
+            fill_rule: Default::default(),
             morph: vec![
                 "M50 10 A40 40 0 1 1 50 90 A40 40 0 1 1 50 10 Z".into(),
                 "M50 10 A40 40 0 1 1 50 90 A40 40 0 1 1 50 10 Z M50 30 A20 20 0 1 0 50 70 A20 20 0 1 0 50 30 Z".into(),

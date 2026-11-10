@@ -164,7 +164,7 @@ fn paints(l: &Layer) -> bool {
 
 /// Layers that animate by themselves while visible (video, particles, fluid).
 fn self_animating(l: &Layer) -> bool {
-    matches!(l.kind, Kind::Video { .. } | Kind::Cloud(_) | Kind::Fluid(_))
+    matches!(l.kind, Kind::Video { .. } | Kind::Lottie { .. } | Kind::Cloud(_) | Kind::Fluid(_))
 }
 
 const OP_MIN: f64 = 0.004;

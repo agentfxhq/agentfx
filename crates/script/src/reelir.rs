@@ -1004,7 +1004,7 @@ impl<'a> Em<'a> {
             effects.push(json!({"type": "glow", "radius": base(Ch::Glow).unwrap_or(0.0), "color": rgba(&c)}));
         }
         // shadows on non-box kinds are CSS drop-shadow filters (html.rs): reel drop-shadow effect
-        let is_box = matches!(l.kind, Kind::Group | Kind::Rect | Kind::Ellipse | Kind::Image { .. } | Kind::Video { .. } | Kind::Counter { .. } | Kind::Html { .. });
+        let is_box = matches!(l.kind, Kind::Group | Kind::Rect | Kind::Ellipse | Kind::Image { .. } | Kind::Video { .. } | Kind::Lottie { .. } | Kind::Counter { .. } | Kind::Html { .. });
         if !is_box {
             for sh in &l.style.shadows {
                 let c = sh.color.clone().unwrap_or(Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0.4 });
@@ -1096,6 +1096,13 @@ impl<'a> Em<'a> {
                     None => self.note("unsupported image"),
                 }
             }
+            Kind::Lottie { src, offset, rate, looped, hold } => {
+                if !own.is_empty() {
+                    extra_children.push(json!({"name": format!("{}-box", l.id), "children": [], "content": self.paint_content(&own)}));
+                }
+                let cr = self.nat.content_rect(&l.id).unwrap_or(r);
+                extra_children.push(json!({"name": format!("{}-lottie", l.id), "children": [], "content": {"type": "lottie", "path": src, "rect": [r4(cr[0]), r4(cr[1]), r4(cr[2]), r4(cr[3])], "start": self.scene_start(&l.id), "offset": offset, "rate": rate, "looped": looped, "hold": hold}}));
+            }
             Kind::Video { src, fit, offset, rate, looped, hold } => {
                 if !own.is_empty() {
                     extra_children.push(json!({"name": format!("{}-box", l.id), "children": [], "content": self.paint_content(&own)}));
@@ -1166,16 +1173,19 @@ impl<'a> Em<'a> {
                         // path whose trim ever collapses (draw-on from 0) gets butt caps
                         let collapses = tracks.iter().any(|t| matches!(t.ch, Ch::TrimEnd | Ch::TrimStart) && (t.base.n() <= 1e-3 || t.keys.iter().any(|k| k.v.n() <= 1e-3)) && t.ch == Ch::TrimEnd)
                             || base(Ch::TrimEnd).map(|v| v <= 1e-3).unwrap_or(false);
-                        let cap = if l.tags.iter().any(|t| t == "slice") || collapses { "butt" } else { "round" };
+                        let cap = if l.tags.iter().any(|t| t == "slice") || collapses { "butt" } else { l.style.stroke_cap.unwrap_or("round") };
                         let sb = match l.style.stroke_paint.as_ref().and_then(|p| brush(p, r)) {
                             Some(b) => serde_json::to_value(b).unwrap(),
                             None => json!({"solid": rgba(s)}),
                         };
-                        let mut st = json!({"width": l.style.stroke_w, "join": "round", "cap": cap, "brush": sb});
+                        let mut st = json!({"width": l.style.stroke_w, "join": l.style.stroke_join.unwrap_or("round"), "cap": cap, "brush": sb});
                         if let Some((a, b)) = l.style.dash {
                             st["dash"] = json!([a, b]);
                         }
                         pc["stroke"] = st;
+                    }
+                    if l.style.even_odd && pc.get("fill").is_some() {
+                        pc["fill_rule"] = json!("evenodd");
                     }
                     if pc.get("fill").is_none() && pc.get("stroke").is_none() {
                         pc["stroke"] = json!({"width": 1, "brush": {"solid": [0, 0, 0, 0]}});
@@ -1744,7 +1754,7 @@ pub fn emit(ir: &Ir, nat: &mut Native) -> Out {
     // base paint of every layer (own content)
     let tp = std::time::Instant::now();
     let mut ids: Vec<(String, bool, bool)> = vec![];
-    ir.root.walk(&mut |l| ids.push((l.id.clone(), matches!(l.kind, Kind::Image { .. }), matches!(l.kind, Kind::Path { .. } | Kind::Video { .. }))));
+    ir.root.walk(&mut |l| ids.push((l.id.clone(), matches!(l.kind, Kind::Image { .. }), matches!(l.kind, Kind::Path { .. } | Kind::Video { .. } | Kind::Lottie { .. }))));
     let mut paint_errors = vec![];
     for (id, img, skip) in &ids {
         if *skip {

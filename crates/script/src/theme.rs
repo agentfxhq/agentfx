@@ -27,6 +27,8 @@ pub struct Theme {
     pub taste: crate::taste::TasteCfg,
     /// design layer (L2): surface, elevation, type roles, scale, treatments, do/don't
     pub d: crate::design::Design,
+    /// asset tokens (`assets logo=...`, brand kits): `src=$logo`, the `logo` element
+    pub assets: IndexMap<String, String>,
 }
 
 pub const MOTION_TOKENS: &str = include_str!("../../../design/motion-tokens.json");
@@ -138,6 +140,7 @@ impl Theme {
             no_emdash: true,
             taste: crate::taste::TasteCfg::default(),
             d,
+            assets: IndexMap::new(),
         })
     }
 
@@ -168,8 +171,10 @@ impl Theme {
             if let Some(name) = t.args.first().and_then(|v| v.as_str()) {
                 if let Some(b) = Theme::builtin(name) {
                     let dd = th.d.clone();
+                    let assets = std::mem::take(&mut th.assets);
                     th = b;
                     th.d = dd;
+                    th.assets = assets;
                 }
             }
             for line in &t.children {
@@ -317,6 +322,9 @@ impl Theme {
                     "gutter" => self.d.gutter = crate::design::num(&raw).unwrap_or(24.0),
                     _ => bad(diags, "layout", "layout tokens: radius, radius-sm, safe, safe-x, safe-y, margin, grid, gutter"),
                 },
+                "assets" => {
+                    self.assets.insert(k.clone(), raw);
+                }
                 "lint" => match k.as_str() {
                     "min-contrast" => self.min_contrast = raw.parse().unwrap_or(self.min_contrast),
                     "no-emdash" => self.no_emdash = raw != "false",

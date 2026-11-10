@@ -1,6 +1,6 @@
 ---
 name: agentfx
-description: Make motion graphics and videos with AgentFX. Write a Reel Script (.reel), lint it, look at frames and contact sheets, then render MP4, GIF, WebP or alpha video natively (no browser). Quick mode renders straight away and is the default; director mode deliberates first (brief, three directions with style frames, dramaturgy on the music grid, storyboard, hero variants, then the full render), with an optional local browser desk. Use when the user asks for a video, animation, motion graphics, social clip, explainer, product teaser, kinetic typography, captions, an effect like fluid ink, physics, shatter, glitch, VHS, halftone, slit-scan or infinite zoom, or says "director mode", "storyboard first", "show me directions".
+description: Make motion graphics and videos with AgentFX. Write a Reel Script (.reel), lint it, look at frames and contact sheets, then render MP4, GIF, WebP or alpha video natively (no browser). Quick mode renders straight away and is the default; director mode deliberates first (brief, three directions with style frames, dramaturgy on the music grid, storyboard, hero variants, then the full render), with an optional local browser desk. Use when the user asks for a video, animation, motion graphics, social clip, explainer, product teaser, kinetic typography, captions, an on-brand video from a brand kit, a logo reveal from an SVG, a Lottie animation, an effect like fluid ink, physics, shatter, glitch, VHS, halftone, slit-scan or infinite zoom, or says "director mode", "storyboard first", "show me directions".
 ---
 
 # AgentFX
@@ -44,6 +44,36 @@ Ask nothing more than you need. If the request is clear, go:
    `.webp`, `.mov` or `.webm` outputs by extension; `--alpha` for a transparent background).
 6. Check the result (a strip of frames: `ffmpeg -i out/film.mp4 -vf fps=2,scale=320:-1,tile=9x1
    out/strip.png`), then hand over the path with one line on what you made.
+
+## Brands, logos and imported animation
+
+When the user names a company or brings brand material, put it in a **brand kit** first instead
+of writing hex colors into the script:
+
+1. `agentfx brand init -o brand/brand.json --name "Acme"` (template + a sample `logo.svg`), then
+   fill it from what the user gave you: `colors` (`primary secondary accent bg fg`, more under
+   `named`), `fonts` (`display`/`body`: `{family, src}` with a local .woff2/.ttf they may embed),
+   `logo` (`src`, `on-dark`, `on-light`, `mark`), `motion` (`ease`, `enter`, `stagger`, ...),
+   `layout` (`safe`, `radius`). From Figma variables: `agentfx brand from-figma vars.json -o
+   brand/brand.json` (REST variables JSON, the Figma MCP `get_variable_defs` output, or design
+   tokens); it says which roles it could not find. Never guess brand colors: ask or leave the
+   template's and mark them proposed.
+2. In the script: `brand "brand/brand.json"` after the `video` line. Then use tokens, never hex:
+   `$primary $secondary $highlight $fg $bg $muted $surface` and the named ones; components,
+   `{accent}` words and default shapes pick the brand up by themselves. Logos: `logo #l w=600`
+   (or `svg #l src=$logo parts`); `$logo` already is the variant for the background.
+3. Logo reveals and icon animation: `svg #id src=file.svg parts` makes every `<g id>` and path a
+   layer `#id.<svg id>` (unnamed paths `#id.p1`...). `draw #id dur=1.6s` traces it (fills fade
+   in after the outline), `enter #id.word rise`, `anim #id.ring stroke ...`, `pulse #id.dot`.
+   Recolor file colors to tokens with `recolor="#e30613:$primary, #000000:$fg"`. Lint names the
+   parts when an id is wrong (`E_SVG_ID`) and lists what it dropped (`W_SVG_PARTS`: clips,
+   masks, filters, images, unoutlined text; outline text in the editor). From Figma: export the
+   frame as SVG with "Include id attribute" and "Outline text" so layer names become part ids.
+4. Lottie files (Bodymovin JSON): `lottie #l src=anim.json w=500 loop`. Text/image layers,
+   expressions and effects are not drawn (`W_LOTTIE` says which); look at a frame.
+
+Details: the spec section "Brand kits and imports", `docs/IMPORTS.md`,
+`examples/features/brand-kit.reel`, `examples/features/svg-logo-reveal.reel`.
 
 Offer director mode in one line only when the brief is open-ended or the user wants to steer:
 

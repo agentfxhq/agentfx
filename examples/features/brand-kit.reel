@@ -1,0 +1,26 @@
+// Brand kit (P5): one JSON file (assets/brand/lumen.json) sets colors, fonts, the logo,
+// motion and layout tokens. Nothing below names a hex color: components, text accents,
+// shapes and the background come from the kit; $primary/$highlight/$coral are its tokens,
+// `logo` is its logo ($logo picks the on-dark variant on this dark background).
+video "Brand kit" size=1920x1080 fps=30 captions=off
+brand "assets/brand/lumen.json"
+
+scene intro dur=3.2s
+  logo #brand w=760 y=36% x=50% anchor=center
+  text #claim "Light for every {team}." style=h2 x=50% y=64% anchor=center
+  rect #bar w=420 h=10 radius=5 fill=$highlight x=50% y=74% anchor=center
+  @0s draw #brand dur=1.6s
+  @0.9s enter #claim rise
+  @1.2s enter #bar wipe
+
+scene tokens dur=3.4s
+  row gap=36
+    stat #a value=98 suffix="%" label="uptime" in=count
+    stat #b value=320 suffix="%" label="faster" in=count
+    stat #c value=24 label="hours a day" in=count
+  row gap=28 y=78% x=50% anchor=center
+    circle #c1 size=70 fill=$primary
+    circle #c2 size=70 fill=$secondary
+    circle #c3 size=70 fill=$highlight
+    circle #c4 size=70 fill=$coral
+  @0.6s enter #c1 pop ; enter #c2 pop ; enter #c3 pop ; enter #c4 pop

@@ -1,0 +1,26 @@
+// SVG import (P5): `svg ... parts` turns the file into native vector layers. Every <g id>
+// and every path is addressable as #logo.<svg id> (crisp at any zoom: they are paths, not a
+// bitmap). draw traces the strokes and outlines (filled shapes then fade their fill in),
+// recolor= maps the file's colors onto tokens, and the parts take ordinary verbs.
+video "SVG logo reveal" size=1920x1080 fps=30 captions=off
+theme
+  colors brand=#3d5afe spark=#ffb400
+
+scene reveal dur=4.2s bg=#0b1026
+  svg #logo src=assets/brand/lumen-logo.svg w=1100 x=50% y=46% anchor=center parts recolor="#e30613:$brand, #111111:#f5f7ff"
+  text #tag "draw, then per-part motion" style=small color=$muted x=50% y=74% anchor=center
+  @0s draw #logo.mark dur=1.1s
+  @0.5s draw #logo.word dur=1.5s
+  @2.2s pulse #logo.spark
+  @2.6s anim #logo.ring stroke 0s:$brand 0.8s:$spark~inout-sine
+  @2.4s enter #tag fade
+
+scene zoom dur=3s bg=#0b1026
+  // the same file at 6x: still vector-sharp
+  svg #big src=assets/brand/lumen-logo.svg w=3400 x=58% y=52% anchor=center parts recolor="#e30613:#3d5afe, #111111:#f5f7ff"
+  @0s anim #big scale 0s:1 3s:1.25~inout-sine
+  @0.3s enter #big.word left
+
+scene lottie dur=2.5s bg=#0b1026
+  // Lottie (Bodymovin JSON) as vectors, drawn by the native renderer
+  lottie #spin src=assets/brand/spinner.json w=420 x=50% y=50% anchor=center loop

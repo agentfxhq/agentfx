@@ -26,6 +26,8 @@ USAGE:
   agentfx design pitch <brief.md|text> [--n 4] [--lenses a,b] [--render]   (prompt pack + style frames + contact sheet)
   agentfx critique <sheet.png|video.mp4> [--rubric visual|motion|all] [--model haiku|sonnet] [--rounds n]
   agentfx picks add|list ...        (design pick memory, design/picks.jsonl)
+  agentfx brand init [-o brand.json] [--name N]       (brand kit template + logo.svg)
+  agentfx brand from-figma <variables.json> [-o brand.json]   (Figma variables / design tokens -> brand kit)
   agentfx catalog [--md]
   agentfx schema
   agentfx --version | --help
@@ -129,7 +131,12 @@ fn build(a: &Args) -> Built {
         eprintln!("{USAGE}");
         std::process::exit(2)
     });
-    let (doc, mut diags) = load(&file);
+    let (mut doc, mut diags) = load(&file);
+    // brand kits (`brand "brand.json"`) expand into theme lines + font declarations
+    {
+        let dir = file.parent().map(|p| p.to_path_buf()).filter(|p| !p.as_os_str().is_empty()).unwrap_or_else(|| PathBuf::from("."));
+        agentfx_script::brand::expand(&mut doc, &dir, &mut diags);
+    }
     let engine = run::tts_engine(a.get("--tts").as_deref(), a.has("--no-tts")).unwrap_or_else(|e| {
         eprintln!("{e}");
         std::process::exit(2)
@@ -202,6 +209,69 @@ fn py_tool(script: &str, rest: &[String]) -> ! {
     std::process::exit(st.map(|s| s.code().unwrap_or(1)).unwrap_or(2))
 }
 
+/// `agentfx brand init [-o brand.json] [--name N]` and `agentfx brand from-figma <vars.json> [-o brand.json]`.
+fn brand_cmd(sub: Option<&str>, rest: &[String]) -> ! {
+    let opt = |k: &str| rest.iter().position(|a| a == k).and_then(|i| rest.get(i + 1)).cloned();
+    let write = |path: &Path, text: &str| {
+        if path.exists() && !rest.iter().any(|a| a == "--force") {
+            eprintln!("{} exists (use --force to overwrite)", path.display());
+            std::process::exit(1);
+        }
+        if let Some(d) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
+            let _ = std::fs::create_dir_all(d);
+        }
+        std::fs::write(path, text).unwrap_or_else(|e| {
+            eprintln!("cannot write {}: {e}", path.display());
+            std::process::exit(1)
+        });
+        eprintln!("wrote {}", path.display());
+    };
+    match sub {
+        Some("init") => {
+            let out = PathBuf::from(opt("-o").unwrap_or_else(|| "brand.json".into()));
+            let name = opt("--name").unwrap_or_else(|| "Acme".into());
+            write(&out, &agentfx_script::brand::template(&name));
+            let logo = out.parent().map(|d| d.join("logo.svg")).unwrap_or_else(|| PathBuf::from("logo.svg"));
+            if !logo.exists() {
+                write(&logo, agentfx_script::brand::TEMPLATE_LOGO);
+            }
+            eprintln!("use it with `brand \"{}\"` after the video line; colors are $primary $secondary $highlight $fg $bg, the logo is `logo #l` or `svg #l src=$logo parts`", out.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_default());
+            std::process::exit(0)
+        }
+        Some("from-figma") => {
+            let Some(src) = rest.iter().find(|a| !a.starts_with('-') && Some(a.as_str()) != opt("-o").as_deref() && Some(a.as_str()) != opt("--name").as_deref()) else {
+                eprintln!("usage: agentfx brand from-figma <variables.json> [-o brand.json] [--name N]\n  input: Figma REST `GET /v1/files/:key/variables/local` JSON, the Figma MCP get_variable_defs map, or W3C/Tokens Studio design tokens");
+                std::process::exit(2)
+            };
+            let text = std::fs::read_to_string(src).unwrap_or_else(|e| {
+                eprintln!("cannot read {src}: {e}");
+                std::process::exit(2)
+            });
+            let j: serde_json::Value = serde_json::from_str(&text).unwrap_or_else(|e| {
+                eprintln!("{src}: not JSON: {e}");
+                std::process::exit(2)
+            });
+            let (mut kit, notes) = agentfx_script::brand::from_figma(&j);
+            if let Some(n) = opt("--name") {
+                kit["name"] = serde_json::json!(n);
+            }
+            for n in &notes {
+                eprintln!("  {n}");
+            }
+            let text = serde_json::to_string_pretty(&kit).unwrap() + "\n";
+            match opt("-o") {
+                Some(o) => write(Path::new(&o), &text),
+                None => print!("{text}"),
+            }
+            std::process::exit(0)
+        }
+        _ => {
+            eprintln!("usage: agentfx brand init [-o brand.json] [--name N] [--force]\n       agentfx brand from-figma <variables.json> [-o brand.json] [--name N] [--force]");
+            std::process::exit(2)
+        }
+    }
+}
+
 fn main() {
     // before any thread or layout exists (it may set an env var read once by Parley)
     agentfx_script::native::layout_mode();
@@ -221,6 +291,7 @@ fn main() {
         (Some("motion"), Some("mine")) => py_tool("motion_mine.py", &raw[3..]),
         (Some("critique"), _) => py_tool("critique.py", &raw[2..]),
         (Some("picks"), _) => py_tool("picks.py", &raw[2..]),
+        (Some("brand"), sub) => brand_cmd(sub, &raw[3.min(raw.len())..]),
         (Some("design"), Some("pitch")) => py_tool("pitch.py", &raw[3..]),
         (Some("design"), Some(sub @ ("extract" | "harvest"))) => {
             // computed styles of style frames (Blitz/Stylo), then the aggregation (tools/harvest.py)

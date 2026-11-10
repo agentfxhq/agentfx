@@ -375,6 +375,8 @@ pub enum Kind {
     Text { runs: Vec<Run> },
     Image { src: String, fit: String },
     Video { src: String, fit: String, offset: f64, rate: f64, looped: bool, hold: bool },
+    /// Lottie animation (P5): drawn by the native renderer (velato) into the box, contain fit.
+    Lottie { src: String, offset: f64, rate: f64, looped: bool, hold: bool },
     /// Raw escape hatches (rendered by the HTML path / Chrome fallback in the native renderer).
     Html { markup: String },
     Svg { markup: String },
@@ -545,6 +547,14 @@ pub struct Style {
     pub stroke_paint: Option<Paint>,
     #[serde(skip_serializing_if = "is_zero")]
     pub stroke_w: f64,
+    /// path stroke cap / join (imported SVG parts; None: the defaults)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stroke_cap: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stroke_join: Option<&'static str>,
+    /// even-odd fill rule (imported SVG parts)
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub even_odd: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dash: Option<(f64, f64)>,
     #[serde(skip_serializing_if = "is_zero")]

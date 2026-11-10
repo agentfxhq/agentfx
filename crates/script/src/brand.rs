@@ -215,14 +215,26 @@ fn kit(j: &J, ex: &mut Ex, set_base: bool, fams: &mut Vec<String>) -> (Node, Vec
             None => ex.err("E_BRAND", "`colors` must be an object".into(), "write \"colors\": {\"primary\": \"#0a5cff\", \"bg\": \"#0b1020\", \"fg\": \"#ffffff\"}"),
         }
     }
+    // the canvas: colors.bg, else the literal colors of the `background` paint
+    let canvas_lum = bg.as_ref().map(|c| c.luminance()).or_else(|| {
+        let p = crate::values::parse_paint(o.get("background")?.as_str()?).ok()?;
+        let cs: Vec<Rgba> = match p {
+            crate::values::Paint::Solid(ColorRef::Lit(c)) => vec![c],
+            crate::values::Paint::Linear { stops, .. } | crate::values::Paint::Radial { stops, .. } | crate::values::Paint::Conic { stops, .. } => {
+                stops.into_iter().filter_map(|s| if let ColorRef::Lit(c) = s.color { Some(c) } else { None }).collect()
+            }
+            _ => vec![],
+        };
+        (!cs.is_empty()).then(|| cs.iter().map(|c| c.luminance()).sum::<f64>() / cs.len() as f64)
+    });
     let dark = match o.get("base").and_then(J::as_str) {
         Some("dark") => true,
         Some("light") => false,
         Some(b) => {
             ex.err("E_BRAND_KEY", format!("base `{b}`"), "base is \"dark\" or \"light\" (default: from the bg color)");
-            bg.as_ref().map(|c| c.luminance() < 0.4).unwrap_or(true)
+            canvas_lum.map(|l| l < 0.4).unwrap_or(true)
         }
-        None => bg.as_ref().map(|c| c.luminance() < 0.4).unwrap_or(true),
+        None => canvas_lum.map(|l| l < 0.4).unwrap_or(true),
     };
     if set_base {
         theme.args.push(Value::Str(if dark { "studio-dark".into() } else { "studio-light".into() }));
@@ -720,6 +732,17 @@ mod tests {
         assert!((th.dur("enter") - 0.6).abs() < 1e-9);
         // dark background: $logo is the on-dark variant
         assert!(th.assets["logo"].ends_with("logo-white.svg"), "{:?}", th.assets);
+    }
+
+    #[test]
+    fn light_background_paint_picks_the_light_base() {
+        let d = tmpdir("lightbg");
+        std::fs::write(d.join("brand.json"), r##"{"background":"linear(180deg, #ffffff 0%, #eef0f4 100%)","colors":{"primary":"#0a5cff"}}"##).unwrap();
+        let (mut doc, _) = crate::parse::parse("video \"t\"\nbrand \"brand.json\"\n");
+        let mut diags = vec![];
+        expand(&mut doc, &d, &mut diags);
+        let th = doc.nodes.iter().find(|n| n.kind == "theme").unwrap();
+        assert_eq!(th.args[0].raw(), "studio-light");
     }
 
     #[test]

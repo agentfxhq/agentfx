@@ -1,0 +1,121 @@
+{
+ "id": "teaser-dashboard-shot",
+ "tags": [
+  "product",
+  "screenshot"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 750.5,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 1,
+  "cost_usd": 0.39577290000000004,
+  "tokens": {
+   "input_tokens": 4,
+   "output_tokens": 90,
+   "cache_read_input_tokens": 70281,
+   "cache_creation_input_tokens": 858
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 17,
+   "Read": 7
+  },
+  "lint_calls": 1,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_STATIC_END": 1
+  },
+  "renders": 0,
+  "frames": 3,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "That notification is only the earlier background `find` command, which hit its time limit and was stopped. I had already found the renderer without it, and the video was rendered and checked. Nothing else is pending.\n\nThe promo is at `./out/film.mp4` and the script is at `./film.reel`.",
+  "spec_reads": 2,
+  "tool_errors": 1,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 1,
+    "codes": [
+     "W_COLD_OPEN"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 9.5
+  },
+  "text": [
+   {
+    "text": "Everything in one place",
+    "pass": true
+   },
+   {
+    "text": "Try Panelo free",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "the dashboard screenshot is shown large",
+     "pass": false,
+     "evidence": "Screenshot sits at roughly 2/3 of frame width with big empty margins; small and text unreadable until zoom."
+    },
+    {
+     "item": "there is a zoom or camera move into the screenshot",
+     "pass": true,
+     "evidence": "Frames 3.56s–5.15s show progressive zoom into the hero area, then zoom out at 5.94s."
+    },
+    {
+     "item": "both lines of copy appear",
+     "pass": true,
+     "evidence": "'Everything in one place' at 1.19–1.98s and 'Try Panelo free' in the final scene."
+    },
+    {
+     "item": "ends on the call to action",
+     "pass": true,
+     "evidence": "Last four frames hold 'Try Panelo free' on a gradient."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": false,
+   "problems": [
+    "Dashboard is too small in the frame at rest (about 1300px on a 1920 canvas, small top-heavy placement); UI details are illegible until the zoom.",
+    "The headline disappears before the zoom begins, so the zoom has no copy and the caption sits tight against the bottom edge of the screenshot.",
+    "The zoom crops into the dashboard, cutting off panels mid-text (left chat and right panel clipped). It reads as a generic crop, not a deliberate focus.",
+    "The CTA is plain text on a gradient, with no button, URL or logo, and it holds static for about 3.5s. It feels bare.",
+    "Screenshot placement is off-center vertically, leaving a large empty dark area below it, and the browser chrome looks flat with no shadow or depth."
+   ],
+   "verdict": "Meets the brief structurally, with a zoom, both lines of copy and a CTA ending. The execution is generic: the screenshot is small, the headline vanishes before the zoom, and the CTA is plain. It's acceptable but probably draws tweak requests.",
+   "cost_usd": 0.025244000000000003,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 79.2
+ },
+ "score_wall_s": 13.7,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/teaser-dashboard-shot"
+}

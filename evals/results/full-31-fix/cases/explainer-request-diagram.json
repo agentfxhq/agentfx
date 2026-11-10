@@ -1,0 +1,138 @@
+{
+ "id": "explainer-request-diagram",
+ "tags": [
+  "explainer",
+  "diagram"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 66.4,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 18,
+  "cost_usd": 0.2254269,
+  "tokens": {
+   "input_tokens": 28,
+   "output_tokens": 4315,
+   "cache_read_input_tokens": 406449,
+   "cache_creation_input_tokens": 35394
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 9,
+   "Read": 4,
+   "mcp__agentfx__agentfx_render": 1
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 5,
+  "first_lint_errors": 3,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 5
+  },
+  "warning_codes": {
+   "W_EMPTY_TEXT": 1,
+   "W_STATIC_END": 3,
+   "W_TEXT_DENSITY": 2,
+   "W_SAFE_AREA": 1
+  },
+  "renders": 1,
+  "frames": 2,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a 14-second animated diagram of a web request and rendered it to `./out/film.mp4` (script: `./film.reel`). I checked two frames (the second step and the response step), but I didn't extract frames from the finished MP4 to look at it.\n\nThe diagram is three cards in a row: **Browser → Server → Database**. Arrows draw between them, and the card for the current step lights up. A caption under the diagram walks through the steps:\n\n1. The browser sends an HTTP request.\n2. The server runs code and queries the database.\n3. The database returns the data.\n4. The server builds the response.\n5. The browser shows the page.\n\nThe arrows between the cards turn two-way once the response comes back. The captions and the \"You click\", \"App logic\" and \"Stores data\" sub-labels are my own wording.\n\nThe film has no voice-over or music. Lint's only remaining warnings are a text-density note (more on-screen words than are comfortable to read while listening) and a note that the last 2 seconds barely move.",
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 2,
+    "codes": [
+     "W_STATIC_END",
+     "W_TEXT_DENSITY"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 14.0
+  },
+  "text": [
+   {
+    "text": "Browser",
+    "pass": true
+   },
+   {
+    "text": "Server",
+    "pass": true
+   },
+   {
+    "text": "Database",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "three nodes: browser, server, database",
+     "pass": true,
+     "evidence": "Browser, Server, Database cards with icons and subtitles are visible in every frame."
+    },
+    {
+     "item": "arrows/connectors between them",
+     "pass": true,
+     "evidence": "Arrows link Browser→Server→Database. The return arrows are drawn as small bidirectional arrows."
+    },
+    {
+     "item": "the request path is shown step by step (not all at once)",
+     "pass": true,
+     "evidence": "Arrows appear in sequence between 1.75s and 7.58s. The active node highlight and the numbered captions move from step 1 to step 5."
+    },
+    {
+     "item": "the way back (response) is shown",
+     "pass": false,
+     "evidence": "The return links look like tiny double-headed arrows on the same line as the request arrows. No distinct curved dashed return path is visible, so the response direction is unclear. The step 3 and step 4 captions are the only cue."
+    },
+    {
+     "item": "clean, uncluttered look",
+     "pass": true,
+     "evidence": "Dark green gradient, consistent cards, one caption at a time. The only blemish is the brief caption overlap at crossfades."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "The diagram is small. It takes up about the middle third of the frame, with a lot of empty space above and below, and the node labels and captions are small for 1080p.",
+    "The response path is not distinct. The return arrows are tiny double-headed arrows that sit on the request arrows instead of separate curved dashed lines. The 'and back' story is hard to see.",
+    "Captions overlap at the crossfades (about 4.08s and 11.08s). The old and new text are both visible and look messy.",
+    "The title is crowded against the diagram, and the layout is cramped in the centre. The caption sits far below, so the eye has to jump between them.",
+    "The arrows are thin and low contrast. The step 3 and step 4 highlights are subtle, so it is hard to follow where the data is at any moment."
+   ],
+   "verdict": "The video is clean and on-topic, and it walks through the steps in order. The diagram is small. The response path is barely distinguishable from the request path. The captions overlap during crossfades. It is acceptable but generic, and the user would probably ask for bigger visuals and a clearer return path.",
+   "cost_usd": 0.0275372,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 77.3
+ },
+ "score_wall_s": 14.6,
+ "workdir": "/tmp/claude-1000/agentfx-evals-fix/full-31-fix/explainer-request-diagram"
+}

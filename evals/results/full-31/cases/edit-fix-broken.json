@@ -1,0 +1,94 @@
+{
+ "id": "edit-fix-broken",
+ "tags": [
+  "edit",
+  "lint"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 44.0,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 12,
+  "cost_usd": 0.11717970000000001,
+  "tokens": {
+   "input_tokens": 24,
+   "output_tokens": 2708,
+   "cache_read_input_tokens": 265077,
+   "cache_creation_input_tokens": 15886
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 7,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_render": 1
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 3,
+  "first_lint_errors": 3,
+  "error_codes": {
+   "E_PRESET": 1,
+   "E_ID": 1,
+   "E_EVENT_OUTSIDE": 1
+  },
+  "warning_codes": {
+   "W_COLD_OPEN": 1,
+   "W_DEAD_AIR": 1,
+   "W_STATIC_END": 1
+  },
+  "renders": 2,
+  "frames": 1,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "po in the title:** `in=rize` is now `in=rise`.\n- **Typo in a pulse target:** `@1.5s pulse #nmae` now targets `#name`.\n- **Out-of-range event:** `@6s exit #tag fade` fell outside the 5 s scene. It is now `@4.4s`.\n- **Dead air:** I added `@3s pulse #name` so nothing sits still for more than 2 s.\n\n`agentfx lint film.reel --measure --format 9:16` now reports 0 errors and 0 warnings.\n\n**Why there's no video:** the renderer can't be found. The `agentfx` on PATH is a wrapper that sends render calls to `/home/drzivil/dev/agentfx/tools/remote-render.sh`. That script looks for `/home/drzivil/dev/agentfx/tools/agentfx-render`, which doesn't exist. The MCP render tool goes through the same wrapper and fails the same way. Setting `AGENTFX_RENDERER` didn't help, because the wrapper overwrites it.\n\nThere is a working renderer at `/home/drzivil/.local/bin/agentfx-render`, plus a built one in `target/release/`. I didn't call the unwrapped `~/.local/bin/agentfx` directly. The wrapper looks deliberately set up (shared render lock, remote routing), and I didn't want to bypass it without your say-so.\n\n**Your options:**\n- **Fix the wrapper:** make `tools/agentfx-render` exist, for example by running `tools/install.sh`, then render with `agentfx render film.reel -o out/film.mp4 --format 9:16`.\n- **Let me bypass it:** tell me to go around the wrapper and I'll render with `/home/drzivil/.local/bin/agentfx` directly.\n\nI also haven't looked at a frame yet, since `agentfx frame` needs the same renderer.",
+  "spec_reads": 0,
+  "tool_errors": 4,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": false,
+  "agent_rendered": false,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 5.0
+  },
+  "text": [
+   {
+    "text": "BEAN BOX",
+    "pass": true
+   },
+   {
+    "text": "Fresh roasted, every week",
+    "pass": true
+   }
+  ],
+  "judge": null,
+  "render_errors": [
+   "9:16: renderer not found at /home/drzivil/dev/agentfx/tools/agentfx-render (build it with `cargo build --release` at the repository root, or run tools/install.sh, which installs agentfx-render next to agentfx; or set AGENTFX_RENDERER)\n"
+  ],
+  "compiles": false,
+  "accepted": false,
+  "score": 30.0
+ },
+ "score_wall_s": 0.0,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/edit-fix-broken"
+}

@@ -1,0 +1,130 @@
+{
+ "id": "teaser-nordlicht",
+ "tags": [
+  "product",
+  "brand"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": 15,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 82.3,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 21,
+  "cost_usd": 0.26502650000000005,
+  "tokens": {
+   "input_tokens": 38,
+   "output_tokens": 5264,
+   "cache_read_input_tokens": 649825,
+   "cache_creation_input_tokens": 36832
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 12,
+   "Read": 4,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_sheet": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_STATIC_END": 1
+  },
+  "renders": 0,
+  "frames": 0,
+  "sheets": 3,
+  "skill_loaded": true,
+  "result": "The Nordlicht teaser is rendered: 15.0 s, 1920×1080, landscape. I checked the frames on a contact sheet but didn't extract frames from the final MP4.\n\n- **0–5 s:** \"Plan less.\" in white on navy `#0B1F3A`. A teal `#4FD1C5` glow drifts along the bottom like an aurora, and a teal line draws under the text.\n- **5–10 s:** \"Live more.\" in teal, with the glow growing.\n- **10–15 s:** a teal dot above the \"Nordlicht\" wordmark, then \"Coming March 2027\" in teal. The glow keeps drifting to the end.\n\nThe Nordlicht wordmark is plain text in the default font, since I had no logo file. If you have an SVG logo, I can swap it in. There's no music or voice-over.\n\nThe `agentfx` wrapper on PATH points at a renderer that doesn't exist (`tools/agentfx-render`), so its `sheet` and `render` commands and the MCP tools failed. I ran the built binary in `target/release` directly instead, under the same lock the wrapper uses. Lint reports no errors or warnings.\n\nFiles are in `/tmp/claude-1000/agentfx-evals-full/full-31/teaser-nordlicht`:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 0,
+  "tool_errors": 3,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 15.0
+  },
+  "text": [
+   {
+    "text": "Nordlicht",
+    "pass": true
+   },
+   {
+    "text": "Plan less. Live more.",
+    "pass": true
+   },
+   {
+    "text": "Coming March 2027",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "uses navy #0B1F3A and teal #4FD1C5 as the main colours",
+     "pass": true,
+     "evidence": "Navy background throughout, teal glow, bar, dot, 'Live more.' and date text."
+    },
+    {
+     "item": "app name Nordlicht is prominent",
+     "pass": true,
+     "evidence": "Large bold white 'Nordlicht' centred in final scene."
+    },
+    {
+     "item": "tagline shown",
+     "pass": true,
+     "evidence": "'Plan less.' then 'Live more.' in huge type across two scenes."
+    },
+    {
+     "item": "ends on Coming March 2027",
+     "pass": true,
+     "evidence": "Final frames at 13–14.4s show 'Coming March 2027' under Nordlicht."
+    },
+    {
+     "item": "looks like a polished product teaser, not a slideshow",
+     "pass": false,
+     "evidence": "Text-only cards on a dim gradient; no product visuals, reads as three title slides."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": false,
+   "problems": [
+    "Purely typographic with no app UI, imagery or logo, so it feels like a generic slideshow rather than a product teaser",
+    "The tagline is split across two separate scenes and never appears together; 'Plan less.' fades to an empty frame with only a bar at 4.4s",
+    "Pacing is slow: about 5s on each static line, with long holds and little motion after the text-in",
+    "'Coming March 2027' is small and mid-weight teal on a glowing gradient, so it has weaker hierarchy and contrast than the rest",
+    "Brand reveal is plain: a dot above the wordmark with no real logo, and the empty space in the upper third is unused"
+   ],
+   "verdict": "Clean, on-brand and legible, with all the requested text and the right ending. It's a safe, generic type-only animation with slow pacing and no product content, so the user would probably ask for more visual interest.",
+   "cost_usd": 0.028549699999999997,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 80.7
+ },
+ "score_wall_s": 13.1,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/teaser-nordlicht"
+}

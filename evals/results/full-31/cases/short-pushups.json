@@ -1,0 +1,133 @@
+{
+ "id": "short-pushups",
+ "tags": [
+  "vertical",
+  "social",
+  "list"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 754.6,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 1,
+  "cost_usd": 0.32867589999999997,
+  "tokens": {
+   "input_tokens": 4,
+   "output_tokens": 91,
+   "cache_read_input_tokens": 56320,
+   "cache_creation_input_tokens": 1052
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 14,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_sheet": 1,
+   "Read": 4
+  },
+  "lint_calls": 6,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_DEAD_AIR": 4,
+   "W_TEXT_DENSITY": 1,
+   "W_OVERLAP": 17,
+   "W_SAFE_AREA": 3
+  },
+  "renders": 0,
+  "frames": 2,
+  "sheets": 1,
+  "skill_loaded": true,
+  "result": "That background notification is only the earlier `find /` search being stopped at its time limit. I don't need it, because I'd already found the renderer from the `ls` output. It doesn't change the render.\n\nThe finished video is still at `./out/film.mp4` and the script is at `./film.reel`.",
+  "spec_reads": 0,
+  "tool_errors": 1,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 19.5
+  },
+  "text": [
+   {
+    "text": "You're doing push-ups wrong",
+    "pass": true
+   },
+   {
+    "text": "hands under shoulders",
+    "pass": true
+   },
+   {
+    "text": "squeeze your glutes",
+    "pass": true
+   },
+   {
+    "text": "full range of motion",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical 9:16",
+     "pass": true,
+     "evidence": "Frames are tall portrait 1080x1920."
+    },
+    {
+     "item": "hook first",
+     "pass": true,
+     "evidence": "First frames read \"You're doing push-ups wrong\"."
+    },
+    {
+     "item": "three fixes in sequence",
+     "pass": true,
+     "evidence": "Numbered 1 Hands under shoulders, 2 Squeeze your glutes, 3 Full range of motion appear in order."
+    },
+    {
+     "item": "text stays inside the vertical safe area (not under the right action rail or bottom band)",
+     "pass": true,
+     "evidence": "Text is centered with wide margins and nothing sits in the bottom band or right rail. The 12.19s frame is clipped only because the push transition is mid-slide."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "There are no visuals at all. It is plain text on black, with no push-up demo, icons or illustration, so it looks generic and unengaging.",
+    "Frames are mostly static, with the same layout repeated for each fix, so motion feels repetitive. Several sampled frames look identical.",
+    "The hook is small and sits in the middle of the frame with large empty areas above and below, so the frame is underused. The hook could be bigger and punchier.",
+    "The outro is weak. \"Fix all 3\" is small and there is no call to action such as follow or subscribe, which leaves a lot of empty black.",
+    "The dark green numerals have lowish contrast against the black background, and the subtext is small and grey."
+   ],
+   "verdict": "A clean, legible, correctly ordered text-only short that meets the structure requested. It is bland, with no visuals, little motion variety and underused space, so a user would likely ask for more polish.",
+   "cost_usd": 0.028753400000000005,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 83.3
+ },
+ "score_wall_s": 20.3,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/short-pushups"
+}

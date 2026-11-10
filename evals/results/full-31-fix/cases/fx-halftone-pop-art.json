@@ -1,0 +1,124 @@
+{
+ "id": "fx-halftone-pop-art",
+ "tags": [
+  "effect",
+  "halftone",
+  "square"
+ ],
+ "formats": [
+  "1:1"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 57.9,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 11,
+  "cost_usd": 0.1258336,
+  "tokens": {
+   "input_tokens": 18,
+   "output_tokens": 2228,
+   "cache_read_input_tokens": 218176,
+   "cache_creation_input_tokens": 20425
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 4,
+   "Read": 2,
+   "mcp__agentfx__agentfx_render": 1
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 2,
+  "first_lint_errors": 2,
+  "error_codes": {
+   "E_TOPLEVEL": 2
+  },
+  "warning_codes": {
+   "W_CONTRAST": 6,
+   "W_OVERLAP": 2
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a square (1080×1080), 6-second POP ART poster in retro comic style. It's a red and blue burst on yellow, with big white \"POP\" and black \"ART\". The whole poster is run through a four-colour halftone, so the dots show in every colour. The dots start coarse and settle to a fine screen in the first 1.4 seconds, and the text pops in.\n\nI checked a frame at 3 seconds and it reads cleanly. Lint reports 0 errors and 3 warnings. Two are contrast warnings on the white \"POP\", and one says POP and ART overlap. The frame shows neither problem, so I left them. The contrast warnings come from how the halftone is applied. The overlap warning is probably a bounding-box artifact. The render finished without errors, but I didn't watch the finished video.\n\nFiles are in /tmp/claude-1000/agentfx-evals-fix/full-31-fix/fx-halftone-pop-art/:\n- out/film.mp4\n- film.reel",
+  "spec_reads": 0,
+  "tool_errors": 1,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "1:1": {
+    "errors": 0,
+    "warnings": 3,
+    "codes": [
+     "W_CONTRAST",
+     "W_OVERLAP"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "1:1": 6.0
+  },
+  "text": [
+   {
+    "text": "POP ART",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "square 1:1",
+     "pass": true,
+     "evidence": "Frames are square, 1080x1080."
+    },
+    {
+     "item": "visible halftone dot pattern",
+     "pass": true,
+     "evidence": "CMYK dots visible on yellow, red and blue; coarse at the start, finer later."
+    },
+    {
+     "item": "comic/pop-art look (bold colours, bold type)",
+     "pass": true,
+     "evidence": "Yellow, red and blue with heavy white and black type gives a Lichtenstein feel."
+    },
+    {
+     "item": "POP ART readable",
+     "pass": true,
+     "evidence": "POP is clear from 0.75s. ART is dark on blue, so it reads but is weaker."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "ART is dark charcoal on dark blue with a dotted texture. Contrast is low and it is much weaker than POP.",
+    "The first frame is a messy, blobby halftone and the text is hard to read. The resolve to clean dots takes about 1 second.",
+    "After about 1.5s the frame barely changes for 4.5s, so it feels static, with only a slow scale drift.",
+    "The type is nearly as wide as the blue circle, so it feels cramped. There are no comic details such as outlines, speech bursts or rays, and the red ring covers most of the yellow.",
+    "The dense dot pattern makes the letter edges ragged and the blue looks muddy."
+   ],
+   "verdict": "It is a clear, on-brief pop-art poster with a strong halftone look and readable text. It is let down by weak contrast on ART, a static second half and a plain composition.",
+   "cost_usd": 0.030979299999999998,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 86.7
+ },
+ "score_wall_s": 17.5,
+ "workdir": "/tmp/claude-1000/agentfx-evals-fix/full-31-fix/fx-halftone-pop-art"
+}

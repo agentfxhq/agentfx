@@ -1,0 +1,111 @@
+{
+ "id": "fx-infinite-zoom",
+ "tags": [
+  "effect",
+  "zoom",
+  "fractal"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 774.2,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 2,
+  "cost_usd": 0.24387330000000002,
+  "tokens": {
+   "input_tokens": 6,
+   "output_tokens": 599,
+   "cache_read_input_tokens": 93089,
+   "cache_creation_input_tokens": 737
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 14,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_frame": 1,
+   "Read": 2,
+   "Monitor": 1
+  },
+  "lint_calls": 1,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {},
+  "renders": 1,
+  "frames": 3,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I rendered the video: an 8-second, 1920×1080 clip at 30 fps. It's a constant-speed dive into a Mandelbrot spiral, with the colours cycling and the view slowly turning as it goes deeper. \"Go deeper\" is in large white text at the centre, rising in at 0.6 s and pulsing near the end.\n\nI checked frames at 3 s and 5 s, and they look right. I didn't check frames from the finished MP4 itself.\n\n- **Not a loop:** the zoom is a single dive, so it doesn't repeat seamlessly. The catalog also lists a seamless looping zoom (`nest` with `camera loop`). Say so if you'd rather have that, but it looks like a nested frame rather than a true fractal.\n- **Text legibility:** the text has a soft dark shadow, but white on the bright pink and cyan areas is only moderately readable.\n- **Workaround:** the `agentfx` wrapper on PATH points at a renderer path that doesn't exist. I ran the real binary at `$AGENTFX_HOME/target/release/agentfx` locally instead, so the render did not go through the wrapper's remote-render script. I didn't change the wrapper or anything in the AgentFX repository.\n\nFiles are in `/tmp/claude-1000/agentfx-evals-full/full-31/fx-infinite-zoom`:\n- `out/film.mp4`\n- `film.reel`",
+  "spec_reads": 0,
+  "tool_errors": 3,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 8.0
+  },
+  "text": [
+   {
+    "text": "Go deeper",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "continuous zoom into a fractal or nested structure",
+     "pass": true,
+     "evidence": "Mandelbrot spirals get progressively deeper and more detailed with rotation across frames."
+    },
+    {
+     "item": "the zoom keeps going across the whole clip",
+     "pass": true,
+     "evidence": "Structure changes steadily from 0.33s to 7.67s, ending in a deep spiral."
+    },
+    {
+     "item": "text Go deeper shown and readable",
+     "pass": true,
+     "evidence": "Large white bold text is centered in every frame, readable though it is busy against bright pastel areas."
+    }
+   ],
+   "quality": 7,
+   "accept_first_try": true,
+   "problems": [
+    "Text contrast drops over bright yellow/pink/cyan areas; the shadow helps but the white text is less crisp there.",
+    "The start has large black empty areas, so the fractal looks sparse and less striking.",
+    "Large smooth gradient areas make it feel less like 'infinite' self-similar zoom; the spiral is not a clear repeating motif.",
+    "Text is static and is not tied to the zoom, so it is a bit generic."
+   ],
+   "verdict": "A vivid, continuous fractal dive with a clear, readable centered title. It is good for a first draft. The opening black areas and the text contrast over bright zones are the main weaknesses.",
+   "cost_usd": 0.0228733,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 90.0
+ },
+ "score_wall_s": 14.7,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/fx-infinite-zoom"
+}

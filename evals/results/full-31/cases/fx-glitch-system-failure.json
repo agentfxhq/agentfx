@@ -1,0 +1,118 @@
+{
+ "id": "fx-glitch-system-failure",
+ "tags": [
+  "effect",
+  "glitch"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 749.2,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 1,
+  "cost_usd": 0.2335397,
+  "tokens": {
+   "input_tokens": 4,
+   "output_tokens": 104,
+   "cache_read_input_tokens": 46713,
+   "cache_creation_input_tokens": 905
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 12,
+   "Read": 4,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_frame": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_OVERLAP": 1
+  },
+  "renders": 1,
+  "frames": 2,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "That notification is only about the background `find` I started while looking for the renderer. It hit its time limit and was stopped. I don't need it any more, because I found the renderer another way, so I won't restart it. It doesn't affect the video.\n\n`out/film.mp4` was already rendered and is complete. The script is at `film.reel`.",
+  "spec_reads": 0,
+  "tool_errors": 2,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 1,
+    "warnings": 2,
+    "codes": [
+     "E_OUT_OF_FRAME",
+     "W_OVERLAP",
+     "W_SAFE_AREA"
+    ],
+    "error_msgs": [
+     "E_OUT_OF_FRAME: text \"SYSTEM FAILURE\" is cut off by the frame edge in scene `fail` (126,430 1805x230)"
+    ]
+   }
+  },
+  "lint_clean": false,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 7.0
+  },
+  "text": [
+   {
+    "text": "SYSTEM FAILURE",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "SYSTEM FAILURE shown",
+     "pass": true,
+     "evidence": "Large white bold SYSTEM FAILURE is legible in every frame."
+    },
+    {
+     "item": "visible glitch artefacts",
+     "pass": true,
+     "evidence": "Colour-fringed block displacement and RGB split on the title in many frames, strongest at 0.29s and around 5s."
+    },
+    {
+     "item": "broken TV feel",
+     "pass": false,
+     "evidence": "The background is clean black with no visible scanlines, noise, rolling bars or screen distortion. It reads as a glitchy title, not a broken TV."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": false,
+   "problems": [
+    "There is no broken-TV environment. The black background has no static, scanlines, roll bars or screen flicker, and the glitch is confined to the text.",
+    "The red ghost copy is offset to the right and shows as a dark red slab. It looks like a misregistered duplicate, not a deliberate chromatic split.",
+    "The layout is static and the title sits small in a wide empty frame. Frame use is weak, with large empty areas above and below.",
+    "The glitch is mild and often clean, so frames like 3.79s and 6.12s look like a normal title. The intensity doesn't read as a system failure.",
+    "The subtitle is small and low-impact, and the red on black contrast is moderate."
+   ],
+   "verdict": "The title is legible and the glitch effects are visible. It looks like a glitchy text card, not a broken TV, because the screen itself is never distorted. The user would likely ask for more TV-style distortion and a stronger look.",
+   "cost_usd": 0.0254919,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 64.7
+ },
+ "score_wall_s": 25.6,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/fx-glitch-system-failure"
+}

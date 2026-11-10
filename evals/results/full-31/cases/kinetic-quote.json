@@ -1,0 +1,119 @@
+{
+ "id": "kinetic-quote",
+ "tags": [
+  "kinetic-type"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": 10,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 65.8,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 24,
+  "cost_usd": 0.27049999999999996,
+  "tokens": {
+   "input_tokens": 38,
+   "output_tokens": 4835,
+   "cache_read_input_tokens": 662260,
+   "cache_creation_input_tokens": 38962
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 14,
+   "mcp__agentfx__agentfx_spec": 1,
+   "mcp__agentfx__agentfx_frame": 1,
+   "Read": 3
+  },
+  "lint_calls": 1,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {},
+  "renders": 0,
+  "frames": 4,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "The quote video is rendered: a 10-second, 16:9 (1920×1080) MP4 for YouTube, at `./out/film.mp4`. The script is `./film.reel`. Lint reports 0 errors and 0 warnings. I looked at stills of the last frame and a contact sheet from an earlier draft, but not at the final render itself.\n\n- **Look:** a warm near-black background with cream text and one gold word.\n- **Words:** \"Simplicity\", \"is\", \"the\", \"ultimate\" and \"sophistication\" rise in one at a time, about a second or more apart. \"sophistication\" is gold.\n- **Ending:** \"LEONARDO DA VINCI\" fades in at 7.4 s with a small pulse on the gold word, then a slow push-in. The quote stays on screen until the end.\n\nThe text is in Inter. The serif font I tried isn't registered in this install, so I dropped it rather than ship a fallback warning.\n\nThe `agentfx` wrapper on PATH pointed at a renderer that doesn't exist here. I ran the real binary at `/home/drzivil/dev/agentfx/target/release/agentfx` instead and didn't change anything in the AgentFX install.",
+  "spec_reads": 1,
+  "tool_errors": 1,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 10.0
+  },
+  "text": [
+   {
+    "text": "Simplicity is the ultimate sophistication",
+    "pass": true
+   },
+   {
+    "text": "Leonardo da Vinci",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "the quote words appear one by one",
+     "pass": true,
+     "evidence": "Simplicity, is, the, ultimate, sophistication appear in sequence from 1.25s to 6.25s."
+    },
+    {
+     "item": "the author name is shown",
+     "pass": true,
+     "evidence": "LEONARDO DA VINCI appears under the quote from 7.92s."
+    },
+    {
+     "item": "calm, elegant look (no frantic motion)",
+     "pass": true,
+     "evidence": "Dark warm background, cream serif-like type, gold accent word, slow pacing. The re-centering jumps are mildly jarring."
+    },
+    {
+     "item": "the full quote is readable on screen at the end",
+     "pass": true,
+     "evidence": "All five words are visible in two lines at 8.75–9.58s with strong contrast."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "Layout shifts as words are added: the line re-centers and jumps, and the ultimate row looks left-aligned at 4.6–5.4s, which breaks the calm feel.",
+    "The author credit is tiny and sits very close under the quote. The hierarchy and spacing are weak, and it is hard to read on YouTube.",
+    "The quote block sits slightly high and the frame feels empty. The text could be larger or use more of the 16:9 frame.",
+    "The first 0.8s is a blank dark frame and the ending is a static hold. The slow zoom and pulse are barely noticeable, so there is no polished finish.",
+    "The background is flat with no texture or accent such as a rule line, so it looks generic."
+   ],
+   "verdict": "The video does what was asked. Words appear one at a time, the name is shown, the full quote is readable at the end, and the look is calm. The weak points are the re-centering jumps, the small author line and the generic styling. A user would probably accept it as a first draft, but it is not polished enough to post as is.",
+   "cost_usd": 0.026131,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 86.7
+ },
+ "score_wall_s": 12.6,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/kinetic-quote"
+}

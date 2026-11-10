@@ -1,0 +1,110 @@
+{
+ "id": "fx-fluid-ink-dream",
+ "tags": [
+  "effect",
+  "fluid"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 64.6,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 15,
+  "cost_usd": 0.1481157,
+  "tokens": {
+   "input_tokens": 26,
+   "output_tokens": 2675,
+   "cache_read_input_tokens": 338057,
+   "cache_creation_input_tokens": 21877
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 8,
+   "mcp__agentfx__agentfx_frame": 1,
+   "Read": 2
+  },
+  "lint_calls": 1,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {},
+  "renders": 1,
+  "frames": 4,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made the 8-second, 16:9 (1920×1080) video, and it's at `./out/film.mp4`. The script is `./film.reel`.\n\nThe word DREAM sits in navy on a warm paper background. At about 1.8 s it dissolves into ink while a pour comes up from below. A swirl then stirs the ink into marbled streaks.\n\nI checked a frame before the dissolve (the word reads cleanly) and one mid-swirl (it looks like ink). I didn't view the rendered MP4 itself, and the last second or two (the swirl settling) is untested. Lint came back clean.\n\nThe `agentfx` CLI and MCP tools couldn't find the renderer at the expected path, and the `AGENTFX_RENDERER` variable had no effect. I copied both binaries to `/tmp/afx-bin/` and ran from there, so your AgentFX install is untouched.",
+  "spec_reads": 0,
+  "tool_errors": 3,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 8.0
+  },
+  "text": [
+   {
+    "text": "DREAM",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "the word DREAM is readable first",
+     "pass": true,
+     "evidence": "Frames 0.33–1.67s show a bold, centred, high-contrast DREAM."
+    },
+    {
+     "item": "it dissolves into fluid ink (simulated fluid, not just a fade)",
+     "pass": true,
+     "evidence": "At 2.33–3.0s the letters smear into wisps and tendrils, then swirl into vortices."
+    },
+    {
+     "item": "the ink motion is visible over several frames",
+     "pass": true,
+     "evidence": "From 3.0s to 7.67s the swirl keeps evolving through spirals, filaments and turbulence."
+    }
+   ],
+   "quality": 7,
+   "accept_first_try": true,
+   "problems": [
+    "The ink floods nearly the whole frame by the end. It reads as a muddy blue mass and never settles on a clear final image or resolve.",
+    "The dissolve is quick, so the word is gone by about 3s. The ink spends the remaining ~5s as generic swirl.",
+    "The word sits static for about 2s before anything happens. The pour blob from the bottom looks like an odd teardrop that has nothing to do with the word.",
+    "Hard stair-step or jagged artifacts show along the spiral edges at 4.33–5.0s, and the grid-like frame-edge banding looks computed.",
+    "The word is small within the frame, only about 70% of the width and about 25% of the height, and the lower and upper areas are empty before the dissolve."
+   ],
+   "verdict": "The video does what was asked. DREAM reads clearly, breaks into real fluid-simulated ink, and the swirling motion carries through to the end. It loses polish because the ink floods the frame into a murky mass, the edges show stair-step artifacts, and there is no final resolve. Most users would probably accept it as a first draft.",
+   "cost_usd": 0.0246927,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 90.0
+ },
+ "score_wall_s": 16.6,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/fx-fluid-ink-dream"
+}

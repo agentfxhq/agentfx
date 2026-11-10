@@ -1,0 +1,129 @@
+{
+ "id": "data-q3-kpis",
+ "tags": [
+  "data",
+  "kpi"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 82.3,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 25,
+  "cost_usd": 0.2391045,
+  "tokens": {
+   "input_tokens": 40,
+   "output_tokens": 5600,
+   "cache_read_input_tokens": 564445,
+   "cache_creation_input_tokens": 31645
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 13,
+   "Read": 6,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_frame": 1
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_DEAD_AIR": 1,
+   "W_STATIC_END": 1,
+   "W_SAFE_AREA": 2
+  },
+  "renders": 0,
+  "frames": 2,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a 7-second, 1080p animation of your Q3 numbers. Only the 4,300 and the +18% actually count up. I checked frames from the render, and the animation and final figures look right.\n\n- **Counts up:** new customers run from 0 to 4,300, and the revenue card's \"+18% vs Q2\" ticks up from +0%.\n- **Pops in, doesn't count:** 1.2M and 2.1% land with a pop. AgentFX counters only handle whole numbers, so counting a decimal figure would have meant rewriting it (1,200K, say).\n- **What I added:** the \"Q3 results\" title and the \"vs Q2\" wording on the +18% are my own, so change them if they're wrong. The deck is dark navy with three cards: revenue, new customers and churn. I added no currency symbol because you didn't give one.\n- **One lint warning left:** it says the title leaves the safe area. I put it at a position that clears the cards.\n- **Renderer workaround:** the `agentfx` on PATH is a wrapper pointing at a render script that isn't installed. I ran the real binary at `~/.local/bin/agentfx` instead, so the MCP tools failed in this session.\n\nFiles are in `/tmp/claude-1000/agentfx-evals-full/full-31/data-q3-kpis`:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 2,
+  "tool_errors": 5,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 1,
+    "codes": [
+     "W_SAFE_AREA"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 7.0
+  },
+  "text": [
+   {
+    "text": "Q3",
+    "pass": true
+   },
+   {
+    "text": "18%",
+    "pass": false
+   },
+   {
+    "text": "2.1",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "three KPIs shown: revenue 1.2M, 4,300 new customers, churn 2.1%",
+     "pass": true,
+     "evidence": "All three cards show 1.2M, 4,300, 2.1% from ~2s onward."
+    },
+    {
+     "item": "numbers count up",
+     "pass": true,
+     "evidence": "Customers go 351→2,675→3,794→4,240→4,300; the +18% goes 11→17→18. The 1.2M and 2.1% don't count, they just pop in."
+    },
+    {
+     "item": "the +18% growth is visible",
+     "pass": true,
+     "evidence": "Green '+18% vs Q2' is under revenue from about 2s to the end."
+    },
+    {
+     "item": "numbers are correct (no invented figures)",
+     "pass": true,
+     "evidence": "Final values match the brief. 'vs Q2' is a reasonable reading of the +18%."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "Revenue 1.2M and churn 2.1% appear statically instead of counting up, so the 'numbers should count up' request is only partly met.",
+    "Cards are crowded in the top ~55% of the frame, with large empty space below and tight gaps between cards. The layout feels top-heavy.",
+    "The 4,300 nearly fills its card at full size, with little padding.",
+    "The count finishes at about 3.2s, then the last ~4s is only small pulses. The ending feels static.",
+    "The empty lower half of each card and the plain dark background look generic, with no visual accent or chart."
+   ],
+   "verdict": "Clean, readable and correct. The customer count and the +18% count up. The revenue and churn figures just appear, and the layout leaves the lower half of the frame empty. Usable as a first draft, but generic.",
+   "cost_usd": 0.026219199999999998,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 83.3
+ },
+ "score_wall_s": 11.0,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/data-q3-kpis"
+}

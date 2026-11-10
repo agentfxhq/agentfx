@@ -1,0 +1,14 @@
+{
+ "commit_first": "3e1b28f",
+ "run_id": "full-31-fix",
+ "model": "sonnet",
+ "judge_model": "sonnet",
+ "mode": "both",
+ "max_turns": 40,
+ "commit": "3e1b28f",
+ "started": "2026-11-10T08:19:02",
+ "work": "/tmp/claude-1000/agentfx-evals-fix/full-31-fix",
+ "product": "/home/drzivil/dev/agentfx",
+ "agentfx_bin": "/home/drzivil/dev/agentfx/tools/remote-render.sh",
+ "wall_min": 6.5
+}

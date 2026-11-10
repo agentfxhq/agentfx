@@ -1,0 +1,131 @@
+{
+ "id": "promo-summer-sale-multi",
+ "tags": [
+  "product",
+  "multi-format"
+ ],
+ "formats": [
+  "1:1",
+  "9:16"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 755.4,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 1,
+  "cost_usd": 0.24569730000000004,
+  "tokens": {
+   "input_tokens": 4,
+   "output_tokens": 139,
+   "cache_read_input_tokens": 48298,
+   "cache_creation_input_tokens": 1033
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 12,
+   "Read": 6
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_STATIC_END": 2
+  },
+  "renders": 0,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "That notification is about an earlier background command. It was my slow combined `find /` and lint check, and it hit its time limit and was stopped. I don't need it, because I got the same results with later, faster commands.\n\nThe finished work is unaffected. `film.reel` and the two renders are in place, and lint is clean for both formats:\n- `out/summer-sale-1x1.mp4`\n- `out/summer-sale-9x16.mp4`",
+  "spec_reads": 2,
+  "tool_errors": 3,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "1:1": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   },
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "1:1": 5.5,
+   "9:16": 5.5
+  },
+  "text": [
+   {
+    "text": "Summer Sale",
+    "pass": true
+   },
+   {
+    "text": "-30% on everything",
+    "pass": true
+   },
+   {
+    "text": "ends Sunday",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "works in square",
+     "pass": false,
+     "evidence": "Content is crowded in the top ~70% with a large empty orange band at the bottom, so the layout is top-heavy and off-balance. The sun circle is also off-center. Nothing is clipped."
+    },
+    {
+     "item": "the discount -30% is the most prominent element",
+     "pass": false,
+     "evidence": "'Summer Sale' is larger than the '-30% on everything' pill. The pill does have strong contrast, but the headline wins on hierarchy."
+    },
+    {
+     "item": "sunny warm colours",
+     "pass": true,
+     "evidence": "The yellow-to-orange gradient, glowing sun and dark red text all read as warm and summery."
+    },
+    {
+     "item": "all three lines readable",
+     "pass": true,
+     "evidence": "All three lines are legible with good contrast. 'ENDS SUNDAY' is smaller and dark red on orange but still readable."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "Layout is top-heavy in both formats. In 9:16 the text block sits in the upper half with roughly 40% of the frame empty at the bottom. In 1:1 the bottom third is empty.",
+    "'-30%' is buried inside a sentence in a mid-sized pill and is smaller than 'Summer Sale', so the key offer isn't the hero.",
+    "'ENDS SUNDAY' is small and low-contrast dark red on orange, and it is crammed right under the pill. In 9:16 it sits close to the pill and looks weak.",
+    "The sun graphic is off-center and cut by the pill. The circle is faint and the layers look muddy behind the headline.",
+    "Motion is minimal. After the initial rise and the 'ends Sunday' pop-in, the frames look nearly static. The pulses are barely visible, so it feels like a static poster."
+   ],
+   "verdict": "The result is clean, legible and clearly sunny. It's generic, though, and the layout is poorly balanced. The text clusters in the upper part of the frame with dead space below. The headline outranks the -30% offer, and the 'ends Sunday' line is small. It works as a draft but needs layout and hierarchy changes.",
+   "cost_usd": 0.0459314,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 68.3
+ },
+ "score_wall_s": 15.5,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/promo-summer-sale-multi"
+}

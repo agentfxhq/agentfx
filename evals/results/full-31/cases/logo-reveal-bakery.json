@@ -1,0 +1,117 @@
+{
+ "id": "logo-reveal-bakery",
+ "tags": [
+  "logo",
+  "brand"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 755.2,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 1,
+  "cost_usd": 0.29983390000000004,
+  "tokens": {
+   "input_tokens": 4,
+   "output_tokens": 102,
+   "cache_read_input_tokens": 54491,
+   "cache_creation_input_tokens": 1016
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 15,
+   "Read": 4,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_frame": 1
+  },
+  "lint_calls": 1,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_OVERLAP": 1
+  },
+  "renders": 1,
+  "frames": 4,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "That notification is only about the background `find` I started earlier. It hit its time limit and was stopped. I don't need it any more, because I found the renderer another way, so I won't restart it. The video was already rendered and isn't affected.\n\nThe logo reveal is at `out/film.mp4`, with the script at `film.reel`.",
+  "spec_reads": 1,
+  "tool_errors": 3,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 7.0
+  },
+  "text": [
+   {
+    "text": "Krume & Co",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "Krume & Co shown as a wordmark",
+     "pass": true,
+     "evidence": "Large 'Krume & Co' wordmark centred with loaf mark above and BAKERY tag below."
+    },
+    {
+     "item": "warm colour palette",
+     "pass": true,
+     "evidence": "Cream background, peach glow, brown and caramel text and mark."
+    },
+    {
+     "item": "serif or elegant typography",
+     "pass": true,
+     "evidence": "Fraunces-style serif wordmark with a tracked small-caps tagline."
+    },
+    {
+     "item": "an elegant reveal animation that ends on a held logo",
+     "pass": true,
+     "evidence": "The loaf is drawn in, the name resolves in with a blur, then the rule and tag appear. The final frames hold the full logo from about 3.2s to the end."
+    }
+   ],
+   "quality": 7,
+   "accept_first_try": true,
+   "problems": [
+    "The glow circle is cropped at the top and bottom of the frame and reads as a large flat disc. Its hard edge looks a bit clumsy.",
+    "The loaf mark is fairly small and generic next to the very large wordmark. The lockup is slightly top-heavy in spacing, with a big gap between mark and name.",
+    "The glow disappears abruptly at about 5.2s. The flat cream final hold is plainer than the earlier frames, and the animation is basically finished by about 3.2s.",
+    "The thin rule and the small BAKERY tag are low contrast and small for social viewing.",
+    "The per-letter blur reveal is nice, but the name enters late (about 1.4s), so the first second shows little."
+   ],
+   "verdict": "This is a clean, warm, elegant logo reveal that matches the brief. The serif wordmark is legible and the logo holds at the end. The cropped glow disc and the generic, small loaf mark keep it from looking fully polished, but most users would accept it as a first draft.",
+   "cost_usd": 0.027285499999999997,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 90.0
+ },
+ "score_wall_s": 12.9,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/logo-reveal-bakery"
+}

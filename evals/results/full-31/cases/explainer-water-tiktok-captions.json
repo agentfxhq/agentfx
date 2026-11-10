@@ -1,0 +1,93 @@
+{
+ "id": "explainer-water-tiktok-captions",
+ "tags": [
+  "explainer",
+  "captions",
+  "vertical"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": 15,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 89.0,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 23,
+  "cost_usd": 0.24436150000000006,
+  "tokens": {
+   "input_tokens": 42,
+   "output_tokens": 6404,
+   "cache_read_input_tokens": 697695,
+   "cache_creation_input_tokens": 27617
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 17,
+   "mcp__agentfx__agentfx_spec": 1,
+   "mcp__agentfx__agentfx_frame": 1
+  },
+  "lint_calls": 6,
+  "lint_errors_seen": 4,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_ANCHOR": 1,
+   "E_CAPTION_OVERFLOW": 1,
+   "E_EVENT_OUTSIDE": 2
+  },
+  "warning_codes": {
+   "W_ANCHOR_UNUSED": 1,
+   "W_CAPTION_SAFE": 1,
+   "W_CONTRAST": 6,
+   "W_CAPTION_READ": 2
+  },
+  "renders": 0,
+  "frames": 5,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I've deleted the scratch directories (`/tmp/afx-home` and `/tmp/afx-bin`), and `./out/` is empty.",
+  "spec_reads": 3,
+  "tool_errors": 7,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": false,
+  "agent_rendered": false,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 15.0
+  },
+  "text": [
+   {
+    "text": "water",
+    "pass": true
+   }
+  ],
+  "judge": null,
+  "render_errors": [
+   "9:16: renderer not found at /home/drzivil/dev/agentfx/tools/agentfx-render (build it with `cargo build --release` at the repository root, or run tools/install.sh, which installs agentfx-render next to agentfx; or set AGENTFX_RENDERER)\n"
+  ],
+  "compiles": false,
+  "accepted": false,
+  "score": 30.0
+ },
+ "score_wall_s": 0.2,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/explainer-water-tiktok-captions"
+}

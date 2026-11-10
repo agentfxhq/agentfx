@@ -1,0 +1,118 @@
+{
+ "id": "fx-vhs-retro-rewind",
+ "tags": [
+  "effect",
+  "retro"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 71.2,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 19,
+  "cost_usd": 0.17421240000000002,
+  "tokens": {
+   "input_tokens": 38,
+   "output_tokens": 3997,
+   "cache_read_input_tokens": 507224,
+   "cache_creation_input_tokens": 20861
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 11,
+   "Read": 3,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_frame": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_STATIC_END": 2,
+   "W_SAFE_AREA": 2,
+   "W_DEAD_AIR": 1
+  },
+  "renders": 1,
+  "frames": 3,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made the \"Retro Rewind\" intro as a 16:9, 1080p MP4 of about 7.5 s. I checked a contact sheet of the two scenes before rendering, but I didn't extract frames from the finished MP4, so the final file is unwatched.\n\n- **Scene 1, rewind (2.5 s):** a \"◀◀ REWIND\" title slides in over a dark purple background. It has heavy VHS noise, glitching, a \"PLAY ▶\" label and a tape counter.\n- **Scene 2, title (5 s):** a retro sun and horizon grid sit behind \"RETRO\" in white and \"REWIND\" in teal, both with an RGB-split fringe. \"NOW PLAYING ▶\" appears below, and the tape noise ramps up toward the end.\n\nLint reports no errors but still shows 4 warnings. Two are safe-area warnings. The other two, `W_DEAD_AIR` and `W_STATIC_END`, say the ending sits still for several seconds, and my VHS-noise ramp didn't clear them.\n\nI chose the copy and the palette myself. I removed a year I had made up from the subtitle.\n\nThe `agentfx` command on PATH couldn't find the renderer, so I ran the real binary at `/home/drzivil/dev/agentfx/target/release/agentfx` directly. The AgentFX MCP tools hit the same missing-renderer error and I didn't use them for the render.\n\nFiles are in /tmp/claude-1000/agentfx-evals-full/full-31/fx-vhs-retro-rewind:\n- out/film.mp4\n- film.reel",
+  "spec_reads": 0,
+  "tool_errors": 3,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 4,
+    "codes": [
+     "W_DEAD_AIR",
+     "W_SAFE_AREA",
+     "W_STATIC_END"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 7.5
+  },
+  "text": [
+   {
+    "text": "Retro Rewind",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "channel name Retro Rewind shown",
+     "pass": true,
+     "evidence": "RETRO / REWIND large and centered on the title scene from 2.8s to the end."
+    },
+    {
+     "item": "VHS look (scanlines, chroma bleed, tracking noise or grain)",
+     "pass": false,
+     "evidence": "The first scene has faint horizontal noise lines and a glitchy REWIND. The title scene looks clean and flat, with only slight RGB fringing. There is no visible scanline, grain or tracking."
+    },
+    {
+     "item": "80s colours/type",
+     "pass": true,
+     "evidence": "Synthwave sun, purple grid floor, and teal/pink/yellow palette with bold type."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "The title scene is clean and digital, with little VHS texture. The user asked for a VHS look, and the main branding frames lose it.",
+    "The white RETRO sits on the bright sun, so its contrast is weak. The sun also crowds REWIND, which makes the lockup cramped and overlapping.",
+    "The title scene looks static for about 5s. The pulse is barely visible, so the end hold feels dead.",
+    "The intro opens with a generic 'REWIND' scene that is mostly empty dark space, and the tiny timecode and PLAY elements add little. The channel name only appears after 2.5s.",
+    "The grid floor is just a flat purple gradient with no perspective lines, so the 80s scene feels unfinished."
+   ],
+   "verdict": "The intro is readable and has an 80s palette with the channel name. The VHS effect fades after the first scene, the title lockup overlaps the sun and has weak contrast, and the second half is static. It is a generic first draft that probably needs tweaks.",
+   "cost_usd": 0.026441199999999998,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 73.3
+ },
+ "score_wall_s": 13.2,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/fx-vhs-retro-rewind"
+}

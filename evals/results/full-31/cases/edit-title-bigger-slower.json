@@ -1,0 +1,122 @@
+{
+ "id": "edit-title-bigger-slower",
+ "tags": [
+  "edit"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 54.2,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 16,
+  "cost_usd": 0.1591541,
+  "tokens": {
+   "input_tokens": 30,
+   "output_tokens": 3310,
+   "cache_read_input_tokens": 368061,
+   "cache_creation_input_tokens": 22297
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Read": 2,
+   "Grep": 2,
+   "Bash": 7,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_frame": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_STATIC_END": 1
+  },
+  "renders": 1,
+  "frames": 5,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made the title bigger and slowed the animation down. The new render is at `out/film.mp4`. I looked at one frame at 2.5 s and the title fits with margin, but I haven't watched the finished video.\n\nIn `film.reel`:\n- **Title:** size 56 → 150. It now spans about 85% of the frame width.\n- **Title animation:** the rise now takes 1.6 s with an ease-out curve.\n- **Date line:** size 32 → 56. It fades in over 1.2 s, starting 1.2 s in, so it comes after the title instead of right behind it.\n- **Scene length:** 4 s → 4.2 s, to fit the slower entrance.\n\nLint still reports one warning, `W_STATIC_END`: nothing moves for the last 2 s. I left it because that's a settled hold at the end. I can add a slow push-in or an exit if you'd rather it kept moving.\n\nThe `agentfx` on PATH is a wrapper that can't find the renderer, so I called `~/.local/bin/agentfx` directly to check the frame and render. I didn't change anything outside this folder.",
+  "spec_reads": 1,
+  "tool_errors": 4,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 1,
+    "codes": [
+     "W_STATIC_END"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 4.2
+  },
+  "text": [
+   {
+    "text": "Spring Workshop 2027",
+    "pass": true
+   },
+   {
+    "text": "April 12, Vienna",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "title size clearly larger than before (was size=56)",
+     "pass": true,
+     "evidence": "Title spans ~85% of frame width, far bigger than 56px; date also enlarged."
+    },
+    {
+     "item": "title entrance is slower than before",
+     "pass": true,
+     "evidence": "Title is still fading/rising at 0.17s and 0.53s, fully settled by ~0.9s; date fades in from 1.2s to ~1.9s."
+    },
+    {
+     "item": "the rest of the design is kept (copy, colours)",
+     "pass": true,
+     "evidence": "Same text, navy background, white title, orange date."
+    },
+    {
+     "item": "nothing cut off",
+     "pass": true,
+     "evidence": "Title fits with small margins on both sides in all frames."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "Title side margins are tight (~10% each side), so it feels slightly crowded.",
+    "The title entrance looks only slightly slower; it's mostly settled by ~0.9s, and the rise motion is barely visible.",
+    "The date is small next to the huge title, so the hierarchy gap is large.",
+    "About 2s of the video is static after the date appears, so it feels plain."
+   ],
+   "verdict": "The edit does what was asked. The title is much bigger and the entrance is slower, with the copy and colours unchanged and nothing clipped. It's a clean but plain title card, and a user would likely accept it as is.",
+   "cost_usd": 0.0235458,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 86.7
+ },
+ "score_wall_s": 13.5,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/edit-title-bigger-slower"
+}

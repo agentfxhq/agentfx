@@ -1,0 +1,135 @@
+{
+ "id": "teaser-beanbox-cards",
+ "tags": [
+  "product",
+  "brand",
+  "square"
+ ],
+ "formats": [
+  "1:1"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 53.1,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 15,
+  "cost_usd": 0.19453949999999998,
+  "tokens": {
+   "input_tokens": 24,
+   "output_tokens": 3697,
+   "cache_read_input_tokens": 389375,
+   "cache_creation_input_tokens": 29646
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 8,
+   "mcp__agentfx__agentfx_spec": 1,
+   "mcp__agentfx__agentfx_frame": 1,
+   "Read": 1
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 3,
+  "first_lint_errors": 2,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 3
+  },
+  "warning_codes": {
+   "W_CONTRAST": 2,
+   "W_SMALL_MOTION": 1,
+   "W_STATIC_END": 1
+  },
+  "renders": 0,
+  "frames": 2,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made the square Bean Box post as a 9-second, 1080×1080 MP4 at `./out/film.mp4`. The script is `./film.reel`. Lint is clean, and I checked one frame by eye. I didn't check the finished MP4 itself.\n\n- **Look:** cream `#FFF4E6` background with three full-width orange `#FF6B35` pills reading \"Fresh roasted\", \"Free shipping\" and \"Cancel anytime\". Each pill pops in one after the other, then pulses.\n- **Header:** \"BEAN BOX\" with a small orange bar under \"Coffee subscription\". The \"Coffee subscription\" line is my own wording, so change it if you'd rather not have it.\n- **Text colour:** the title and pill text are dark brown, not orange or cream. Orange text on cream, and cream text on orange, both failed the contrast check (about 2.6:1, below the 3:1 minimum). The orange stays on the pills and the bar.\n- **Ending:** the whole stack pulses once near the end, then holds still.\n\nThe bare `agentfx` command in this session couldn't find its renderer. I ran the built binary at `/home/drzivil/dev/agentfx/target/release/agentfx` instead.",
+  "spec_reads": 1,
+  "tool_errors": 3,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "1:1": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "1:1": 9.0
+  },
+  "text": [
+   {
+    "text": "Bean Box",
+    "pass": true
+   },
+   {
+    "text": "Fresh roasted",
+    "pass": true
+   },
+   {
+    "text": "Free shipping",
+    "pass": true
+   },
+   {
+    "text": "Cancel anytime",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "square 1:1 frame",
+     "pass": true,
+     "evidence": "All frames are square."
+    },
+    {
+     "item": "orange #FF6B35 and a cream background",
+     "pass": true,
+     "evidence": "Orange pills and bar on a cream background."
+    },
+    {
+     "item": "three features shown",
+     "pass": true,
+     "evidence": "Fresh roasted, Free shipping and Cancel anytime are all visible and legible."
+    },
+    {
+     "item": "brand name Bean Box visible",
+     "pass": true,
+     "evidence": "BEAN BOX is large at the top of every frame."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "The layout is top-heavy. The bottom ~15% of the frame is empty, and the empty space is uneven.",
+    "The three pills are identical, full-width orange blocks. There are no icons or imagery, and no coffee or bean visual, so the post feels generic.",
+    "The first ~1s shows only the title with an empty lower half, and the pills stack in slowly. The cards are all in by ~2.5s, followed by about 6s of near-static holding.",
+    "The dark text on saturated orange has only moderate contrast. Everything is the same weight, so no feature stands out.",
+    "There is no call to action or URL, such as 'Subscribe' or a website, and the tagline is small and plain."
+   ],
+   "verdict": "The post meets the brief. It is square, uses orange on cream, shows all three features and shows the Bean Box name, and the text is legible. It is a clean but generic template, with a top-heavy layout, no imagery and no call to action. A user would probably accept it as a first draft, though a designer wouldn't call it polished.",
+   "cost_usd": 0.0315143,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 86.7
+ },
+ "score_wall_s": 14.3,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/teaser-beanbox-cards"
+}

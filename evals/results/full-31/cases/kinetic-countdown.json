@@ -1,0 +1,130 @@
+{
+ "id": "kinetic-countdown",
+ "tags": [
+  "social",
+  "kinetic-type",
+  "vertical"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 44.7,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 14,
+  "cost_usd": 0.21006679999999997,
+  "tokens": {
+   "input_tokens": 24,
+   "output_tokens": 3814,
+   "cache_read_input_tokens": 395948,
+   "cache_creation_input_tokens": 33071
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 9,
+   "Read": 2
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 2,
+  "first_lint_errors": 2,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 2
+  },
+  "warning_codes": {
+   "W_SAFE_AREA": 2
+  },
+  "renders": 0,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "The 3-2-1-LAUNCH countdown is rendered as a 9:16 MP4 at `out/countdown.mp4`. It runs about 5.2 s. I checked a contact sheet and a LAUNCH frame, but I didn't watch the MP4. The script is `film.reel`.\n\n- **3, 2, 1:** each number is about 1000 px tall, white or yellow with a black outline, on a hard-cut colour (hot pink, cyan, lime). Each pops in with a springy overshoot and a pop sound, with a yellow circle, pink slash or purple circle behind it. Each leaves with a quick zoom-out.\n- **LAUNCH:** a white flash, then the word slams in on a tilted pink band over purple. Confetti bursts in five colours, with a whoosh sound and a pulse. It ends on a short hold.\n- **Lint:** no errors or warnings, apart from one style note that the text treatment varies between scenes. That is intentional.\n- **Sound:** there is no music track, only the built-in pop and whoosh sound effects. If you have a track you have the rights to, tell me and I'll add it and cut to its beat.\n- **Setup:** the `agentfx` wrapper on PATH couldn't find the renderer. I set `AGENTFX_RENDERER` and ran the repo's own `target/release/agentfx` instead.",
+  "spec_reads": 0,
+  "tool_errors": 1,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 5.2
+  },
+  "text": [
+   {
+    "text": "3",
+    "pass": true
+   },
+   {
+    "text": "2",
+    "pass": true
+   },
+   {
+    "text": "1",
+    "pass": true
+   },
+   {
+    "text": "LAUNCH",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "numbers 3, 2, 1 shown in sequence",
+     "pass": true,
+     "evidence": "3 (0.22s), 2 (1.08s), 1 (2.38s) in order, big and legible"
+    },
+    {
+     "item": "LAUNCH shown after the countdown",
+     "pass": true,
+     "evidence": "LAUNCH on a pink band from 3.25s to end"
+    },
+    {
+     "item": "loud, saturated colours",
+     "pass": true,
+     "evidence": "Hot pink, cyan, lime, purple, yellow with black outlines"
+    },
+    {
+     "item": "each number pops (scale/bounce entrance)",
+     "pass": true,
+     "evidence": "The 2 is larger at 1.08s and settles smaller at 1.52s, so it overshoots then settles. The 3 and 1 are cropped by the ring at the frame edges."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": false,
+   "problems": [
+    "The LAUNCH finale is weak. The text is small and sits in a thin band with a lot of empty purple above and below. No confetti or flash shows in the sampled frames, and the frame looks static for about 2s.",
+    "The yellow ring and the purple ring are 1100px wide in a 1080px frame, so they are clipped at the left and right edges. The 3 and 1 look cramped and the circles look cut off.",
+    "The 2 fades out semi-transparent over the pink band, leaving a muddy teal and orange ghost frame.",
+    "LAUNCH is only about 185px on a 1080 canvas, which is tiny next to the 1000px numbers. The hierarchy drops at the payoff and the text could be much larger.",
+    "The scenes are inconsistent: the 3 and 1 use circles and the 2 uses a band. The 1 is white on a purple ring with a weak pop. The countdown sits in the upper half and leaves the lower frame empty."
+   ],
+   "verdict": "Loud and readable, and the 3-2-1-LAUNCH order is correct with a pop on each number. The finale underdelivers because LAUNCH is small and static in the frames, the rings clip at the edges, and the 2 fades out muddy. A user would probably ask for a bigger LAUNCH.",
+   "cost_usd": 0.0307884,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 86.7
+ },
+ "score_wall_s": 12.9,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/kinetic-countdown"
+}

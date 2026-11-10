@@ -1,0 +1,126 @@
+{
+ "id": "social-sleep-tips",
+ "tags": [
+  "social",
+  "vertical",
+  "list"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 53.3,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 16,
+  "cost_usd": 0.21482250000000003,
+  "tokens": {
+   "input_tokens": 30,
+   "output_tokens": 3492,
+   "cache_read_input_tokens": 482305,
+   "cache_creation_input_tokens": 32903
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 9,
+   "Read": 2,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_sheet": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_DEAD_AIR": 3
+  },
+  "renders": 1,
+  "frames": 3,
+  "sheets": 1,
+  "skill_loaded": true,
+  "result": "I made the vertical video (1080x1920, about 18 s). It's at `./out/film.mp4`, and the script is `./film.reel`.\n\nIt runs: title card with a moon, then tips 1, 2 and 3 as big numbers over the tip text, then a closing card. The backgrounds are night gradients in navy, teal and violet, with a pale moon and soft accent colours. The tip wording is yours. The title (\"3 tips for better sleep\") and the closing line (\"Sleep well tonight\") are my own copy, so change them if you like.\n\nLint is clean. I checked the contact sheet but didn't extract frames from the finished MP4.\n\nThe `agentfx` CLI couldn't find its renderer in the AgentFX data directory, and `AGENTFX_RENDERER` had no effect. I copied both binaries into `/tmp/afxbin/` and ran from there, without changing the AgentFX install. The MCP tools hit the same error, so I used the CLI copy for the sheet, frame and render.",
+  "spec_reads": 0,
+  "tool_errors": 3,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 18.0
+  },
+  "text": [
+   {
+    "text": "No screens after 10pm",
+    "pass": true
+   },
+   {
+    "text": "Keep your room cool",
+    "pass": true
+   },
+   {
+    "text": "Same bedtime every day",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "three tips shown, numbered or in sequence",
+     "pass": true,
+     "evidence": "Big 1, 2, 3 with tip text, each in its own scene."
+    },
+    {
+     "item": "a title or hook about better sleep",
+     "pass": true,
+     "evidence": "Intro reads '3 tips for better sleep' with a moon."
+    },
+    {
+     "item": "calm night colour palette (dark blues/purples)",
+     "pass": true,
+     "evidence": "Navy, teal-blue and purple gradients with soft mint and lavender accents."
+    },
+    {
+     "item": "each tip readable for long enough",
+     "pass": true,
+     "evidence": "Each tip is on screen about 4s with large white text."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "The bottom 40% of every frame is empty, so the layout is top-heavy and the frame is poorly used.",
+    "There is a big gap between the huge number and the tip text, so they don't read as one unit.",
+    "The scenes are identical text on a gradient, with no icons or illustrations. The moon appears only in the intro and the style is generic.",
+    "The moon is a flat circle with no glow or stars, and the outro is bare text.",
+    "The text sits mid-frame, which may be covered by the platform UI. The tip text could also be larger."
+   ],
+   "verdict": "The video is clean, readable and on-brief. It has a calm palette, clear 1-2-3 pacing and a good hook. The layout is plain and top-heavy, with a lot of dead space and no supporting visuals. It's an acceptable first draft but not a polished one.",
+   "cost_usd": 0.0270151,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 86.7
+ },
+ "score_wall_s": 18.5,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/social-sleep-tips"
+}

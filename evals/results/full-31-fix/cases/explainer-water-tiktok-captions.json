@@ -1,0 +1,125 @@
+{
+ "id": "explainer-water-tiktok-captions",
+ "tags": [
+  "explainer",
+  "captions",
+  "vertical"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": 15,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 71.6,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 19,
+  "cost_usd": 0.2042406,
+  "tokens": {
+   "input_tokens": 34,
+   "output_tokens": 3703,
+   "cache_read_input_tokens": 535306,
+   "cache_creation_input_tokens": 28403
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 11,
+   "mcp__agentfx__agentfx_spec": 1,
+   "Read": 2,
+   "mcp__agentfx__agentfx_render": 1
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 2,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_CAPTION_OVERFLOW": 2
+  },
+  "warning_codes": {
+   "W_CAPTION_READ": 7,
+   "W_CAPTION_SAFE": 4
+  },
+  "renders": 1,
+  "frames": 1,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a 10.7 s vertical video (1080×1920), which is shorter than the 15 s you asked for. It has big bold captions that appear one word at a time, with the current word in yellow. I haven't played the finished MP4. I checked three still frames, and the captions landed one word at a time in them.\n\n**Why it's short:** no text-to-speech engine was available, so there is no voice-over, and the caption timing is estimated from the text. That estimate came out at about 10.7 s, not 15 s. The video is silent. If you add a voice track or a transcript, the timing will follow the real audio.\n\n- **Copy (proposed by me):** \"Tired? Foggy? Headache? You might just be thirsty. Even mild dehydration hurts focus and mood. Water fixes it fast. So drink a glass right now.\" I kept it to the widely documented claim that mild dehydration hurts focus and mood, with no made-up statistics.\n- **Look:** a blue water gradient with a soft glow and a few drifting bubbles. The captions are 110 px, bold and uppercase, with a thick outline.\n- **Lint:** no errors. Two warnings remain:\n  - The caption block sits a few pixels past the right edge of the safe area for platform buttons.\n  - The \"A GLASS\" caption shows 478 ms where the check wants 500 ms.\n\nFiles are in `./`:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 4,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 2,
+    "codes": [
+     "W_CAPTION_READ",
+     "W_CAPTION_SAFE"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": false,
+  "durations": {
+   "9:16": 10.7
+  },
+  "text": [
+   {
+    "text": "water",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical 9:16",
+     "pass": true,
+     "evidence": "Frames are tall portrait, 1080x1920 render."
+    },
+    {
+     "item": "big bold word-by-word captions (tiktok/hormozi style)",
+     "pass": false,
+     "evidence": "Words are bold with yellow highlight but small (~1/8 frame width), and caption position drifts horizontally and vertically between frames (left, centre, right). Several frames have no text."
+    },
+    {
+     "item": "captions stay clear of the bottom UI band",
+     "pass": true,
+     "evidence": "Captions sit at about 33% and 80% of frame height. The lower one is close to the UI zone but above the very bottom."
+    },
+    {
+     "item": "on topic: why drink more water",
+     "pass": true,
+     "evidence": "Copy covers dehydration, focus and mood, and 'drink a glass'. The blue water look fits the topic."
+    }
+   ],
+   "quality": 4,
+   "accept_first_try": false,
+   "problems": [
+    "Captions are too small for the 'big bold' TikTok style. They fill only a small part of the frame, and the 110px size is visibly undersized.",
+    "The caption position is inconsistent. It jumps between left, centre and right and between upper-middle and lower frame, so reading is jittery and looks like a bug.",
+    "Many sampled frames have no caption, which leaves long empty stretches. The video also runs 10.7s, short of the requested 15s.",
+    "The background is a generic blurry gradient with faint circles. No water imagery, icons or emphasis visuals support the message.",
+    "Some captions are faded or translucent in mid-transition (TIRED?, AND MOOD.), which hurts legibility and punch."
+   ],
+   "verdict": "The video is on topic and vertical, but the captions are too small and shift position. It has gaps with no text, it runs short of 15s, and the background is bland. It reads as a weak first draft rather than a TikTok-style video.",
+   "cost_usd": 0.0277245,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 64.5
+ },
+ "score_wall_s": 15.3,
+ "workdir": "/tmp/claude-1000/agentfx-evals-fix/full-31-fix/explainer-water-tiktok-captions"
+}

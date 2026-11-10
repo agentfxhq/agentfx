@@ -1,0 +1,129 @@
+{
+ "id": "data-signups-bar",
+ "tags": [
+  "data",
+  "chart"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 745.4,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 1,
+  "cost_usd": 0.18499649999999998,
+  "tokens": {
+   "input_tokens": 4,
+   "output_tokens": 133,
+   "cache_read_input_tokens": 38829,
+   "cache_creation_input_tokens": 920
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_spec": 1,
+   "Bash": 13,
+   "mcp__agentfx__agentfx_frame": 1,
+   "Read": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_STATIC_END": 1
+  },
+  "renders": 0,
+  "frames": 2,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "That notification is about an earlier background command, not your chart. It was my `find /` search for the renderer binary, and it was stopped at its time limit. I don't need it any more, because I found the renderer at `~/.local/bin/agentfx-render` with the `which` check that ran first. I won't restart it.\n\nThe video is unaffected: `./out/film.mp4` was rendered and the script is at `./film.reel`.",
+  "spec_reads": 1,
+  "tool_errors": 2,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 1,
+    "codes": [
+     "W_STATIC_END"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 6.0
+  },
+  "text": [
+   {
+    "text": "Signups are taking off",
+    "pass": true
+   },
+   {
+    "text": "Jun",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "bar chart with six bars Jan to Jun",
+     "pass": true,
+     "evidence": "Six bars labelled Jan–Jun are visible from 1.25s onward."
+    },
+    {
+     "item": "values 120 to 560 correct",
+     "pass": true,
+     "evidence": "The final labels read 120, 180, 240, 310, 420, 560. Intermediate frames show wrong counting values such as 87, 52 and 220."
+    },
+    {
+     "item": "June highlighted",
+     "pass": false,
+     "evidence": "June is only a slightly lighter, washed-out green. It looks pale and faded next to the others, so it reads weakly as a highlight."
+    },
+    {
+     "item": "title shown",
+     "pass": true,
+     "evidence": "'Signups are taking off' is large and white at the top in every frame."
+    },
+    {
+     "item": "bars animate in",
+     "pass": true,
+     "evidence": "Bars grow from 0.25s to 1.25s, though the heights and labels behave oddly during the growth."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "June highlight is weak. It is a pale, desaturated green, with no contrasting accent colour. It looks washed out rather than emphasised.",
+    "The bar-grow animation is glitchy. At 0.25s Jan shows 87 and Feb shows 52, so the bars are out of order. At 0.75s Jun (220) is shorter than May (321). The labels count through odd values.",
+    "The axis and month labels are tiny and low-contrast, and the value labels are small for a 1080p social video. The chart leaves a lot of empty space at the sides.",
+    "The June pulse at 3.25s and 4.25s makes the bar overshoot the top gridline and cover its '560' label. It looks like a glitch.",
+    "The animation is finished by about 1.5s, so the remaining 4+ seconds are mostly static. The design is generic, with a plain green gradient and no emphasis on the growth story."
+   ],
+   "verdict": "The chart is correct and legible, and it has the right title. The animation looks glitchy at the start. June is only weakly highlighted. The pulse covers the June value label. Most of the video is static, so it is serviceable but generic, and a user would probably ask for fixes.",
+   "cost_usd": 0.0253587,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 77.3
+ },
+ "score_wall_s": 12.3,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/data-signups-bar"
+}

@@ -133,6 +133,10 @@ def tool_env(work_root):
     bindir = Path(work_root) / "_bin"
     bindir.mkdir(parents=True, exist_ok=True)
     real = Path(agentfx_bin()).resolve()
+    # the renderer next to the real binary; a wrapper (tools/remote-render.sh) names its local binary in AFX_LOCAL_BIN
+    rdir = [Path(d) for d in (real.parent, os.environ.get("AFX_LOCAL_BIN") and Path(os.environ["AFX_LOCAL_BIN"]).resolve().parent,
+                              ROOT / "target" / "release") if d]
+    renderer = next((d / "agentfx-render" for d in rdir if (d / "agentfx-render").is_file()), real.parent / "agentfx-render")
     for name in ("agentfx", "agentfx-render"):
         link = bindir / name
         if link.is_symlink() or link.exists():
@@ -145,7 +149,7 @@ def tool_env(work_root):
     heavy = f"exec flock {lock} {real} \"$@\"" if shutil.which("flock") else f"exec {real} \"$@\""
     (bindir / "agentfx").write_text(
         "#!/bin/sh\n"
-        f"export AGENTFX_RENDERER={real.parent / 'agentfx-render'}\n"
+        f"export AGENTFX_RENDERER={renderer}\n"
         "case \"$1\" in\n"
         f"  render|sheet|storyboard) {heavy} ;;\n"
         f"  *) exec {real} \"$@\" ;;\n"

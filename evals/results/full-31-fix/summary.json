@@ -1,0 +1,45 @@
+{
+ "run_id": "full-31-fix",
+ "meta": {
+  "commit_first": "3e1b28f",
+  "run_id": "full-31-fix",
+  "model": "sonnet",
+  "judge_model": "sonnet",
+  "mode": "both",
+  "max_turns": 40,
+  "commit": "3e1b28f",
+  "started": "2026-11-10T08:19:02",
+  "work": "/tmp/claude-1000/agentfx-evals-fix/full-31-fix",
+  "product": "/home/drzivil/dev/agentfx",
+  "agentfx_bin": "/home/drzivil/dev/agentfx/tools/remote-render.sh",
+  "wall_min": 6.5
+ },
+ "aggregate": {
+  "cases": 6,
+  "score": 80.87,
+  "accept_rate": 0.667,
+  "judge_accept": 0.667,
+  "quality": 5.33,
+  "checklist_pass": 0.917,
+  "lint_clean": 1.0,
+  "renders": 1.0,
+  "duration_ok": 0.833,
+  "text_ok": 1.0,
+  "turns": 14.17,
+  "lint_calls": 3.83,
+  "first_lint_errors": 1.33,
+  "lint_errors_seen": 2.33,
+  "agent_cost_usd": 0.94,
+  "judge_cost_usd": 0.17,
+  "agent_wall_s": 50.78
+ },
+ "error_codes": {
+  "E_VERB": 1,
+  "E_ID": 2,
+  "E_PRESET": 1,
+  "E_EVENT_OUTSIDE": 1,
+  "E_OUT_OF_FRAME": 5,
+  "E_CAPTION_OVERFLOW": 2,
+  "E_TOPLEVEL": 2
+ }
+}

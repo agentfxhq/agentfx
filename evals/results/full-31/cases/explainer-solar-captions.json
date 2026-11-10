@@ -1,0 +1,134 @@
+{
+ "id": "explainer-solar-captions",
+ "tags": [
+  "explainer",
+  "captions"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": 30,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 107.6,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 22,
+  "cost_usd": 0.3398265,
+  "tokens": {
+   "input_tokens": 38,
+   "output_tokens": 8940,
+   "cache_read_input_tokens": 686945,
+   "cache_creation_input_tokens": 45414
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 12,
+   "mcp__agentfx__agentfx_sheet": 1,
+   "Read": 4
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 6,
+  "first_lint_errors": 6,
+  "error_codes": {
+   "E_ANCHOR": 1,
+   "E_ICON": 2,
+   "E_TOPLEVEL": 1,
+   "E_OUT_OF_FRAME": 2
+  },
+  "warning_codes": {
+   "W_ANCHOR_UNUSED": 1,
+   "W_CONTRAST": 2,
+   "W_TEXT_DENSITY": 1,
+   "W_DEAD_AIR": 7,
+   "W_STATIC_END": 1
+  },
+  "renders": 0,
+  "frames": 0,
+  "sheets": 2,
+  "skill_loaded": true,
+  "result": "hlighted subtitles. I checked it from a contact strip of the rendered frames, not by playing it back.\n\nIt runs in five scenes on a dark navy background with a yellow sun:\n1. **Intro:** \"How solar panels work, in 3 simple steps.\"\n2. **Step 1:** sunlight hits the solar cells. The sun pulses and a light beam wipes toward the panel.\n3. **Step 2:** the cells make electricity. Electrons drift across the panel and the bolt pulses.\n4. **Step 3:** an inverter turns it into power for your home. An Inverter → Your home diagram pulses.\n5. **Outro:** \"Sunlight in. Clean power out.\"\n\nThe narration text is my own proposed copy. It makes no numeric or product claims.\n\nThe lint warnings still open are minor:\n- Two short subtitles (\"Step one.\", \"Step two.\") show about 0.07 s under the recommended reading time.\n- Step 3 has slightly more on-screen text than is comfortable to read while listening.\n- The final 2 s move only a small part of the frame, so the ending is fairly still.\n- The Inverter/Your home labels have low contrast on their backgrounds. I changed the node variant to try to fix it, but the strip is too small to confirm it did.\n\nThe `agentfx` wrapper on PATH points at a renderer path that doesn't exist. I called `/home/drzivil/dev/agentfx/target/release/agentfx` directly with the installed `agentfx-render`. I kept `nice` and the shared render lock. The wrapper itself is unchanged and will fail the same way next time.\n\nFiles are in the working directory:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 0,
+  "tool_errors": 1,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 4,
+    "codes": [
+     "W_CAPTION_READ",
+     "W_STATIC_END",
+     "W_TEXT_DENSITY"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 27.43
+  },
+  "text": [
+   {
+    "text": "sunlight",
+    "pass": true
+   },
+   {
+    "text": "inverter",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "has narration with on-screen captions/subtitles",
+     "pass": true,
+     "evidence": "Karaoke captions at the bottom of every frame, with the spoken words highlighted in yellow."
+    },
+    {
+     "item": "three steps explained in order",
+     "pass": true,
+     "evidence": "Big numerals 1, 2, 3 with titles: Sunlight hits the cells, Cells make electricity, Inverter powers your home."
+    },
+    {
+     "item": "visuals change per step",
+     "pass": true,
+     "evidence": "Step 1 shows sun and panel, step 2 shows electrons and a bolt, step 3 shows an inverter-to-home flow. The title and outro screens differ too."
+    },
+    {
+     "item": "captions readable and not covering the main visual",
+     "pass": true,
+     "evidence": "Captions sit in the bottom band and are clear of the graphics. They are fairly small and have a faded look at 19.43s. At 8.0s the caption sits close to the sun."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "Step 1 layout is weak: the sun and panel are unconnected, with no visible rays, and the panel is a blank blue rectangle with no cell grid. The sun looks dropped in next to it rather than shining on it.",
+    "Step 2 is only loosely illustrated. Three dots in a plain box and a bolt do not show electrons flowing. The dots leave the panel and sit awkwardly beside the bolt.",
+    "Layout is unbalanced. The graphics are small and crowded into the lower-left, with large empty areas on the right and bottom. The big numeral is tight against the title and visuals.",
+    "Step 3 uses a small generic UI card for the inverter and home, which is dull and not very explanatory. There is no panel or house imagery, and the DC to AC subtext is tiny.",
+    "Captions and sub-labels are small for 1080p: the 'in 3 simple steps' subtitle is tiny, and the caption text at 19.43s looks dim. The captions also repeat the spoken line, and the step-one wording differs slightly from the title."
+   ],
+   "verdict": "The video is functional. It has narration, karaoke captions, three clearly numbered steps and a distinct visual for each. The visuals are generic and under-designed: step 1 is a sun beside a blank rectangle, and step 2 is dots in a box. Much of the frame is unused. A user would likely ask for richer illustrations and a better layout.",
+   "cost_usd": 0.033262299999999995,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 83.3
+ },
+ "score_wall_s": 15.7,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/explainer-solar-captions"
+}

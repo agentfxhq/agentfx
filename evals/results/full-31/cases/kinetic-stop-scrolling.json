@@ -1,0 +1,134 @@
+{
+ "id": "kinetic-stop-scrolling",
+ "tags": [
+  "social",
+  "kinetic-type",
+  "vertical"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": 8,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 100.6,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 24,
+  "cost_usd": 0.2826551,
+  "tokens": {
+   "input_tokens": 42,
+   "output_tokens": 5661,
+   "cache_read_input_tokens": 761051,
+   "cache_creation_input_tokens": 37464
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 15,
+   "mcp__agentfx__agentfx_sheet": 1,
+   "Read": 3
+  },
+  "lint_calls": 6,
+  "lint_errors_seen": 3,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_VERB": 1,
+   "E_OUT_OF_FRAME": 2
+  },
+  "warning_codes": {
+   "W_SAFE_AREA": 11,
+   "W_STATIC_END": 1,
+   "W_COLD_OPEN": 1
+  },
+  "renders": 0,
+  "frames": 0,
+  "sheets": 6,
+  "skill_loaded": true,
+  "result": "The 8-second 9:16 reel (1080x1920, 30 fps) is rendered at `out/film.mp4`. The script is `film.reel`.\n\n- **Look:** pure black background with neon green (#39FF14) and white type in heavy weight.\n- **Timing:** STOP slams in at 0.3s with a pop sound, and SCROLLING pops in under it at 1.1s. Both exit at 3.2s. START zooms in at 3.9s, and BUILDING pops in at 4.5s with a green and white confetti burst. START and BUILDING pulse again before the end, around 6s.\n- **Not checked:** I only looked at still frames and a contact sheet. I didn't play the MP4 back or check it with a frame strip.\n- **Lint:** it shows one warning, a 0.3s still frame at the start (W_COLD_OPEN). I left it because STOP lands right after.\n- **No audio:** the pop sound is the only audio. Add a beat-driven track before posting if you want one.\n- **Word size:** the words are a bit under full width, because the safe-area check complained when I made them larger.\n- **Renderer:** the `agentfx` wrapper on PATH couldn't find the renderer, so I ran `~/.local/bin/agentfx` directly.",
+  "spec_reads": 1,
+  "tool_errors": 3,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 1,
+    "codes": [
+     "W_COLD_OPEN"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 8.0
+  },
+  "text": [
+   {
+    "text": "STOP SCROLLING",
+    "pass": true
+   },
+   {
+    "text": "START BUILDING",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical 9:16 frame",
+     "pass": true,
+     "evidence": "Tall portrait frames, 1080x1920."
+    },
+    {
+     "item": "the words appear one after another (not all at once)",
+     "pass": true,
+     "evidence": "STOP, then SCROLLING, then blank, then START, then BUILDING."
+    },
+    {
+     "item": "black background with neon green accents",
+     "pass": true,
+     "evidence": "Pure black background with neon green SCROLLING and START."
+    },
+    {
+     "item": "text is big and fills most of the frame width",
+     "pass": false,
+     "evidence": "STOP and START fill about 70–75% of the width. SCROLLING and BUILDING fill only about 70%. All text sits in the upper-middle with large empty black areas."
+    },
+    {
+     "item": "feels high energy (fast, punchy motion)",
+     "pass": false,
+     "evidence": "Mostly static holds of 2+ s, and a blank frame at 3.67s. Only a small particle burst at 5.0s."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "Text is smaller than 'big and bold' implies. SCROLLING and BUILDING are small, and the text block takes up only about a third of the tall frame, leaving large empty black space above and below.",
+    "Low energy. The words sit static for 2+ s each, with slow pacing and few slam effects. The only extra is a small particle burst.",
+    "The black gap around 3.7s and the empty top and bottom of the frame feel like dead air.",
+    "The second line is much smaller than the first, so the hierarchy feels weak. The final hold on START/BUILDING has no closing punch.",
+    "The layout is generic: white and green words stacked in a plain way, with no accents, glow or other design interest."
+   ],
+   "verdict": "Clean and legible, with the right colours and word order. It is too static and undersized to feel like a punchy reel, and a user would likely ask for bigger text and faster slams.",
+   "cost_usd": 0.027719100000000003,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 71.3
+ },
+ "score_wall_s": 15.0,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/kinetic-stop-scrolling"
+}

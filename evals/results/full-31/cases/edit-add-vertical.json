@@ -1,0 +1,136 @@
+{
+ "id": "edit-add-vertical",
+ "tags": [
+  "edit",
+  "multi-format"
+ ],
+ "formats": [
+  "16:9",
+  "9:16"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 99.2,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 25,
+  "cost_usd": 0.3019299000000001,
+  "tokens": {
+   "input_tokens": 46,
+   "output_tokens": 7506,
+   "cache_read_input_tokens": 741899,
+   "cache_creation_input_tokens": 38147
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 17,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_frame": 1,
+   "Read": 3
+  },
+  "lint_calls": 7,
+  "lint_errors_seen": 3,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 2,
+   "E_OVERFLOW": 1
+  },
+  "warning_codes": {
+   "W_TEXT_DENSITY": 9,
+   "W_STATIC_END": 13,
+   "W_SAFE_AREA": 8
+  },
+  "renders": 1,
+  "frames": 3,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "The vertical version is rendered, and the headline no longer gets cut off. I checked a portrait frame by eye and it fits. I didn't look at the rendered MP4s themselves.\n\n**What I changed in `film.reel`:**\n- The file now has `formats=[16:9, 9:16]`.\n- The headline no longer uses `nowrap`. It wraps within a width box instead.\n- In portrait it is 118 px and wraps to three lines: \"OPEN DAY AT / THE / MAKERSPACE\". The subtitle is 54 px and stays on one line.\n- The headline had been 2388 px wide, far past the 1080 px frame. The lint error for that is gone.\n- Landscape looks the same as before: the headline is on one line at 110 px. I widened its box a little so it doesn't wrap.\n\n**Lint:** landscape still has a safe-area warning on the headline and subtitle. It was there before, because the headline runs nearly edge to edge. There is also a \"static end\" warning on both formats, because nothing moves after the first second.\n\n**Renders:**\n- `out/film-16x9.mp4`\n- `out/film-9x16.mp4`\n\n**Renderer problem:** the `agentfx` command on PATH is a wrapper that calls `tools/remote-render.sh`, and that script doesn't exist here, so every command through it failed. I ran the installed binary at `~/.local/bin/agentfx` directly, with the same flags. I didn't change the wrapper.",
+  "spec_reads": 3,
+  "tool_errors": 4,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 4,
+    "codes": [
+     "W_SAFE_AREA",
+     "W_STATIC_END",
+     "W_TEXT_DENSITY"
+    ],
+    "error_msgs": []
+   },
+   "9:16": {
+    "errors": 0,
+    "warnings": 2,
+    "codes": [
+     "W_STATIC_END",
+     "W_TEXT_DENSITY"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 6.0,
+   "9:16": 6.0
+  },
+  "text": [
+   {
+    "text": "OPEN DAY AT THE MAKERSPACE",
+    "pass": true
+   },
+   {
+    "text": "free entry",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical version: the headline fits inside the frame (wraps or scales)",
+     "pass": true,
+     "evidence": "In 9:16 the headline wraps to three lines (OPEN DAY AT / THE / MAKERSPACE) and sits fully inside the frame with side margins."
+    },
+    {
+     "item": "landscape version still looks as before",
+     "pass": true,
+     "evidence": "In 16:9 the headline and subline are still centred at the same positions and sizes. The headline spans nearly the full width, as it did before."
+    },
+    {
+     "item": "copy unchanged",
+     "pass": true,
+     "evidence": "Both versions show 'OPEN DAY AT THE MAKERSPACE' and 'Saturday 10:00 to 16:00, free entry' word for word."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "In 9:16 the text block sits in the upper-middle and the bottom 40% of the frame is empty. The composition feels top-heavy and unused.",
+    "In 9:16 the subline runs almost edge to edge. Its side margins are tight and fall inside the story UI safe zones.",
+    "In 9:16 the headline wraps awkwardly: 'THE' sits alone on its own line, which gives an uneven rag.",
+    "In 16:9 the headline nearly touches the left and right edges, so its margins are tight.",
+    "The design is plain: only text on a gradient, with a small subline and little motion after the intro, so it is generic."
+   ],
+   "verdict": "The edit does what was asked. The vertical headline now wraps and fits, the landscape version is essentially unchanged, and the copy is the same. The vertical layout is a bit unbalanced, with tight subline margins and a lot of empty space below, but a user would likely accept it.",
+   "cost_usd": 0.0447355,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 86.7
+ },
+ "score_wall_s": 27.9,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/edit-add-vertical"
+}

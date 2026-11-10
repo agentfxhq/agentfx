@@ -1,0 +1,98 @@
+{
+ "id": "explainer-request-diagram",
+ "tags": [
+  "explainer",
+  "diagram"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 65.5,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 13,
+  "cost_usd": 0.1743259,
+  "tokens": {
+   "input_tokens": 26,
+   "output_tokens": 3908,
+   "cache_read_input_tokens": 350059,
+   "cache_creation_input_tokens": 25047
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 8,
+   "mcp__agentfx__agentfx_frame": 1
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 9,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 9
+  },
+  "warning_codes": {
+   "W_TEXT_DENSITY": 3,
+   "W_STATIC_END": 3
+  },
+  "renders": 0,
+  "frames": 3,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I wrote the script at `./film.reel`, but I couldn't render it, so there's no video in `./out/` yet. I haven't seen a single frame of it either.\n\n**Why it's blocked:** `agentfx` looks for its renderer at `/home/drzivil/dev/agentfx/tools/agentfx-render`, and nothing is there. A built renderer does exist at `/home/drzivil/dev/agentfx/target/release/agentfx-render`. Setting `AGENTFX_RENDERER` to that path didn't change the error. The MCP `frame` call failed the same way. Linking the file into `tools/` would fix it, but that edits the AgentFX install outside this project, so I left it alone.\n\n**What the script has:**\n- **Diagram:** a 16:9, 12 second clip with three nodes in a row (Browser, Server, Database), joined by arrows that draw in.\n- **Highlights:** each node lights up in turn as the request moves along.\n- **Return trip:** the Server and Browser light up again at 7s and 9s, but there are no arrows drawn back. The clip also doesn't yet label the request-in and response-out steps.\n- **Lint:** 0 errors and 2 warnings. One says there are a few more words on screen than is comfortable to read. The other says the clip ends on only a small movement.\n\n**To finish:** run `ln -s /home/drzivil/dev/agentfx/target/release/agentfx-render /home/drzivil/dev/agentfx/tools/agentfx-render` or `tools/install.sh`, then say so. I'll then add the return arrows and labels, check a few frames, and render the MP4.",
+  "spec_reads": 1,
+  "tool_errors": 3,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 2,
+    "codes": [
+     "W_STATIC_END",
+     "W_TEXT_DENSITY"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": false,
+  "agent_rendered": false,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 12.0
+  },
+  "text": [
+   {
+    "text": "Browser",
+    "pass": true
+   },
+   {
+    "text": "Server",
+    "pass": true
+   },
+   {
+    "text": "Database",
+    "pass": true
+   }
+  ],
+  "judge": null,
+  "render_errors": [
+   "16:9: renderer not found at /home/drzivil/dev/agentfx/tools/agentfx-render (build it with `cargo build --release` at the repository root, or run tools/install.sh, which installs agentfx-render next to agentfx; or set AGENTFX_RENDERER)\n"
+  ],
+  "compiles": false,
+  "accepted": false,
+  "score": 30.0
+ },
+ "score_wall_s": 0.1,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/explainer-request-diagram"
+}

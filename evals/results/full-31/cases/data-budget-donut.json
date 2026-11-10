@@ -1,0 +1,132 @@
+{
+ "id": "data-budget-donut",
+ "tags": [
+  "data",
+  "chart"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 66.2,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 21,
+  "cost_usd": 0.2108573,
+  "tokens": {
+   "input_tokens": 38,
+   "output_tokens": 3911,
+   "cache_read_input_tokens": 573633,
+   "cache_creation_input_tokens": 28577
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 15,
+   "mcp__agentfx__agentfx_frame": 1,
+   "Read": 1
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 2,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_CAMERA": 2
+  },
+  "warning_codes": {
+   "W_STATIC_END": 3,
+   "W_DEAD_AIR": 1
+  },
+  "renders": 1,
+  "frames": 2,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made an 8-second, 16:9 donut chart video of your budget. Rent is 40%, Salaries 35%, Marketing 15% and Other 10%, with a \"Where our budget goes\" title above it. The ring draws on, and there's a slow zoom and a pulse before the end. I checked one frame at 7 s, and the labels and figures read clearly. I didn't watch the rendered MP4 itself.\n\nThe `agentfx` command on PATH is a wrapper that points at a renderer that doesn't exist, so I ran the real binary at `$AGENTFX_HOME/target/release/agentfx` with its own renderer instead. Lint reports 0 errors and 0 warnings. You'll need the same workaround if you re-render.\n\nThe legend shows \"40 %\" with a space, which is the renderer's default, and the center label reads \"40%\".\n\nFiles are in `/tmp/claude-1000/agentfx-evals-full/full-31/data-budget-donut`:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 1,
+  "tool_errors": 4,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 8.0
+  },
+  "text": [
+   {
+    "text": "Rent",
+    "pass": true
+   },
+   {
+    "text": "Salaries",
+    "pass": true
+   },
+   {
+    "text": "Marketing",
+    "pass": true
+   },
+   {
+    "text": "Other",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "pie or donut chart with four slices",
+     "pass": true,
+     "evidence": "Donut with green, light green, yellow, red segments."
+    },
+    {
+     "item": "labels/legend with the four categories",
+     "pass": true,
+     "evidence": "Legend lists Rent, Salaries, Marketing, Other."
+    },
+    {
+     "item": "percentages correct",
+     "pass": true,
+     "evidence": "Legend shows 40/35/15/10 %, and slice sizes look proportional."
+    },
+    {
+     "item": "chart animates in",
+     "pass": true,
+     "evidence": "At 0.33s the donut is only partly drawn (one arc), and it is complete by 1.67s."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "The chart and legend are small for the 1080p frame, with empty space at the sides and bottom.",
+    "The two greens (Rent and Salaries) are similar, and the legend dots are tiny, so matching legend to slice is hard.",
+    "The centre reads '40% RENT' and the legend text is small and low-contrast, so the other slices aren't labelled directly.",
+    "After the intro the motion is minimal. The zoom and pulses are subtle, and the chart is static for most of the 8 s.",
+    "The legend shows '40 %' with a space and the percentages are light weight, which looks slightly unpolished."
+   ],
+   "verdict": "Correct and clean. The data is right and the chart animates in, but the layout is small and generic and the motion after the intro is weak.",
+   "cost_usd": 0.037097000000000005,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 86.7
+ },
+ "score_wall_s": 10.8,
+ "workdir": "/tmp/claude-1000/agentfx-evals-full/full-31/data-budget-donut"
+}

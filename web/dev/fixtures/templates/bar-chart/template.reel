@@ -1,0 +1,9 @@
+video "Bar chart" size=1280x720 fps=30 captions=off formats=[16:9, 9:16, 1:1]
+scene chart dur=5s bg={{bg}}
+  text #title "{{title}}" x=50% y=11% anchor=center size=44 weight=800 color=#FFFFFF nowrap
+  chart #c type={{type}} data=[{{rows.value}}] labels=[{{rows.label}}] w=1000 h=500 x=50% y=57% anchor=center in=draw
+  when portrait
+    set #c w=640 h=900
+    set #title size=34
+  when square
+    set #c w=640 h=520

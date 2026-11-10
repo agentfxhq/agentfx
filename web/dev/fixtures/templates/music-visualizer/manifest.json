@@ -1,0 +1,14 @@
+{
+  "id": "music-visualizer",
+  "title": "Music visualizer",
+  "description": "A radial spectrum and bar EQ that dance to your track.",
+  "tags": ["music", "audio", "visualizer"],
+  "formats": ["16:9", "9:16", "1:1"],
+  "duration_s": 8,
+  "params": [
+    {"id": "title", "type": "text", "label": "Track title", "default": "Night Drive", "max_len": 40},
+    {"id": "audio", "type": "audio", "label": "Music (mp3/wav)", "required": false, "default": "demo-beat.mp3"},
+    {"id": "color", "type": "color", "label": "Colour", "default": "#5EEAD4"},
+    {"id": "color2", "type": "color", "label": "Second colour", "default": "#A78BFA"}
+  ]
+}

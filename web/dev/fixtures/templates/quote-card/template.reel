@@ -1,0 +1,9 @@
+video "Quote card" size=1080x1080 fps=30 captions=off
+scene card dur=1s bg={{bg}}
+  text #quote "{{quote}}" x=50% y=44% anchor=center size=70 weight=800 color={{color}} w=84% align=center
+  rect #bar x=50% y=66% w=110 h=6 radius=3 anchor=center fill={{accent}}
+  text #author "{{author}}" x=50% y=72% anchor=center size=32 weight=600 color={{accent}} nowrap
+  when landscape
+    set #quote size=60 y=40%
+    set #bar y=64%
+    set #author y=72%

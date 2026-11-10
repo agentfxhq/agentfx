@@ -1,0 +1,14 @@
+{
+  "id": "glitch-text",
+  "title": "Glitch text",
+  "description": "A word that tears, stutters and smears like a broken signal.",
+  "tags": ["text", "glitch"],
+  "formats": ["16:9", "9:16", "1:1"],
+  "duration_s": 4,
+  "params": [
+    {"id": "text", "type": "text", "label": "Text", "default": "SIGNAL", "max_len": 24},
+    {"id": "color", "type": "color", "label": "Text colour", "default": "#75F6D4"},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#10121D"},
+    {"id": "intensity", "type": "number", "label": "Glitch amount", "default": 1, "min": 0.2, "max": 1.5, "step": 0.1}
+  ]
+}

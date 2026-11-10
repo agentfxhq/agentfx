@@ -1,0 +1,16 @@
+{
+  "id": "bar-chart",
+  "title": "Animated chart",
+  "description": "Paste a table and get a chart that draws itself.",
+  "tags": ["data", "chart"],
+  "formats": ["16:9", "9:16", "1:1"],
+  "duration_s": 5,
+  "params": [
+    {"id": "title", "type": "text", "label": "Title", "default": "Revenue by quarter", "max_len": 50},
+    {"id": "rows", "type": "data", "label": "Data", "columns": [{"id": "label", "label": "Label", "type": "text"}, {"id": "value", "label": "Value", "type": "number"}],
+     "default": [{"label": "Q1", "value": 12}, {"label": "Q2", "value": 18}, {"label": "Q3", "value": 9}, {"label": "Q4", "value": 24}], "max_rows": 24},
+    {"id": "type", "type": "enum", "label": "Chart", "default": "bar", "options": ["bar", "line", "area", "donut"]},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#0E1116"}
+  ],
+  "i18n": {"de": {"title": "Animiertes Diagramm", "description": "Tabelle einfügen, das Diagramm zeichnet sich selbst.", "params": {"title": "Titel", "rows": "Daten", "type": "Diagramm", "bg": "Hintergrund"}}}
+}

@@ -1,0 +1,13 @@
+video "Music visualizer" size=1280x720 fps=30 captions=off formats=[16:9, 9:16, 1:1]
+music src={{audio}} vol=0.9
+scene viz dur=8s bg=radial(at 50% 45%, #1B1F2E 0%, #0B0D14 70%)
+  visualizer #ring type=radial mirror count=64 w=420 h=420 radius=120 gap=4 colors=[{{color}}, {{color2}}] gain=1.1 smooth=90ms x=50% y=44% anchor=center
+  ellipse #core w=180 h=180 x=50% y=44% anchor=center fill=radial(at 50% 50%, {{color2}} 0%, {{color}} 100%) glow=audio(band=0, gain=30, smooth=120ms)
+  pulse #core on=beat amount=0.12 decay=250ms
+  visualizer #bars count=48 w=1100 h=110 gap=6 colors=[{{color}}, {{color2}}] mirror gain=1.15 smooth=70ms x=50% y=88% anchor=center
+  text #title "{{title}}" x=50% y=74% anchor=center size=40 weight=800 color=#FFFFFF nowrap
+  when portrait
+    set #title size=32
+    set #bars w=640
+  when square
+    set #bars w=640

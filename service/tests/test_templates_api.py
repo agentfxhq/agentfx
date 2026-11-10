@@ -88,3 +88,18 @@ def test_mcp_template_tools(client):
         assert res["content"][1]["type"] == "image"
     tools = {t["name"]: t for t in rpc(client, "tools/list")["result"]["tools"]}
     assert "out_dir" not in tools["agentfx_render_template"]["inputSchema"]["properties"]
+
+
+def test_raw_source_still_with_format(client):
+    from conftest import QUICKSTART
+    r = client.post("/api/v1/renders", json={"source": QUICKSTART, "output": "png", "format": "9:16", "at": "2s"})
+    assert r.status_code == 202, r.text
+    s, _ = _wait(client, r.json()["job_id"])
+    png = _get(client, s["url"]).content
+    assert (int.from_bytes(png[16:20], "big"), int.from_bytes(png[20:24], "big")) == (720, 1280)
+
+
+def test_storage_cap(client):
+    client.svc.stored_bytes = 10 ** 15
+    r = client.post("/api/v1/renders", json={"template": "hello-card"})
+    assert r.status_code == 503 and r.json()["error"]["code"] == "busy"

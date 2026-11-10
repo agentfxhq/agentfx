@@ -56,6 +56,7 @@ claude mcp add --transport http agentfx https://api.agentfx.dev/mcp [--header "A
 | `AFX_TRUST_PROXY` | 0 (compose: 1) | client IP from `X-Forwarded-For` (only behind Caddy) |
 | `AFX_CORS_ORIGINS` | `*` | |
 | `AFX_MCP_WAIT_S` | 50 | how long MCP render tools wait |
+| `AFX_STORAGE_MAX_GB`, `AFX_JOB_OUTPUT_MB` | 50, 2048 | outputs + uploads on disk (new jobs/uploads get 503 above); files of one job |
 | `AFX_FREE_<FIELD>`, `AFX_KEY_<FIELD>` | see `config.py` | tier limits, e.g. `AFX_FREE_DURATION_S=20`, `AFX_FREE_RENDERS_PER_DAY=10` |
 
 Tier fields: `source_kb, duration_s, max_short_side, qualities, renders_per_day,
@@ -98,7 +99,8 @@ Untrusted Reel Script runs through two layers.
    `AGENTFX_TTS=none`, HOME/cache inside the job dir); an iptables/ip6tables owner rule rejects
    all traffic of uids 20000-20255 (installed by the entrypoint, which then drops NET_ADMIN from
    the bounding set). The service runs as root in the container with only CHOWN, DAC_OVERRIDE,
-   FOWNER, SETUID, SETGID, KILL (+ NET_ADMIN for the entrypoint), no-new-privileges, a read-only
+   FOWNER, SETUID, SETGID, KILL (+ NET_ADMIN and SETPCAP for the entrypoint, which removes both from
+   the bounding set before uvicorn starts), no-new-privileges, a read-only
    root filesystem and private data files (umask 077; the data dir is 0711 so slot uids reach
    only their own job dir).
 

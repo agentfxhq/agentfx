@@ -1,7 +1,7 @@
 #!/bin/sh
 # AgentFX service entrypoint (runs as root in the container, with the capabilities from
 # docker-compose.yml). 1. block all network traffic of the sandbox uid range, 2. drop
-# NET_ADMIN/NET_RAW from the bounding set, 3. exec uvicorn. The service itself switches each
+# NET_ADMIN and SETPCAP from the bounding set, 3. exec uvicorn. The service itself switches each
 # renderer process to its slot uid (AFX_SANDBOX_UID_BASE + slot).
 set -eu
 
@@ -32,7 +32,7 @@ if [ "$(id -u)" = 0 ]; then
   else
     echo "agentfx-service: WARNING renderers have network access (AFX_REQUIRE_NETWORK_ISOLATION=0)" >&2
   fi
-  set -- setpriv --bounding-set=-net_admin,-net_raw --inh-caps=-all --
+  set -- setpriv --bounding-set=-net_admin,-setpcap --inh-caps=-all --
 else
   set --
 fi

@@ -247,6 +247,8 @@ def build(cfg=None) -> Starlette:
         await form.close()
         if len(data) > svc.assets.max_upload():
             raise ServiceError("file too large", "too_large", 413)
+        if svc.stored_bytes > cfg.storage_max_gb * 1024 ** 3:
+            raise ServiceError("the service is out of storage, try again later", "busy", 503)
         if not svc.store.take(client, "uploads", tier.uploads_per_day):
             raise ServiceError(f"daily upload limit reached ({tier.uploads_per_day}/day)", "rate_limited", 429)
         if not svc.store.take(client, "upload_bytes", tier.upload_mb_per_day * 1024 * 1024, len(data)):
@@ -254,6 +256,7 @@ def build(cfg=None) -> Starlette:
             raise ServiceError(f"daily upload volume reached ({tier.upload_mb_per_day} MB/day)", "rate_limited", 429)
         try:
             meta = svc.assets.put(data, client, tier.retention_h)
+            svc.stored_bytes += len(data)
         except SourceError:
             svc.store.give_back(client, "uploads")
             svc.store.give_back(client, "upload_bytes", len(data))

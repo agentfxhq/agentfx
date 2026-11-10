@@ -89,6 +89,8 @@ class Config:
     signing_key: bytes
     trust_proxy: bool            # take the client IP from X-Forwarded-For (only behind Caddy)
     mcp_wait_s: float            # agentfx_render over MCP waits this long for short renders
+    storage_max_gb: float        # outputs + uploads; new render jobs get 503 above
+    job_output_mb: int           # files of one job (a batch stops above)
     free: Tier = field(default=None)
     key: Tier = field(default=None)
 
@@ -159,6 +161,8 @@ def load() -> Config:
         signing_key=_signing_key(data_dir),
         trust_proxy=_env("AFX_TRUST_PROXY", False, bool),
         mcp_wait_s=_env("AFX_MCP_WAIT_S", 50.0, float),
+        storage_max_gb=_env("AFX_STORAGE_MAX_GB", 50.0, float),
+        job_output_mb=_env("AFX_JOB_OUTPUT_MB", 2048, int),
     )
     cfg.free = _tier("free", source_kb=64, duration_s=20.0, max_short_side=720, qualities=("preview",),
                      renders_per_day=10, previews_per_min=60, concurrent_renders=1, retention_h=24.0,

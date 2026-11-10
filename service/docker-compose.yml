@@ -38,6 +38,7 @@ services:
       - SETGID
       - KILL           # kill runaway renderer process groups
       - NET_ADMIN      # entrypoint only: iptables rule, dropped before the service starts
+      - SETPCAP        # entrypoint only: to drop NET_ADMIN (and itself) from the bounding set
     security_opt:
       - no-new-privileges:true
     mem_limit: ${AFX_MEM_LIMIT:-12g}

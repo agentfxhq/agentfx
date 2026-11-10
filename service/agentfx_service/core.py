@@ -28,7 +28,7 @@ from . import stdio as stdio_mod
 from . import validate
 from .assets import AssetStore, candidate_names
 from .keys import Store
-from .sandbox import Sandbox, SandboxError
+from .sandbox import Sandbox, SandboxError, dir_size
 from .validate import SourceError
 
 log = logging.getLogger("agentfx.core")
@@ -194,6 +194,7 @@ class Service:
         self.jobs: dict[str, RenderJob] = {}
         self._cleanup_task = None
         self.watermark_font = self._find_font()
+        self.stored_bytes = 0  # outputs + uploads, recounted by cleanup()
         self.stdio = stdio_mod.load(cfg.agentfx_home)
         from .tpl import Templates
         self.templates = Templates(cfg.templates_dir)
@@ -475,6 +476,8 @@ class Service:
             units = [Unit(source, at=validate.check_at(at or "0s"))]
         if output not in (STILL_OUTPUTS if kind == "still" else VIDEO_OUTPUTS):
             raise ServiceError(f"output must be one of {', '.join(STILL_OUTPUTS + VIDEO_OUTPUTS)}", "invalid_request")
+        if self.stored_bytes > self.cfg.storage_max_gb * 1024 ** 3:
+            raise ServiceError("the service is out of output storage, try again later", "busy", 503)
         if self.client_active_renders(client) >= tier.concurrent_renders:
             raise ServiceError(f"at most {tier.concurrent_renders} render job(s) at a time per client; wait for the "
                                "running one", "too_many_renders", 429)
@@ -570,6 +573,8 @@ class Service:
         try:
             for i, unit in enumerate(job.units):
                 base_p, span = i / n, 1 / n
+                if dir_size(dest) > self.cfg.job_output_mb * 1024 * 1024:
+                    raise ServiceError(f"the job's files exceed {self.cfg.job_output_mb} MB", "limit_exceeded")
                 try:
                     name = await self._render_unit(job, unit, slot, tier, dest, base_p, span)
                     f = {"name": name}
@@ -591,6 +596,7 @@ class Service:
                 job.file = zname
             else:
                 job.file = job.files[0]["name"]
+            self.stored_bytes += dir_size(dest)
             job.finished = time.time()
             job.expires = job.finished + job.retention_h * 3600
             job.status, job.progress = "done", 1.0
@@ -602,6 +608,9 @@ class Service:
         finally:
             job.units = []
             if job.status == "error":
+                for f in dest.iterdir():  # keep only job.json of failed jobs
+                    if f.name != "job.json":
+                        f.unlink(missing_ok=True)
                 job.expires = time.time() + 3600
             self._save_meta(job)
 
@@ -623,7 +632,8 @@ class Service:
             if job.kind == "still":
                 png = "still.png"
                 r = await asyncio.to_thread(self.run_cli, slot, job_dir,
-                                            ["frame", "src.reel", "--at", unit.at, "-o", png, "--no-tts"],
+                                            ["frame", "src.reel", "--at", unit.at, "-o", png, "--no-tts"]
+                                            + (["--format", job.format] if job.format else []),
                                             min(job.wall_s, self.cfg.preview_wall_s * 3))
                 if r.killed or r.code != 0 or not (job_dir / png).is_file():
                     raise ServiceError("render failed: " + (f"stopped ({r.killed})" if r.killed else _first_error(r.stderr)),
@@ -767,6 +777,7 @@ class Service:
             if j.status in ("done", "error") and j.expires and j.expires < now:
                 self.jobs.pop(jid, None)
         self.assets.cleanup()
+        self.stored_bytes = dir_size(self.cfg.outputs_dir) + dir_size(self.cfg.assets_dir)
 
 
 # ------------------------------------------------------------------ utils

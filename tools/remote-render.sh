@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# agentfx with `render` offloaded to another tailnet machine (default: lore).
+# agentfx with `render` offloaded to another machine (default: lore, then the softwer overflow box).
 # Drop-in: put this first on PATH as `agentfx` (e.g. via AFX_LOCAL_BIN). Every other subcommand,
 # and any render when the remote is busy or unreachable, runs locally.
 #
-#   AFX_REMOTE=lore            ssh host
+#   AFX_REMOTES="lore|0-3|4 afxrender@89.167.79.118|1|0.7"
+#                              hosts in order of preference: ssh host|cores (taskset)|max 1-min load.
+#                              The first host under its load limit that has ffmpeg (on PATH or
+#                              <runner>/bin/ffmpeg) takes the job; none: render locally.
 #   AFX_REMOTE_DIR=agentfx-runner   runner dir on the host (bin/, share/); jobs go to /tmp/agentfx-jobs-$USER
-#   AFX_REMOTE_MAXLOAD=4       fall back to local when the host's 1-min load is above this
-#   AFX_REMOTE_CPUS=0-3        cores the remote render may use (taskset)
 #   AFX_LOCAL_BIN=<path>       the local agentfx binary
 #
 # The working directory (files <= 50 MB, no .git/target/node_modules) is synced to a throwaway job
@@ -14,10 +15,8 @@
 # exactly the files that were synced plus the output, one by one, then the empty dirs (no
 # recursive delete on remote hosts); anything else the renderer left expires with /tmp.
 set -euo pipefail
-REMOTE=${AFX_REMOTE:-lore}
+REMOTES=${AFX_REMOTES:-"lore|0-3|4 afxrender@89.167.79.118|1|0.7"}
 RDIR=${AFX_REMOTE_DIR:-agentfx-runner}
-MAXLOAD=${AFX_REMOTE_MAXLOAD:-4}
-CPUS=${AFX_REMOTE_CPUS:-0-3}
 LOCAL=${AFX_LOCAL_BIN:-$(dirname "$(readlink -f "$0")")/../target/release/agentfx}
 
 local_run() { exec "$LOCAL" "$@"; }
@@ -38,8 +37,15 @@ done
 # absolute paths in the args (other than -o) would not exist remotely
 for a in "${rargs[@]}"; do case "$a" in /*) local_run "$@" ;; esac; done
 
-read -r load ruser < <(timeout 6 ssh -o BatchMode=yes -o ConnectTimeout=4 "$REMOTE" 'echo "$(cut -d" " -f1 /proc/loadavg) $(id -un)"' 2>/dev/null || echo "999 x")
-awk -v l="$load" -v m="$MAXLOAD" 'BEGIN{exit !(l <= m)}' || { echo "remote-render: $REMOTE load $load > $MAXLOAD, rendering locally" >&2; local_run "$@"; }
+REMOTE=""
+for spec in $REMOTES; do
+  IFS='|' read -r h c m <<<"$spec"
+  probe="echo \"\$(cut -d' ' -f1 /proc/loadavg) \$(id -un) \$( { command -v ffmpeg >/dev/null || test -x ~/$RDIR/bin/ffmpeg; } && echo ff || echo noff)\""
+  read -r load ruser ff < <(timeout 6 ssh -o BatchMode=yes -o ConnectTimeout=4 "$h" "$probe" 2>/dev/null || echo "999 x noff")
+  if [ "$ff" = ff ] && awk -v l="$load" -v m="$m" 'BEGIN{exit !(l <= m)}'; then REMOTE=$h; CPUS=$c; break; fi
+  echo "remote-render: skip $h (load $load, ${ff})" >&2
+done
+[ -n "$REMOTE" ] || { echo "remote-render: no remote free, rendering locally" >&2; local_run "$@"; }
 
 ext=${out##*.}; [ "$ext" != "$out" ] || ext=mp4
 job="job-$(hostname)-$$-$(date +%s)"
@@ -59,7 +65,7 @@ ssh -o BatchMode=yes "$REMOTE" "mkdir -p $JD"
 rsync -a --max-size=50m --exclude .git --exclude target --exclude node_modules --exclude '*.mp4' \
   --out-format='%n' ./ "$REMOTE:$JD/" | grep -v '/$' > "$list" || true
 set +e
-ssh -o BatchMode=yes "$REMOTE" "cd $JD && AGENTFX_HOME=\$HOME/$RDIR/share AGENTFX_GPU=0 nice -n 10 taskset -c $CPUS \$HOME/$RDIR/bin/agentfx ${q[*]}"
+ssh -o BatchMode=yes "$REMOTE" "cd $JD && PATH=\$HOME/$RDIR/bin:\$PATH AGENTFX_HOME=\$HOME/$RDIR/share AGENTFX_GPU=0 nice -n 10 taskset -c $CPUS \$HOME/$RDIR/bin/agentfx ${q[*]}"
 code=$?
 set -e
 if [ $code -eq 0 ]; then

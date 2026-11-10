@@ -162,7 +162,12 @@ impl<'a> Ctx<'a> {
                 let src = praw(n, "src").or_else(|| text_arg(n)).unwrap_or_default();
                 let src = self.asset(&src, n);
                 if k == "image" && image_size(std::path::Path::new(&src)).is_none() {
-                    self.err("E_ASSET", format!("unsupported or invalid image `{src}`"), "use a local PNG or JPEG image", n.span);
+                    let hint = if src.to_lowercase().ends_with(".svg") {
+                        "an SVG is vector art, not an image: use `svg #logo src=logo.svg w=800 h=240` (same props, scales crisply, animates like any layer)"
+                    } else {
+                        "use a local PNG or JPEG image"
+                    };
+                    self.err("E_ASSET", format!("unsupported or invalid image `{src}`"), hint, n.span);
                 }
                 let kind = if k == "image" {
                     Kind::Image { src, fit: praw(n, "fit").unwrap_or("cover".into()) }

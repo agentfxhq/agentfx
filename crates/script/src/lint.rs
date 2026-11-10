@@ -40,6 +40,48 @@ fn walk_nodes<'a>(nodes: &'a [Node], out: &mut Vec<&'a Node>) {
     }
 }
 
+/// Number formatting defaults are German (counter grouping `.` from 10 000 on, chart decimal
+/// comma). Say so where it shows, so an English video does not end on "10.000" or "2,1 %".
+pub fn number_format_rules(all: &[&Node], d: &mut Vec<Diag>) {
+    let num = |n: &Node, k: &str| n.props.get(k).and_then(|v| v.raw().trim().parse::<f64>().ok());
+    let mut no_sep: HashMap<String, Span> = HashMap::new();
+    for n in all {
+        if !matches!(n.kind.as_str(), "counter" | "stat") || n.props.contains_key("sep") {
+            continue;
+        }
+        if let Some(id) = n.args.iter().map(|a| a.raw()).find(|a| a.starts_with('#')) {
+            no_sep.insert(id.trim_start_matches('#').to_string(), n.span);
+        }
+        let big = ["to", "value", "from"].iter().filter_map(|k| num(n, k)).fold(0.0f64, |m, v| m.max(v.abs()));
+        if big >= 10_000.0 {
+            d.push(Diag::warn("W_NUMBER_FORMAT", format!("{} shows {} with the default German grouping (`.` from 10 000 on, e.g. 10.000)", n.kind, crate::ast::fmt_num(big)),
+                "for English write `sep=\",\"` (10,000); `sep=none` for no grouping. Set it explicitly: the default only groups from 10 000 on, so a count from 9999 changes width", n.span));
+        }
+    }
+    for n in all {
+        if n.kind == "count" {
+            let target = n.args.first().map(|a| a.raw()).unwrap_or_default();
+            if let (Some(span), Some(to)) = (no_sep.get(target.trim_start_matches('#')), num(n, "to")) {
+                if to.abs() >= 10_000.0 {
+                    d.push(Diag::warn("W_NUMBER_FORMAT", format!("count {target} to={} shows the default German grouping (10.000)", crate::ast::fmt_num(to)),
+                        format!("for English add `sep=\",\"` on {target} (10,000); `sep=none` for no grouping"), *span));
+                }
+            }
+        }
+        if n.kind == "chart" && !n.props.contains_key("locale") {
+            let decimals = match n.props.get("data") {
+                Some(crate::ast::Value::List(l)) => l.iter().any(|v| v.raw().contains('.')),
+                Some(v) => v.raw().contains('.'),
+                None => false,
+            };
+            if decimals {
+                d.push(Diag::warn("W_NUMBER_FORMAT", "chart labels use a decimal comma by default (2,1), the German style",
+                    "for English add `locale=en` (2.1); keep the default for German narration", n.span));
+            }
+        }
+    }
+}
+
 pub fn static_rules(doc: &Document, tl: &Timeline, ir: &Ir) -> Vec<Diag> {
     let mut d = vec![];
     let mut dd = vec![];
@@ -58,6 +100,7 @@ pub fn static_rules(doc: &Document, tl: &Timeline, ir: &Ir) -> Vec<Diag> {
     }
     crate::textv2::lint_families(&all, &ir.fonts, &mut d);
     note_rules(doc, &mut d);
+    number_format_rules(&all, &mut d);
     // events: outside their scene, cursor clicks too dense, zooms overlapping
     let scenes: Vec<&Node> = doc.nodes.iter().filter(|n| n.kind == "scene").collect();
     for (si, sn) in scenes.iter().enumerate() {
@@ -115,6 +158,14 @@ pub fn static_rules(doc: &Document, tl: &Timeline, ir: &Ir) -> Vec<Diag> {
         // scene with narration but nothing happening on screen for long stretches
         if evs.is_empty() && st.dur > 12.0 && sn.children.iter().any(|c| c.kind == "say") {
             d.push(Diag::warn("W_STATIC_SCENE", format!("scene `{}` runs {:.1}s without any event", st.id, st.dur), "anchor a few verbs to narration words ([[word]] + @word)", sn.span));
+        }
+        // a scene without narration and without dur= is only pre + post long (0.5 s by default):
+        // almost always a forgotten `dur=` (an agent writes the elements and expects a few seconds)
+        let has_beat = sn.children.iter().any(|c| matches!(c.kind.as_str(), "say" | "pause") || (c.kind == "captions" && c.props.contains_key("src")));
+        let has_len = ["dur", "min"].iter().any(|k| sn.props.contains_key(*k));
+        if !has_beat && !has_len && st.dur < 1.5 && sn.children.iter().any(|c| c.kind != "at") {
+            d.push(Diag::warn("W_SCENE_SHORT", format!("scene `{}` lasts only {:.2}s: it has no narration (`say`/`pause`) and no `dur=`, so its length is just pre + post", st.id, st.dur),
+                format!("give the scene a length, e.g. `scene {} dur=6s`, or add a beat (`say \"...\"` / `pause 4s`); events and in= presets only play inside the scene", st.id), sn.span));
         }
     }
     for s in &tl.scenes {

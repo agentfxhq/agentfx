@@ -14,7 +14,7 @@ scores the result without the agent's help:
 
 usage:
   python3 evals/run.py run     [--cases a,b|glob] [--tags t1,t2] [--run-id ID] [--model sonnet] [--judge-model sonnet]
-                               [--parallel 2] [--max-turns 40] [--timeout 1200] [--mode both|cli|mcp] [--work DIR]
+                               [--parallel 1] [--max-turns 40] [--timeout 900] [--max-load 10] [--skip-done] [--mode both|cli|mcp] [--work DIR]
   python3 evals/run.py score   <run-id> [--cases ...] [--judge-model sonnet] [--no-judge]   (re-score kept workdirs)
   python3 evals/run.py summary <run-id>
   python3 evals/run.py compare <run-a> <run-b>
@@ -132,11 +132,19 @@ def tool_env(work_root):
     real = Path(agentfx_bin()).resolve()
     for name in ("agentfx", "agentfx-render"):
         link = bindir / name
-        src = real.parent / name
         if link.is_symlink() or link.exists():
             link.unlink()
-        if src.exists():
-            link.symlink_to(src)
+    # the agent's and the scorer's `agentfx`: heavy subcommands (render, sheet, storyboard; single frames are light)
+    # wait for the machine-wide heavy-job lock, so a shared box runs one heavy job at a time
+    lock = os.environ.get("AGENTFX_HEAVY_LOCK", "/tmp/claude-1000/agentfx-heavy.lock")
+    (bindir / "agentfx").write_text(
+        "#!/bin/sh\n"
+        f"export AGENTFX_RENDERER={real.parent / 'agentfx-render'}\n"
+        "case \"$1\" in\n"
+        f"  render|sheet|storyboard) exec flock {lock} {real} \"$@\" ;;\n"
+        f"  *) exec {real} \"$@\" ;;\n"
+        "esac\n")
+    (bindir / "agentfx").chmod(0o755)
     env = dict(os.environ)
     for k in list(env):
         if k == "CLAUDECODE" or k.startswith("CLAUDE_CODE_") or k.startswith("CLAUDE_AGENT"):
@@ -460,7 +468,7 @@ def score_case(case, wd, args, env):
         # (same renderer, 12 frames; far cheaper than rendering every frame on a shared box)
         delivered = False
         with LOCK:
-            rc, out, err = afx(["sheet", reel.name, "--n", "12", "--cols", "4", "--format", fmt, "-o", str(sh)], reel.parent, env, timeout=900)
+            rc, out, err = afx(["sheet", reel.name, "--n", "12", "--cols", "4", "--format", fmt, "-o", str(sh)], reel.parent, env, timeout=3600)  # may wait for the heavy-job lock
         if rc == 0 and sh.exists():
             sheets.append(str(sh))
             rendered.append(f"{fmt}: NOT rendered by the agent; frames from `agentfx sheet` ({total or 0:.1f} s script)")
@@ -509,6 +517,7 @@ def run_case(case, args, run_dir, work_root, env, do_agent=True):
     rec = {"id": case["id"], "tags": case.get("tags", []), "formats": case["formats"], "duration_s": case["duration_s"],
            "model": args.model, "mode": args.mode}
     if do_agent:
+        wait_for_load(args.max_load)
         prepare_workdir(case, wd, args.mode)
         print(f"[{time.strftime('%H:%M:%S')}] start {case['id']}", flush=True)
         rec["agent"] = run_agent(case, wd, args, env)
@@ -532,6 +541,14 @@ def run_case(case, args, run_dir, work_root, env, do_agent=True):
     print(f"[{time.strftime('%H:%M:%S')}] done  {case['id']}: score {rec['score'].get('score')} q={j.get('quality')} "
           f"accept={j.get('accept_first_try')} turns={rec['metrics'].get('num_turns')} ${rec['metrics'].get('cost_usd') or 0:.2f}", flush=True)
     return rec
+
+
+def wait_for_load(max_load, max_wait=1800):
+    """Shared box: do not start a case while the 1-min load is above max_load (wait up to 30 min)."""
+    t0 = time.time()
+    while os.getloadavg()[0] > max_load and time.time() - t0 < max_wait:
+        print(f"[{time.strftime('%H:%M:%S')}] load {os.getloadavg()[0]:.0f} > {max_load}, waiting", flush=True)
+        time.sleep(60)
 
 
 def load_run(run_id):
@@ -644,13 +661,15 @@ def main():
         p.add_argument("--tags")
         p.add_argument("--model", default="sonnet")
         p.add_argument("--judge-model", default="sonnet")
-        p.add_argument("--parallel", type=int, default=2)
+        p.add_argument("--parallel", type=int, default=1)
         p.add_argument("--max-turns", type=int, default=40)
         p.add_argument("--timeout", type=int, default=900)
         p.add_argument("--mode", default="both", choices=["both", "cli", "mcp"])
         p.add_argument("--effort")
         p.add_argument("--work", default=os.environ.get("AGENTFX_EVAL_WORK") or os.path.join(tempfile.gettempdir(), "agentfx-evals"))
         p.add_argument("--no-judge", action="store_true")
+        p.add_argument("--max-load", type=float, default=float(os.environ.get("AGENTFX_EVAL_MAX_LOAD", 10)))
+        p.add_argument("--skip-done", action="store_true", help="run: skip cases that already have a result in this run")
     sub.add_parser("summary").add_argument("run_id")
     pc = sub.add_parser("compare")
     pc.add_argument("a")
@@ -678,12 +697,15 @@ def main():
     cases = load_cases(args.cases, args.tags)
     if args.cmd == "score":  # only cases this run actually has
         cases = [c for c in cases if (work_root / c["id"] / "_transcript.jsonl").exists()]
+    if args.cmd == "run" and args.skip_done:
+        cases = [c for c in cases if not (run_dir / "cases" / f"{c['id']}.json").exists()]
     if args.parallel > 2:
         print("run.py: parallel capped at 2 (shared machine)")
         args.parallel = 2
     meta_p = run_dir / "meta.json"
     meta = json.loads(meta_p.read_text()) if meta_p.exists() else {}
     if args.cmd == "run":
+        meta.setdefault("commit_first", git_commit())
         meta.update({"run_id": run_id, "model": args.model, "judge_model": args.judge_model, "mode": args.mode,
                      "max_turns": args.max_turns, "commit": git_commit(), "started": time.strftime("%Y-%m-%dT%H:%M:%S"),
                      "work": str(work_root)})

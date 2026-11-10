@@ -1,0 +1,127 @@
+# AgentFX template default track: "Night Drive" (synthwave groove), 120 bpm, 8 bars = 16 s.
+# Analog models + synthesized 808/909 kit only (no third-party samples, no plugins).
+# Used by templates/music-visualizer and templates/lyric-video. Licence: CC0 1.0 (see LICENSE.md).
+# Rendered with reel-music (~/dev/reel-music):
+#   .venv/bin/python score.py render <this file> -o out/night-drive
+title: Night Drive (AgentFX template default)
+bpm: 120
+key: A minor
+seed: 120
+length: 16
+fade_out: 0.6
+sections:
+  - {name: intro,  bars: 2, chords: "Am9 Fmaj7"}
+  - {name: groove, bars: 4, chords: "Am9 Fmaj7 C Gsus4,G"}
+  - {name: lift,   bars: 2, chords: "Dm9 E7sus4,E7"}
+hits: ["3:1", "7:1"]
+tracks:
+  drums:
+    kind: drums
+    kit: electronic
+    humanize: 0.5
+    lanes:
+      kick: {tune: 50, decay: 0.6, punch: 1.0, click: 0.35, drive: 1.6}
+      snare: {gain: -6, tone: 200, snappy: 0.8, sdecay: 0.2, reverb: 0.35, lp: 9500}
+      clap: {gain: -10, reverb: 0.3}
+      hat: {gain: -20, hdecay: 0.03, lp: 11500, pan: 0.15, ghosts: 0.2}
+      ohat: {gain: -22, hdecay: 0.22, lp: 10500, pan: -0.15}
+    play:
+      intro:  {kick: "x.......x.......", hat: "..o...o...o...o."}
+      groove: {kick: "x...x...x...x...", snare: "....x.......x...", clap: "....x.......x...",
+               hat: "x.o.x.o.x.o.x.o.", ohat: "..x...x...x...x."}
+      lift:   {kick: "x...x...x...x...", snare: "....x.......x...|....x...x.x.xxxx", clap: "....x.......x...",
+               hat: "xoxoxoxoxoxoxoxo", ohat: "..x...x...x...x."}
+    inserts: [{type: tape, drive: 1.6}]
+  bass:
+    kind: analog
+    stem: bass
+    center: A2
+    synth:
+      mono: true
+      glide: 0.05
+      osc: [{wave: saw}, {wave: square, oct: -1, level: 0.5}]
+      filter: {type: ladder, cutoff: 260, res: 0.45, env: 2.6, keytrack: 0.3, drive: 1.8, vel: 0.7}
+      fenv: {a: 0.002, d: 0.18, s: 0.12, r: 0.1}
+      aenv: {a: 0.002, d: 0.3, s: 0.8, r: 0.08}
+      drift: 1.5
+    play:
+      intro:  {bass: "x-----------o---", gate: 0.95}
+      groove: {bass: "x.xOx.xOx.xOx.xO", gate: 0.6}
+      lift:   {bass: "x.xOx.xOx.xOx.xO", gate: 0.6}
+    levels: {intro: -6}
+    duck: 0.5
+    duck_release: 0.4
+    width: 0.3
+    gain: -1
+  pad:
+    kind: analog
+    stem: pad
+    center: A3
+    synth:
+      osc: [{wave: saw, unison: 2, detune: 10, spread: 0.7}, {wave: pulse, pw: 0.45, level: 0.6}]
+      pwm: {rate: 0.3, depth: 0.18}
+      filter: {type: ladder, res: 0.2, env: 0.8, keytrack: 0.3, drive: 1.1}
+      fenv: {a: 0.4, d: 2.0, s: 0.5, r: 1.2}
+      aenv: {a: 0.25, d: 1.2, s: 0.85, r: 1.2}
+      chorus: {mode: juno1, mix: 0.8}
+      drift: 3.0
+    auto: {cutoff: "1=500 3=1400 7=2200 8:4=3600"}
+    play:
+      intro:  {chord: "x---------------", size: 4, open: true, gate: 0.97}
+      groove: {chord: "x---------------", size: 4, open: true, gate: 0.97}
+      lift:   {chord: "x---------------", size: 4, open: true, gate: 0.97}
+    hp: 160
+    eq: [{f: 420, g: -4, q: 1.0}]
+    duck: 0.35
+    reverb: 0.45
+    gain: -5
+  lead:
+    kind: analog
+    stem: lead
+    synth:
+      mono: true
+      glide: 0.08
+      osc: [{wave: pulse, pw: 0.5}, {wave: saw, level: 0.5}]
+      pwm: {rate: 0.45, depth: 0.25}
+      filter: {type: ladder, cutoff: 1600, res: 0.3, env: 1.6, keytrack: 0.6, drive: 1.4}
+      fenv: {a: 0.01, d: 0.6, s: 0.35, r: 0.4}
+      aenv: {a: 0.02, d: 0.5, s: 0.85, r: 0.4}
+      vibrato: {rate: 5.4, cents: 12, delay: 0.3, attack: 0.4}
+    play:
+      groove: {melody: "E5:1 G5:0.5 A5:0.5 C6:1.5 B5:0.5 | A5:1 G5:1 E5:2 | G5:1 A5:0.5 C6:0.5 D6:1.5 C6:0.5 | B5:2 ~G5:2", gate: 0.92}
+      lift:   {melody: "A5:1 C6:0.5 D6:0.5 E6:2 | D6:1 C6:1 ~B5:2", gate: 0.95}
+    hp: 200
+    bbd: {beats: 0.75, fb: 0.38, mix: 0.28, lp: 3200, sat: 1.2}
+    reverb: 0.35
+    eq: [{f: 2600, g: 1.5, q: 0.8}]
+    gain: 1
+  arp:
+    kind: analog
+    stem: lead
+    center: A4
+    synth:
+      osc: [{wave: saw}, {wave: pulse, pw: 0.25, level: 0.6}]
+      filter: {type: ladder, res: 0.5, env: 2.2, keytrack: 0.4, drive: 1.3}
+      fenv: {a: 0.001, d: 0.14, s: 0.0, r: 0.12}
+      aenv: {a: 0.002, d: 0.28, s: 0.0, r: 0.15}
+    auto: {cutoff: "1=400 3=900 7=1800 8:4=4200"}
+    play:
+      intro:  {arp: "x.x.x.x.x.x.x.x.", dir: up, range: 2, gate: 0.5}
+      groove: {arp: "xxxxxxxxxxxxxxxx", dir: updown, range: 2, gate: 0.45}
+      lift:   {arp: "xxxxxxxxxxxxxxxx", dir: up, range: 3, gate: 0.45}
+    hp: 300
+    width: 1.4
+    duck: 0.2
+    reverb: 0.3
+    gain: -10
+  fx:
+    kind: fx
+    riser: [lift]
+    riser_gain: -13
+mix:
+  reverb:
+    drums: {kind: room, decay: 1.2}
+    pad: {kind: hall, decay: 4.0, size: 40, duck: 0.3}
+    lead: {kind: plate, decay: 2.5}
+    fx: {kind: hall, decay: 3.0, size: 45}
+  master: {lufs: -14, tp: -1.2, comp: {threshold_db: -16, ratio: 2}}

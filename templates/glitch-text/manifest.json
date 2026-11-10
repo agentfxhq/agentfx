@@ -1,0 +1,18 @@
+{
+  "id": "glitch-text",
+  "title": "Glitch text",
+  "description": "Your word boots up through a corrupted signal: block displacement, RGB split and datamosh bursts.",
+  "tags": ["text", "glitch", "glitch effect", "datamosh", "intro"],
+  "formats": ["16:9", "9:16", "1:1"],
+  "duration_s": 6,
+  "params": [
+    {"id": "text", "type": "text", "label": "Text", "default": "SIGNAL LOST", "max_len": 32, "required": true},
+    {"id": "sub", "type": "text", "label": "Subline (optional)", "default": "Transmission 07", "max_len": 48},
+    {"id": "style", "type": "enum", "label": "Style", "default": "rgb", "options": ["rgb", "mono", "signal"]},
+    {"id": "intensity", "type": "number", "label": "Intensity", "default": 1, "min": 0.3, "max": 1.5, "step": 0.1},
+    {"id": "seed", "type": "number", "label": "Variation", "default": 7, "min": 1, "max": 999, "step": 1},
+    {"id": "color", "type": "color", "label": "Text colour", "default": "#F2F2F2"},
+    {"id": "accent", "type": "color", "label": "Accent", "default": "#FF2E63"},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#0A0A0F"}
+  ]
+}

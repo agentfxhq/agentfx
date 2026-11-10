@@ -1,0 +1,45 @@
+// Animated text (AgentFX template): kinetic typography for one headline. Four animator styles on a
+// single text node (AE-style range selectors), a rule that draws on, a slow push, a clean exit.
+video "{{text}}" size=1920x1080 fps=30 captions=off formats=[16:9, 9:16, 1:1]
+
+scene type dur={{duration}}s bg={{bg}}
+  ellipse #light w=2200 h=2200 x=50% y=50% anchor=center fill=radial(at 50% 50%, {{accent.rgb}}26 0%, {{accent.rgb}}00 60%)
+  layer #push x=0 y=0 w=100% h=100%
+{{#kicker}}
+    text #kicker "{{kicker}}" size=36 weight=700 color={{accent}} tracking=0.35 upper x=50% y=29% anchor=center w=80% fit nowrap align=center
+{{/kicker}}
+    text #head "{{text}}" size={{= round(clamp(3400 / max(text_len, 1), 96, 170))}} weight={{#style=cinematic}}300{{/style=cinematic}}{{^style=cinematic}}900{{/style=cinematic}} color={{color}} lh=1.0 tracking={{#style=cinematic}}0.06{{/style=cinematic}}{{^style=cinematic}}-0.03{{/style=cinematic}} x=50% y=50% anchor=center w=80% align=center{{#upper=yes}} upper{{/upper=yes}}
+    rect #rule w=220 h=8 x=50% y=70% anchor=center fill={{accent}} radius=4 origin=center sx=0
+  anim #push scale 0s:1 {{duration}}s:1.05~linear
+  anim #rule sx 0.5s:0 1.3s:1~out-expo {{= duration - 0.6}}s:1 {{= duration - 0.2}}s:0~in-cubic
+{{#kicker}}
+  @0.15s animate #kicker by=char shape=ramp-up range=0%..30% offset=-30%..100% dur=0.8s ease=linear opacity=0 x=-20
+  @{{= duration - 0.7}}s animate #kicker by=char shape=ramp-down range=0%..30% offset=-30%..100% dur=0.5s ease=linear opacity=0
+{{/kicker}}
+{{#style=rise}}
+  // characters rise out of a soft blur, left to right
+  @0.3s animate #head by=char shape=ramp-up range=0%..20% offset=-20%..100% dur={{= 1.4 / speed}}s ease=out-quad opacity=0 y=120 blur=14 rot=6
+  @{{= duration - 0.9}}s animate #head by=char shape=ramp-down range=0%..20% offset=-20%..100% dur=0.7s ease=in-quad opacity=0 y=-90 blur=10
+{{/style=rise}}
+{{#style=focus}}
+  // words pull into focus in random order, from large and blurred
+  @0.3s animate #head by=word order=random seed=3 shape=ramp-up range=0%..35% offset=-35%..100% dur={{= 1.6 / speed}}s ease=out-cubic opacity=0 scale=1.6 blur=30
+  @{{= duration - 0.8}}s animate #head by=word order=random seed=5 shape=ramp-down range=0%..35% offset=-35%..100% dur=0.6s ease=in-cubic opacity=0 scale=0.85 blur=20
+{{/style=focus}}
+{{#style=slide}}
+  // words slide in from the left with a colour sweep that settles back to the text colour
+  @0.3s animate #head by=word shape=ramp-up range=0%..25% offset=-25%..100% dur={{= 1.2 / speed}}s ease=out-expo opacity=0 x=-160 sx=0.6
+  @0.3s animate #head by=char shape=smooth range=0%..25% offset=-25%..100% dur={{= 1.9 / speed}}s ease=linear color={{accent}}
+  @{{= duration - 0.8}}s animate #head by=word shape=ramp-down range=0%..25% offset=-25%..100% dur=0.6s ease=in-expo opacity=0 x=200
+{{/style=slide}}
+{{#style=cinematic}}
+  // light, widely tracked letters fade up one by one, slowly
+  @0.3s animate #head by=char order=random seed=11 shape=ramp-up range=0%..40% offset=-40%..100% dur={{= 2.2 / speed}}s ease=inout-sine opacity=0 blur=8
+  @{{= duration - 1.1}}s animate #head by=char order=random seed=12 shape=ramp-down range=0%..40% offset=-40%..100% dur=0.9s ease=inout-sine opacity=0 blur=8
+{{/style=cinematic}}
+  when portrait
+    set #head size={{= round(clamp(2400 / max(text_len, 1), 84, 150))}} w=80%
+{{#kicker}}
+    set #kicker y=32%
+{{/kicker}}
+    set #rule y=68%

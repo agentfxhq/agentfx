@@ -1,0 +1,19 @@
+{
+  "id": "logo-reveal",
+  "title": "Logo reveal",
+  "description": "Your logo flies together from shards or wipes on under a light sweep; a text logo when you have no file.",
+  "tags": ["logo", "logo animation", "logo reveal", "intro", "brand"],
+  "formats": ["16:9", "9:16", "1:1"],
+  "duration_s": 5,
+  "params": [
+    {"id": "logo", "type": "image", "label": "Logo (png/jpg, transparent png works best)", "required": false, "accept": [".png", ".jpg", ".jpeg"]},
+    {"id": "brand", "type": "text", "label": "Brand name (used when there is no logo file)", "default": "Northwind", "max_len": 28, "required": true},
+    {"id": "tagline", "type": "text", "label": "Tagline (optional)", "default": "Built for the long run", "max_len": 48},
+    {"id": "style", "type": "enum", "label": "Style", "default": "assemble", "options": ["assemble", "sweep"]},
+    {"id": "seed", "type": "number", "label": "Variation", "default": 7, "min": 1, "max": 999, "step": 1},
+    {"id": "text_color", "type": "color", "label": "Text colour", "default": "#FFFFFF"},
+    {"id": "accent", "type": "color", "label": "Light", "default": "#7FD1FF"},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#07090F"},
+    {"id": "bg2", "type": "color", "label": "Background centre", "default": "#1A2236"}
+  ]
+}

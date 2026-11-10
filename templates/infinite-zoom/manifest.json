@@ -1,0 +1,20 @@
+{
+  "id": "infinite-zoom",
+  "title": "Infinite zoom",
+  "description": "A seamless infinite zoom through neon frames, rings or portals; the end runs into the start, so it loops.",
+  "tags": ["infinite zoom", "loop", "tunnel", "zoom", "neon"],
+  "formats": ["16:9", "9:16", "1:1"],
+  "duration_s": 6,
+  "params": [
+    {"id": "title", "type": "text", "label": "Text in the middle (optional)", "default": "", "max_len": 32},
+    {"id": "style", "type": "enum", "label": "Style", "default": "tunnel", "options": ["tunnel", "rings", "portal"]},
+    {"id": "reverse", "type": "enum", "label": "Zoom out instead", "default": "no", "options": ["no", "yes"]},
+    {"id": "twist", "type": "number", "label": "Twist per level (deg)", "default": 4, "min": -20, "max": 20, "step": 1},
+    {"id": "duration", "type": "number", "label": "Loop length (s)", "default": 6, "min": 3, "max": 20, "step": 0.5},
+    {"id": "color1", "type": "color", "label": "Colour 1", "default": "#FF2BD6"},
+    {"id": "color2", "type": "color", "label": "Colour 2", "default": "#22E4FF"},
+    {"id": "color3", "type": "color", "label": "Colour 3", "default": "#FFC23D"},
+    {"id": "text_color", "type": "color", "label": "Text colour", "default": "#FFFFFF"},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#05010D"}
+  ]
+}

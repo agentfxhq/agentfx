@@ -1,0 +1,75 @@
+// Music visualizer (AgentFX template). Everything that moves is driven by the track:
+// 8 log bands, level and the beat grid, analysed at compile time and smoothed.
+video "{{title}}" size=1920x1080 fps=30 captions=off formats=[16:9, 9:16, 1:1]
+
+music src={{audio}} vol=1
+
+scene viz dur={{duration}}s bg=radial(at 50% 40%, {{bg.rgb}} 0%, {{bg.rgb}} 45%, #000000 140%) optics vignette=0.4 film-grain=0.035 seed=5
+  // light behind everything: two soft colour fields that breathe with bass and mids
+  ellipse #glow1 w=1500 h=1500 x=36% y=42% anchor=center fill=radial(at 50% 50%, {{color1.rgb}}59 0%, {{color1.rgb}}00 66%) opacity=audio(band=0.5, gain=0.75, offset=0.3, smooth=300ms)
+  ellipse #glow2 w=1300 h=1300 x=66% y=54% anchor=center fill=radial(at 50% 50%, {{color2.rgb}}48 0%, {{color2.rgb}}00 66%) opacity=audio(band=4, gain=0.8, offset=0.25, smooth=360ms)
+  anim #glow1 x 0s:0 {{duration}}s:120~inout-sine
+  anim #glow2 x 0s:0 {{duration}}s:-140~inout-sine
+  layer #stage x=0 y=0 w=100% h=100%
+    layer #breathe x=0 y=0 w=100% h=100% scale=audio(level, gain=0.035, offset=0.985, smooth=220ms)
+{{#style=bars}}
+      // spectrum: a skyline of bars from low (left) to high (right) on a horizon, mirrored below as a reflection
+      visualizer #spec type=bars count=64 w=1000 h=400 gap=5 colors=[{{ramp color1 color2 64}}] gain={{= 0.95 * sensitivity}} smooth=70ms x=50% y=56% anchor=bottom glow=10 glow-color={{color1}}
+      layer #refl x=0 y=0 w=100% h=100% opacity=0.16 blur=4 origin=50%,56%
+        visualizer #mirror type=bars count=64 w=1000 h=400 gap=5 colors=[{{ramp color1 color2 64}}] gain={{= 0.95 * sensitivity}} smooth=70ms x=50% y=56% anchor=bottom
+      anim #refl sy 0s:-1
+      rect #axis w=1040 h=2 x=50% y=56% anchor=center fill=linear(90deg, {{text_color.rgb}}00 0%, {{text_color.rgb}}80 50%, {{text_color.rgb}}00 100%)
+{{/style=bars}}
+{{#style=radial}}
+      // radial spectrum around a record that spins slowly and kicks on the beat
+      visualizer #ring type=radial mirror count=72 w=740 h=740 radius=250 gap=7 colors=[{{ramp color1 color2 72 mirror}}] gain={{= 0.9 * sensitivity}} smooth=90ms x=50% y=40% anchor=center glow=12 glow-color={{color1}}
+      layer #disc x=50% y=40% w=460 h=460 anchor=center
+        ellipse #vinyl x=0 y=0 w=460 h=460 fill=radial(at 50% 50%, #17151F 0%, #08070C 100%) stroke=linear(135deg, {{color1}} 0%, {{color2}} 100%) sw=3
+        ellipse #g1 x=40 y=40 w=380 h=380 stroke=#FFFFFF12 sw=2 fill=#00000000
+        ellipse #g2 x=70 y=70 w=320 h=320 stroke=#FFFFFF10 sw=2 fill=#00000000
+        ellipse #g3 x=100 y=100 w=260 h=260 stroke=#FFFFFF0E sw=2 fill=#00000000
+        ellipse #sheen x=0 y=0 w=460 h=460 fill=conic(0deg, #FFFFFF00 0%, #FFFFFF1F 8%, #FFFFFF00 18%, #FFFFFF00 50%, #FFFFFF1A 58%, #FFFFFF00 68%) rot=0
+          anim rot 0s:0 {{duration}}s:{{= duration * 24}} ease=linear
+        ellipse #label x=150 y=150 w=160 h=160 fill=linear(135deg, {{color1}} 0%, {{color2}} 100%)
+        ellipse #hole x=222 y=222 w=16 h=16 fill=#08070C
+      pulse #disc on=beat amount={{= 0.035 * sensitivity}} decay=240ms
+{{/style=radial}}
+{{#style=waveform}}
+      // oscilloscope: a bright trace over a softer, slower echo; a fine spectrum floor beneath
+      layer #scope x=0 y=0 w=100% h=100% glow=16 glow-color={{color1}}
+        visualizer #echo type=waveform count=64 w=1000 h=360 thick=3 colors=[{{color2}}] gain={{= 0.7 * sensitivity}} x=50% y=40% anchor=center opacity=0.5
+        visualizer #wave type=waveform count=128 w=1000 h=440 thick=5 colors=[{{ramp color2 color1 127 mirror}}] gain={{= 0.95 * sensitivity}} x=50% y=40% anchor=center
+      visualizer #floor type=bars count=80 w=1000 h=110 gap=4 colors=[{{ramp color1 color2 80}}] gain={{= 0.9 * sensitivity}} smooth=60ms x=50% y=62% anchor=bottom opacity=0.55
+{{/style=waveform}}
+  // type: title and artist, a progress rule that runs the length of the piece
+  text #title "{{title}}" size=96 weight=800 color={{text_color}} tracking=-0.02 x=50% y=80% anchor=center w=84% fit nowrap align=center
+  text #artist "{{artist}}" size=32 weight=600 color={{text_color.rgb}}B3 tracking=0.3 upper x=50% y=86.5% anchor=center w=76% fit nowrap align=center
+  rect #track w=480 h=4 x=50% y=92% anchor=center fill={{text_color.rgb}}26 radius=2
+  rect #progress w=480 h=4 x=50% y=92% anchor=center fill=linear(90deg, {{color1}} 0%, {{color2}} 100%) radius=2 origin=left sx=0
+    anim sx 0s:0 {{duration}}s:1 ease=linear
+  @0s animate #title by=char shape=ramp-up range=0%..30% offset=-30%..100% dur=1.1s ease=linear opacity=0 y=40 blur=12
+  @0.4s animate #artist by=char shape=ramp-up range=0%..30% offset=-30%..100% dur=1.0s ease=linear opacity=0 blur=6
+  // base geometry fits the narrowest format (1080 px); wider formats scale the stage up
+  when landscape
+{{^style=radial}}
+    anim #stage sx 0s:1.62
+{{/style=radial}}
+  when portrait
+{{#style=radial}}
+    anim #stage scale 0s:1.12
+{{/style=radial}}
+{{^style=radial}}
+    anim #stage sy 0s:1.5
+{{/style=radial}}
+    set #title y=70% size=110
+    set #artist y=76.5%
+    set #track y=82%
+    set #progress y=82%
+  when square
+{{#style=radial}}
+    anim #stage scale 0s:0.8
+{{/style=radial}}
+    set #title y=79% size=80
+    set #artist y=86%
+    set #track y=92%
+    set #progress y=92%

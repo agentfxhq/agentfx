@@ -130,6 +130,20 @@ def build(cfg=None) -> Starlette:
 
     # ------------------------------------------------------------ templates
 
+    def size_px(m):
+        """{name: "WxH"} for the manifest's sizes (a list of presets, or a legacy name -> WxH map)."""
+        sizes = m.get("sizes") or []
+        if isinstance(sizes, dict):
+            return {str(k): str(v) for k, v in sizes.items()}
+        out = {}
+        for n in sizes:
+            try:
+                w, h = templates.mod.size_px(n)
+            except (ValueError, AttributeError):
+                continue
+            out[str(n)] = f"{w}x{h}"
+        return out
+
     @handler
     async def list_templates(req):
         auth(req)
@@ -141,6 +155,8 @@ def build(cfg=None) -> Starlette:
                 continue
             m = dict(m)
             m.setdefault("kind", "video")
+            m["size_px"] = size_px(m)
+            m["sizes"] = list(m["size_px"]) if isinstance(m.get("sizes"), dict) else m.get("sizes", [])
             m["preview_url"] = f"{base_url(req)}/api/v1/templates/{tid}/preview.webp" if templates.preview(tid) else None
             out.append(m)
         return JSONResponse(out)
@@ -152,6 +168,8 @@ def build(cfg=None) -> Starlette:
         try:
             m = dict(templates.manifest(tid))
             m.setdefault("kind", "video")
+            m["size_px"] = size_px(m)
+            m["sizes"] = list(m["size_px"]) if isinstance(m.get("sizes"), dict) else m.get("sizes", [])
             m["source"] = templates.source(tid)
         except ValueError as e:
             raise ServiceError(str(e), "not_found", 404) from None
@@ -202,14 +220,15 @@ def build(cfg=None) -> Starlette:
         client, tier = auth(req)
         rate(client, tier, False)
         b = await body(req)
-        return JSONResponse(await svc.lint(tier, b.get("source"), b.get("format"), bool(b.get("measure", True))))
+        return JSONResponse(await svc.lint(tier, b.get("source"), b.get("format"), bool(b.get("measure", True)),
+                                           size=b.get("size")))
 
     @handler
     async def timing(req):
         client, tier = auth(req)
         rate(client, tier, False)
         b = await body(req)
-        return JSONResponse(await svc.timing(tier, b.get("source"), b.get("format")))
+        return JSONResponse(await svc.timing(tier, b.get("source"), b.get("format"), size=b.get("size")))
 
     @handler
     async def frame(req):
@@ -218,7 +237,7 @@ def build(cfg=None) -> Starlette:
         b = await body(req)
         if "at" not in b:
             raise ServiceError("`at` is required (anchor, scene:anchor or seconds like 2.5s)", "invalid_request")
-        png, _ = await svc.frame(tier, b.get("source"), b["at"], b.get("format"), b.get("width"))
+        png, _ = await svc.frame(tier, b.get("source"), b["at"], b.get("format"), b.get("width"), size=b.get("size"))
         return Response(png, media_type="image/png")
 
     @handler
@@ -226,8 +245,36 @@ def build(cfg=None) -> Starlette:
         client, tier = auth(req)
         rate(client, tier, True)
         b = await body(req)
-        png, _ = await svc.sheet(tier, b.get("source"), b.get("n"), b.get("format"), b.get("cols"), bool(b.get("events")))
+        png, _ = await svc.sheet(tier, b.get("source"), b.get("n"), b.get("format"), b.get("cols"), bool(b.get("events")),
+                                 size=b.get("size"))
         return Response(png, media_type="image/png")
+
+    @handler
+    async def preview(req):
+        client, tier = auth(req)
+        rate(client, tier, True)
+        b = await body(req)
+        html = await svc.preview(tier, b.get("source"), b.get("format"), size=b.get("size"),
+                                 fonts_base=f"{base_url(req)}/api/v1/fonts")
+        return Response(html, media_type="text/html; charset=utf-8",
+                        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+    @handler
+    async def font(req):
+        p = svc.font_path(req.path_params["name"])
+        if not p:
+            raise ServiceError("unknown font", "not_found", 404)
+        media = {".ttf": "font/ttf", ".otf": "font/otf", ".ttc": "font/collection", ".woff": "font/woff",
+                 ".woff2": "font/woff2"}[p.suffix.lower()]
+        return FileResponse(p, media_type=media, headers={"Cache-Control": "public, max-age=86400",
+                                                          "Access-Control-Allow-Origin": "*",
+                                                          "X-Content-Type-Options": "nosniff"})
+
+    @handler
+    async def catalog(req):
+        client, tier = auth(req)
+        rate(client, tier, False)
+        return JSONResponse(await svc.catalog(), headers={"Cache-Control": "public, max-age=3600"})
 
     # ------------------------------------------------------------ assets
 
@@ -351,6 +398,9 @@ def build(cfg=None) -> Starlette:
         Route("/api/v1/timing", timing, methods=["POST"]),
         Route("/api/v1/frame", frame, methods=["POST"]),
         Route("/api/v1/sheet", sheet, methods=["POST"]),
+        Route("/api/v1/preview", preview, methods=["POST"]),
+        Route("/api/v1/fonts/{name}", font),
+        Route("/api/v1/catalog", catalog),
         Route("/api/v1/assets", upload, methods=["POST"]),
         Route("/api/v1/renders", create_render, methods=["POST"]),
         Route("/api/v1/batch", batch, methods=["POST"]),

@@ -115,13 +115,44 @@ def load_manifest(tid):
         return json.load(f)
 
 
+def _rt():
+    """templates/render_template.py of the repo: SIZE_PRESETS / size_px (also for the fixtures)."""
+    global _RT
+    if _RT is None:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('render_template', os.path.join(REPO, 'templates', 'render_template.py'))
+        _RT = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(_RT)
+    return _RT
+
+
+_RT = None
+
+
+def size_px(m):
+    """{name: "WxH"} for the manifest's `sizes` (a list of preset names)."""
+    out = {}
+    for n in m.get('sizes') or []:
+        try:
+            w, h = _rt().size_px(n)
+        except ValueError:
+            continue
+        out[n] = f'{w}x{h}'
+    return out
+
+
+def with_manifest_extras(m):
+    m.setdefault('kind', 'video')
+    m['size_px'] = size_px(m)
+    return m
+
+
 def list_templates():
     out = []
     root = templates_dir()
     for d in sorted(os.listdir(root)):
         if os.path.isfile(os.path.join(root, d, 'manifest.json')):
-            m = load_manifest(d)
-            m.setdefault('kind', 'video')
+            m = with_manifest_extras(load_manifest(d))
             m['preview_url'] = f'{API}/templates/{d}/preview'
             out.append(m)
     return out
@@ -238,8 +269,11 @@ def substitute(src, manifest, vals, rows=None):
     return re.sub(r'\{\{([\w-]+)\}\}', lambda m: vals.get(m.group(1), m.group(0)), src)
 
 
-def instantiate(tid, params):
+def instantiate(tid, params, size=None):
+    """`size`: a preset name of the manifest's `sizes` (stills are laid out per size)."""
     manifest = load_manifest(tid)
+    if size is not None and size not in size_px(manifest):
+        raise ApiError(400, 'bad_size', f'template {tid!r} has no size {size!r}')
     tdir = os.path.join(templates_dir(), tid)
     script = os.path.join(templates_dir(), 'render_template.py')
     if os.path.isfile(script) and templates_dir() != FIXTURES:
@@ -250,6 +284,8 @@ def instantiate(tid, params):
             if isinstance(v, (list, dict)):
                 v = json.dumps(v)
             args += ['--set', f'{k}={v}']
+        if size:
+            args += ['--size', size]
         p = subprocess.run(args, capture_output=True, timeout=30)
         if p.returncode != 0:
             raise ApiError(400, 'bad_param', p.stderr.decode('utf-8', 'replace').strip()[-400:])
@@ -257,7 +293,7 @@ def instantiate(tid, params):
     with open(os.path.join(tdir, 'template.reel'), encoding='utf-8') as f:
         src = f.read()
     vals, rows = coerce_params(manifest, params or {})
-    return substitute(src, manifest, vals, rows)
+    return with_size(substitute(src, manifest, vals, rows), size_px(manifest)[size] if size else None)
 
 
 def ASSETS_BY_TYPE_PARAM(manifest):
@@ -566,24 +602,22 @@ def render_one(d, source, name, output, at, fargs, target=None):
     return (diags[0]['message'] if isinstance(diags, list) and diags else err.strip()[-300:]) or 'render failed'
 
 
-def parse_sizes(body):
-    """`sizes`: {"name": "WxH"} (or a list of "WxH"); None = the script's own size."""
-    sizes = body.get('sizes')
+def parse_sizes(manifest, sizes):
+    """`sizes`: preset names from the manifest (None: the template's own size) -> [(name, WxH)]."""
     if not sizes:
         return [(None, None)]
-    if isinstance(sizes, list):
-        sizes = {s: s for s in sizes}
-    if not isinstance(sizes, dict) or len(sizes) > 12:
-        raise ApiError(400, 'bad_size', 'sizes must map up to 12 names to WxH')
-    out = []
-    for name, wh in sizes.items():
-        parse_size(wh)  # validates
-        out.append((re.sub(r'[^\w-]+', '-', str(name)).strip('-') or wh, wh))
-    return out
+    px = size_px(manifest)
+    if not isinstance(sizes, list) or len(sizes) > 12 or len(set(map(str, sizes))) != len(sizes):
+        raise ApiError(400, 'bad_size', 'sizes must be a list of up to 12 distinct preset names')
+    for n in sizes:
+        if n not in px:
+            raise ApiError(400, 'bad_size', f'unknown size {n!r} (sizes: {", ".join(px) or "none"})')
+    return [(n, px[n]) for n in sizes]
 
 
-def start_job(outputs, output):
-    """outputs: [(file name, source, at, fargs)]; renders them in a thread, zips when > 1."""
+def start_job(outputs, output, zipped=False):
+    """outputs: [(file name, source, at, fargs, target px, size name, row)]; renders them in a
+    thread. A batch (zipped) is zipped and its `url` is the zip; otherwise `url` = first file."""
     jid = uuid.uuid4().hex[:16]
     d = os.path.join(DATA, 'jobs', jid)
     os.makedirs(d)
@@ -595,7 +629,7 @@ def start_job(outputs, output):
         job['status'] = 'running'
         job['expected'] = per * len(outputs)
         files = []
-        for name, source, at, fargs, target in outputs:
+        for name, source, at, fargs, target, label, row in outputs:
             # link the assets the source references (same rules as new_job_dir)
             _, tmp = new_job_dir(source)
             for fn in os.listdir(tmp):
@@ -606,58 +640,84 @@ def start_job(outputs, output):
             if err:
                 job.update(status='error', error=f'{name}: {err}')
                 return
-            m = re.search(r'size=(\d+x\d+)', source)
-            files.append({'name': name, 'size': ('%dx%d' % target) if target and output in STILL_OUT else (m[1] if m else None), 'url': f'{API}/files/{jid}/{name}'})
+            f = {'name': name, 'url': f'{API}/files/{jid}/{name}'}
+            if label:
+                f['size'] = label
+            if row is not None:
+                f['row'] = row
+            files.append(f)
             job['done_n'] += 1
-        if len(files) > 1:
+        url = files[0]['url']
+        if zipped:
             with zipfile.ZipFile(os.path.join(d, 'agentfx.zip'), 'w', zipfile.ZIP_DEFLATED) as z:
                 for f in files:
                     z.write(os.path.join(d, f['name']), f['name'])
-            job['zip_url'] = f'{API}/files/{jid}/agentfx.zip'
-        job.update(status='done', progress=1.0, files=files, url=files[0]['url'] if len(files) == 1 else job['zip_url'])
+            url = f'{API}/files/{jid}/agentfx.zip'
+        job.update(status='done', progress=1.0, files=files, url=url)
     threading.Thread(target=work, daemon=True).start()
     return jid
 
 
 def ep_render_start(body):
-    output = body.get('output', 'mp4')
-    if output not in VIDEO_OUT + STILL_OUT:
-        raise ApiError(400, 'bad_request', f'output must be one of {VIDEO_OUT + STILL_OUT}')
+    """A raw `source` (one file) or a `template` with `params` and `sizes` (one file per size)."""
+    output = body.get('output')
+    tid = body.get('template')
+    if tid is not None:
+        if body.get('source') is not None:
+            raise ApiError(400, 'bad_request', 'send either `source` or `template`, not both')
+        m = load_manifest(tid)
+        still = m.get('kind') == 'still'
+        output = output or ('png' if still else 'mp4')
+        check_output(output, still)
+        at = str(m.get('still_at') or '0s')
+        outs = []
+        for name, wh in parse_sizes(m, body.get('sizes')):
+            src = instantiate(tid, body.get('params') or {}, name)
+            fname = f'{tid}-{name}.{output}' if name else f'{tid}.{output}'
+            outs.append((fname, src, at, [] if name else fmt_args(body), parse_size(wh) if wh else None, name, None))
+        return {'job_id': start_job(outs, output)}
+    if body.get('sizes'):
+        raise ApiError(400, 'bad_request', 'sizes need a `template`')
+    output = output or 'mp4'
+    check_output(output, None)
     source = body.get('source')
     new_job_dir(source)  # validates (size, length)
     at = str(body.get('at') or '0s')
     if not re.fullmatch(r'[\w.:+\-@]+', at):
         raise ApiError(400, 'bad_request', 'bad `at`')
-    outs = []
-    for name, wh in parse_sizes(body):
-        fname = f'agentfx-{name}.{output}' if name else f'agentfx.{output}'
-        outs.append((fname, with_size(source, wh), at, [] if wh else fmt_args(body), parse_size(wh) if wh else None))
-    return {'job_id': start_job(outs, output)}
+    return {'job_id': start_job([(f'agentfx.{output}', source, at, fmt_args(body), None, None, None)], output)}
+
+
+def check_output(output, still):
+    allowed = STILL_OUT if still else VIDEO_OUT if still is False else VIDEO_OUT + STILL_OUT
+    if output not in allowed:
+        raise ApiError(400, 'bad_request', f'output must be one of {allowed}')
 
 
 def ep_batch(body):
-    """API addition: one output per row of params (and per size), zipped."""
+    """One output per row of params (x sizes), zipped; each row overrides the shared `params`."""
     tid = body.get('template')
     m = load_manifest(tid)
     rows = body.get('rows')
     if isinstance(rows, str):
         rows = parse_rows(rows, {'id': 'rows'})
         rows = [{k: v.replace('\\"', '"').replace('\\\\', '\\') for k, v in r.items()} for r in rows]
-    if not isinstance(rows, list) or not rows or len(rows) > 100:
+    if not isinstance(rows, list) or not rows or len(rows) > 100 or not all(isinstance(r, dict) for r in rows):
         raise ApiError(400, 'bad_request', 'rows must be a list of 1..100 param objects (or CSV text)')
-    output = body.get('output') or ('png' if m.get('kind') == 'still' else 'mp4')
-    if output not in VIDEO_OUT + STILL_OUT:
-        raise ApiError(400, 'bad_request', 'bad output')
-    at = str(body.get('at') or m.get('still_at') or '0s')
-    sizes = parse_sizes(body)
+    still = m.get('kind') == 'still'
+    output = body.get('output') or ('png' if still else 'mp4')
+    check_output(output, still)
+    at = str(m.get('still_at') or '0s')
+    shared = body.get('params') or {}
+    sizes = parse_sizes(m, body.get('sizes'))
     outs = []
-    for i, params in enumerate(rows, 1):
-        src = instantiate(tid, params)
+    for i, row in enumerate(rows):
         for name, wh in sizes:
-            outs.append((f'{i:03d}{"-" + name if name else ""}.{output}', with_size(src, wh), at, [], parse_size(wh) if wh else None))
+            src = instantiate(tid, {**shared, **row}, name)
+            outs.append((f'{tid}-{i + 1:03d}{"-" + name if name else ""}.{output}', src, at, [], parse_size(wh) if wh else None, name, i))
     if len(outs) > 200:
         raise ApiError(413, 'too_large', 'too many outputs (rows x sizes > 200)')
-    return {'job_id': start_job(outs, output)}
+    return {'job_id': start_job(outs, output, zipped=True)}
 
 
 def ep_render_status(jid):
@@ -669,7 +729,7 @@ def ep_render_status(jid):
         exp = job.get('expected', 5)
         guess = min(0.95, 1 - 0.5 ** (el / exp * 1.6))
         job['progress'] = round(max(guess, job['done_n'] / max(1, job['n']) * 0.95), 3)
-    return {k: job[k] for k in ('status', 'progress', 'url', 'files', 'zip_url', 'error') if k in job}
+    return {k: job[k] for k in ('status', 'progress', 'url', 'files', 'error') if k in job}
 
 
 CATALOG = None
@@ -758,7 +818,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == ['templates']:
             return self.send(200, list_templates())
         if len(p) == 2 and p[0] == 'templates':
-            m = load_manifest(p[1])
+            m = with_manifest_extras(load_manifest(p[1]))
             with open(os.path.join(templates_dir(), p[1], 'template.reel'), encoding='utf-8') as f:
                 m['source'] = f.read()
             return self.send(200, m)
@@ -814,7 +874,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200, ep_assets(self))
         body = self.body()
         if p == 'instantiate':
-            return self.send(200, {'source': instantiate(body.get('template'), body.get('params') or {})})
+            return self.send(200, {'source': instantiate(body.get('template'), body.get('params') or {}, body.get('size') or None)})
         if p == 'parse':
             return self.send(200, ep_parse(body))
         if p == 'lint':

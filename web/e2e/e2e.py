@@ -1,6 +1,6 @@
 """Browser end-to-end tests of the playground (Python Playwright, one headless Chromium).
 
-    python3 web/dev/mock_api.py &            # or the real service
+    AGENTFX_TEMPLATES=web/dev/fixtures/templates python3 web/dev/mock_api.py &   # the e2e uses the fixtures
     AGENTFX_API=http://127.0.0.1:8793 npx vite --port 8794 &
     flock /tmp/claude-1000/agentfx-heavy.lock python3 web/e2e/e2e.py   # on the shared box
 

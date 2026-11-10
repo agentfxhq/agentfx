@@ -230,8 +230,10 @@ the manifest's `sizes` list, so clients can lay out size pickers without the pre
 renders go through `{"template", "params", "sizes"}` (the service instantiates each size, so
 size-aware still templates get their `{{W}}`/`{{S}}` scope); a raw `source` render has no `sizes`.
 
-Live preview (`/preview`): the page is `agentfx html --no-embed` with `file://` references rewritten to
-`/api/v1/fonts/<name>` (fonts) and `/api/v1/files/<job>/<name>` (assets). The playground loads it into a
+Live preview (`/preview`): the page is `agentfx html --no-embed` with `file://` references rewritten:
+bundled fonts (`assets/fonts/<name>`) to `/api/v1/fonts/<name>`, files of the job (uploads, template
+default assets, custom font files) inlined as `data:` URIs (the page needs no job storage; page
+size capped at 24 MB), any other `file://` reference dropped. The playground loads it into a
 sandboxed iframe (`allow-scripts`, opaque origin, so font responses need `Access-Control-Allow-Origin: *`)
 and drives `window.__reel` (`ready`, `seek(t)`, `anims`) by postMessage. Compile errors still return
 the page (200), so the preview keeps working while lint shows the errors.

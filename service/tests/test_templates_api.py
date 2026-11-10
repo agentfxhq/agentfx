@@ -99,7 +99,8 @@ def test_raw_source_still_with_format(client):
     assert (int.from_bytes(png[16:20], "big"), int.from_bytes(png[20:24], "big")) == (720, 1280)
 
 
-def test_storage_cap(client):
-    client.svc.stored_bytes = 10 ** 15
+def test_storage_cap(client, monkeypatch):
+    # the startup cleanup recounts stored_bytes in a thread, so lower the cap instead of faking usage
+    monkeypatch.setattr(client.svc.cfg, "storage_max_gb", -1.0)
     r = client.post("/api/v1/renders", json={"template": "hello-card"})
     assert r.status_code == 503 and r.json()["error"]["code"] == "busy"

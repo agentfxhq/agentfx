@@ -6,7 +6,7 @@
   "description": "A bold quote for posts, stories and print, in every size at once.",
   "tags": ["still", "social", "print", "text"],
   "formats": [],
-  "sizes": {"instagram-post": "1080x1080", "story": "1080x1920", "twitter": "1600x900", "a4-flyer": "2480x3508"},
+  "sizes": ["instagram-post", "story", "x-post", "a4-flyer"],
   "duration_s": 1,
   "params": [
     {"id": "quote", "type": "text", "label": "Quote", "default": "Make the thing you wish existed.", "max_len": 120},

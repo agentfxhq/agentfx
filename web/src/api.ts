@@ -49,7 +49,10 @@ export interface TemplateManifest {
   duration_s: number;
   kind?: 'video' | 'still';
   still_at?: string;
-  sizes?: Record<string, string>;
+  /** size preset names (templates/render_template.py SIZE_PRESETS); the first is the main size */
+  sizes?: string[];
+  /** name -> "WxH" for `sizes` (service addition) */
+  size_px?: Record<string, string>;
   i18n?: Record<string, { title?: string; description?: string; params?: Record<string, string>; options?: Record<string, Record<string, string>> }>;
   params: TemplateParam[];
   preview_url?: string;
@@ -60,8 +63,7 @@ export interface RenderStatus {
   status: 'queued' | 'running' | 'done' | 'error';
   progress: number;
   url?: string;
-  files?: { name: string; size?: string | null; url: string }[];
-  zip_url?: string;
+  files?: { name: string; size?: string | null; row?: number; url: string }[];
   error?: string;
 }
 
@@ -111,8 +113,9 @@ const j = async <T>(p: Promise<Response>): Promise<T> => (await p).json() as Pro
 export const api = {
   templates: (signal?: AbortSignal) => j<TemplateManifest[]>(req('/templates', { signal })),
   template: (id: string, signal?: AbortSignal) => j<TemplateManifest>(req(`/templates/${encodeURIComponent(id)}`, { signal })),
-  instantiate: (template: string, params: Record<string, unknown>, signal?: AbortSignal) =>
-    j<{ source: string }>(req('/instantiate', { method: 'POST', json: { template, params }, signal })).then((r) => r.source),
+  /** `size`: a preset name of a still template (the source is laid out for that size). */
+  instantiate: (template: string, params: Record<string, unknown>, signal?: AbortSignal, size?: string) =>
+    j<{ source: string }>(req('/instantiate', { method: 'POST', json: { template, params, size }, signal })).then((r) => r.source),
   toJson: (source: string, signal?: AbortSignal) =>
     j<{ json: ReelDoc }>(req('/parse', { method: 'POST', json: { source, to: 'json' }, signal })).then((r) => r.json),
   toText: (doc: ReelDoc, signal?: AbortSignal) =>
@@ -134,11 +137,15 @@ export const api = {
     fd.append('file', file);
     return j<{ asset_id: string; name: string }>(req('/assets', { method: 'POST', body: fd }));
   },
-  startRender: (source: string, format: string | undefined, output: Output, opts: { quality?: 'preview' | 'hd'; sizes?: Record<string, string>; at?: string } = {}) =>
-    j<{ job_id: string }>(req('/renders', { method: 'POST', json: { source, format, output, quality: opts.quality ?? 'preview', sizes: opts.sizes, at: opts.at } })),
-  /** API addition (PLATFORM.md): one output per row of params, zipped. */
-  batch: (template: string, rows: Record<string, unknown>[] | string, output: Output, sizes?: Record<string, string>, at?: string) =>
-    j<{ job_id: string }>(req('/batch', { method: 'POST', json: { template, rows, output, sizes, at } })),
+  /** A raw script (Studio): one file; stills render the frame at `at`. */
+  startRender: (source: string, format: string | undefined, output: Output, opts: { quality?: 'preview' | 'hd'; at?: string } = {}) =>
+    j<{ job_id: string }>(req('/renders', { method: 'POST', json: { source, format, output, quality: opts.quality ?? 'preview', at: opts.at } })),
+  /** A template: the service instantiates it per size (preset names), one file per size. */
+  renderTemplate: (template: string, params: Record<string, unknown>, output: Output, opts: { format?: string; sizes?: string[]; quality?: 'preview' | 'hd' } = {}) =>
+    j<{ job_id: string }>(req('/renders', { method: 'POST', json: { template, params, output, format: opts.format, sizes: opts.sizes, quality: opts.quality ?? 'preview' } })),
+  /** One output per row of params (x sizes); the finished job's `url` is the zip. */
+  batch: (template: string, rows: Record<string, unknown>[], output: Output, sizes?: string[], params?: Record<string, unknown>) =>
+    j<{ job_id: string }>(req('/batch', { method: 'POST', json: { template, rows, output, sizes, params } })),
   renderStatus: (id: string, signal?: AbortSignal) => j<RenderStatus>(req(`/renders/${encodeURIComponent(id)}`, { signal })),
 };
 

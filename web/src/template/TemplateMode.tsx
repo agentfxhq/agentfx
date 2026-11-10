@@ -43,7 +43,8 @@ export function TemplateMode({ initialId, embed }: { initialId: string | null; e
 
   const tpl = useMemo(() => list?.find((x) => x.id === id) ?? list?.[0] ?? null, [list, id]);
   const still = tpl?.kind === 'still';
-  const sizes = tpl?.sizes ?? {};
+  // name -> WxH in the manifest's order (sizes: preset names, size_px: their pixels)
+  const sizes = useMemo(() => Object.fromEntries((tpl?.sizes ?? []).filter((n) => tpl?.size_px?.[n]).map((n) => [n, tpl!.size_px![n]])), [tpl]);
   const stillAt = parseDur(tpl?.still_at ?? '0s')?.seconds ?? 0;
 
   // a new template: reset the form, format, sizes and playhead
@@ -52,7 +53,7 @@ export function TemplateMode({ initialId, embed }: { initialId: string | null; e
     setValues(defaults(tpl.params));
     setAssets({});
     setFormat(tpl.formats.includes(format) ? format : tpl.formats[0] ?? '16:9');
-    const names = Object.keys(tpl.sizes ?? {});
+    const names = (tpl.sizes ?? []).filter((n) => tpl.size_px?.[n]);
     setPicked(names.slice(0, 1));
     setActive(names[0] ?? null);
     setTime(tpl.kind === 'still' ? stillAt : 0);
@@ -69,8 +70,11 @@ export function TemplateMode({ initialId, embed }: { initialId: string | null; e
   const dv = useDebounced(values, 220);
   useEffect(() => {
     if (!tpl) return;
+    // a still template is laid out per size: instantiate for the size on stage (wait for the reset)
+    const size = tpl.kind === 'still' ? (active && sizes[active] ? active : undefined) : undefined;
+    if (tpl.kind === 'still' && Object.keys(sizes).length > 0 && !size) return;
     const ac = new AbortController();
-    api.instantiate(tpl.id, dv, ac.signal).then(
+    api.instantiate(tpl.id, dv, ac.signal, size).then(
       (src) => {
         setSource(src);
         setParamErr(null);
@@ -81,7 +85,7 @@ export function TemplateMode({ initialId, embed }: { initialId: string | null; e
       },
     );
     return () => ac.abort();
-  }, [tpl?.id, dv]);
+  }, [tpl?.id, dv, tpl?.kind === 'still' ? active : null]);
 
   // embed: tell the host page our height
   useEffect(() => {
@@ -95,7 +99,7 @@ export function TemplateMode({ initialId, embed }: { initialId: string | null; e
   const native = useMemo(() => nativeOnlyFeatures(doc), [doc]);
   const filtered = (list ?? []).filter((x) => !query || (x.title + ' ' + x.description + ' ' + x.tags.join(' ')).toLowerCase().includes(query.toLowerCase()));
   const activeSize = still && active ? sizes[active] : undefined;
-  const pickedSizes = still ? Object.fromEntries(picked.filter((n) => sizes[n]).map((n) => [n, sizes[n]])) : undefined;
+  const pickedSizes = still ? picked.filter((n) => sizes[n]) : undefined;
 
   const openStudio = () => {
     if (!source) return;
@@ -163,7 +167,7 @@ export function TemplateMode({ initialId, embed }: { initialId: string | null; e
           />
         </div>
         {still ? (
-          <SizePicker sizes={sizes} picked={picked} active={active} source={source} at={stillAt} onPick={setPicked} onActive={setActive} />
+          <SizePicker tplId={tpl!.id} params={dv} sizes={sizes} picked={picked} active={active} at={stillAt} onPick={setPicked} onActive={setActive} />
         ) : (
           <Transport
             time={time}
@@ -212,10 +216,10 @@ export function TemplateMode({ initialId, embed }: { initialId: string | null; e
             />
           )}
           {paramErr && <div class="err-text" style={{ marginTop: 12 }}>{paramErr}</div>}
-          {tpl && !embed && <BatchPanel tpl={tpl} still={still} sizes={pickedSizes} at={tpl.still_at} />}
+          {tpl && !embed && <BatchPanel tpl={tpl} still={still} sizes={pickedSizes} params={dv} />}
         </div>
         <div class="side-foot">
-          <RenderPanel source={source} format={format} fileStem={tpl?.id ?? 'agentfx'} disabled={!!paramErr} compact={embed && !still} still={still} sizes={pickedSizes} at={still ? tpl?.still_at ?? '0s' : undefined} />
+          <RenderPanel source={source} format={format} fileStem={tpl?.id ?? 'agentfx'} disabled={!!paramErr} compact={embed && !still} still={still} sizes={pickedSizes} at={still ? tpl?.still_at ?? '0s' : undefined} template={tpl ? { id: tpl.id, params: dv } : undefined} />
           <button class="btn ghost block" onClick={openStudio} disabled={!source} data-testid="open-studio">
             <Code /> {t('openStudio')}
           </button>
@@ -233,17 +237,17 @@ export function TemplateMode({ initialId, embed }: { initialId: string | null; e
   );
 }
 
-function SizePicker({ sizes, picked, active, source, at, onPick, onActive }: { sizes: Record<string, string>; picked: string[]; active: string | null; source: string | null; at: number; onPick: (p: string[]) => void; onActive: (n: string) => void }) {
+function SizePicker({ tplId, params, sizes, picked, active, at, onPick, onActive }: { tplId: string; params: Record<string, unknown>; sizes: Record<string, string>; picked: string[]; active: string | null; at: number; onPick: (p: string[]) => void; onActive: (n: string) => void }) {
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
-  const ds = useDebounced(source, 500);
-  // small exact thumbnails, one request at a time (the box is shared)
+  const dp = useDebounced(params, 500);
+  // small exact thumbnails, one request at a time (the box is shared); each size is its own layout
   useEffect(() => {
-    if (!ds) return;
     const ac = new AbortController();
     (async () => {
-      for (const [n, wh] of Object.entries(sizes)) {
+      for (const n of Object.keys(sizes)) {
         try {
-          const url = await api.frame(ds, at, undefined, 220, ac.signal, wh);
+          const src = await api.instantiate(tplId, dp, ac.signal, n);
+          const url = await api.frame(src, at, undefined, 220, ac.signal);
           setThumbs((th) => {
             if (th[n]) URL.revokeObjectURL(th[n]);
             return { ...th, [n]: url };
@@ -254,7 +258,7 @@ function SizePicker({ sizes, picked, active, source, at, onPick, onActive }: { s
       }
     })();
     return () => ac.abort();
-  }, [ds, JSON.stringify(sizes)]);
+  }, [tplId, dp, JSON.stringify(sizes)]);
 
   return (
     <div class="sizes" data-testid="sizes">
@@ -292,7 +296,7 @@ function SizePicker({ sizes, picked, active, source, at, onPick, onActive }: { s
   );
 }
 
-function BatchPanel({ tpl, still, sizes, at }: { tpl: TemplateManifest; still: boolean; sizes?: Record<string, string>; at?: string }) {
+function BatchPanel({ tpl, still, sizes, params }: { tpl: TemplateManifest; still: boolean; sizes?: string[]; params: Record<string, unknown> }) {
   const [open, setOpen] = useState(false);
   const [csv, setCsv] = useState('');
   const [state, setState] = useState<{ s: 'idle' } | { s: 'running'; p: number } | { s: 'done'; url: string } | { s: 'error'; m: string }>({ s: 'idle' });
@@ -300,14 +304,15 @@ function BatchPanel({ tpl, still, sizes, at }: { tpl: TemplateManifest; still: b
   useEffect(() => () => clearTimeout(timer.current), []);
   const cols = tpl.params.filter((p) => ['text', 'longtext', 'color', 'number', 'enum'].includes(p.type)).map((p) => ({ id: p.id, label: p.label, type: p.type === 'number' ? ('number' as const) : ('text' as const) }));
   const rows = csv.trim() ? csvToRows(csv, cols) : [];
-  const n = rows.length * Math.max(1, sizes ? Object.keys(sizes).length : 1);
+  const n = rows.length * Math.max(1, sizes ? sizes.length : 1);
   const output: Output = still ? 'png' : 'mp4';
   const go = async () => {
     setState({ s: 'running', p: 0 });
     try {
-      const { job_id } = await api.batch(tpl.id, rows, output, sizes, at);
+      // the form's values are shared params; each CSV row overrides them
+      const { job_id } = await api.batch(tpl.id, rows, output, sizes, params);
       pollJob(job_id, (r) => {
-        if (r.status === 'done') setState({ s: 'done', url: doneState(r, output).zip ?? absUrl(r.url ?? '') });
+        if (r.status === 'done') setState({ s: 'done', url: doneState(r, output, true).zip ?? absUrl(r.url ?? '') });
         else if (r.status === 'error') setState({ s: 'error', m: r.error ?? t('renderFailed') });
         else setState({ s: 'running', p: r.progress });
       }, timer);

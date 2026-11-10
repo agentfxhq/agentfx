@@ -10,19 +10,23 @@ previews stay fast while renders run.
 from __future__ import annotations
 
 import asyncio
+import base64
 import collections
 import glob
 import hashlib
 import hmac
 import json
 import logging
+import mimetypes
 import os
+import re
 import secrets
 import shutil
 import time
 import zipfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from urllib.parse import quote, unquote
 
 from . import stdio as stdio_mod
 from . import validate
@@ -35,6 +39,9 @@ log = logging.getLogger("agentfx.core")
 JOB_ID = __import__("re").compile(r"^r[0-9a-f]{24}$")
 VIDEO_OUTPUTS = ("mp4", "gif", "webp")
 STILL_OUTPUTS = ("png", "jpg", "pdf")
+FONT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}\.(ttf|otf|ttc|woff2?)$")
+FILE_URL = re.compile(r"file://(/[^)'\"\s]+)")
+PREVIEW_MAX_BYTES = 24 * 1024 * 1024
 
 
 class ServiceError(Exception):
@@ -194,6 +201,7 @@ class Service:
         self.jobs: dict[str, RenderJob] = {}
         self._cleanup_task = None
         self.watermark_font = self._find_font()
+        self._catalog = None
         self.stored_bytes = 0  # outputs + uploads, recounted by cleanup()
         self.stdio = stdio_mod.load(cfg.agentfx_home)
         from .tpl import Templates
@@ -230,6 +238,27 @@ class Service:
             raise ServiceError("`source` (Reel Script text) is required", "invalid_request", 400)
         if len(source.encode("utf-8")) > tier.source_kb * 1024:
             raise ServiceError(f"source is larger than {tier.source_kb} KB", "limit_exceeded", 413)
+
+    def apply_size(self, tier, source, size):
+        """`size: "WxH"` on preview operations: sets the `video` header size (like a template
+        size preset). Returns (source, sized). Each side 16..8192 px, area capped by the tier's
+        still megapixels (a still is what a sized frame usually is)."""
+        if size in (None, ""):
+            return source, False
+        m = validate.SIZE.match(str(size)) if isinstance(size, str) else None
+        if not m:
+            raise ServiceError("size must look like 1080x1920", "invalid_request")
+        w, h = int(m.group(1)), int(m.group(2))
+        if not (16 <= w <= 8192 and 16 <= h <= 8192):
+            raise ServiceError("size: each side must be 16..8192 px", "invalid_request")
+        if w * h > tier.still_max_mp * 1_000_000:
+            raise ServiceError(f"size: at most {tier.still_max_mp:g} megapixels on this tier", "limit_exceeded", 422)
+        try:
+            out = self.stdio.set_video_size(source, f"{w}x{h}")
+        except ValueError as e:
+            raise ServiceError(str(e), "invalid_source", 422) from None
+        self.check_source_size(out, tier)
+        return out, True
 
     def prepare(self, slot, source: str, strict=True):
         """Blocking (worker thread): job dir with src.reel, parsed + validated, assets copied.
@@ -305,16 +334,19 @@ class Service:
             out["diagnostics"] = _json_or(r.stderr, [])
         return out
 
-    async def lint(self, tier, source, fmt=None, measure=True):
+    async def lint(self, tier, source, fmt=None, measure=True, size=None):
         self.check_source_size(source, tier)
         fmt = validate.check_format(fmt)
+        source, sized = self.apply_size(tier, source, size)
+        if sized:
+            fmt = None
 
         def fn(slot):
             job_dir, _facts, _ok, _ = self.prepare(slot, source, strict=False)
             try:
                 args = ["lint", "src.reel", "--no-tts"]
                 if measure:
-                    args += ["--measure"] + (["--format", fmt] if fmt else ["--all-formats"])
+                    args += ["--measure"] + (["--format", fmt] if fmt else [] if sized else ["--all-formats"])
                 elif fmt:
                     args += ["--format", fmt]
                 return self.run_cli(slot, job_dir, args)
@@ -327,9 +359,10 @@ class Service:
         summary = (r.stderr.strip().splitlines() or [""])[-1]
         return {"diagnostics": diags, "summary": summary}
 
-    async def timing(self, tier, source, fmt=None):
+    async def timing(self, tier, source, fmt=None, size=None):
         self.check_source_size(source, tier)
         validate.check_format(fmt)
+        source, _sized = self.apply_size(tier, source, size)
 
         def fn(slot):
             job_dir, *_ = self.prepare(slot, source)
@@ -347,7 +380,7 @@ class Service:
     def _image_job(self, slot, source, args_fn, max_width=None, max_side=2160):
         job_dir, facts, *_ = self.prepare(slot, source)
         try:
-            if validate.short_side(facts) > max_side:
+            if max_side and validate.short_side(facts) > max_side:
                 raise ServiceError(f"previews are limited to a {max_side}px short side", "limit_exceeded", 422)
             r = self.run_cli(slot, job_dir, args_fn("out.png"))
             if r.killed:
@@ -367,26 +400,112 @@ class Service:
         finally:
             self.sandbox.remove(job_dir)
 
-    async def frame(self, tier, source, at, fmt=None, width=None):
+    async def frame(self, tier, source, at, fmt=None, width=None, size=None):
         self.check_source_size(source, tier)
         at = validate.check_at(at)
         fmt = validate.check_format(fmt)
         width = validate.check_int(width, "width", 64, 1920, 640)
+        source, sized = self.apply_size(tier, source, size)
+        if sized:
+            fmt = None  # the size is exact; the megapixel cap replaces the short-side cap
 
         def args(o):
             return ["frame", "src.reel", "--at", at, "-o", o, "--no-tts"] + (["--format", fmt] if fmt else [])
-        return await self.preview_op(lambda slot: self._image_job(slot, source, args, width))
+        return await self.preview_op(lambda slot: self._image_job(slot, source, args, width,
+                                                                   max_side=None if sized else 2160))
 
-    async def sheet(self, tier, source, n=None, fmt=None, cols=None, events=False):
+    async def sheet(self, tier, source, n=None, fmt=None, cols=None, events=False, size=None):
         self.check_source_size(source, tier)
         fmt = validate.check_format(fmt)
+        source, sized = self.apply_size(tier, source, size)
+        if sized:
+            fmt = None
         n = validate.check_int(n, "n", 1, 36, 12)
         cols = validate.check_int(cols, "cols", 1, 8, None)
 
         def args(o):
             a = ["sheet", "src.reel", "-o", o, "--no-tts"] + (["--events"] if events else ["--n", str(n)])
             return a + (["--cols", str(cols)] if cols else []) + (["--format", fmt] if fmt else [])
-        return await self.preview_op(lambda slot: self._image_job(slot, source, args, 2400))
+        return await self.preview_op(lambda slot: self._image_job(slot, source, args, 2400,
+                                                                   max_side=None if sized else 2160))
+
+    # ------------------------------------------------------------ live preview + catalog
+
+    def fonts_dir(self) -> Path:
+        return Path(self.cfg.agentfx_home, "assets", "fonts").resolve()
+
+    def font_path(self, name) -> Path | None:
+        """A bundled font for the preview page: a plain file name in assets/fonts only."""
+        if not isinstance(name, str) or not FONT_NAME.match(name):
+            return None
+        d = self.fonts_dir()
+        p = (d / name).resolve()
+        return p if p.parent == d and p.is_file() else None
+
+    async def preview(self, tier, source, fmt=None, size=None, fonts_base="/api/v1/fonts"):
+        """`agentfx html --no-embed` for the playground's live preview. Bundled fonts point at
+        /fonts/<name>; files of the job (uploads, template defaults) are inlined as data URIs, so
+        the page needs no job storage; any other file:// reference is dropped. A source that does
+        not compile still returns a page when the CLI wrote one (lint shows the errors)."""
+        self.check_source_size(source, tier)
+        fmt = validate.check_format(fmt)
+        source, sized = self.apply_size(tier, source, size)
+        if sized:
+            fmt = None
+        fonts = self.fonts_dir()
+
+        def fn(slot):
+            job_dir, *_ = self.prepare(slot, source)
+            try:
+                args = ["html", "src.reel", "--no-embed", "--no-tts", "-o", "preview.html"] + (["--format", fmt] if fmt else [])
+                r = self.run_cli(slot, job_dir, args)
+                page = job_dir / "preview.html"
+                if r.killed:
+                    raise ServiceError(f"preview stopped ({r.killed})", "timeout", 422)
+                if not page.is_file() or page.stat().st_size == 0:
+                    raise ServiceError("html failed: " + _first_error(r.stderr), "compile_error", 422,
+                                       {"diagnostics": _json_or(r.stderr, [])})
+                if page.stat().st_size > PREVIEW_MAX_BYTES:
+                    raise ServiceError("the preview page is too large", "too_large", 413)
+                html = page.read_text(encoding="utf-8")
+                jd = job_dir.resolve()
+                budget = [PREVIEW_MAX_BYTES - len(html)]
+
+                def rewrite(m):
+                    raw = unquote(m.group(1))
+                    try:
+                        real = Path(raw).resolve()
+                    except (OSError, ValueError):
+                        return ""
+                    if real.parent == fonts and real.is_file() and FONT_NAME.match(real.name):
+                        return f"{fonts_base}/{quote(real.name)}"
+                    if jd in real.parents and real.is_file():
+                        data = real.read_bytes()
+                        budget[0] -= len(data) * 4 // 3 + 64
+                        if budget[0] < 0:
+                            raise ServiceError("the preview page is too large (assets)", "too_large", 413)
+                        mime = mimetypes.guess_type(real.name)[0] or "application/octet-stream"
+                        return f"data:{mime};base64,{base64.b64encode(data).decode()}"
+                    return ""
+                return FILE_URL.sub(rewrite, html)
+            finally:
+                self.sandbox.remove(job_dir)
+        return await self.preview_op(fn)
+
+    async def catalog(self):
+        if self._catalog is None:
+            def fn(slot):
+                job_dir = self.sandbox.new_job_dir()
+                try:
+                    return self.run_cli(slot, job_dir, ["catalog"])
+                finally:
+                    self.sandbox.remove(job_dir)
+            r = await self.preview_op(fn)
+            j = _json_or(r.stdout, None)
+            if j is None:
+                raise ServiceError("catalog failed: " + _first_error(r.stderr), "internal", 500)
+            self._catalog = j
+        return self._catalog
 
     # ------------------------------------------------------------ renders
 

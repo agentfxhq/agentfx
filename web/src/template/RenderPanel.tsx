@@ -1,5 +1,5 @@
-// Render -> progress -> download (POST /renders, GET /renders/{id}); several files (sizes) come
-// back as a list plus a zip.
+// Render -> progress -> download (POST /renders, GET /renders/{id}). A template with several
+// sizes goes through /batch with one row, so the files come back as a list plus a zip (`url`).
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { absUrl, api, ApiError, type Output, type RenderStatus } from '../api';
 import { prettySize, t } from '../i18n';
@@ -15,8 +15,10 @@ interface Props {
   disabled?: boolean;
   compact?: boolean;
   still?: boolean;
-  sizes?: Record<string, string>; // name -> WxH (stills / size picker)
+  sizes?: string[]; // still size preset names (size picker)
   at?: string;
+  /** template mode: the service instantiates the template itself (per size) */
+  template?: { id: string; params: Record<string, unknown> };
 }
 
 /** Poll a render or batch job until it ends. */
@@ -33,18 +35,20 @@ export function pollJob(job: string, onUpdate: (r: RenderStatus) => void, timer:
   tick();
 }
 
-export function doneState(r: RenderStatus, output: Output): Done {
+/** `zip`: the job was a batch (its `url` is the zip). */
+export function doneState(r: RenderStatus, output: Output, zip = false): Done {
   const files = (r.files ?? (r.url ? [{ name: `agentfx.${output}`, url: r.url }] : [])).map((f) => ({ ...f, url: absUrl(f.url) }));
-  return { s: 'done', url: absUrl(r.url ?? files[0]?.url ?? ''), output, files, zip: r.zip_url ? absUrl(r.zip_url) : undefined };
+  const url = absUrl(r.url ?? files[0]?.url ?? '');
+  return { s: 'done', url, output, files, zip: zip && r.url ? url : undefined };
 }
 
-export function RenderPanel({ source, format, fileStem, disabled, compact, still, sizes, at }: Props) {
+export function RenderPanel({ source, format, fileStem, disabled, compact, still, sizes, at, template }: Props) {
   const outputs: Output[] = still ? ['png', 'jpg', 'pdf'] : ['mp4', 'gif', 'webp'];
   const [output, setOutput] = useState<Output>(outputs[0]);
   const [st, setSt] = useState<State>({ s: 'idle' });
   const poll = useRef<ReturnType<typeof setTimeout>>();
   const renderedFor = useRef<string | null>(null);
-  const key = `${source}|${format}|${JSON.stringify(sizes ?? {})}|${output}`;
+  const key = `${source}|${format}|${JSON.stringify(sizes ?? [])}|${output}`;
 
   useEffect(() => () => clearTimeout(poll.current), []);
   useEffect(() => {
@@ -55,16 +59,21 @@ export function RenderPanel({ source, format, fileStem, disabled, compact, still
     if (st.s === 'done' && renderedFor.current !== key) setSt({ s: 'idle' });
   }, [key]);
 
-  const noSize = !!sizes && Object.keys(sizes).length === 0;
+  const noSize = !!sizes && sizes.length === 0;
   const start = async () => {
     if (!source || noSize) return;
     clearTimeout(poll.current);
     setSt({ s: 'running', progress: 0 });
     try {
-      const { job_id } = await api.startRender(source, sizes ? undefined : format || undefined, output, { sizes, at });
+      const many = !!template && !!sizes && sizes.length > 1;
+      const { job_id } = !template
+        ? await api.startRender(source, format || undefined, output, { at })
+        : many
+          ? await api.batch(template.id, [{}], output, sizes, template.params)
+          : await api.renderTemplate(template.id, template.params, output, { format: sizes ? undefined : format || undefined, sizes });
       renderedFor.current = key;
       pollJob(job_id, (r) => {
-        if (r.status === 'done') setSt(doneState(r, output));
+        if (r.status === 'done') setSt(doneState(r, output, many));
         else if (r.status === 'error') setSt({ s: 'error', message: r.error ?? t('renderFailed') });
         else setSt({ s: 'running', progress: r.progress ?? 0 });
       }, poll);
@@ -98,8 +107,8 @@ export function RenderPanel({ source, format, fileStem, disabled, compact, still
               {st.files.map((f) => (
                 <li key={f.url}>
                   <span class="ico">{isImg(st.output) ? <ImageIcon size={14} /> : <Film size={14} />}</span>
-                  <span class="nm">{prettySize(f.name.replace(/^agentfx-|\.\w+$/g, ''))}</span>
-                  <span class="faint mono">{f.size}</span>
+                  <span class="nm">{prettySize(f.size ?? f.name.replace(/\.\w+$/, ''))}</span>
+                  <span class="faint mono">{f.name}</span>
                   <a class="btn sm ghost icon" href={f.url} download={f.name} aria-label={t('download', { t: f.name })} title={f.name}>
                     <Download size={14} />
                   </a>

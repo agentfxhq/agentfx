@@ -26,6 +26,10 @@ AGENTFX_API=http://127.0.0.1:8793 npx vite --port 8794   # http://127.0.0.1:8794
 `AGENTFX_API` defaults to `http://127.0.0.1:8780` (the real service). The mock uses the repo's
 `templates/` when it has manifests, else `dev/fixtures/templates/` (or `--templates DIR`), runs the CLI
 with `--tts none`, and takes the shared heavy-job lock for render/frame/sheet (`MOCK_FLOCK=` disables).
+The e2e tests expect the fixtures: start the mock with `AGENTFX_TEMPLATES=dev/fixtures/templates`.
+Contract as the service: manifest `sizes` is a list of preset names plus `size_px` {name: WxH};
+template renders send `{template, params, sizes}` (several sizes go through `/batch` with one row,
+whose `url` is the zip).
 
 ```sh
 npm test                 # unit tests (timeline model, JSON <-> timeline <-> edits <-> JSON through the CLI, CSV, i18n)

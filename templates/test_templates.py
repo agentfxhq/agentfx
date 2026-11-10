@@ -5,7 +5,7 @@
 2. Every template: instantiate with defaults and with edge inputs (max-length text, empty optional
    params, every enum value) and lint in all three formats with `agentfx lint --measure
    --all-formats --no-tts`; no errors allowed. Needs the agentfx binary: $AGENTFX_BIN, else
-   `agentfx` on PATH, else <repo>/target/release/agentfx; the lint part is skipped without it.
+   <repo>/target/release/agentfx, else `agentfx` on PATH (must include the distort pack, 27d2a14 or later); the lint part is skipped without it.
 """
 import json
 import os
@@ -25,7 +25,7 @@ LONG = "The quick brown fox jumps over the lazy dog while the band plays on and 
 
 
 def agentfx_bin():
-    for c in (os.environ.get("AGENTFX_BIN"), shutil.which("agentfx"), str(HERE.parent / "target/release/agentfx")):
+    for c in (os.environ.get("AGENTFX_BIN"), str(HERE.parent / "target/release/agentfx"), shutil.which("agentfx")):
         if c and Path(c).is_file():
             return c
     return None

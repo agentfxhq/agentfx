@@ -1,0 +1,7 @@
+video "Coffee promo" size=1080x1920 fps=30 captions=off
+
+scene hero dur=5s bg=#3E2723
+  text #name "BEAN BOX" size=180 weight=900 colour=#FFE0B2 x=50% y=40% anchor=center in=rize
+  text #tag "Fresh roasted, every week" size=60 color=#FFCC80 x=50% y=55% anchor=center nowrap in=fade delay=0.4s
+  @1.5s pulse #nmae
+  @6s exit #tag fade

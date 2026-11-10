@@ -1,0 +1,16 @@
+id: logo-reveal-bakery
+tags:
+- logo
+- brand
+formats:
+- '16:9'
+duration_s: null
+files: {}
+prompt: logo reveal for my bakery "Krume & Co", warm colours, elegant, maybe a serif font
+must_text:
+- Krume & Co
+must_haves:
+- Krume & Co shown as a wordmark
+- warm colour palette
+- serif or elegant typography
+- an elegant reveal animation that ends on a held logo

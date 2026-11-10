@@ -1,0 +1,17 @@
+id: fx-halftone-pop-art
+tags:
+- effect
+- halftone
+- square
+formats:
+- '1:1'
+duration_s: null
+files: {}
+prompt: retro comic book style poster with halftone dots that says POP ART, square
+must_text:
+- POP ART
+must_haves:
+- square 1:1
+- visible halftone dot pattern
+- comic/pop-art look (bold colours, bold type)
+- POP ART readable

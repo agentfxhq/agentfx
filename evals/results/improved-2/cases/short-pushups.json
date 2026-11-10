@@ -1,0 +1,129 @@
+{
+ "id": "short-pushups",
+ "tags": [
+  "vertical",
+  "social",
+  "list"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 37.6,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 11,
+  "cost_usd": 0.17186120000000002,
+  "tokens": {
+   "input_tokens": 16,
+   "output_tokens": 2995,
+   "cache_read_input_tokens": 220952,
+   "cache_creation_input_tokens": 29946
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 5,
+   "Read": 3
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_DEAD_AIR": 4,
+   "W_CONTRAST": 2
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "The push-up Short is rendered: a 9:16 video, 1080×1920, about 18 seconds, with no voice or music. I checked a contact sheet of one frame per scene and lint came back clean. I didn't scrub through the rendered MP4 itself.\n\n- **Hook (3 s):** \"You're doing push-ups WRONG\", with a pulse on \"WRONG\".\n- **Fix 1 (4 s):** \"Hands under your shoulders\".\n- **Fix 2 (4 s):** \"Squeeze your glutes\".\n- **Fix 3 (4 s):** \"Full range of motion\".\n- **Closer (3 s):** \"Try it on your next set\". You didn't ask for this line, so it's my proposed copy. Cut it if you'd rather end on fix 3.\n\nIt's all kinetic text on a dark green background. It has no footage of push-ups or demo graphics.\n\nFiles are in `./`:\n- `film.reel`\n- `out/film.mp4`",
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 18.0
+  },
+  "text": [
+   {
+    "text": "You're doing push-ups wrong",
+    "pass": true
+   },
+   {
+    "text": "hands under shoulders",
+    "pass": true
+   },
+   {
+    "text": "squeeze your glutes",
+    "pass": true
+   },
+   {
+    "text": "full range of motion",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical 9:16",
+     "pass": true,
+     "evidence": "Frames are tall portrait, 1080x1920."
+    },
+    {
+     "item": "hook first",
+     "pass": true,
+     "evidence": "First frames read \"You're doing push-ups WRONG\"."
+    },
+    {
+     "item": "three fixes in sequence",
+     "pass": true,
+     "evidence": "FIX 1 hands, FIX 2 glutes, FIX 3 full range appear in order."
+    },
+    {
+     "item": "text stays inside the vertical safe area",
+     "pass": true,
+     "evidence": "Text is centered with wide margins, in the upper-middle, clear of the right rail and bottom band."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "Text only, with no push-up visuals, icons or diagrams. Nothing shows hand, glute or range-of-motion form, so it feels like a slide deck.",
+    "The background is a flat green gradient, and the same layout repeats in every scene. It is monotonous with little visual interest.",
+    "The text sits in a small block in the middle, and the top and bottom of the frame are empty. Type is smaller than it could be for a Short, and the fix scenes are small next to the hook.",
+    "Scenes 1–3 and the CTA hold nearly the same frame for about 4 s each, so motion looks static apart from the pulses. There is no progress indicator or transition variety.",
+    "The CTA is weak and plain. It is white text only, with no subscribe or follow prompt and no accent colour."
+   ],
+   "verdict": "The video is clean, legible and correctly structured: the hook comes first, the three fixes follow in order, and the text is safe. It is generic and text-only, with no exercise visuals and little visual variation. A user would likely ask for imagery or more energy.",
+   "cost_usd": 0.0284598,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 83.3
+ },
+ "score_wall_s": 16.4,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-2/short-pushups"
+}

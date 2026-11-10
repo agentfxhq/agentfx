@@ -1,0 +1,15 @@
+id: fx-shatter-breaking-news
+tags:
+- effect
+- shatter
+formats:
+- '16:9'
+duration_s: null
+files: {}
+prompt: the text BREAKING NEWS should shatter into pieces
+must_text:
+- BREAKING NEWS
+must_haves:
+- BREAKING NEWS readable before it breaks
+- it shatters into pieces (fracture, not a fade)
+- pieces fly/fall convincingly

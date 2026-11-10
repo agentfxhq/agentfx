@@ -1,0 +1,46 @@
+{
+ "run_id": "improved-2",
+ "meta": {
+  "commit_first": "ee18d22",
+  "run_id": "improved-2",
+  "model": "sonnet",
+  "judge_model": "sonnet",
+  "mode": "both",
+  "max_turns": 40,
+  "commit": "ee18d22",
+  "started": "2026-11-10T03:47:02",
+  "work": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-2",
+  "wall_min": 46.6,
+  "product": "/home/drzivil/dev/agentfx/.claude/worktrees/agent-a0a7fa9d34bdb1909",
+  "agentfx_bin": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/target-p4/release/agentfx"
+ },
+ "aggregate": {
+  "cases": 17,
+  "score": 81.24,
+  "accept_rate": 0.471,
+  "judge_accept": 0.529,
+  "quality": 5.65,
+  "checklist_pass": 0.882,
+  "lint_clean": 0.941,
+  "renders": 0.941,
+  "duration_ok": 1.0,
+  "text_ok": 0.941,
+  "turns": 12.0,
+  "lint_calls": 3.0,
+  "first_lint_errors": 0.35,
+  "lint_errors_seen": 1.35,
+  "agent_cost_usd": 2.29,
+  "judge_cost_usd": 0.48,
+  "agent_wall_s": 98.28
+ },
+ "error_codes": {
+  "E_VERB": 4,
+  "E_OVERFLOW": 1,
+  "E_PRESET": 2,
+  "E_ID": 1,
+  "E_EVENT_OUTSIDE": 1,
+  "E_OUT_OF_FRAME": 12,
+  "E_PAINT": 1,
+  "E_KIND": 1
+ }
+}

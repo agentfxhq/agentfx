@@ -1,0 +1,130 @@
+{
+ "id": "kinetic-stop-scrolling",
+ "tags": [
+  "social",
+  "kinetic-type",
+  "vertical"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": 8,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 35.2,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 12,
+  "cost_usd": 0.1807182,
+  "tokens": {
+   "input_tokens": 18,
+   "output_tokens": 2610,
+   "cache_read_input_tokens": 264502,
+   "cache_creation_input_tokens": 32033
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 4,
+   "mcp__agentfx__agentfx_spec": 1,
+   "Read": 2,
+   "mcp__agentfx__agentfx_render": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 2,
+  "first_lint_errors": 2,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 2
+  },
+  "warning_codes": {
+   "W_SAFE_AREA": 2
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made the 8-second vertical (9:16, 1080×1920, 30 fps) reel. I checked two stills, one from each half, and rendered it without audio. I didn't watch the full video or run a frame strip.\n\nThe script is `./film.reel` and the video is `./out/film.mp4`.\n\n- **0–4s:** a giant neon-green STOP zooms in with a shake, then a white SCROLLING pops in under it. Green bars wipe across the top and bottom.\n- **4–8s:** START lands as a neon-green outline, then BUILDING slams in as solid neon green. It uses the same bars and a final pulse and glow.\n\nThe background is pure black throughout, with neon green (`#39FF14`) as the accent. Every word is as large as the frame allows. The last lint run showed no errors, only an info note about the text styles differing between scenes, which is intentional.\n\nI didn't add music, because I wasn't given a track. If you want one, send an audio file and I can cut the slams to its beat.",
+  "spec_reads": 1,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 8.0
+  },
+  "text": [
+   {
+    "text": "STOP SCROLLING",
+    "pass": true
+   },
+   {
+    "text": "START BUILDING",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "vertical 9:16 frame",
+     "pass": true,
+     "evidence": "Tall frames, 1080x1920."
+    },
+    {
+     "item": "the words appear one after another (not all at once)",
+     "pass": true,
+     "evidence": "STOP appears first, SCROLLING by 1.67s, START at 4.33s, BUILDING by 5.67s."
+    },
+    {
+     "item": "black background with neon green accents",
+     "pass": true,
+     "evidence": "Pure black with neon green bars and text."
+    },
+    {
+     "item": "text is big and fills most of the frame width",
+     "pass": false,
+     "evidence": "STOP and START span the width, but SCROLLING and BUILDING only fill about 75% or less."
+    },
+    {
+     "item": "feels high energy (fast, punchy motion)",
+     "pass": false,
+     "evidence": "Only one word lands per 1–1.2s, and the frames sit static for long stretches. The bars wipe slowly. It reads more as steady than punchy."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": false,
+   "problems": [
+    "Pacing is slow for a punchy reel: the second word waits over 1s, and the last ~2s hold static with little new action.",
+    "SCROLLING and BUILDING are much smaller than STOP and START, so they don't fill the frame width and feel like subtitles.",
+    "The layout is top-heavy: the lower 40% of the frame is empty black apart from the thin bar. This leaves a big dead zone, and the bottom is also covered by Instagram UI.",
+    "START is an outline-only word with thin strokes, so it has far less impact than the solid STOP. The two halves feel inconsistent.",
+    "The two scenes repeat the same layout and timing, so the second half adds no escalation or payoff, and there is no CTA or closing beat."
+   ],
+   "verdict": "It's clean, legible, and on brief for colour and format. But it's more calm than slam-in energetic. The second words are undersized, the lower half is empty, and the timing is sluggish. It needs another pass before it's reel-ready.",
+   "cost_usd": 0.0290864,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 74.7
+ },
+ "score_wall_s": 15.5,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-3/kinetic-stop-scrolling"
+}

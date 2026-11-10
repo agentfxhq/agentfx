@@ -1,0 +1,19 @@
+id: teaser-dashboard-shot
+tags:
+- product
+- screenshot
+formats:
+- '16:9'
+duration_s: null
+files:
+  dashboard.png: examples/assets/ui/content.png
+prompt: here's a screenshot of our dashboard (dashboard.png). make a short promo that shows it nicely, zooms in
+  a bit, and says "Everything in one place" and then "Try Panelo free"
+must_text:
+- Everything in one place
+- Try Panelo free
+must_haves:
+- the dashboard screenshot is shown large
+- there is a zoom or camera move into the screenshot
+- both lines of copy appear
+- ends on the call to action

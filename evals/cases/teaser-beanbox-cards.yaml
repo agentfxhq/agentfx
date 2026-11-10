@@ -1,0 +1,21 @@
+id: teaser-beanbox-cards
+tags:
+- product
+- brand
+- square
+formats:
+- '1:1'
+duration_s: null
+files: {}
+prompt: 'square post for instagram for our coffee subscription Bean Box. show three features: Fresh roasted, Free
+  shipping, Cancel anytime. brand colour is orange #FF6B35 on cream'
+must_text:
+- Bean Box
+- Fresh roasted
+- Free shipping
+- Cancel anytime
+must_haves:
+- square 1:1 frame
+- 'orange #FF6B35 and a cream background'
+- three features shown
+- brand name Bean Box visible

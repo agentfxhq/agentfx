@@ -1,0 +1,18 @@
+id: edit-add-vertical
+tags:
+- edit
+- multi-format
+formats:
+- '16:9'
+- '9:16'
+duration_s: null
+files:
+  film.reel: evals/fixtures/edit-landscape.reel
+prompt: I also need film.reel as a vertical version for stories, but the headline gets cut off there
+must_text:
+- OPEN DAY AT THE MAKERSPACE
+- free entry
+must_haves:
+- 'vertical version: the headline fits inside the frame (wraps or scales)'
+- landscape version still looks as before
+- copy unchanged

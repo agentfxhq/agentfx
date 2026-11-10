@@ -1,0 +1,22 @@
+id: music-beat-words
+tags:
+- music
+- kinetic-type
+- vertical
+formats:
+- '9:16'
+duration_s: null
+files:
+  track.mp3: examples/features/assets/beat-128bpm-drop.mp3
+prompt: 'for my song (track.mp3) i want words that change on every beat: FEEL / THE / BASS / DROP, vertical for
+  reels'
+must_text:
+- FEEL
+- THE
+- BASS
+- DROP
+must_haves:
+- vertical 9:16
+- words FEEL THE BASS DROP appear one at a time
+- word changes are synced to the beat (beat anchors or audio)
+- music track is used

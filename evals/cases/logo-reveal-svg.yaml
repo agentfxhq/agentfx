@@ -1,0 +1,16 @@
+id: logo-reveal-svg
+tags:
+- logo
+- asset
+formats:
+- '16:9'
+duration_s: 5
+files:
+  logo.svg: evals/fixtures/logo.svg
+prompt: make a cool logo reveal with my logo (logo.svg in this folder), 5 seconds, dark background
+must_text: []
+must_haves:
+- the provided logo (yellow circle mark + white Lumen wordmark) is shown, not a re-typed imitation
+- a reveal animation (not just a fade)
+- dark background
+- logo holds still at the end

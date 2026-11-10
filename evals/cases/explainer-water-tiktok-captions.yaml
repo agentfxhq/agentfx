@@ -1,0 +1,18 @@
+id: explainer-water-tiktok-captions
+tags:
+- explainer
+- captions
+- vertical
+formats:
+- '9:16'
+duration_s: 15
+files: {}
+prompt: tiktok style video with those big bold captions word by word, about why you should drink more water. like
+  15 seconds
+must_text:
+- water
+must_haves:
+- vertical 9:16
+- big bold word-by-word captions (tiktok/hormozi style)
+- captions stay clear of the bottom UI band
+- 'on topic: why drink more water'

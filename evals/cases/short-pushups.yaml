@@ -1,0 +1,21 @@
+id: short-pushups
+tags:
+- vertical
+- social
+- list
+formats:
+- '9:16'
+duration_s: null
+files: {}
+prompt: 'youtube short: hook "You''re doing push-ups wrong" then 3 fixes: hands under shoulders, squeeze your glutes,
+  full range of motion'
+must_text:
+- You're doing push-ups wrong
+- hands under shoulders
+- squeeze your glutes
+- full range of motion
+must_haves:
+- vertical 9:16
+- hook first
+- three fixes in sequence
+- text stays inside the vertical safe area (not under the right action rail or bottom band)

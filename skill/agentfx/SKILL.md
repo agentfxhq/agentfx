@@ -34,16 +34,72 @@ Ask nothing more than you need. If the request is clear, go:
 
 1. Read the catalog (and the spec section for what you use). Pick the closest example as a start.
 2. Write the `.reel`. Copy, numbers, names and logos come from the user; never invent claims.
-   Mark any copy you propose as proposed.
-3. `agentfx lint film.reel --measure --all-formats` (add `--no-tts` when there is no voice-over).
-   Fix every error and warning; lint hints say how.
+   Mark any copy you propose as proposed. Get these right in the first draft (see
+   [First-draft checklist](#first-draft-checklist)): length, format, size, numbers.
+3. `agentfx lint film.reel --measure --format <each requested format>` (`--all-formats` when
+   the video is for several; add `--no-tts` when there is no voice-over). Fix every error and
+   every warning that is about the formats you deliver; lint hints say how.
 4. Look before you render: `agentfx sheet film.reel --events -o out/sheet.png` and
    `agentfx frame film.reel --at <anchor|seconds> -o out/frame.png` for the moments that matter.
    Open the PNGs and check overflow, clipping, contrast, alignment and pacing. Fix and repeat.
-5. `nice -n 19 agentfx render film.reel -o out/film.mp4` (`--format 9:16` for vertical; `.gif`,
+   This is also required for edits: look at a frame after every change you hand over.
+5. Render once, at the end, only the formats the user asked for:
+   `nice -n 19 agentfx render film.reel -o out/film.mp4` (`--format 9:16` for vertical; `.gif`,
    `.webp`, `.mov` or `.webm` outputs by extension; `--alpha` for a transparent background).
+   A render takes from seconds to several minutes. Run it in the foreground and let it finish:
+   give the shell call a long timeout (e.g. Bash `timeout: 600000`) or use the MCP
+   `agentfx_render` tool, which blocks until the file is written. Never put a render in the
+   background (`&`, `run_in_background`) and never wait for it with `pgrep`/`sleep` loops (they
+   match other renders and themselves): when your session ends, a background render is killed and
+   the user gets no video. Never `pkill`/`kill` agentfx processes by name: on a shared machine
+   they belong to other people.
+   Know the cost before you render: `time agentfx frame film.reel --at <busiest moment>` and
+   multiply by the frame count (fps x seconds). Text, shapes, images, charts and camera moves
+   cost milliseconds per frame; per-frame layers (`gen`, `fluid`, `cloud`, big `particles`,
+   live grain, a moving 3D camera) cost up to seconds per frame on the CPU. Use them where the
+   user asked for that effect, give them `res=` / a smaller box, and never as decoration (an
+   animated noise background turned a 8 s counter into a 30-minute render).
 6. Check the result (a strip of frames: `ffmpeg -i out/film.mp4 -vf fps=2,scale=320:-1,tile=9x1
-   out/strip.png`), then hand over the path with one line on what you made.
+   out/strip.png`), then hand over the path with one line on what you made. The MP4 has a
+   variable frame rate (a still hold is one long frame): extract single frames with the fps
+   filter as above or with `agentfx frame`, not with `ffmpeg -ss <t> -i`, which jumps to the
+   next change and shows the wrong moment.
+
+### First-draft checklist
+
+- **Length.** Every scene without narration needs `dur=` (else it is only 0.5 s long:
+  `W_SCENE_SHORT`). No length given: 5 to 8 s for a title, logo or effect clip, 10 to 15 s for a
+  list, teaser or chart, the narration's length for an explainer. A stated length is a must.
+- **Format.** "Reel", "TikTok", "story", "short", "vertical": 9:16 (`size=1080x1920`). "Square",
+  "post": 1:1. "YouTube", "landscape" or nothing: 16:9. Several: `formats=[...]` plus `when`
+  overrides, and lint and render each.
+- **Fill the frame.** The hero (headline, number, chart, logo) spans at least 60 % of the frame
+  width; at 1080p headlines are 120 to 220 px, supporting text at least 44 px (56 px in 9:16).
+  `W_SCALE_FILL` and `W_SMALL_MOTION` mean it is too small: scale up, do not ignore them.
+- **Components are sized for slides, not for social frames.** `stat`, `card`, `node`, `chart`
+  at their defaults fill a third of a 1080p frame. For a KPI, chart or diagram video scale them up
+  (a design `scale` line, or `w=`/`size=`) until the hero spans
+  60 % of the width, and check a frame: the judge of a first draft is "can I read it on a phone".
+  The scale line goes into a design block after `video`:
+  `design "Big" base=dark` with the child line `scale components=1.6 diagram=1.6 chart=1.4`.
+- **Social captions.** "Word by word", "TikTok/Reels captions": `captions style=pop` (one word
+  at a time) or `style=hormozi maxwords=2`, `size=` 96 to 120 in 9:16, `place=center`. Captions
+  need narration (`say`) or a transcript (`src=`).
+- **Motion to the end, then a short hold.** Every scene has an entrance and something that moves
+  or lands near its end (a camera push, a pulse, an exit); more than about 2 s without motion reads
+  as a frozen video (`W_STATIC_END`, `W_DEAD_AIR`). A logo, title or CTA still ends on a settled
+  hold of 0.5 to 1.5 s: let the last move finish, do not keep a slow scale creeping to the last frame.
+- **One look per brief.** Keep the requested palette in every scene (a "black with neon green"
+  brief does not end on a full green screen); a teaser needs a visual (UI, shape, logo lockup),
+  not only centred text cards; kinetic words land one at a time, each big.
+- **Numbers as written.** Number defaults are German: counters group with `.` from 10 000 on and
+  charts use a decimal comma. For English copy set `sep=","` on `counter`/`stat` and `locale=en`
+  on `chart` (`W_NUMBER_FORMAT`). Show the user's figures exactly (1.2M stays "1.2M", 4,300
+  stays "4,300"). Counters count integers only: count a decimal figure as a `text` that lands
+  with a pop, or count the integer part with `prefix=`/`suffix=` (`to=4300 sep=","`), never
+  rewrite the figure as 1200K.
+- **Assets.** `image` reads PNG; for an SVG file (a logo) use `svg src=logo.svg w= h=`
+  (or paste it in an `svg |` body); never retype a logo as text.
 
 ## Brands, logos and imported animation
 

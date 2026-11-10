@@ -1,0 +1,14 @@
+{
+ "commit_first": "ee18d22",
+ "run_id": "improved-2",
+ "model": "sonnet",
+ "judge_model": "sonnet",
+ "mode": "both",
+ "max_turns": 40,
+ "commit": "ee18d22",
+ "started": "2026-11-10T03:47:02",
+ "work": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-2",
+ "wall_min": 46.6,
+ "product": "/home/drzivil/dev/agentfx/.claude/worktrees/agent-a0a7fa9d34bdb1909",
+ "agentfx_bin": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/target-p4/release/agentfx"
+}

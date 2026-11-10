@@ -1,0 +1,127 @@
+{
+ "id": "edit-title-bigger-slower",
+ "tags": [
+  "edit"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 867.3,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 16,
+  "cost_usd": 0.150844,
+  "tokens": {
+   "input_tokens": 24,
+   "output_tokens": 3267,
+   "cache_read_input_tokens": 290660,
+   "cache_creation_input_tokens": 22265
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Read": 1,
+   "Bash": 6,
+   "TaskStop": 2,
+   "ToolSearch": 1,
+   "mcp__agentfx__agentfx_frame": 2,
+   "mcp__agentfx__agentfx_render": 1
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 1,
+  "first_lint_errors": 1,
+  "error_codes": {
+   "E_OUT_OF_FRAME": 1
+  },
+  "warning_codes": {
+   "W_STATIC_END": 6,
+   "W_SMALL_MOTION": 1,
+   "W_OVERLAP": 1
+  },
+  "renders": 1,
+  "frames": 3,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made the title bigger and slowed the animation, and rendered the video to `out/film.mp4` (1920x1080, 4 s). I only looked at stills from the finished layout, not the rendered video. The CLI `agentfx frame` command hung, so I used the MCP frame tool for those. I didn't render a 9:16 version.\n\n- **Title size:** 56 → 120.\n- **Title line break:** at 120 the title was too wide for vertical (9:16) and got cut off. I replaced `nowrap` with `align=center`, so it now breaks onto two lines in widescreen and three in vertical. If you'd rather keep it on one line, the size has to come down to about 80.\n- **Date position:** I moved it from `y=58%` to `y=64%`, so it clears the taller title.\n- **Title animation:** the rise now takes 1.6 s.\n- **Date animation:** the fade takes 1.4 s and starts at 1 s instead of 0.2 s, so it follows the title. Everything has landed by about 2.4 s, and the last 1.6 s is a hold.\n\nLint is clean except for a \"static end\" warning for both formats, because the last 2 s don't move. That's from the hold at the end, so I left it. If you want the hold shorter, the scene's `dur=4s` is the place to change it.",
+  "spec_reads": 1,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 1,
+    "codes": [
+     "W_STATIC_END"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 4.0
+  },
+  "text": [
+   {
+    "text": "Spring Workshop 2027",
+    "pass": true
+   },
+   {
+    "text": "April 12, Vienna",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "title size clearly larger than before (was size=56)",
+     "pass": true,
+     "evidence": "Title is large and wraps to two lines, spanning about half the frame width; clearly bigger than 56px."
+    },
+    {
+     "item": "title entrance is slower than before",
+     "pass": true,
+     "evidence": "Title fades and rises over about 1s (0.17s dim, 0.83s full), and the date comes in later at about 1.2–1.5s. This is slower than the old entrance."
+    },
+    {
+     "item": "the rest of the design is kept (copy, colours)",
+     "pass": true,
+     "evidence": "Same text, navy background, white title and orange date."
+    },
+    {
+     "item": "nothing cut off",
+     "pass": true,
+     "evidence": "All text is fully inside the frame in every frame."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "The title wraps to two lines, because nowrap was removed. A single line may have been expected.",
+    "The date is tiny next to the big title, so it is hard to read and the hierarchy gap is too large.",
+    "The motion stops after about 1.5s, so the last 2.5s is a static hold.",
+    "The title and date sit slightly high with a lot of empty space, and the design is generic."
+   ],
+   "verdict": "The edit does what was asked. The title is much bigger and the entrance is slower, with the copy and colours unchanged and nothing clipped. The title now wraps to two lines and the date is very small, which keeps it generic. A user would likely accept it as a first draft.",
+   "cost_usd": 0.0245639,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 86.7
+ },
+ "score_wall_s": 17.7,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/edit-title-bigger-slower"
+}

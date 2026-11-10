@@ -1,0 +1,19 @@
+id: data-signups-bar
+tags:
+- data
+- chart
+formats:
+- '16:9'
+duration_s: null
+files: {}
+prompt: 'bar chart of our monthly signups Jan to Jun: 120, 180, 240, 310, 420, 560. highlight June, title "Signups
+  are taking off"'
+must_text:
+- Signups are taking off
+- Jun
+must_haves:
+- bar chart with six bars Jan to Jun
+- values 120 to 560 correct
+- June highlighted
+- title shown
+- bars animate in

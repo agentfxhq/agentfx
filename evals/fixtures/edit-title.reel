@@ -1,0 +1,5 @@
+video "Spring Workshop" size=1920x1080 fps=30 captions=off
+
+scene open dur=4s bg=#14213D
+  text #title "Spring Workshop 2027" size=56 weight=800 color=#FFFFFF x=50% y=45% anchor=center nowrap in=rise
+  text #date "April 12, Vienna" size=32 color=#FCA311 x=50% y=58% anchor=center nowrap in=fade delay=0.2s

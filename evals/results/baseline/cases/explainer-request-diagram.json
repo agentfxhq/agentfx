@@ -1,0 +1,122 @@
+{
+ "id": "explainer-request-diagram",
+ "tags": [
+  "explainer",
+  "diagram"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": null,
+ "metrics": {
+  "num_turns": null,
+  "cost_usd": null,
+  "tokens": {},
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 12,
+   "Read": 4
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_TEXT_DENSITY": 4,
+   "W_STATIC_END": 2
+  },
+  "renders": 2,
+  "frames": 2,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": null,
+  "spec_reads": 0,
+  "tool_errors": 1,
+  "is_error": null
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 3,
+    "codes": [
+     "W_SMALL_MOTION",
+     "W_STATIC_END",
+     "W_TEXT_DENSITY"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": false,
+  "agent_rendered": false,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 15.0
+  },
+  "text": [
+   {
+    "text": "Browser",
+    "pass": true
+   },
+   {
+    "text": "Server",
+    "pass": true
+   },
+   {
+    "text": "Database",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "three nodes: browser, server, database",
+     "pass": true,
+     "evidence": "Browser, Server, Database cards with icons and subtitles visible throughout."
+    },
+    {
+     "item": "arrows/connectors between them",
+     "pass": true,
+     "evidence": "Thin arrows Browser→Server and Server→Database appear; curved return arcs too."
+    },
+    {
+     "item": "the request path is shown step by step (not all at once)",
+     "pass": true,
+     "evidence": "Arrow 1 appears ~1.9s, arrow 2 ~4.4–5.6s, with captions stepping 1→4 and nodes lighting in turn."
+    },
+    {
+     "item": "the way back (response) is shown",
+     "pass": true,
+     "evidence": "Curved arcs under the nodes appear at 8s (DB→Server) and 11.9s (Server→Browser), but they're faint and the arrowheads are hard to see."
+    },
+    {
+     "item": "clean, uncluttered look",
+     "pass": false,
+     "evidence": "The look is clean, but at 10.6s captions 3 and 4 overlap into an unreadable smear. The diagram is tiny, and the return arcs are faint."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "Step captions overlap at ~10.6s (3 and 4 collide into garbled text).",
+    "Diagram is small in the frame, with huge empty areas above and below. Node text and subtitles are tiny.",
+    "Step captions at the bottom are very small and far from the action, so they are hard to read.",
+    "Return arcs are thin, low-contrast and drawn as under-curves. Their arrowheads are barely visible, so the response direction is unclear. The request and response arrows are also the same colour.",
+    "Plain generic green gradient look. The arrows are hairline thin and there is little visual hierarchy or emphasis."
+   ],
+   "verdict": "The video has the right structure: three nodes, a step-by-step request and a return path. The execution is weak. Captions overlap mid-video, the type and diagram are too small for the frame, and the response arcs are faint. It needs fixes before the user would accept it.",
+   "cost_usd": 0.0281533,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 71.3
+ },
+ "score_wall_s": 451.9,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/explainer-request-diagram"
+}

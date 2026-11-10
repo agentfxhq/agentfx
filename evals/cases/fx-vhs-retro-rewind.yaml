@@ -1,0 +1,15 @@
+id: fx-vhs-retro-rewind
+tags:
+- effect
+- retro
+formats:
+- '16:9'
+duration_s: null
+files: {}
+prompt: 80s VHS look intro for my youtube channel "Retro Rewind"
+must_text:
+- Retro Rewind
+must_haves:
+- channel name Retro Rewind shown
+- VHS look (scanlines, chroma bleed, tracking noise or grain)
+- 80s colours/type

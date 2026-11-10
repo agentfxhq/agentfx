@@ -12,3 +12,9 @@ __pycache__/
 *.pyc
 agentfx-projects/
 .claude-lock
+# eval harness: keep per-case JSON and summaries, not media
+evals/results/**/*.mp4
+evals/results/**/*.png
+evals/results/**/*.webp
+evals/results/**/*.gif
+evals/results/**/work/

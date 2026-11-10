@@ -1,0 +1,114 @@
+{
+ "id": "fx-glitch-system-failure",
+ "tags": [
+  "effect",
+  "glitch"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": "timeout",
+  "stderr": "",
+  "wall_s": 900.1,
+  "orphans_killed": [
+   "/usr/bin/python3 /tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/oldroot/mcp/",
+   "/bin/bash -c source /home/drzivil/.claude/shell-snapshots/snapshot-bash-1794281124396-1ibp3p.sh 2>/dev/null || true && s",
+   "sleep 5 "
+  ]
+ },
+ "metrics": {
+  "num_turns": null,
+  "cost_usd": null,
+  "tokens": {},
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 13,
+   "Read": 4,
+   "Monitor": 1
+  },
+  "lint_calls": 8,
+  "lint_errors_seen": 7,
+  "first_lint_errors": 0,
+  "error_codes": {
+   "E_VALUE": 2,
+   "E_OUT_OF_FRAME": 5
+  },
+  "warning_codes": {
+   "W_OVERLAP": 2,
+   "W_SAFE_AREA": 9,
+   "W_STATIC_END": 3
+  },
+  "renders": 2,
+  "frames": 1,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": null,
+  "spec_reads": 0,
+  "tool_errors": 2,
+  "is_error": null
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 6.0
+  },
+  "text": [
+   {
+    "text": "SYSTEM FAILURE",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "SYSTEM FAILURE shown",
+     "pass": true,
+     "evidence": "Title is legible in every frame, centred, pale mint on near-black."
+    },
+    {
+     "item": "visible glitch artefacts (RGB split, block displacement, scanlines or noise)",
+     "pass": true,
+     "evidence": "Frames at 0.75s, 1.25s, 4.25s and 5.75s show RGB fringing and sliced or displaced blocks across the letters."
+    },
+    {
+     "item": "broken TV feel",
+     "pass": false,
+     "evidence": "The effect only reaches the text. The background stays flat black with barely visible noise, with no scanlines, roll bars, static bursts or screen distortion, so it reads as a glitchy title and not a broken TV."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "The broken-TV look is weak. The background is almost pure black with no visible scanlines, static, tracking bars or screen distortion.",
+    "The subtitle 'ERR 0x0000F4 // SIGNAL LOST' is tiny, dim and low-contrast, and is often unreadable once glitched.",
+    "The title takes up only about 60% of the frame width, and the large empty black space makes the composition feel small and plain.",
+    "The glitch is subtle and uniform between bursts. Frames such as 1.75s and 2.75s show a clean title with no impact, so the glitch lacks drama.",
+    "Colour is limited to mint and a muted red, so the palette is flat and generic."
+   ],
+   "verdict": "The title is legible and has some RGB-split and slice glitching. It looks like a glitchy text effect more than a broken TV, and the subtitle is too small and dim. It is acceptable but generic, and the user would probably ask for a stronger TV-failure look.",
+   "cost_usd": 0.028095400000000003,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 73.3
+ },
+ "score_wall_s": 18.8,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/fx-glitch-system-failure"
+}

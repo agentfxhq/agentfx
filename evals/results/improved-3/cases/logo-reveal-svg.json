@@ -1,0 +1,111 @@
+{
+ "id": "logo-reveal-svg",
+ "tags": [
+  "logo",
+  "asset"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": 5,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 51.8,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 13,
+  "cost_usd": 0.2593071,
+  "tokens": {
+   "input_tokens": 22,
+   "output_tokens": 4156,
+   "cache_read_input_tokens": 421671,
+   "cache_creation_input_tokens": 43884
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 8,
+   "Read": 2
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 3,
+  "first_lint_errors": 2,
+  "error_codes": {
+   "E_KIND": 2,
+   "E_OUT_OF_FRAME": 1
+  },
+  "warning_codes": {},
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made the 5-second logo reveal on a dark navy background (1920×1080, 30 fps). It's at `out/film.mp4` and the script is `film.reel`. It lints clean. I checked a contact sheet and two frames. I didn't check frames from the rendered MP4.\n\n- **0.2 s:** a gold ring shockwave expands from where the circle will land.\n- **0.3 to 1 s:** your circle springs in with a soft gold glow, then the dark diamond spins into it.\n- **1.1 to 2 s:** the wordmark blur-wipes in beside the mark.\n- **2.3 s:** a light sweep crosses the whole lockup.\n- **Last 1.5 s:** a gentle settle and hold.\n\nIt uses your actual SVG paths, split into mark and wordmark so they can animate separately. The lockup is about 1400 px wide.\n\nThe ring is only visible for roughly the first second, and the sweep is subtle. Both are easy to push harder if you want a punchier look.",
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 5.0
+  },
+  "text": [],
+  "judge": {
+   "checklist": [
+    {
+     "item": "the provided logo (yellow circle mark + white Lumen wordmark) is shown, not a re-typed imitation",
+     "pass": true,
+     "evidence": "Yellow circle with dark diamond and white bold 'Lumen' wordmark are shown from 1.88s on."
+    },
+    {
+     "item": "a reveal animation (not just a fade)",
+     "pass": true,
+     "evidence": "Ring pulse, mark pops in, blurred wordmark wipes in at 1.46s, light sweep at 2.71s."
+    },
+    {
+     "item": "dark background",
+     "pass": true,
+     "evidence": "Dark navy/black radial gradient throughout."
+    },
+    {
+     "item": "logo holds still at the end",
+     "pass": false,
+     "evidence": "Scale pushes to 1.03 from 3.7s, so the logo is still drifting at 3.96s, 4.38s and 4.79s, and the frames show slightly different sizes."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": false,
+   "problems": [
+    "The ring pulse is off-center and clipped by the frame edge (0.62s). It is centered on the left side, not on the mark, and looks like a bug.",
+    "The mark starts off-center at the left and the wordmark enters afterward, so the first second feels unbalanced. The ring and mark don't share a center.",
+    "The glow around the mark looks teal/green, not warm gold, which clashes with the yellow logo.",
+    "The ending isn't a settled hold. A slow scale push continues to the end, so the logo is never fully still.",
+    "The lockup is fairly small for the 1920 frame, with lots of empty space. The light sweep is hard to see, and the 2.71s frame just washes out the mark."
+   ],
+   "verdict": "The real logo is shown on a dark background with a decent multi-step reveal. The off-center clipped ring, the greenish glow and the logo still scaling at the end make it feel unpolished. The user would probably ask for fixes.",
+   "cost_usd": 0.032163,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 79.2
+ },
+ "score_wall_s": 17.1,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-3/logo-reveal-svg"
+}

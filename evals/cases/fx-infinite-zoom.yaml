@@ -1,0 +1,16 @@
+id: fx-infinite-zoom
+tags:
+- effect
+- zoom
+- fractal
+formats:
+- '16:9'
+duration_s: null
+files: {}
+prompt: infinite zoom effect, like it keeps zooming into a fractal forever, with the text "Go deeper"
+must_text:
+- Go deeper
+must_haves:
+- continuous zoom into a fractal or nested structure
+- the zoom keeps going across the whole clip
+- text Go deeper shown and readable

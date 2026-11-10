@@ -1,0 +1,18 @@
+id: explainer-solar-captions
+tags:
+- explainer
+- captions
+formats:
+- '16:9'
+duration_s: 30
+files: {}
+prompt: short explainer video with a voice over and subtitles on how solar panels work, in 3 simple steps (sunlight
+  hits the cells, cells make electricity, inverter turns it into power for your home). around 30 seconds
+must_text:
+- sunlight
+- inverter
+must_haves:
+- has narration with on-screen captions/subtitles
+- three steps explained in order
+- visuals change per step (not one static screen)
+- captions readable and not covering the main visual

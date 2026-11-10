@@ -1,0 +1,126 @@
+{
+ "id": "edit-fix-broken",
+ "tags": [
+  "edit",
+  "lint"
+ ],
+ "formats": [
+  "9:16"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 47.6,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 11,
+  "cost_usd": 0.0966207,
+  "tokens": {
+   "input_tokens": 18,
+   "output_tokens": 1535,
+   "cache_read_input_tokens": 191987,
+   "cache_creation_input_tokens": 15509
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 7,
+   "Read": 1
+  },
+  "lint_calls": 3,
+  "lint_errors_seen": 3,
+  "first_lint_errors": 3,
+  "error_codes": {
+   "E_PRESET": 1,
+   "E_ID": 1,
+   "E_EVENT_OUTSIDE": 1
+  },
+  "warning_codes": {
+   "W_COLD_OPEN": 1,
+   "W_SMALL_MOTION": 1,
+   "W_DEAD_AIR": 1,
+   "W_STATIC_END": 1
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I fixed `film.reel` and rendered it to `./out/film.mp4` (9:16, 5 s). Lint is clean. I checked a frame at 4 s, and the title and tagline sit centred and legible. I didn't watch the full video or check a strip of frames.\n\n**What was broken**\n- `in=rize` is not a preset, so I changed it to `in=rise`.\n- `pulse #nmae` pointed at an id that doesn't exist, so I changed it to `#name`.\n- `@6s exit #tag fade` fell outside the 5 s scene, so I moved it to `@4.2s`.\n- `colour=` is now `color=`, to match the other text line. I didn't test whether `colour=` was an error.\n\n**What I added**\nLint warned about dead air and a static ending. I added a slow zoom (`@0s zoom z=1.12 dur=5s`) and a second pulse on the title at 3 s. That is a change to your design, so remove those two lines if you'd rather not have them.",
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "9:16": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "9:16": 5.0
+  },
+  "text": [
+   {
+    "text": "BEAN BOX",
+    "pass": true
+   },
+   {
+    "text": "Fresh roasted, every week",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "the script lints clean and renders",
+     "pass": true,
+     "evidence": "A 5s 9:16 render exists with all 12 frames showing content and no errors visible."
+    },
+    {
+     "item": "BEAN BOX in the cream colour #FFE0B2",
+     "pass": true,
+     "evidence": "The title is a light cream colour on the dark brown background in every frame."
+    },
+    {
+     "item": "the intended rise entrance and the pulse on the name work",
+     "pass": true,
+     "evidence": "The title is slightly lower and fading in at 0.21s, then settles. The size changes between frames (1.88s larger, 2.29s smaller, 3.12s larger), which fits the pulses and the slow zoom."
+    },
+    {
+     "item": "the tagline still exits",
+     "pass": true,
+     "evidence": "The tagline is dimmed at 4.38s and gone at 4.79s."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": true,
+   "problems": [
+    "The layout is generic: the text sits in the middle and the bottom 40% of the frame is empty, with no imagery or coffee cue.",
+    "The tagline is small for a vertical reel, at about 60px.",
+    "The title wraps to two lines, which is fine, but the hierarchy is flat and there is no call to action.",
+    "The exit starts at 4.2s, so the tagline disappears before the end and the last frame is only the title.",
+    "The zoom and pulses are subtle, so the motion is modest."
+   ],
+   "verdict": "The fixes work. The colour is correct, the rise and pulses show, and the tagline exits. The design itself is plain and leaves a lot of empty space, but it is acceptable as a repair of a broken file.",
+   "cost_usd": 0.0271442,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": true,
+  "score": 83.3
+ },
+ "score_wall_s": 17.5,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-1/edit-fix-broken"
+}

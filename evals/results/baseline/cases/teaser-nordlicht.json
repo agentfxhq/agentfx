@@ -1,0 +1,133 @@
+{
+ "id": "teaser-nordlicht",
+ "tags": [
+  "product",
+  "brand"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": 15,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 57.0,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 12,
+  "cost_usd": 0.1614982,
+  "tokens": {
+   "input_tokens": 18,
+   "output_tokens": 2804,
+   "cache_read_input_tokens": 250262,
+   "cache_creation_input_tokens": 27099
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "ToolSearch": 1,
+   "Bash": 4,
+   "mcp__agentfx__agentfx_spec": 2,
+   "mcp__agentfx__agentfx_sheet": 1,
+   "mcp__agentfx__agentfx_render": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_SCALE_FILL": 1,
+   "W_DEAD_AIR": 2,
+   "W_STATIC_END": 1
+  },
+  "renders": 1,
+  "frames": 0,
+  "sheets": 1,
+  "skill_loaded": true,
+  "result": "The 15-second landscape teaser is rendered at `./out/film.mp4` (1920x1080, 30 fps, 450 frames, silent). I checked a contact sheet of the frames, and lint came back clean at 16:9 and 9:16. I didn't play back the rendered MP4 itself.\n\n- **0–4s:** \"Nordlicht\" rises on navy #0B1F3A. A soft teal #4FD1C5 aurora glow drifts underneath, and a teal underline wipes in.\n- **4–7.5s:** \"Plan less.\" in white, with a slow push-in.\n- **7.5–11s:** \"Live more.\" in teal, with the glow swelling behind it.\n- **11–15s:** the Nordlicht wordmark, then \"Coming March 2027\" in teal.\n\nThe only copy is your name, tagline and date. It has no music or voice-over, because I wasn't given a track. The script is at `./film.reel` if you want to change timing or text.",
+  "spec_reads": 2,
+  "tool_errors": 0,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 15.0
+  },
+  "text": [
+   {
+    "text": "Nordlicht",
+    "pass": true
+   },
+   {
+    "text": "Plan less. Live more.",
+    "pass": true
+   },
+   {
+    "text": "Coming March 2027",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "uses navy #0B1F3A and teal #4FD1C5 as the main colours",
+     "pass": true,
+     "evidence": "Navy background throughout with teal glow, 'Live more.' and 'Coming March 2027' in teal."
+    },
+    {
+     "item": "app name Nordlicht is prominent",
+     "pass": true,
+     "evidence": "Large bold white 'Nordlicht' in the opening and end frames."
+    },
+    {
+     "item": "tagline shown",
+     "pass": true,
+     "evidence": "'Plan less.' then 'Live more.' on separate full-frame cards."
+    },
+    {
+     "item": "ends on Coming March 2027",
+     "pass": true,
+     "evidence": "Final frames 11.9–14.4s show Nordlicht with teal 'Coming March 2027' beneath."
+    },
+    {
+     "item": "looks like a polished product teaser, not a slideshow",
+     "pass": false,
+     "evidence": "Four text-only cards on a gradient with no product visuals or graphic elements; it reads as a title-card slideshow."
+    }
+   ],
+   "quality": 5,
+   "accept_first_try": false,
+   "problems": [
+    "There is no product imagery, UI, icon or logo mark. It is only text on a gradient, so it doesn't show what Nordlicht is and feels like a slideshow of title cards.",
+    "The glow is a soft blurry blob and doesn't evoke an aurora, which the name suggests. It is barely visible on some frames, so the background feels flat and empty.",
+    "The scenes are separate static cards with only a slow scale and a rise-in. There is little motion variety or energy, and the pacing is slow for a teaser.",
+    "The hierarchy is flat. The tagline is split across two cards, and the end card repeats the same title with a small date. The thin teal bar in the opening scene is a weak accent and disappears after the opening.",
+    "The 'Coming March 2027' line is small compared with the title and sits close to it. The end card has a lot of empty space and no call to action."
+   ],
+   "verdict": "The video is clean, legible and on brand, and it has all the requested copy in the right order. It is generic: four text cards on a blurred gradient with no visual concept or product cue. It is acceptable but not a polished teaser, and the user would probably ask for more visual interest.",
+   "cost_usd": 0.029921200000000002,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 77.3
+ },
+ "score_wall_s": 21.2,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/baseline/teaser-nordlicht"
+}

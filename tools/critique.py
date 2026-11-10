@@ -111,7 +111,10 @@ def probe_dur(mp4):
 
 
 def grab(mp4, t, w=640):
-    r = subprocess.run([ffmpeg(), "-v", "error", "-ss", f"{t:.3f}", "-i", mp4, "-frames:v", "1", "-vf", f"scale={w}:-2", "-f", "image2pipe", "-vcodec", "png", "-"], capture_output=True)
+    # AgentFX renders variable frame rate MP4s (a still hold is one long frame). `-ss` before `-i`
+    # would return the first frame AFTER t (the next scene), so fill the holds with fps= and trim.
+    vf = f"fps=30,trim=start={t:.3f},setpts=PTS-STARTPTS,scale={w}:-2"
+    r = subprocess.run([ffmpeg(), "-v", "error", "-i", mp4, "-vf", vf, "-frames:v", "1", "-f", "image2pipe", "-vcodec", "png", "-"], capture_output=True)
     from PIL import Image
     return Image.open(io.BytesIO(r.stdout)).convert("RGB")
 

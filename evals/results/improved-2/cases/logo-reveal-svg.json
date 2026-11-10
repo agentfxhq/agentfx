@@ -1,0 +1,113 @@
+{
+ "id": "logo-reveal-svg",
+ "tags": [
+  "logo",
+  "asset"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": 5,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": 0,
+  "stderr": "",
+  "wall_s": 43.4,
+  "orphans_killed": []
+ },
+ "metrics": {
+  "num_turns": 13,
+  "cost_usd": 0.1921195,
+  "tokens": {
+   "input_tokens": 22,
+   "output_tokens": 3600,
+   "cache_read_input_tokens": 345555,
+   "cache_creation_input_tokens": 30380
+  },
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 9,
+   "Read": 1
+  },
+  "lint_calls": 4,
+  "lint_errors_seen": 2,
+  "first_lint_errors": 1,
+  "error_codes": {
+   "E_PAINT": 1,
+   "E_KIND": 1
+  },
+  "warning_codes": {
+   "W_COLD_OPEN": 1
+  },
+  "renders": 0,
+  "frames": 1,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": "I made a 5-second logo reveal on a dark navy background with a soft radial glow. It's 1920×1080 at 30 fps, rendered at `out/film.mp4`, and the script is `film.reel`. Lint is clean and I checked a contact sheet of frames before rendering. I didn't check frames from the final render.\n\nThe reveal runs like this:\n- **0 to 1 s:** the gold mark springs in with a ring pulse that expands and fades.\n- **1 to 2 s:** the \"Lumen\" wordmark slides in from the left, de-blurring as it fades up, and the mark gets a glow.\n- **2.2 to 3.4 s:** a soft light sweep crosses the finished lockup.\n- **3.2 to 5 s:** a slow push-in, so the end never freezes.\n\nI used your actual logo paths from `logo.svg`, split into the mark and the wordmark so they animate separately. I didn't add music or sound.\n\nThe ring pulse is centered on the screen rather than on the mark. Early in the reveal, while the wordmark is still hidden, the mark sits left of center, so the ring looks slightly off from it.",
+  "spec_reads": 0,
+  "tool_errors": 1,
+  "is_error": false,
+  "subtype": "success"
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 0,
+    "codes": [],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": true,
+  "agent_rendered": true,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 5.0
+  },
+  "text": [],
+  "judge": {
+   "checklist": [
+    {
+     "item": "the provided logo (yellow circle mark + white Lumen wordmark) is shown, not a re-typed imitation",
+     "pass": true,
+     "evidence": "Yellow circle with dark diamond and white bold 'Lumen' wordmark shown cleanly from 1.46s onward."
+    },
+    {
+     "item": "a reveal animation (not just a fade)",
+     "pass": true,
+     "evidence": "Mark springs in with scale, a ring expands, and the wordmark slides in from blurred to sharp. A glow and a light sweep follow."
+    },
+    {
+     "item": "dark background",
+     "pass": true,
+     "evidence": "Dark navy radial gradient in every frame."
+    },
+    {
+     "item": "logo holds still at the end",
+     "pass": false,
+     "evidence": "The lockup is visibly larger at 4.79s than at 3.54s. It is still slowly scaling up through the last frame, so it never settles."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": false,
+   "problems": [
+    "The expanding ring is centred on the screen, not on the mark. At 0.2–1.0s it floats off to the right of the mark and then overlaps the blurred wordmark, so it looks like a mistake.",
+    "The logo does not hold still at the end. It keeps creeping up in scale to the final frame, so there is no clean resting frame.",
+    "The light sweep and glow are barely visible. The mark looks washed out and grey at about 2.7s, and the sweep doesn't read as a deliberate shine.",
+    "The mark appears alone off-centre on the left for the first second, then the wordmark arrives. The composition feels unbalanced and generic, and the reveal is low-impact for a 'cool' reveal.",
+    "Roughly the last 2 seconds are an almost static lockup, so the 5s feels front-loaded and the ending is flat."
+   ],
+   "verdict": "The real logo is shown on a dark background with a spring, blur and slide reveal. The ring is misaligned with the mark, the glow and sweep are weak, and the logo is still scaling at the end. It's acceptable but generic, and a user would probably ask for fixes.",
+   "cost_usd": 0.0336657,
+   "model": "sonnet"
+  },
+  "compiles": true,
+  "accepted": false,
+  "score": 79.2
+ },
+ "score_wall_s": 18.7,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-2/logo-reveal-svg"
+}

@@ -1,0 +1,18 @@
+id: music-visualizer-night-drive
+tags:
+- music
+- audio-reactive
+formats:
+- '16:9'
+duration_s: null
+files:
+  track.mp3: examples/features/assets/beat-128bpm-drop.mp3
+prompt: music video for my track (track.mp3, 128 bpm). visualizer bars that hit with the beat and the title "Night
+  Drive"
+must_text:
+- Night Drive
+must_haves:
+- audio visualizer (bars or similar) driven by the music
+- title Night Drive shown
+- the music is used (music track in the script)
+- night/drive mood

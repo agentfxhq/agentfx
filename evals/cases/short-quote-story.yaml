@@ -1,0 +1,16 @@
+id: short-quote-story
+tags:
+- vertical
+- kinetic-type
+formats:
+- '9:16'
+duration_s: null
+files: {}
+prompt: instagram story with a motivational quote "Small steps every day", calm pastel colours
+must_text:
+- Small steps every day
+must_haves:
+- vertical 9:16
+- pastel colour palette
+- calm motion
+- quote readable and large

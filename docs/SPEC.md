@@ -118,6 +118,8 @@ lossless except comments (round-trip tests in `tests/parse_roundtrip.rs`).
 
 1. **Narration drives length.** A scene is `pre` + its beats + `post` (default 0.5 s). A beat is a
    `say` (lead + spoken audio + tail, at least `min=`) or a `pause <dur>`. Scenes run back to back.
+   A scene with neither beats nor `dur=` is therefore only 0.5 s long: every scene of a video without
+   voice-over needs `dur=` (lint `W_SCENE_SHORT`).
 2. **Word timings** come from the TTS engine (`--tts piper|edge|none` or `$AGENTFX_TTS`; default
    `piper`, local, voice `en_US-ljspeech-medium`, see docs/INSTALL-NOTES.md), cached per sentence
    hash (`cache/tts/<sha>.mp3|json`). Written words are aligned to spoken words by edit-distance
@@ -685,6 +687,8 @@ when portrait               // also: landscape, square, 9:16, 16:9 (comma lists)
 | `E_ID` | error | unknown id/hotspot (lists ids in scope, "did you mean") |
 | `E_ANCHOR W_ANCHOR_UNUSED W_ANCHOR_DUP` | error/warn | narration anchors |
 | `E_TIMING_OVERRUN E_EVENT_OUTSIDE W_TIMING_CLICKS W_TIMING_CONFLICT W_STATIC_SCENE` | | timing |
+| `W_SCENE_SHORT` | warning | a scene without narration (`say`/`pause`) and without `dur=` is only pre + post long (0.5 s); give it `dur=` |
+| `W_NUMBER_FORMAT` | warning | German number defaults would show: a `counter`/`stat` reaching 10 000 without `sep=` (10.000), a `chart` with decimals without `locale=` (2,1) |
 | `E_PRESET E_VERB E_CHANNEL E_VALUE E_TOKEN E_COLOR E_PAINT E_EASE` | error | vocabulary/values |
 | `E_OVERFLOW E_OUT_OF_FRAME W_SAFE_AREA W_MIN_FONT W_CONTRAST W_OVERLAP` | | layout (static, and measured with `--measure`) |
 | `E_LINK_GEOMETRY W_LINK_SHORT` | error/warn | connectors (measured) |
@@ -1154,7 +1158,9 @@ Questions the test agents asked, answered here.
   `when portrait` + `set #app crop=[0, 380, 960, 1240]`. `aspect=` takes `16:9` or a number.
 - **Hotspots per state:** `swap shot=b.png` loads `b.json` (or `hotspots=`); inline `hot` lines belong to the
   `browser` and stay valid across swaps. Different inline hotspots per state: one scene per state.
-- **Counters:** integers only in S0; a thousands separator (`sep=.`) and decimals are planned.
+- **Counters:** integers only; decimals are planned. Thousands grouping: `sep=","` (10,000), `sep="."`
+  or `sep=none`; without `sep=` a counter groups with `.` from 10 000 on (German style, so 9999 -> 10.000
+  also changes width). English videos set `sep=","` (lint `W_NUMBER_FORMAT`).
 - **Charts:** `unit` is appended to every value label; line/area charts label the x axis (a y axis is planned); pie/donut legends sit right of the ring (give the chart `w=` room);
   chart parts are addressable after the run (added from this feedback): `#rev.b4` = 4th bar, `#conv.d6` = 6th
   point, `#dev.s1` = 1st slice (1-based), e.g. `@Quartal pulse #rev.b4 scale=1.15 ; glow #rev.b4`; line/area

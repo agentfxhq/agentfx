@@ -1,0 +1,119 @@
+{
+ "id": "fx-glitch-system-failure",
+ "tags": [
+  "effect",
+  "glitch"
+ ],
+ "formats": [
+  "16:9"
+ ],
+ "duration_s": null,
+ "model": "sonnet",
+ "mode": "both",
+ "agent": {
+  "rc": "timeout",
+  "stderr": "",
+  "wall_s": 900.2,
+  "orphans_killed": [
+   "/usr/bin/python3 /home/drzivil/dev/agentfx/.claude/worktrees/agent-a0a7fa9d34bdb1909/mcp/server.py ",
+   "/bin/bash -c source /home/drzivil/.claude/shell-snapshots/snapshot-bash-1794282652588-8sjb9t.sh 2>/dev/null || true && s",
+   "flock /tmp/claude-1000/agentfx-heavy.lock /tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414",
+   "tail -3 ",
+   "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/target-p4/release/agentfx ren",
+   "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/target-p4/release/agentfx-ren",
+   "/usr/bin/ffmpeg -hide_banner -y -f matroska -i pipe:0 -an -vf settb=expr=1/30 -c:v h264_nvenc -profile:v high -preset p6"
+  ]
+ },
+ "metrics": {
+  "num_turns": null,
+  "cost_usd": null,
+  "tokens": {},
+  "tool_calls": {
+   "Skill": 1,
+   "Bash": 9,
+   "ToolSearch": 1,
+   "TaskStop": 2,
+   "Read": 1
+  },
+  "lint_calls": 2,
+  "lint_errors_seen": 0,
+  "first_lint_errors": 0,
+  "error_codes": {},
+  "warning_codes": {
+   "W_OVERLAP": 1
+  },
+  "renders": 1,
+  "frames": 4,
+  "sheets": 0,
+  "skill_loaded": true,
+  "result": null,
+  "spec_reads": 0,
+  "tool_errors": 0,
+  "is_error": null
+ },
+ "score": {
+  "reel": "film.reel",
+  "lint": {
+   "16:9": {
+    "errors": 0,
+    "warnings": 1,
+    "codes": [
+     "W_OVERLAP"
+    ],
+    "error_msgs": []
+   }
+  },
+  "lint_clean": true,
+  "renders": false,
+  "agent_rendered": false,
+  "duration_ok": true,
+  "durations": {
+   "16:9": 5.0
+  },
+  "text": [
+   {
+    "text": "SYSTEM FAILURE",
+    "pass": true
+   }
+  ],
+  "judge": {
+   "checklist": [
+    {
+     "item": "SYSTEM FAILURE shown",
+     "pass": true,
+     "evidence": "White SYSTEM above red FAILURE, large and legible in most frames."
+    },
+    {
+     "item": "visible glitch artefacts",
+     "pass": true,
+     "evidence": "RGB split and smeared block displacement on SYSTEM at 0.21s, 3.12s, 3.96s and 4.79s. Faint grain."
+    },
+    {
+     "item": "broken TV feel",
+     "pass": true,
+     "evidence": "Dark background with grain, chromatic smear and flicker read as a failing signal. There are no obvious scanlines or tracking bars."
+    }
+   ],
+   "quality": 6,
+   "accept_first_try": true,
+   "problems": [
+    "Between glitch bursts the text is clean, so the TV-breakdown feel is weak. There are no visible scanlines, tracking bars or screen distortion.",
+    "The late glitch on SYSTEM smears so heavily that the word is nearly illegible at 3.96s and 4.79s.",
+    "FAILURE is offset to the right of SYSTEM, which looks like an accident instead of a deliberate stagger.",
+    "The ERR line is small and low-contrast, and it dims often, so it is hard to read.",
+    "FAILURE is almost never glitched, so the effect is uneven. The upper half is busy and the lower area is empty."
+   ],
+   "verdict": "Clear, legible SYSTEM FAILURE title with real RGB-split glitch bursts. It is fairly generic and the broken-TV treatment is light. A user would probably accept it as a first draft but might ask for more screen distortion.",
+   "cost_usd": 0.0266053,
+   "model": "sonnet"
+  },
+  "render_errors": [
+   "16:9: incomplete agent render film.mp4 (0.2 of 5.0 s)"
+  ],
+  "compiles": true,
+  "accepted": false,
+  "score": 80.7
+ },
+ "score_wall_s": 726.8,
+ "workdir": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-2/fx-glitch-system-failure"
+}

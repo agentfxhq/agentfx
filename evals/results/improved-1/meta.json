@@ -1,0 +1,12 @@
+{
+ "commit_first": "ddbdbbb+dirty",
+ "run_id": "improved-1",
+ "model": "sonnet",
+ "judge_model": "sonnet",
+ "mode": "both",
+ "max_turns": 40,
+ "commit": "ddbdbbb+dirty",
+ "started": "2026-11-10T01:34:18",
+ "work": "/tmp/claude-1000/-home-drzivil-dev-agentfx/109b9915-2036-4b36-8093-6745cd90414c/scratchpad/work/improved-1",
+ "wall_min": 82.2
+}

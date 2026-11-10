@@ -1,0 +1,17 @@
+id: kinetic-quote
+tags:
+- kinetic-type
+formats:
+- '16:9'
+duration_s: 10
+files: {}
+prompt: 'I want an animated quote for youtube: "Simplicity is the ultimate sophistication" - Leonardo da Vinci.
+  the words should appear one by one, elegant and calm, about 10 seconds'
+must_text:
+- Simplicity is the ultimate sophistication
+- Leonardo da Vinci
+must_haves:
+- the quote words appear one by one
+- the author name is shown
+- calm, elegant look (no frantic motion)
+- the full quote is readable on screen at the end

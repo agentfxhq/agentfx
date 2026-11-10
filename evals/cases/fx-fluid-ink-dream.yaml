@@ -1,0 +1,15 @@
+id: fx-fluid-ink-dream
+tags:
+- effect
+- fluid
+formats:
+- '16:9'
+duration_s: null
+files: {}
+prompt: fluid ink effect where the word DREAM dissolves into ink
+must_text:
+- DREAM
+must_haves:
+- the word DREAM is readable first
+- it dissolves into fluid ink (simulated fluid, not just a fade)
+- the ink motion is visible over several frames

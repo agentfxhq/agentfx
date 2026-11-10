@@ -124,7 +124,7 @@ colours) when its manifest says so:
   caller renders with `index` = 1..rows (`batch_params(manifest, params)` yields the param sets).
 - Lint for stills: `agentfx lint --measure` per size must have no errors and no warnings except
   the video reading-time rules that do not apply to a still (`W_TEXT_DENSITY`, `W_WORDY`,
-  `W_READ_SIZE`, `I_LINE_LENGTH`). Templates set `lint motion=false` (no motion to judge).
+  `W_READ_SIZE`, `I_LINE_LENGTH`, and the video taste rule `W_SCALE_FILL`). Templates set `lint motion=false` (no motion to judge).
 - `preview.webp` or `preview.png` (<= 600 KB) shows the defaults at the main size.
 
 ## HTTP API (P1 serves, P2 and the remote MCP use)

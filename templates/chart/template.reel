@@ -11,8 +11,8 @@ scene chart dur=60s bg={{bg}}
     row #brandrow gap=14 x={{= 7.5*min(DW, DH)/DW}}% y={{= 100*(DH*0.12 if A < 0.7 else 0.075*min(DW, DH))/DH}}% align=center
       ellipse #dot w=18 h=18 fill={{accent}}
       text #brand "{{brand}}" font="Space Grotesk" size=30 weight=700 tracking=0.06 upper color={{ink}} opacity=0.85 nowrap
-    text #title "{{title}}" font="Space Grotesk" size={{= 84 if A > 1.3 else 76}} weight=700 lh=1.04 tracking=-0.02 color={{ink}} w={{= DW - 0.15*min(DW, DH)}} h={{= 100 if A > 1.3 else 180}} x={{= 7.5*min(DW, DH)/DW}}% y={{= 100*((DH*0.12 if A < 0.7 else 0.075*min(DW, DH)) + 64)/DH}}% fit
-    text #subtitle "{{subtitle}}" font="Inter" size=34 weight=400 color={{ink}} opacity=0.7 w={{= DW - 0.15*min(DW, DH)}} h=48 x={{= 7.5*min(DW, DH)/DW}}% y={{= 100*((DH*0.12 if A < 0.7 else 0.075*min(DW, DH)) + (176 if A > 1.3 else 256))/DH}}% fit nowrap
+    text #title "{{title}}" font="Space Grotesk" size={{= 84 if A > 1.3 else 76}} weight=700 lh=1.04 tracking=-0.02 color={{ink}} align=left w={{= DW - 0.15*min(DW, DH)}} h={{= 100 if A > 1.3 else 180}} x={{= 7.5*min(DW, DH)/DW}}% y={{= 100*((DH*0.12 if A < 0.7 else 0.075*min(DW, DH)) + 64)/DH}}% fit
+    text #subtitle "{{subtitle}}" font="Inter" size=34 weight=400 color={{ink}} opacity=0.7 align=left w={{= DW - 0.15*min(DW, DH)}} h=48 x={{= 7.5*min(DW, DH)/DW}}% y={{= 100*((DH*0.12 if A < 0.7 else 0.075*min(DW, DH)) + (176 if A > 1.3 else 256))/DH}}% fit nowrap
 {{^type=kpi}}
     chart #c type={{type}} data=[{{#rows}}{{.value}}{{^@last}}, {{/@last}}{{/rows}}] labels=[{{#rows}}"{{.label}}"{{^@last}}, {{/@last}}{{/rows}}] unit="{{unit}}" locale={{locale}} color={{color}}{{#= highlight > 0 and highlight <= rows_count}} highlight={{highlight}}{{/= highlight > 0 and highlight <= rows_count}} w={{= DW - 0.15*min(DW, DH)}} h={{= (DH*(0.86 if A < 0.7 else 1) - 0.075*min(DW, DH) - 90) - ((DH*0.12 if A < 0.7 else 0.075*min(DW, DH)) + (276 if A > 1.3 else 360))}} x={{= 7.5*min(DW, DH)/DW}}% y={{= 100*((DH*0.12 if A < 0.7 else 0.075*min(DW, DH)) + (276 if A > 1.3 else 360))/DH}}%
 {{/type=kpi}}
@@ -24,4 +24,4 @@ scene chart dur=60s bg={{bg}}
 {{/= n <= 4}}
 {{/rows}}
 {{/type=kpi}}
-    text #source "{{source}}" font="Inter" size=28 weight=400 color={{ink}} opacity=0.6 x={{= 7.5*min(DW, DH)/DW}}% y={{= 100*(DH*(0.86 if A < 0.7 else 1) - 0.075*min(DW, DH))/DH}}% anchor=bottom-left w={{= DW*0.7}} h=40 fit nowrap
+    text #source "{{source}}" font="Inter" size=28 weight=400 color={{ink}} opacity=0.6 align=left x={{= 7.5*min(DW, DH)/DW}}% y={{= 100*(DH*(0.86 if A < 0.7 else 1) - 0.075*min(DW, DH))/DH}}% anchor=bottom-left w={{= DW*0.7}} h=40 fit nowrap

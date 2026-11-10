@@ -17,8 +17,8 @@ scene ui dur=10s bg=#F4F6FA
   text #h "Good morning, Sam" size=44 weight=700 color=#101828 x=360 y=50
   text #s "Here is what happened this week." size=24 color=#667085 x=360 y=112
   row #stats gap=24 x=360 y=180 w=1200
-    stat #k1 label="Revenue" value=48210 prefix="$" delta="+12 %" icon=trend
+    stat #k1 label="Revenue" value=48 prefix="$" suffix="k" delta="+12 %" icon=trend
     stat #k2 label="New users" value=1284 delta="+8 %" icon=user
-    stat #k3 label="Churn" value=2.1 suffix=" %" delta="-0.4 %" icon=x
+    stat #k3 label="Churn" value=2 suffix=" %" delta="-0.4 %" icon=x
   box #panel x=360 y=470 w=1200 h=480 pad=28
     chart #c type=area data=[18, 24, 21, 30, 34, 31, 42, 47, 45, 56] labels=["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10"] w=1140 h=420 color=#3CBF87 locale=en

@@ -23,10 +23,12 @@ scene thumb dur=60s bg={{bg}}
       <svg viewBox="0 0 300 240">{{#side=right}}<path d="M24 44 C 120 -4, 236 36, 252 176" fill="none" stroke="{{accent.rgb}}" stroke-width="20" stroke-linecap="round"/><path d="M206 146 L254 196 L288 132" fill="none" stroke="{{accent.rgb}}" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>{{/side=right}}{{#side=left}}<path d="M276 44 C 180 -4, 64 36, 48 176" fill="none" stroke="{{accent.rgb}}" stroke-width="20" stroke-linecap="round"/><path d="M94 146 L46 196 L12 132" fill="none" stroke="{{accent.rgb}}" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>{{/side=left}}</svg>
 {{/shape=arrow}}
     col #words gap=18 align=start x={{= 4.5 if side_right else 47.5}}% y=54% anchor=left w={{= DW*0.5}}
-      text #line1 "{{line1}}" font="Inter" size=172 weight=900 lh=0.92 tracking=-0.03 upper color={{ink}} stroke=#000000 sw=10 w={{= DW*0.5}} h=330 fit
+      text #line1 "{{line1}}" font="Inter" size=172 weight=900 lh=0.92 tracking=-0.03 upper color={{ink}} stroke=#000000 sw=10 align=left w={{= DW*0.5}} h={{= 330 if line1_len > 9 else 175}} fit
 {{#line2}}
-      text #line2 "{{line2}}" font="Inter" size=150 weight=900 lh=0.95 tracking=-0.03 upper color={{bg}} fill={{accent}} pad=26 radius=10 rot=-2 maxw={{= DW*0.5}} h=210 fit
+      row #line2box fill={{accent}} pad=26 radius=12 rot=-2 shadow=lg
+        text #line2 "{{line2}}" font="Inter" size=150 weight=900 lh=0.95 tracking=-0.03 upper color={{bg}} align=left w={{= DW*0.47}} h={{= 290 if line2_len > 9 else 150}} fit
 {{/line2}}
 {{#badge}}
-    text #badge "{{badge}}" font="Inter" size=64 weight=900 color=#FFFFFF fill=#E8263B pad=22 radius=16 rot=4 x={{= 95.5 if side_right else 4.5}}% y=8% anchor={{#side=right}}top-right{{/side=right}}{{#side=left}}top-left{{/side=left}} nowrap shadow=lg
+    row #badgebox fill=#E8263B pad=22 radius=16 rot=4 shadow=lg x={{= 95.5 if side_right else 4.5}}% y=8% anchor={{#side=right}}top-right{{/side=right}}{{#side=left}}top-left{{/side=left}}
+      text #badge "{{badge}}" font="Inter" size=64 weight=900 color=#FFFFFF nowrap
 {{/badge}}

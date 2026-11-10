@@ -13,5 +13,5 @@ scene ui dur=10s bg=#F4F6FA
   chart #spark type=area data=[18, 24, 21, 30, 34, 31, 42, 47, 45, 56] w=760 h=220 x=70 y=490 color=#8FE0BB grid=false axis=false
   col #cards gap=28 x=60 y=820 w=780
     stat #k1 label="New users" value=1284 delta="+8 %" icon=user
-    stat #k2 label="Churn" value=2.1 suffix=" %" delta="-0.4 %" icon=x
+    stat #k2 label="Churn" value=2 suffix=" %" delta="-0.4 %" icon=x
     note #n "Payouts arrive on Friday." title="Next payout" kind=success

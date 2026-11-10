@@ -7,7 +7,7 @@
    (max-length text, missing optional images, 1 and max table rows, every enum value).
 3. With the agentfx binary ($AGENTFX_BIN, `agentfx` on PATH or <repo>/target/release/agentfx):
    `agentfx lint --measure --no-tts` at every size, no errors and no warnings except the video
-   reading-time rules (STILL_IGNORED).
+   reading-time rules (STILL_IGNORED: reading-time and scale-taste rules for video).
 4. With AGENTFX_STILL_RENDER=1: one frame per size (`agentfx frame --at <still_at>`), checked for
    the exact pixel size. Frames run one at a time under the shared heavy-job lock
    ($AGENTFX_HEAVY_LOCK, default /tmp/claude-1000/agentfx-heavy.lock when its dir exists).
@@ -26,7 +26,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import render_template as rt  # noqa: E402
 
-STILL_IGNORED = {"W_TEXT_DENSITY", "W_WORDY", "W_READ_SIZE", "I_LINE_LENGTH"}
+STILL_IGNORED = {"W_TEXT_DENSITY", "W_WORDY", "W_READ_SIZE", "I_LINE_LENGTH", "W_SCALE_FILL"}
 LONG = ("The quick brown fox jumps over the lazy dog while the band plays on and on, "
         "and everybody stays until the very last song of the night is over")
 

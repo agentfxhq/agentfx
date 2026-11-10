@@ -74,7 +74,7 @@ scene banner dur=60s bg={{bg}}
         image #logo src={{logo}} fit=contain w={{= lw*0.8}} h={{= lw*0.8}}
 {{/logo}}
         text #brand "{{brand}}" font="Space Grotesk" size=52 weight=700 color={{ink}} nowrap
-      text #headline "{{headline}}" font="Space Grotesk" size=150 weight=700 lh=1.0 tracking=-0.02 color={{ink}} align=left w={{= bw*(0.5 if image_len else 0.54)}} h={{= bh*0.42}} fit
+      text #headline "{{headline}}" font="Space Grotesk" size=150 weight=700 lh=1.0 tracking=-0.02 color={{ink}} align=left w={{= bw*(0.5 if image_len else 0.54)}} h={{= bh*0.3}} fit
 {{#subline}}
       text #subline "{{subline}}" font="Inter" size=54 weight=400 lh=1.25 color={{ink}} opacity=0.82 align=left w={{= bw*(0.5 if image_len else 0.54)}} h={{= bh*0.14}} fit
 {{/subline}}

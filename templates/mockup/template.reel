@@ -21,7 +21,7 @@ scene mockup dur=60s bg={{bg}}
 {{#= txt}}
     col #words gap=30 align=start x={{= 6 if wide else 8}}% y={{= 50 if wide else (12 if A < 0.7 else 7)}}% anchor={{#= wide}}left{{/= wide}}{{^= wide}}top-left{{/= wide}} w={{= DW*(0.36 if wide else 0.84)}}
 {{#headline}}
-      text #headline "{{headline}}" font="Space Grotesk" size={{= 96 if wide else 92}} weight=700 lh=1.02 tracking=-0.025 color={{ink}} align=left w={{= DW*(0.36 if wide else 0.84)}} h={{= DH*(0.34 if wide else (0.12 if A < 0.7 else 0.14))}} fit
+      text #headline "{{headline}}" font="Space Grotesk" size={{= 96 if wide else 92}} weight=700 lh=1.02 tracking=-0.025 color={{ink}} align=left w={{= DW*(0.36 if wide else 0.84)}} h={{= DH*(0.24 if wide else (0.12 if A < 0.7 else 0.14))}} fit
 {{/headline}}
 {{#subline}}
       text #subline "{{subline}}" font="Inter" size=38 weight=400 lh=1.35 color={{ink}} opacity=0.75 align=left w={{= DW*(0.34 if wide else 0.8)}} h={{= DH*(0.16 if wide else 0.07)}} fit
@@ -29,7 +29,6 @@ scene mockup dur=60s bg={{bg}}
 {{/= txt}}
 {{#type=phone}}
 {{#phone_screen}}
-    image #shot src={{phone_screen}} fit=cover x=0 y=0 w=900 h=1950
     ellipse #floorshadow w={{= min(rw, rh)*0.42}} h={{= min(rw, rh)*0.07}} x={{= 100*(cx + min(rw, rh)*0.04)/DW}}% y={{= 100*(ry + rh*0.93)/DH}}% anchor=center fill=radial(at 50% 50%, #00000059 0%, #00000000 70%)
     scene3d #stage w={{= rw}} h={{= rh}} x={{= 100*rx/DW}}% y={{= 100*ry/DH}}% fov=26 camera=(1.2, 0.6, 8.2) target=(0, -0.05, 0) light=(-4, 6, 7) ambient=0.62 aa=3 shadow=off outline=0
       group #phone ry=-20 rx=4 rz=-3
@@ -40,7 +39,6 @@ scene mockup dur=60s bg={{bg}}
 {{#type=laptop}}
 {{#laptop_screen}}
     ellipse #floorshadow w={{= min(rw, rh)*0.95}} h={{= min(rw, rh)*0.12}} x={{= 100*cx/DW}}% y={{= 100*(ry + rh*0.7)/DH}}% anchor=center fill=radial(at 50% 50%, #00000040 0%, #00000000 70%)
-    image #shot src={{laptop_screen}} fit=cover x=0 y=0 w=1600 h=1000
     scene3d #stage w={{= rw}} h={{= rh}} x={{= 100*rx/DW}}% y={{= 100*ry/DH}}% fov=26 camera=(2.2, 2.4, 9.5) target=(0, 0.55, 0) light=(-4, 7, 6) ambient=0.6 aa=3 shadow=off outline=0
       group #laptop ry=-22
         box #base w=4.1 h=0.12 d=2.75 bevel=0.05 color=#C9CDD4 material=phong shininess=40 specular=0.3
@@ -58,3 +56,13 @@ scene mockup dur=60s bg={{bg}}
     image #print src={{artwork}} fit=contain w={{= tw*0.3}} h={{= tw*0.3}} x={{= 100*cx/DW}}% y={{= 100*(cy - tw*0.07)/DH}}% anchor=center{{#= shirt_luma > 0.35}} blend=multiply{{/= shirt_luma > 0.35}} opacity=0.96
 {{/artwork}}
 {{/type=tshirt}}
+{{#type=phone}}
+{{#phone_screen}}
+  image #shot src={{phone_screen}} fit=cover x=0 y=0 w=900 h=1950
+{{/phone_screen}}
+{{/type=phone}}
+{{#type=laptop}}
+{{#laptop_screen}}
+  image #shot src={{laptop_screen}} fit=cover x=0 y=0 w=1600 h=1000
+{{/laptop_screen}}
+{{/type=laptop}}

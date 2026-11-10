@@ -53,9 +53,9 @@ scene post dur=60s bg={{bg}}
       image #logo src={{logo}} fit=contain w=80 h=80
 {{/logo}}
       text #brand "{{brand}}" font="Space Grotesk" size=40 weight=700 color={{ink}} nowrap
-    text #headline "{{headline}}" font="{{font}}" size={{= 150 if A < 0.7 else 124}} weight=700 lh=1.0 tracking=-0.025 color={{ink}} align=left w={{= DW*0.84}} h={{= DH*(0.27 if A < 0.7 else 0.34)}} x=8% y={{= 27 if A < 0.7 else 25}}% fit
-    text #body "{{body}}" font="Inter" size={{= 46 if A < 0.7 else 40}} weight=400 lh=1.35 color={{ink}} opacity=0.8 align=left w={{= DW*0.8}} h={{= DH*(0.12 if A < 0.7 else 0.13)}} x=8% y={{= 58 if A < 0.7 else 61}}% fit
-    row #ctarow gap=30 x=8% y={{= 73 if A < 0.7 else (76 if A < 0.9 else 79)}}% align=center
+    text #headline "{{headline}}" font="{{font}}" size={{= 150 if A < 0.7 else 124}} weight=700 lh=1.0 tracking=-0.025 color={{ink}} align=left w={{= DW*0.84}} h={{= DH*(0.27 if A < 0.7 else 0.34)}} x=8% y={{= 31 if A < 0.7 else 25}}% fit
+    text #body "{{body}}" font="Inter" size={{= 46 if A < 0.7 else 40}} weight=400 lh=1.35 color={{ink}} opacity=0.8 align=left w={{= DW*0.8}} h={{= DH*(0.12 if A < 0.7 else 0.13)}} x=8% y={{= 61 if A < 0.7 else 61}}% fit
+    row #ctarow gap=30 x=8% y={{= 75 if A < 0.7 else (76 if A < 0.9 else 79)}}% align=center
 {{#cta}}
       row #ctabtn fill={{accent}} pad=24 radius=99
         text #cta "{{cta}}" font="Space Grotesk" size=36 weight=700 color={{bg}} nowrap

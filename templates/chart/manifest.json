@@ -14,7 +14,7 @@
      "columns": [{"id": "label", "type": "text", "max_len": 12}, {"id": "value", "type": "number"}, {"id": "delta", "type": "text", "max_len": 12}],
      "default": [{"label": "Jan", "value": 42}, {"label": "Feb", "value": 48}, {"label": "Mar", "value": 57},
                  {"label": "Apr", "value": 61}, {"label": "May", "value": 74}, {"label": "Jun", "value": 89}]},
-    {"id": "unit", "type": "text", "label": "Unit after values (k, %, EUR)", "default": "k", "max_len": 8},
+    {"id": "unit", "type": "text", "label": "Unit after values (k, %, EUR)", "default": "k", "max_len": 4},
     {"id": "highlight", "type": "number", "label": "Highlighted row (0 = none)", "default": 6, "min": 0, "max": 12, "step": 1},
     {"id": "source", "type": "text", "label": "Source line", "default": "Source: product analytics", "max_len": 80},
     {"id": "brand", "type": "text", "label": "Brand or author", "default": "Northwind", "max_len": 28},

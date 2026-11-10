@@ -35,7 +35,8 @@ Still templates and tables (manifest "kind": "still", "sizes", "data" params):
                                 escaped), {{@index}} (0-based), {{@n}} (1-based), {{#@first}},
                                 {{#@last}}, {{#.col}} / {{#.col=v}} blocks, {{#@changed.col}}
                                 (first row of a run of equal cells: section headers); in {{= }} the
-                                loop index is i / n and number cells are row_<col>
+                                loop index is i / n, number cells are row_<col>,
+                                text cells have row_<col>_len
     {{rows.count}}              number of rows (rows_count in expressions; also rows_groups_<col>
                                 runs of equal cells, rows_maxrun_<col> longest run, rows_maxlen_<col>, rows_filled_<col>,
                                 rows_max_<col>, rows_min_<col>)
@@ -646,6 +647,7 @@ def _render(nodes, values, decl, scope) -> str:
                 for k, row in enumerate(rows):
                     loop = {"." + c: v for c, v in row.items()}
                     loop.update({"row_" + c: v for c, v in row.items() if isinstance(v, float)})
+                    loop.update({f"row_{c}_len": len(v) for c, v in row.items() if isinstance(v, str)})
                     loop.update({"@changed." + c: k == 0 or v != rows[k - 1][c] for c, v in row.items()})
                     loop.update({"@index": k, "@n": k + 1, "@first": k == 0, "@last": k == len(rows) - 1,
                                  "i": k, "n": k + 1, "first": k == 0, "last": k == len(rows) - 1})

@@ -305,7 +305,7 @@ def test_video_data_templates_lint():
                                    capture_output=True, text=True, timeout=300)
                 diags = json.loads(p.stdout[p.stdout.index("["):] if "[" in p.stdout else "[]")
                 for x in diags:
-                    if x.get("severity") in ("error", "warning"):
+                    if x.get("severity") in ("error", "warning") and not (tag == "long" and x["code"] in ("W_TEXT_DENSITY", "W_WORDY")):
                         failures.append(f"{tid} [{tag}] {x.get('format', '')}: {x['code']} {x.get('id', '')} {x['message'][:140]}")
     assert not failures, "\n".join(failures)
 

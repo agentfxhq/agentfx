@@ -36,10 +36,10 @@ theme {{#= bg_luma > 0.45}}studio-light{{/= bg_luma > 0.45}}{{^= bg_luma > 0.45}
 {{: isz0 = clamp(best, 18, 48)}}
 {{: pl = max(3.2, 0.56*(rows_maxlen_price + (0 if currency_pos_none else currency_len + 1)))}}
 {{: pw = isz0*pl}}
-{{: fw = 2 if rows_maxlen_item*0.5*isz0 > colw - pw - 24 else 1}}
-{{: fdw = min(3, ceil(rows_maxlen_description*0.36*isz0/(colw - pw - 24)))}}
+{{: fw = 2 if rows_maxlen_item*0.5*isz0 > 1.3*(colw - pw - 24) else (1.25 if rows_maxlen_item*0.5*isz0 > colw - pw - 24 else 1)}}
+{{: fdw = min(3, 0.25 + 0.75*ceil(rows_maxlen_description*0.36*isz0/(colw - pw - 24)))}}
 {{: pi2 = 0.6 + 1.3*fw + (fd*(0.12 + 0.86*max(fdw, 1)) if showdesc else 0)}}
-{{: isz = clamp(min(isz0, 0.92*(ah - (ceil(nsec/cols) - 1)*70)/(ceil(nsec/cols)*(1.9 + mr*pi2))), 16, 48)}}
+{{: isz = clamp(min(isz0, 0.96*(ah - (ceil(nsec/cols) - 1)*70)/(ceil(nsec/cols)*(1.9 + mr*pi2))), 16, 48)}}
 {{: pw = isz*pl}}
 scene menu dur=60s bg={{bg}}
   layer #page w={{DW}} h={{DH}} x=0 y=0 scale={{S}} origin=top-left
@@ -60,10 +60,10 @@ scene menu dur=60s bg={{bg}}
 {{/@changed.section}}
         row #i{{@n}} gap=24 align=start justify=space-between w={{= colw}}
           col #i{{@n}}t gap={{= isz*0.12}} align=start w={{= colw - pw - 24}}
-            text #i{{@n}}n "{{.item}}" font="{{font}}" size={{= isz}} weight=600 lh=1.15 color={{ink}} align=left w={{= colw - pw - 24}} h={{= isz*1.2*fw}} fit
+            text #i{{@n}}n "{{.item}}" font="{{font}}" size={{= isz}} weight=600 lh=1.15 color={{ink}} align=left w={{= colw - pw - 24}} h={{= isz*1.2*(2 if row_item_len*0.5*isz > colw - pw - 24 else 1)}} fit
 {{#.description}}
 {{#= showdesc}}
-            text #i{{@n}}d "{{.description}}" font="Inter" size={{= max(isz*0.66, 16)}} weight=400 lh=1.3 color={{ink}} opacity=0.72 align=left w={{= colw - pw - 24}} h={{= max(isz*0.66, 16)*1.3*max(fdw, 1)}} fit
+            text #i{{@n}}d "{{.description}}" font="Inter" size={{= max(isz*0.66, 16)}} weight=400 lh=1.3 color={{ink}} opacity=0.72 align=left w={{= colw - pw - 24}} h={{= max(isz*0.66, 16)*1.3*min(3, ceil(row_description_len*0.36*isz/(colw - pw - 24)))}} fit
 {{/= showdesc}}
 {{/.description}}
 {{#.price}}

@@ -6,12 +6,17 @@ scene reveal dur=5s bg=radial(at 50% 45%, {{bg2}} 0%, {{bg}} 70%)
   ellipse #halo w=1400 h=1400 x=50% y=45% anchor=center fill=radial(at 50% 50%, {{accent.rgb}}40 0%, {{accent.rgb}}00 62%) opacity=0
     anim opacity 1.0s:0 2.0s:1~out-cubic
     anim scale 1.0s:0.8 5s:1.1~out-cubic
-  layer #film x=0 y=0 w=100% h=100%
+  layer #shell x=0 y=0 w=100% h=100%
+    layer #film x=0 y=0 w=100% h=100%
 {{#logo}}
-    image #mark src={{logo}} w=760 h=380 x=50% y=45% anchor=center fit=contain
+      image #mark src={{logo}} w=760 h=380 x=50% y=45% anchor=center fit=contain
 {{/logo}}
 {{^logo}}
-    text #mark "{{brand}}" size={{= round(clamp(2400 / max(brand_len, 1), 80, 200))}} weight=900 color={{text_color}} tracking=-0.04 x=50% y=45% anchor=center nowrap
+      text #mark "{{brand}}" size={{= round(clamp(2400 / max(brand_len, 1), 80, 200))}} weight=900 color={{text_color}} tracking=-0.04 x=50% y=45% anchor=center nowrap
+{{/logo}}
+{{#logo}}
+  // the intact logo takes over from the shards as they land (a held remap at exactly 0 shows nothing)
+  image #whole src={{logo}} w=760 h=380 x=50% y=45% anchor=center fit=contain opacity=0
 {{/logo}}
 {{#tagline}}
   text #tag "{{tagline}}" size=44 weight=600 color={{text_color.rgb}}CC tracking=0.3 upper x=50% y=70% anchor=center w=80% fit nowrap align=center
@@ -20,15 +25,20 @@ scene reveal dur=5s bg=radial(at 50% 45%, {{bg2}} 0%, {{bg}} 70%)
 {{#style=assemble}}
 {{#logo}}
   // an uploaded logo flies together from shards: a shatter played backwards
-  @0s shatter #mark pieces=36 seed={{seed}} origin=50%,55% force=900 gravity=0 spin=200 walls=none
-  @0s timemap #film 0s:1.6s 1.6s:0s~out-cubic then=hold
+  @0s shatter #mark pieces=36 seed={{seed}} origin=50%,55% force=600 gravity=0 spin=160 walls=none
+  @0s timemap #film 0s:1.6s 1.6s:0.02s~out-cubic then=hold
+  anim #whole opacity 1.5s:0 1.6s:1
+  anim #whole scale 1.6s:1 5s:1.04~out-sine
+  anim #shell opacity 1.6s:1 1.7s:0
 {{/logo}}
 {{^logo}}
   // a text logo assembles letter by letter, each from its own spin, scale and blur
   @0s animate #mark by=char order=random seed={{seed}} shape=ramp-up range=0%..45% offset=-45%..100% dur=1.5s ease=out-cubic opacity=0 scale=2.2 rot=-40 y=-80 blur=24
 {{/logo}}
+{{^logo}}
   anim #film opacity 0s:0 0.4s:1~out-cubic
-  @1.6s sweep #mark dur=1.1s angle=20deg width=18% strength=0.6 color={{accent}}
+{{/logo}}
+  @1.6s sweep {{#logo}}#whole{{/logo}}{{^logo}}#mark{{/logo}} dur=1.1s angle=20deg width=18% strength=0.6 color={{accent}}
 {{/style=assemble}}
 {{#style=sweep}}
   @0s enter #mark wipe dur=1.4s
@@ -44,6 +54,7 @@ scene reveal dur=5s bg=radial(at 50% 45%, {{bg2}} 0%, {{bg}} 70%)
 {{/logo}}
 {{#logo}}
     set #mark w=840 h=420
+    set #whole w=840 h=420
 {{/logo}}
 {{#tagline}}
     set #tag y=62%

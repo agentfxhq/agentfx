@@ -11,12 +11,12 @@ scene poster dur=6s bg={{paper}}
     ellipse #disc w=1100 h=1100 x=30% y=52% anchor=center fill=radial(at 35% 30%, {{color2}} 0%, {{color1}} 70%){{#image}} opacity=0.85 blend=multiply{{/image}}
       anim scale 0s:0.7 1.8s:1~out-cubic 6s:1.06
       anim x 0s:-160 6s:60~out-cubic
-    rect #band w=2600 h=180 x=50% y=74% anchor=center rot=-8 fill={{ink}}
+    rect #band w=2600 h=180 x=50% y=80% anchor=center rot=-8 fill={{ink}}
       anim x 0s:-900 1.4s:0~out-cubic 6s:120
-    text #title "{{title}}" size={{= round(clamp(3400 / max(title_len, 1), 140, 300))}} weight=900 color={{ink}} tracking=-0.04 lh=0.9 x=63% y=40% anchor=center w=56% align=center upper
+    text #title "{{title}}" size={{= round(clamp(3400 / max(title_len, 1), 140, 300))}} weight=900 color={{ink}} tracking=-0.04 lh=0.9 x=63% y=35% anchor=center w=56% align=center upper
       anim y 0s:160 1.6s:0~out-cubic
       anim scale 1.6s:1 6s:1.04
-    text #sub "{{sub}}" size=46 weight=800 color={{paper}} tracking=0.3 upper x=50% y=74% anchor=center w=80% fit nowrap align=center rot=-8
+    text #sub "{{sub}}" size=46 weight=800 color={{paper}} tracking=0.3 upper x=50% y=80% anchor=center w=80% fit nowrap align=center rot=-8
       anim opacity 0s:0 1.2s:0 1.8s:1
   anim #art halftone 0s:140 1.4s:90~inout-sine 4.2s:{{fine}}~inout-cubic
   when portrait

@@ -22,9 +22,8 @@ scene zoom dur={{duration}}s bg={{bg}}
 {{/style=rings}}
 {{#style=portal}}
     nest #core levels=30 scale=0.7 rot={{twist}} cycle=[{{color1}}, {{color2}}, {{color3}}] w=1920 h=1920
-      rect x=0 y=0 w=1920 h=1920 radius=60 fill=$cycle
-      rect x=150 y=150 w=1620 h=1620 radius=40 fill={{bg}}
-      rect x=210 y=210 w=1500 h=1500 radius=36 stroke=#FFFFFF33 sw=3 fill=#00000000
+      rect x=80 y=80 w=1760 h=1760 radius=70 stroke=$cycle sw=160 fill=#00000000
+      rect x=190 y=190 w=1540 h=1540 radius=30 stroke=#FFFFFF40 sw=4 fill=#00000000
 {{/style=portal}}
   camera loop #tunnel levels=3 dur={{duration}}s{{#reverse=yes}} dir=out{{/reverse=yes}}
 {{#title}}

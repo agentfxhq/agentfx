@@ -6,10 +6,10 @@ scene type dur={{duration}}s bg={{bg}}
   ellipse #light w=2200 h=2200 x=50% y=50% anchor=center fill=radial(at 50% 50%, {{accent.rgb}}26 0%, {{accent.rgb}}00 60%)
   layer #push x=0 y=0 w=100% h=100%
 {{#kicker}}
-    text #kicker "{{kicker}}" size=36 weight=700 color={{accent}} tracking=0.35 upper x=50% y=26% anchor=center w=80% fit nowrap align=center
+    text #kicker "{{kicker}}" size=36 weight=700 color={{accent}} tracking=0.35 upper x=50% y=29% anchor=center w=80% fit nowrap align=center
 {{/kicker}}
     text #head "{{text}}" size={{= round(clamp(3400 / max(text_len, 1), 96, 170))}} weight={{#style=cinematic}}300{{/style=cinematic}}{{^style=cinematic}}900{{/style=cinematic}} color={{color}} lh=1.0 tracking={{#style=cinematic}}0.06{{/style=cinematic}}{{^style=cinematic}}-0.03{{/style=cinematic}} x=50% y=50% anchor=center w=80% align=center{{#upper=yes}} upper{{/upper=yes}}
-    rect #rule w=220 h=8 x=50% y=75% anchor=center fill={{accent}} radius=4 origin=center sx=0
+    rect #rule w=220 h=8 x=50% y=70% anchor=center fill={{accent}} radius=4 origin=center sx=0
   anim #push scale 0s:1 {{duration}}s:1.05~linear
   anim #rule sx 0.5s:0 1.3s:1~out-expo {{= duration - 0.6}}s:1 {{= duration - 0.2}}s:0~in-cubic
 {{#kicker}}
@@ -40,6 +40,6 @@ scene type dur={{duration}}s bg={{bg}}
   when portrait
     set #head size={{= round(clamp(2400 / max(text_len, 1), 84, 150))}} w=80%
 {{#kicker}}
-    set #kicker y=25%
+    set #kicker y=32%
 {{/kicker}}
-    set #rule y=75%
+    set #rule y=68%

@@ -16,7 +16,9 @@ template language are in [`docs/PLATFORM.md`](../docs/PLATFORM.md#templates-p3-w
 | [halftone-poster](halftone-poster/) | Poster printed as CMYK or one-ink halftone dots that resolve from coarse to fine, optional photo | halftone effect |
 | [logo-reveal](logo-reveal/) | Uploaded logo assembles from shards or wipes on under a light sweep; text logo fallback | logo animation |
 
-All templates render in 16:9, 9:16 and 1:1 (`agentfx render --format 9:16`).
+All templates render in 16:9, 9:16 and 1:1 (`agentfx render --format 9:16`). They need an
+`agentfx` build that has the distort pack and Text v2 (commit 27d2a14 or later); older installs
+reject `dblur` with `E_CHANNEL`.
 
 ```bash
 python3 templates/render_template.py --list

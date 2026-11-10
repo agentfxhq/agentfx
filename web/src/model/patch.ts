@@ -64,12 +64,13 @@ export function lineTokens(line: string): string {
     cur += c;
   }
   if (cur) toks.push(cur);
-  return toks
-    .map((t) => {
-      const m = /^([\w-]+=)?(-?\d+(?:\.\d+)?)$/.exec(t);
-      return m ? (m[1] ?? '') + String(Number(m[2])) : t.replace(/\s+/g, ' ');
-    })
-    .join(' ');
+  const norm = toks.map((t) => {
+    const m = /^([\w-]+=)?(-?\d+(?:\.\d+)?)$/.exec(t);
+    return m ? (m[1] ?? '') + String(Number(m[2])) : t.replace(/\s+/g, ' ');
+  });
+  // the canonical text writes bare args (`nowrap`) before key=value props: compare props as a set
+  const isProp = (t: string) => /^[\w.-]+=/.test(t);
+  return [...norm.filter((t) => !isProp(t)), ...norm.filter(isProp).sort()].join(' ');
 }
 
 const indentOf = (l: string) => /^\s*/.exec(l)![0];

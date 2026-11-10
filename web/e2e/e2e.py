@@ -113,6 +113,7 @@ def test_studio(pg: Page):
     assert 'anim #bar sx 0.6s:0 1.4s:1~out-back' in code()
     # drag the bar's second keyframe 30 px to the right
     key = pg.locator('[data-key="bar.sx@1.4"]')
+    key.scroll_into_view_if_needed()
     b = key.bounding_box()
     x, y = b['x'] + b['width'] / 2, b['y'] + b['height'] / 2
     pg.mouse.move(x, y)
@@ -130,6 +131,7 @@ def test_studio(pg: Page):
     pg.click('[data-testid=undo]')
     wait_until(lambda: 'anim #bar sx 0.6s:0 1.4s:1~out-back' in code(), msg='undo')
     # select a key, change its easing in the inspector
+    pg.locator('[data-key="bar.sx@1.4"]').scroll_into_view_if_needed()
     pg.locator('[data-key="bar.sx@1.4"]').click()
     pg.locator('[data-testid=ease-grid] button', has_text='out-expo').first.click()
     wait_until(lambda: '1.4s:1~out-expo' in code(), msg='easing edit')

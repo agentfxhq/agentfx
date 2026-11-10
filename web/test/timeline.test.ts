@@ -9,7 +9,7 @@ import { CLI, timing, toJson, toText } from './cli';
 const SRC = `video "Demo" size=1280x720 fps=30 captions=off formats=[16:9, 9:16]
 // a comment that must survive timeline edits
 scene intro dur=3s bg=#10121D
-  text #word "Hello world" x=50% y=50% anchor=center size=120   // the hero
+  text #word "Hello world" x=50% y=50% nowrap anchor=center size=120   // the hero
     anim opacity 0s:0 0.5s:1~out-cubic
   rect #bar x=50% y=70% w=200 h=8 fill=#3CBF87
   anim #bar sx 0.5s:0 1.2s:1~out-back

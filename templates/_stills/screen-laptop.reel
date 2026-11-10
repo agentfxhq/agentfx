@@ -1,0 +1,24 @@
+// Placeholder laptop screenshot for the mockup template: agentfx frame screen-laptop.reel --at 0s -o ../mockup/screen-laptop.png
+video "Screen" size=1600x1000 fps=30
+theme studio-light
+  layout safe=0
+  lint motion=false
+scene ui dur=10s bg=#F4F6FA
+  rect #side w=300 h=1000 x=0 y=0 fill=#101828
+  col #nav gap=26 x=40 y=48 align=start
+    row gap=14 align=center
+      rect w=40 h=40 radius=12 fill=linear(135deg, #3CBF87 0%, #17845A 100%)
+      text "Northwind" size=30 weight=700 color=#FFFFFF
+    text "Overview" size=24 weight=600 color=#FFFFFF y=40
+    text "Customers" size=24 weight=500 color=#98A2B3
+    text "Revenue" size=24 weight=500 color=#98A2B3
+    text "Reports" size=24 weight=500 color=#98A2B3
+    text "Settings" size=24 weight=500 color=#98A2B3
+  text #h "Good morning, Sam" size=44 weight=700 color=#101828 x=360 y=50
+  text #s "Here is what happened this week." size=24 color=#667085 x=360 y=112
+  row #stats gap=24 x=360 y=180 w=1200
+    stat #k1 label="Revenue" value=48 prefix="$" suffix="k" delta="+12 %" icon=trend
+    stat #k2 label="New users" value=1284 delta="+8 %" icon=user
+    stat #k3 label="Churn" value=2 suffix=" %" delta="-0.4 %" icon=x
+  box #panel x=360 y=470 w=1200 h=480 pad=28
+    chart #c type=area data=[18, 24, 21, 30, 34, 31, 42, 47, 45, 56] labels=["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10"] w=1140 h=420 color=#3CBF87 locale=en

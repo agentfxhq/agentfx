@@ -1,0 +1,23 @@
+{
+  "id": "social-set",
+  "kind": "still",
+  "title": "Social media set",
+  "description": "One message, every channel: feed post, portrait, story, LinkedIn, X and the OG link image, with your logo.",
+  "tags": ["social media", "instagram post", "linkedin post", "og image", "banner", "brand", "social media post erstellen"],
+  "sizes": ["instagram-post", "instagram-portrait", "story", "linkedin-post", "x-post", "og-image", "facebook-post"],
+  "still_at": "0s",
+  "params": [
+    {"id": "headline", "type": "text", "label": "Headline", "default": "Ship videos from a text file", "max_len": 70, "required": true},
+    {"id": "body", "type": "text", "label": "Supporting line", "default": "Write it, lint it, render it. Exact text and brand colours in every format.", "max_len": 140},
+    {"id": "cta", "type": "text", "label": "Call to action", "default": "Try it free", "max_len": 20},
+    {"id": "brand", "type": "text", "label": "Brand name", "default": "Northwind", "max_len": 28},
+    {"id": "url", "type": "text", "label": "Web address", "default": "northwind.example", "max_len": 32},
+    {"id": "logo", "type": "image", "label": "Logo (square PNG, optional)", "default": "logo.png", "accept": [".png"]},
+    {"id": "style", "type": "enum", "label": "Background", "default": "glow", "options": ["glow", "solid", "split"]},
+    {"id": "font", "type": "enum", "label": "Headline font", "default": "Space Grotesk", "options": ["Space Grotesk", "Inter", "Fraunces", "Libre Franklin", "Source Serif 4", "Nunito"]},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#0C1F18"},
+    {"id": "ink", "type": "color", "label": "Text colour", "default": "#F3FBF7"},
+    {"id": "accent", "type": "color", "label": "Accent", "default": "#3CBF87"},
+    {"id": "accent2", "type": "color", "label": "Second accent", "default": "#2F6BFF"}
+  ]
+}

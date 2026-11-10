@@ -93,6 +93,84 @@ from the next beat after the last given line. This is the hook for forced alignm
 service step can run `tools/transcribe.py` on the uploaded song, match the words to the lyric
 lines and fill `times` with `[start, end]` pairs; the template does not change.
 
+### Still templates (P3b)
+
+A template renders a single still with `agentfx frame` (same engine as video: exact text, brand
+colours) when its manifest says so:
+
+```json
+{
+  "id": "flyer",
+  "kind": "still",
+  "still_at": "0s",
+  "sizes": ["a4-flyer", "a5-flyer", "instagram-post", "story"],
+  "batch": {"param": "recipients", "index": "index"},
+  "params": [
+    {"id": "image", "type": "image", "label": "Photo", "default": "photo.png", "accept": [".png"]},
+    {"id": "rows", "type": "data", "label": "Menu", "min_rows": 1, "max_rows": 48,
+     "columns": [{"id": "item", "type": "text", "max_len": 40, "required": true},
+                 {"id": "price", "type": "number"}, {"id": "photo", "type": "image"}],
+     "default": [{"item": "Soup", "price": 6}]}
+  ]
+}
+```
+
+- `kind`: `"video"` (default) or `"still"`. A still has no `duration_s`/`formats`; it renders one
+  frame at `still_at` (default `"0s"`) per size: `agentfx frame <src> --at <still_at> -o x.png`.
+- `sizes`: named presets the template is designed for, the first one is its main size (preview).
+  Presets (px): `instagram-post` 1080x1080, `instagram-portrait` 1080x1350, `story` 1080x1920,
+  `facebook-post` 1200x630, `facebook-cover` 1640x624, `linkedin-post` 1200x628,
+  `linkedin-cover` 1584x396, `x-post` 1600x900, `x-header` 1500x500, `youtube-thumbnail` 1280x720,
+  `youtube-banner` 2560x1440, `og-image` 1200x630, `pinterest-pin` 1000x1500, `full-hd` 1920x1080,
+  `leaderboard` 728x90, `medium-rectangle` 300x250, `skyscraper` 160x600, `wide-skyscraper`
+  300x600, `billboard` 970x250, `mobile-banner` 320x100, `a4-flyer` 2480x3508, `a5-flyer`
+  1748x2480, `a3-poster` 3508x4960, `a4-landscape` 3508x2480, `letter-flyer` 2550x3300,
+  `letter-landscape` 3300x2550 (print sizes at 300 dpi). The table lives in
+  `templates/render_template.py` (`SIZE_PRESETS`). A template must look right at every size it
+  declares; any other `WxH` (16..8192 px a side, at most 36 MP) is accepted best effort. The renderer rounds odd dimensions up to even (`lower::format_size`), so presets are even and an odd custom WxH comes out 1 px larger.
+- The size is chosen at instantiation: `instantiate(id, params, templates_dir, size=None)` (default:
+  the first size), `POST /instantiate {"template", "params", "size"?}`, CLI `--size`. The
+  instantiated source has `video size=WxH` set to the exact output pixels, so `/frame` and
+  `/lint` need no `format` for stills. Sizes are not CLI `--format` aspects (those keep the short
+  side at the base size).
+- Size names inside the template (uppercase, so no param can shadow them): `{{W}}` `{{H}}` output
+  px, `{{S}}` scale, `{{DW}}` `{{DH}}` the frame in design units (the short side is 1080, or the
+  manifest's `design_short`), `{{A}}` aspect W/H, `{{SIZE}}` the preset name, and `SIZE_<name>`
+  (1 for the current size, `-` written `_`) in expressions. Still templates draw into one
+  `layer #page w={{DW}} h={{DH}} x=0 y=0 scale={{S}} origin=top-left`: one design, crisp at
+  every output size (vectors are drawn after the scale), with % positions inside the page.
+- `image` param: an uploaded asset name (plain file name, no paths or URLs), PNG for direct mode
+  (`accept`, the service converts JPEG/WebP uploads to PNG). Default images ship in the template
+  dir and are copied into the job dir with the source (`default_assets(id, params, dir)` lists
+  them, including image cells of data params; params the caller supplied are left out, their
+  names refer to uploads). An empty optional image hides its block
+  (`{{#image}}...{{/image}}`, `{{^image}}` for the fallback).
+- `data` param: a table, given as a JSON array of objects (or of arrays in column order), JSON
+  text, or CSV text with a header row (`,` `;` or tab). At most 500 rows (`max_rows` may lower
+  it, `min_rows` sets a floor) and 64 KB. `columns` declare `id`, `type` (`text` (default),
+  `number`, `image`, `color`), `max_len`, `required`, `default`; unknown columns are dropped.
+  Text cells are single-line, markup-safe and escaped like text params.
+- Table blocks: `{{#rows}}...{{/rows}}` repeats once per row with `{{.col}}` (the cell),
+  `{{@index}}` (0-based), `{{@n}}` (1-based), `{{#@first}}`, `{{#@last}}`, `{{#.col}}` /
+  `{{^.col}}` / `{{#.col=v}}` blocks, and `{{#@changed.col}}` (the first row of a run of equal
+  cells: section headers). `{{rows.count}}` is the row count. In expressions: `rows_count`,
+  `rows_groups_<col>` (runs), `rows_maxrun_<col>` (longest run), `rows_maxlen_<col>`,
+  `rows_filled_<col>`, `rows_max_<col>`, `rows_min_<col>`, and inside the loop `i`, `n`,
+  `row_<col>` (number cells), `row_<col>_len` and `row_<col>_num` (first number in a text cell,
+  e.g. the sign of a delta). `{{.value|en}}` / `{{value|de}}` / `{{value|<enum param>}}` prints
+  a number with thousands separators.
+- Expressions and layout logic (stdlib, no `eval`): `{{= expr}}` takes numbers, number params,
+  `+ - * / // % ( )`, `< <= > >= == != and or not`, `a if c else b`, `min max round abs floor ceil
+  clamp sqrt`; `{{: name = expr}}` binds a number for the rest of its block; `{{#= expr}}...{{/= expr}}`
+  shows a block when the expression is non-zero. Also available: `<text|image>_len`,
+  `<colour>_luma` (relative luminance 0..1, e.g. light or dark theme), `<enum>_<option>` (1/0).
+- `batch` (optional): `{"param": <data param>, "index": <number param>}`. One still per row: the
+  caller renders with `index` = 1..rows (`batch_params(manifest, params)` yields the param sets).
+- Lint for stills: `agentfx lint --measure` per size must have no errors and no warnings except
+  the video reading-time rules that do not apply to a still (`W_TEXT_DENSITY`, `W_WORDY`,
+  `W_READ_SIZE`, `I_LINE_LENGTH`, and the video taste rule `W_SCALE_FILL`). Templates set `lint motion=false` (no motion to judge).
+- `preview.webp` or `preview.png` (<= 600 KB) shows the defaults at the main size.
+
 ## HTTP API (P1 serves, P2 and the remote MCP use)
 
 Base `/api/v1`. JSON in and out. Auth: `Authorization: Bearer <key>`; anonymous requests get the
@@ -102,7 +180,7 @@ free tier, keyed by IP. Errors: `{"error": {"code": "...", "message": "..."}}` w
 |---|---|---|---|
 | GET | `/templates` | | `[manifest + {"preview_url"}]` |
 | GET | `/templates/{id}` | | manifest + `{"source": "<template.reel>"}` |
-| POST | `/instantiate` | `{"template": id, "params": {...}}` | `{"source": "..."}` |
+| POST | `/instantiate` | `{"template": id, "params": {...}, "size"?: "story"}` (size: stills) | `{"source": "..."}` |
 | POST | `/parse` | `{"source"}` or `{"json"}`, `to: "json"|"text"` | `{"json": {...}}` or `{"source": "..."}` |
 | POST | `/lint` | `{"source", "format"?}` | `{"diagnostics": [...]}` (CLI JSON unchanged) |
 | POST | `/timing` | `{"source", "format"?}` | CLI timing JSON |

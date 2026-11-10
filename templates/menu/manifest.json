@@ -1,0 +1,34 @@
+{
+  "id": "menu",
+  "kind": "still",
+  "title": "Restaurant menu",
+  "description": "A typeset menu from a table (section, dish, description, price): print, social and 16:9 menu boards.",
+  "tags": ["menu", "menu maker", "restaurant menu", "speisekarte erstellen", "cafe", "price list", "menu board"],
+  "sizes": ["a4-flyer", "a5-flyer", "a3-poster", "instagram-portrait", "story", "full-hd"],
+  "still_at": "0s",
+  "params": [
+    {"id": "name", "type": "text", "label": "Restaurant name", "default": "Trattoria Lumen", "max_len": 40, "required": true},
+    {"id": "tagline", "type": "text", "label": "Tagline", "default": "Seasonal kitchen since 1998", "max_len": 60},
+    {"id": "rows", "type": "data", "label": "Menu (section, item, description, price)", "min_rows": 1, "max_rows": 40,
+     "columns": [{"id": "section", "type": "text", "max_len": 28}, {"id": "item", "type": "text", "max_len": 40, "required": true},
+                 {"id": "description", "type": "text", "max_len": 70}, {"id": "price", "type": "text", "max_len": 9}],
+     "default": [
+       {"section": "Starters", "item": "Burrata", "description": "Heirloom tomatoes, basil oil, sea salt", "price": "12"},
+       {"section": "Starters", "item": "Vitello tonnato", "description": "Veal, tuna caper sauce, rocket", "price": "14"},
+       {"section": "Starters", "item": "Minestrone", "description": "Spring vegetables, parmesan crust", "price": "9"},
+       {"section": "Pasta", "item": "Cacio e pepe", "description": "Tonnarelli, pecorino, black pepper", "price": "16"},
+       {"section": "Pasta", "item": "Ragu alla bolognese", "description": "Tagliatelle, slow-cooked beef and pork", "price": "18"},
+       {"section": "Pasta", "item": "Ravioli di zucca", "description": "Pumpkin, sage butter, amaretti", "price": "17"},
+       {"section": "Mains", "item": "Branzino", "description": "Whole sea bass, lemon, fennel", "price": "28"},
+       {"section": "Mains", "item": "Saltimbocca", "description": "Veal, prosciutto, sage, white wine", "price": "26"},
+       {"section": "Dolci", "item": "Tiramisu", "description": "Mascarpone, espresso, cocoa", "price": "8"},
+       {"section": "Dolci", "item": "Panna cotta", "description": "Vanilla, berries", "price": "7"}]},
+    {"id": "currency", "type": "text", "label": "Currency sign", "default": "€", "max_len": 4},
+    {"id": "currency_pos", "type": "enum", "label": "Currency position", "default": "after", "options": ["after", "before", "none"]},
+    {"id": "footer", "type": "text", "label": "Footer line", "default": "Via Roma 12  ·  Open Tue to Sun, 12 to 23  ·  lumen.example", "max_len": 100},
+    {"id": "font", "type": "enum", "label": "Display font", "default": "Fraunces", "options": ["Fraunces", "Source Serif 4", "Space Grotesk", "Inter", "Nunito"]},
+    {"id": "bg", "type": "color", "label": "Paper", "default": "#F6F0E6"},
+    {"id": "ink", "type": "color", "label": "Text colour", "default": "#2A2320"},
+    {"id": "accent", "type": "color", "label": "Accent", "default": "#A8432E"}
+  ]
+}

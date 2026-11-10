@@ -1,0 +1,17 @@
+// Placeholder phone screenshot for the mockup template: agentfx frame screen-phone.reel --at 0s
+// -o ../mockup/screen-phone.png (then quantize to keep it small).
+video "Phone screen" size=900x1950 fps=30
+theme studio-light
+  layout safe=0
+  lint motion=false
+scene ui dur=10s bg=#F4F6FA
+  rect #top w=900 h=760 x=0 y=0 fill=linear(160deg, #17845A 0%, #0C2A1F 100%)
+  text #time "9:41" size=34 weight=700 color=#FFFFFF x=70 y=40
+  text #hello "Good morning, Sam" size=40 weight=600 color=#FFFFFF opacity=0.85 x=70 y=170
+  text #big "$48,210" size=120 weight=800 tracking=-0.03 color=#FFFFFF x=70 y=240
+  text #sub "Revenue this week  +12 %" size=34 weight=600 color=#8FE0BB x=70 y=400
+  chart #spark type=area data=[18, 24, 21, 30, 34, 31, 42, 47, 45, 56] w=760 h=220 x=70 y=490 color=#8FE0BB grid=false axis=false
+  col #cards gap=28 x=60 y=820 w=780
+    stat #k1 label="New users" value=1284 delta="+8 %" icon=user
+    stat #k2 label="Churn" value=2 suffix=" %" delta="-0.4 %" icon=x
+    note #n "Payouts arrive on Friday." title="Next payout" kind=success

@@ -1,0 +1,21 @@
+{
+  "id": "youtube-thumbnail",
+  "kind": "still",
+  "title": "YouTube thumbnail",
+  "description": "High-contrast thumbnail: two lines of huge text, your face or product cut-out, an accent shape and a badge.",
+  "tags": ["youtube thumbnail", "thumbnail maker", "thumbnail erstellen", "youtube", "cover"],
+  "sizes": ["youtube-thumbnail", "full-hd"],
+  "still_at": "0s",
+  "params": [
+    {"id": "line1", "type": "text", "label": "Line 1", "default": "I tested", "max_len": 22, "required": true},
+    {"id": "line2", "type": "text", "label": "Line 2 (highlighted)", "default": "Every phone", "max_len": 22},
+    {"id": "badge", "type": "text", "label": "Badge (optional)", "default": "2026", "max_len": 12},
+    {"id": "image", "type": "image", "label": "Face or product (PNG cut-out)", "default": "subject.png", "accept": [".png"]},
+    {"id": "shape", "type": "enum", "label": "Accent shape", "default": "arrow", "options": ["arrow", "circle", "burst", "none"]},
+    {"id": "side", "type": "enum", "label": "Image side", "default": "right", "options": ["right", "left"]},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#101425"},
+    {"id": "bg2", "type": "color", "label": "Background glow", "default": "#3B2A8F"},
+    {"id": "ink", "type": "color", "label": "Text colour", "default": "#FFFFFF"},
+    {"id": "accent", "type": "color", "label": "Accent", "default": "#FFD23F"}
+  ]
+}

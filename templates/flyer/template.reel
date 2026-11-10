@@ -1,0 +1,48 @@
+// Flyer: event or sale. Still template (docs/PLATFORM.md): design units with a 1080 short side
+// inside #page, scaled to the output pixels; positions are % of the page.
+video "{{headline}}" size={{W}}x{{H}} fps=30
+
+theme {{#= bg_luma > 0.45}}studio-light{{/= bg_luma > 0.45}}{{^= bg_luma > 0.45}}studio-dark{{/= bg_luma > 0.45}}
+  layout safe=0
+  lint min-contrast=3 motion=false
+
+scene flyer dur=60s bg={{bg}}
+  layer #page w={{DW}} h={{DH}} x=0 y=0 scale={{S}} origin=top-left
+{{#= A < 0.95}}
+{{#image}}
+    image #photo src={{image}} fit=cover w={{DW}} h={{= DH*(0.58 if A > 0.62 else 0.5)}} x=0 y=0
+    rect #fade w={{DW}} h={{= DH*0.24}} x=0 y={{= 34.5 if A > 0.62 else 26.5}}% fill=linear(180deg, {{bg.rgb}}00 0%, {{bg.rgb}} 100%)
+{{/image}}
+{{^image}}
+    rect #glow1 w={{DW}} h={{DH}} x=0 y=0 fill=radial(at 85% 8%, {{accent.rgb}}D0 0%, {{accent.rgb}}00 55%)
+    rect #glow2 w={{DW}} h={{DH}} x=0 y=0 fill=radial(at 6% 42%, {{accent2.rgb}}B0 0%, {{accent2.rgb}}00 45%)
+{{/image}}
+{{#kicker}}
+    row #kick fill={{accent}} pad=16 radius=99 x=8% y={{= 52 if A > 0.62 else 45}}% anchor=left
+      text #kicker "{{kicker}}" font="Space Grotesk" size=30 weight=700 tracking=0.16 upper color={{bg}} nowrap
+{{/kicker}}
+    text #headline "{{headline}}" font="{{font}}" size=150 weight=800 lh=0.95 tracking=-0.02 color={{ink}} align=left w={{= DW*0.84}} h={{= DH*0.2}} x=8% y={{= 56 if A > 0.62 else 49}}% fit
+    text #subline "{{subline}}" font="Inter" size=40 weight=400 lh=1.3 color={{ink}} opacity=0.85 align=left w={{= DW*0.84}} h={{= DH*0.1}} x=8% y={{= 77.5 if A > 0.62 else 70}}% fit
+    rect #rule w={{= DW*0.84}} h=2 x=8% y={{= 88.5 if A > 0.62 else 79}}% fill={{ink}} opacity=0.25
+    text #date "{{date}}" font="Space Grotesk" size=40 weight=700 color={{accent}} align=left x=8% y={{= 90.5 if A > 0.62 else 81}}% w={{= DW*0.4}} h=60 fit nowrap
+    text #place "{{place}}" font="Space Grotesk" size=40 weight=500 color={{ink}} align=right x=92% y={{= 90.5 if A > 0.62 else 81}}% anchor=top-right w={{= DW*0.42}} h=60 fit nowrap
+{{/= A < 0.95}}
+{{#= A >= 0.95}}
+{{#image}}
+    image #photo src={{image}} fit=cover w={{DW}} h={{DH}} x=0 y=0
+    rect #shade w={{DW}} h={{DH}} x=0 y=0 fill=linear(180deg, {{bg.rgb}}00 15%, {{bg.rgb}}E0 58%, {{bg.rgb}} 100%)
+{{/image}}
+{{^image}}
+    rect #glow1 w={{DW}} h={{DH}} x=0 y=0 fill=radial(at 88% 6%, {{accent.rgb}}D0 0%, {{accent.rgb}}00 55%)
+    rect #glow2 w={{DW}} h={{DH}} x=0 y=0 fill=radial(at 4% 70%, {{accent2.rgb}}B0 0%, {{accent2.rgb}}00 45%)
+{{/image}}
+{{#kicker}}
+    row #kick fill={{accent}} pad=14 radius=99 x=7% y=40% anchor=left
+      text #kicker "{{kicker}}" font="Space Grotesk" size=28 weight=700 tracking=0.16 upper color={{bg}} nowrap
+{{/kicker}}
+    text #headline "{{headline}}" font="{{font}}" size=128 weight=800 lh=0.95 tracking=-0.02 color={{ink}} align=left w={{= DW*0.86}} h={{= DH*0.27}} x=7% y=45% fit
+    text #subline "{{subline}}" font="Inter" size=36 weight=400 lh=1.3 color={{ink}} opacity=0.85 align=left w={{= DW*0.86}} h={{= DH*0.1}} x=7% y=73% fit
+    rect #rule w={{= DW*0.86}} h=2 x=7% y=85% fill={{ink}} opacity=0.25
+    text #date "{{date}}" font="Space Grotesk" size=36 weight=700 color={{accent}} align=left x=7% y=87.5% w={{= DW*0.42}} h=54 fit nowrap
+    text #place "{{place}}" font="Space Grotesk" size=36 weight=500 color={{ink}} align=right x=93% y=87.5% anchor=top-right w={{= DW*0.42}} h=54 fit nowrap
+{{/= A >= 0.95}}

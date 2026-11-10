@@ -1,0 +1,31 @@
+{
+  "id": "certificate",
+  "kind": "still",
+  "title": "Certificate",
+  "description": "Certificate of completion or achievement with name, course, date, signature line and seal; one per row for batches.",
+  "tags": ["certificate", "certificate generator", "zertifikat erstellen", "urkunde", "award", "diploma"],
+  "sizes": ["a4-landscape", "letter-landscape", "a4-flyer", "linkedin-post", "instagram-post"],
+  "still_at": "0s",
+  "batch": {"param": "recipients", "index": "index"},
+  "params": [
+    {"id": "title", "type": "text", "label": "Title", "default": "Certificate", "max_len": 32, "required": true},
+    {"id": "subtitle", "type": "text", "label": "Subtitle", "default": "of completion", "max_len": 40},
+    {"id": "intro", "type": "text", "label": "Line above the name", "default": "This certifies that", "max_len": 60},
+    {"id": "name", "type": "text", "label": "Recipient", "default": "Alexandra Whitfield", "max_len": 48},
+    {"id": "course", "type": "text", "label": "What for", "default": "has successfully completed the course Motion Design Fundamentals (24 hours)", "max_len": 140},
+    {"id": "date", "type": "text", "label": "Date", "default": "9 November 2026", "max_len": 32},
+    {"id": "signer", "type": "text", "label": "Signed by", "default": "Jordan Ellis", "max_len": 32},
+    {"id": "signer_role", "type": "text", "label": "Signer's role", "default": "Head of Academy", "max_len": 26},
+    {"id": "issuer", "type": "text", "label": "Issuer", "default": "Northwind Academy", "max_len": 40},
+    {"id": "logo", "type": "image", "label": "Logo (optional)", "default": "logo.png", "accept": [".png"]},
+    {"id": "seal", "type": "text", "label": "Seal text (empty: no seal)", "default": "2026", "max_len": 8},
+    {"id": "recipients", "type": "data", "label": "Batch: one certificate per row (name, course, date)", "max_rows": 500,
+     "columns": [{"id": "name", "type": "text", "max_len": 48, "required": true}, {"id": "course", "type": "text", "max_len": 140}, {"id": "date", "type": "text", "max_len": 32}],
+     "default": []},
+    {"id": "index", "type": "number", "label": "Batch row to render (1-based)", "default": 1, "min": 1, "max": 500, "step": 1},
+    {"id": "font", "type": "enum", "label": "Name font", "default": "Fraunces", "options": ["Fraunces", "Source Serif 4", "Space Grotesk", "Inter", "Nunito"]},
+    {"id": "bg", "type": "color", "label": "Paper", "default": "#FBF8F1"},
+    {"id": "ink", "type": "color", "label": "Text colour", "default": "#1E2A3A"},
+    {"id": "accent", "type": "color", "label": "Accent (frame, seal)", "default": "#8F6B32"}
+  ]
+}

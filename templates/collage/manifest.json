@@ -1,0 +1,23 @@
+{
+  "id": "collage",
+  "kind": "still",
+  "title": "Photo collage",
+  "description": "Two to nine photos as a clean grid, a mosaic with one hero shot, or scattered polaroids, with an optional title.",
+  "tags": ["collage", "photo collage", "collage erstellen", "moodboard", "photo grid", "polaroid"],
+  "sizes": ["instagram-post", "instagram-portrait", "story", "facebook-post", "x-post", "pinterest-pin", "a4-landscape"],
+  "still_at": "0s",
+  "params": [
+    {"id": "photos", "type": "data", "label": "Photos (2 to 9; caption optional)", "min_rows": 2, "max_rows": 9, "accept": [".png"],
+     "columns": [{"id": "src", "type": "image", "required": true}, {"id": "caption", "type": "text", "max_len": 32}],
+     "default": [{"src": "photo-1.png", "caption": "Dusk"}, {"src": "photo-2.png", "caption": "Alps"}, {"src": "photo-3.png", "caption": "Dunes"},
+                 {"src": "photo-4.png", "caption": "Night"}, {"src": "photo-5.png", "caption": "Forest"}, {"src": "photo-6.png", "caption": "Coast"}]},
+    {"id": "layout", "type": "enum", "label": "Layout", "default": "mosaic", "options": ["grid", "mosaic", "polaroid"]},
+    {"id": "title", "type": "text", "label": "Title (optional)", "default": "Summer 2026", "max_len": 40},
+    {"id": "gap", "type": "number", "label": "Gap", "default": 16, "min": 0, "max": 60, "step": 2},
+    {"id": "radius", "type": "number", "label": "Corner radius", "default": 14, "min": 0, "max": 60, "step": 2},
+    {"id": "margin", "type": "number", "label": "Outer margin", "default": 40, "min": 0, "max": 120, "step": 4},
+    {"id": "font", "type": "enum", "label": "Title font", "default": "Fraunces", "options": ["Fraunces", "Space Grotesk", "Inter", "Nunito", "Source Serif 4"]},
+    {"id": "bg", "type": "color", "label": "Background", "default": "#F4EFE6"},
+    {"id": "ink", "type": "color", "label": "Title colour", "default": "#1F1A17"}
+  ]
+}

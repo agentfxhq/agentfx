@@ -34,16 +34,52 @@ Ask nothing more than you need. If the request is clear, go:
 
 1. Read the catalog (and the spec section for what you use). Pick the closest example as a start.
 2. Write the `.reel`. Copy, numbers, names and logos come from the user; never invent claims.
-   Mark any copy you propose as proposed.
-3. `agentfx lint film.reel --measure --all-formats` (add `--no-tts` when there is no voice-over).
-   Fix every error and warning; lint hints say how.
+   Mark any copy you propose as proposed. Get these right in the first draft (see
+   [First-draft checklist](#first-draft-checklist)): length, format, size, numbers.
+3. `agentfx lint film.reel --measure --format <each requested format>` (`--all-formats` when
+   the video is for several; add `--no-tts` when there is no voice-over). Fix every error and
+   every warning that is about the formats you deliver; lint hints say how.
 4. Look before you render: `agentfx sheet film.reel --events -o out/sheet.png` and
    `agentfx frame film.reel --at <anchor|seconds> -o out/frame.png` for the moments that matter.
    Open the PNGs and check overflow, clipping, contrast, alignment and pacing. Fix and repeat.
-5. `nice -n 19 agentfx render film.reel -o out/film.mp4` (`--format 9:16` for vertical; `.gif`,
+   This is also required for edits: look at a frame after every change you hand over.
+5. Render once, at the end, only the formats the user asked for:
+   `nice -n 19 agentfx render film.reel -o out/film.mp4` (`--format 9:16` for vertical; `.gif`,
    `.webp`, `.mov` or `.webm` outputs by extension; `--alpha` for a transparent background).
+   A render takes from seconds to several minutes. Run it in the foreground and let it finish:
+   give the shell call a long timeout (e.g. Bash `timeout: 600000`) or use the MCP
+   `agentfx_render` tool, which blocks until the file is written. Never put a render in the
+   background (`&`, `run_in_background`) and never wait for it with `pgrep`/`sleep` loops (they
+   match other renders and themselves): when your session ends, a background render is killed and
+   the user gets no video.
 6. Check the result (a strip of frames: `ffmpeg -i out/film.mp4 -vf fps=2,scale=320:-1,tile=9x1
-   out/strip.png`), then hand over the path with one line on what you made.
+   out/strip.png`), then hand over the path with one line on what you made. The MP4 has a
+   variable frame rate (a still hold is one long frame): extract single frames with the fps
+   filter as above or with `agentfx frame`, not with `ffmpeg -ss <t> -i`, which jumps to the
+   next change and shows the wrong moment.
+
+### First-draft checklist
+
+- **Length.** Every scene without narration needs `dur=` (else it is only 0.5 s long:
+  `W_SCENE_SHORT`). No length given: 5 to 8 s for a title, logo or effect clip, 10 to 15 s for a
+  list, teaser or chart, the narration's length for an explainer. A stated length is a must.
+- **Format.** "Reel", "TikTok", "story", "short", "vertical": 9:16 (`size=1080x1920`). "Square",
+  "post": 1:1. "YouTube", "landscape" or nothing: 16:9. Several: `formats=[...]` plus `when`
+  overrides, and lint and render each.
+- **Fill the frame.** The hero (headline, number, chart, logo) spans at least 60 % of the frame
+  width; at 1080p headlines are 120 to 220 px, supporting text at least 44 px (56 px in 9:16).
+  `W_SCALE_FILL` and `W_SMALL_MOTION` mean it is too small: scale up, do not ignore them.
+- **Motion to the end.** Every scene has an entrance and something that moves or lands near its
+  end (a camera push, a pulse, an exit); a long static final hold reads as a frozen video
+  (`W_STATIC_END`, `W_DEAD_AIR`).
+- **Numbers as written.** Number defaults are German: counters group with `.` from 10 000 on and
+  charts use a decimal comma. For English copy set `sep=","` on `counter`/`stat` and `locale=en`
+  on `chart` (`W_NUMBER_FORMAT`). Show the user's figures exactly (1.2M stays "1.2M", 4,300
+  stays "4,300"). Counters count integers only: count a decimal figure as a `text` that lands
+  with a pop, or count the integer part with `prefix=`/`suffix=` (`to=4300 sep=","`), never
+  rewrite the figure as 1200K.
+- **Assets.** `image` reads PNG; for an SVG file (a logo) use `svg src=logo.svg w= h=`
+  (or paste it in an `svg |` body); never retype a logo as text.
 
 Offer director mode in one line only when the brief is open-ended or the user wants to steer:
 
